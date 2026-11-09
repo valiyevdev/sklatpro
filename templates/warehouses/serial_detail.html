@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ serial.serial }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:serial_list' %}">{% t "serial_numbers" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ serial.serial }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ serial.serial }}</h1>
+            <span class="text-pro-sm text-pro-muted">{{ serial.product.name }}</span>
+            {% if serial.status == 'available' %}
+                <span class="badge-pro badge-pro-success">{% t "available" %}</span>
+            {% elif serial.status == 'reserved' %}
+                <span class="badge-pro badge-pro-info">{% t "reserved" %}</span>
+            {% elif serial.status == 'sold' %}
+                <span class="badge-pro badge-pro-neutral">{% t "sold" %}</span>
+            {% elif serial.status == 'damaged' %}
+                <span class="badge-pro badge-pro-danger">{% t "damaged" %}</span>
+            {% elif serial.status == 'returned' %}
+                <span class="badge-pro badge-pro-warning">{% t "returned" %}</span>
+            {% elif serial.status == 'quarantine' %}
+                <span class="badge-pro badge-pro-warning">{% t "quarantine" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral">{{ serial.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ serial.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if serial.location %}{{ serial.location.code }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "location" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-geo-alt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if serial.batch %}{{ serial.batch.batch_number }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "batch" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-upc-scan"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if serial.sale %}{{ serial.sale.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "sale" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cart"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if serial.purchase %}{{ serial.purchase.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "purchase" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-bag"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if serial.transfer %}{{ serial.transfer.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "transfer" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-arrow-left-right"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ serial.created_at|date:"d.m.Y H:i" }}</div>
+            <div class="stat-card-label">{% t "created_at" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clock"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ serial.updated_at|date:"d.m.Y H:i" }}</div>
+            <div class="stat-card-label">{% t "updated_at" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-clock-history"></i></div>
+    </div>
+</div>
+
+{% if serial.notes %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p style="color:var(--text-secondary);line-height:1.6">{{ serial.notes|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

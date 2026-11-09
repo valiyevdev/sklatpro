@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if is_create %}{% t "create_document" %}{% else %}{% t "edit_document" %} {{ doc.number }}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    {% if is_create %}
+    <span class="current">{% t "create_document" %}</span>
+    {% else %}
+    <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="breadcrumb-link">{{ doc.number }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "edit_document" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if is_create %}{% t "create_document" %}{% else %}{% t "edit_document" %} {{ doc.number }}{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="documentForm">
+    {% csrf_token %}
+
+    <div class="grid grid-2 mb-6" style="gap:var(--sp-6)">
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "document_header" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div class="grid grid-2" style="gap:var(--sp-4)">
+                    <div class="form-group">
+                        <label class="form-label">{% t "document_type" %}</label>
+                        {{ form.doc_type }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "document_number" %}</label>
+                        {% if is_create %}
+                        <input type="text" class="input-pro" value="{% t "auto_generated" %}" disabled>
+                        {% else %}
+                        <input type="text" class="input-pro" value="{{ doc.number }}" disabled>
+                        {% endif %}
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label">{% t "title" %}</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "date" %}</label>
+                        {{ form.date }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "due_date" %}</label>
+                        {{ form.due_date }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "customer" %}</label>
+                        {{ form.customer }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "supplier" %}</label>
+                        {{ form.supplier }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{% t "currency" %}</label>
+                        {{ form.currency }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calculator" style="color:var(--primary-600)"></i> {% t "document_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+                    <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                        <span class="cell-muted">{% t "subtotal" %}</span>
+                        <span class="fw-600" id="subtotalDisplay">0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                        <span class="cell-muted">{% t "tax" %}</span>
+                        <span class="fw-600" id="taxDisplay">0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                        <span class="cell-muted">{% t "discount" %}</span>
+                        <span class="fw-600" id="discountDisplay">0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:var(--sp-3) 0">
+                        <span class="fw-600">{% t "total_amount" %}</span>
+                        <span class="fw-600 cell-primary" style="font-size:var(--text-lg)" id="totalDisplay">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro mb-6">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-list-ul" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+            <button type="button" class="btn-pro btn-pro-sm btn-pro-ghost" id="addItemBtn"><i class="bi bi-plus-lg"></i> {% t "add_item" %}</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width:30px">#</th>
+                        <th>{% t "description" %}</th>
+                        <th style="width:100px">{% t "quantity" %}</th>
+                        <th style="width:130px">{% t "unit_price" %}</th>
+                        <th style="width:120px">{% t "discount" %}</th>
+                        <th style="width:120px">{% t "tax" %}</th>
+                        <th style="width:130px">{% t "line_total" %}</th>
+                        <th style="width:40px"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    {% if items %}
+                    {% for item in items %}
+                    <tr class="item-row">
+                        <td class="cell-muted">{{ forloop.counter }}</td>
+                        <td><input type="text" name="item_description" class="input-pro" value="{{ item.description|default:'' }}" placeholder="{% t "description" %}"></td>
+                        <td><input type="number" name="item_quantity" class="input-pro item-qty" value="{{ item.quantity }}" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_unit_price" class="input-pro item-price" value="{{ item.unit_price }}" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_discount" class="input-pro item-discount" value="{{ item.discount }}" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_tax" class="input-pro item-tax" value="{{ item.tax }}" step="0.01" min="0"></td>
+                        <td class="cell-primary fw-600 item-total">{{ item.line_total|floatformat:2 }}</td>
+                        <td><button type="button" class="btn-pro btn-pro-sm btn-pro-ghost removeItemBtn"><i class="bi bi-trash"></i></button></td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr class="item-row">
+                        <td class="cell-muted">1</td>
+                        <td><input type="text" name="item_description" class="input-pro" placeholder="{% t "description" %}"></td>
+                        <td><input type="number" name="item_quantity" class="input-pro item-qty" value="1" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_unit_price" class="input-pro item-price" value="0" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_discount" class="input-pro item-discount" value="0" step="0.01" min="0"></td>
+                        <td><input type="number" name="item_tax" class="input-pro item-tax" value="0" step="0.01" min="0"></td>
+                        <td class="cell-primary fw-600 item-total">0.00</td>
+                        <td><button type="button" class="btn-pro btn-pro-sm btn-pro-ghost removeItemBtn"><i class="bi bi-trash"></i></button></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro mb-6">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-chat-left-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+        </div>
+        <div class="card-pro-body">
+            {{ form.notes }}
+        </div>
+    </div>
+
+    <div style="display:flex;gap:var(--sp-3);justify-content:flex-end">
+        {% if not is_create %}
+        <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+        {% else %}
+        <a href="{% url 'documents:document_list' %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+        {% endif %}
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    const tbody = document.getElementById('itemsBody');
+    const addBtn = document.getElementById('addItemBtn');
+
+    function renumber() {
+        tbody.querySelectorAll('.item-row').forEach(function(row, i){
+            row.querySelector('.cell-muted').textContent = i + 1;
+        });
+    }
+
+    addBtn.addEventListener('click', function(){
+        const row = tbody.querySelector('.item-row');
+        const clone = row.cloneNode(true);
+        clone.querySelectorAll('input').forEach(function(inp){ inp.value = inp.name === 'item_quantity' ? '1' : ''; });
+        clone.querySelector('.item-total').textContent = '0.00';
+        tbody.appendChild(clone);
+        renumber();
+    });
+
+    tbody.addEventListener('click', function(e){
+        var btn = e.target.closest('.removeItemBtn');
+        if (btn && tbody.querySelectorAll('.item-row').length > 1) {
+            btn.closest('.item-row').remove();
+            renumber();
+            recalc();
+        }
+    });
+
+    tbody.addEventListener('input', function(){
+        recalc();
+    });
+
+    function recalc() {
+        var subtotal = 0, tax = 0, discount = 0;
+        tbody.querySelectorAll('.item-row').forEach(function(row){
+            var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            var price = parseFloat(row.querySelector('.item-price').value) || 0;
+            var disc = parseFloat(row.querySelector('.item-discount').value) || 0;
+            var tx = parseFloat(row.querySelector('.item-tax').value) || 0;
+            var line = (qty * price) - disc + tx;
+            row.querySelector('.item-total').textContent = line.toFixed(2);
+            subtotal += qty * price;
+            discount += disc;
+            tax += tx;
+        });
+        document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2);
+        document.getElementById('taxDisplay').textContent = tax.toFixed(2);
+        document.getElementById('discountDisplay').textContent = discount.toFixed(2);
+        document.getElementById('totalDisplay').textContent = (subtotal - discount + tax).toFixed(2);
+    }
+    recalc();
+})();
+</script>
+{% endblock %}

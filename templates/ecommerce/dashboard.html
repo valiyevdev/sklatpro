@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}E-Commerce Dashboard - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <div>
+            <nav class="breadcrumb-pro">
+                <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+                <span class="separator">/</span>
+                <span class="current">{% t "E-Commerce" %}</span>
+            </nav>
+            <h1 class="page-title">{% t "E-Commerce Dashboard" %}</h1>
+            <p class="page-subtitle">{% t "Unified commerce management across all channels" %}</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Channels" %}</div>
+            <div class="stat-card-value">{{ total_channels }}</div>
+            <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ active_channels.count }} {% t "active" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-broadcast"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Today Orders" %}</div>
+            <div class="stat-card-value">{{ total_orders_today }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Today Revenue" %}</div>
+            <div class="stat-card-value">{{ total_revenue_today|floatformat:0 }} so'm</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-cash-coin"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Marketplaces" %}</div>
+            <div class="stat-card-value">{{ active_marketplaces }}</div>
+            <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ active_payment_providers }} {% t "providers" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-shop"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title">{% t "Channel Performance" %}</h3>
+            <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "View All" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for cs in channel_stats %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-broadcast"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ cs.channel.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ cs.channel.get_channel_type_display }}</div>
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-weight:600;font-size:var(--text-sm);color:var(--text-primary)">{{ cs.revenue_today|floatformat:0 }} so'm</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ cs.orders_today }} {% t "orders" %}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-broadcast" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No active channels configured yet." %}</p>
+                <a href="{% url 'ecommerce:channel_create' %}" class="btn-pro btn-pro-sm btn-pro-primary" style="margin-top:var(--sp-3)"><i class="bi bi-plus-lg"></i> {% t "Add Channel" %}</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title">{% t "Recent Orders" %}</h3>
+            <a href="{% url 'orders:order_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "View All" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for order in recent_orders %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div>
+                    <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ order.reference }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ order.customer.name }}</div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-weight:600;font-size:var(--text-sm);color:var(--text-primary)">{{ order.total|floatformat:0 }} so'm</div>
+                    <span class="badge-pro badge-pro-{% if order.status == 'completed' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %} badge-pro-dot" style="font-size:10px">{{ order.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-receipt" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No recent orders." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title">{% t "Integration Logs" %}</h3>
+            <a href="{% url 'ecommerce:integration_logs' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "View All" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for log in integration_logs %}
+            <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                    {% if log.status == 'success' %}background:var(--success-500)
+                    {% elif log.status == 'error' %}background:var(--danger-500)
+                    {% elif log.status == 'warning' %}background:var(--warning-500)
+                    {% else %}background:var(--info-500){% endif %}"></span>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:var(--text-sm);color:var(--text-primary)">{{ log.action }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ log.provider }} - {{ log.created_at|timesince }} {% t "ago" %}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-clock-history" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No integration logs yet." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title">{% t "Recent Payments" %}</h3>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for txn in recent_payments %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div>
+                    <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ txn.transaction_id }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ txn.created_at|timesince }} {% t "ago" %}</div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-weight:600;font-size:var(--text-sm);color:var(--text-primary)">{{ txn.amount|floatformat:0 }} {{ txn.currency }}</div>
+                    <span class="badge-pro badge-pro-{% if txn.status == 'completed' %}success{% elif txn.status == 'failed' %}danger{% elif txn.status == 'refunded' %}info{% else %}warning{% endif %} badge-pro-dot" style="font-size:10px">{{ txn.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-wallet2" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No payment transactions yet." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div style="display:flex;gap:var(--sp-3);flex-wrap:wrap">
+    <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-outline-primary"><i class="bi bi-broadcast"></i> {% t "Channels" %}</a>
+    <a href="{% url 'ecommerce:integration_list' %}" class="btn-pro btn-pro-outline-primary"><i class="bi bi-plug"></i> {% t "Integrations" %}</a>
+    <a href="{% url 'ecommerce:sync_jobs' %}" class="btn-pro btn-pro-outline-primary"><i class="bi bi-arrow-repeat"></i> {% t "Sync Jobs" %}</a>
+</div>
+{% endblock %}

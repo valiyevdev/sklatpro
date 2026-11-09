@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "price_history" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "price_history" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "price_history" %}</h1>
+        <p class="page-subtitle">{{ page.paginator.count }} {% t "results" %}</p>
+    </div>
+</div>
+
+<div class="card-pro" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:3;min-width:200px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="search" value="{{ search }}" class="input-pro" placeholder="{% t "search_price_history" %}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "change_type" %}</label>
+            <select class="input-pro" name="type">
+                <option value="">{% t "all_types" %}</option>
+                <option value="product_base" {% if type_filter == 'product_base' %}selected{% endif %}>{% t "base_price" %}</option>
+                <option value="price_list" {% if type_filter == 'price_list' %}selected{% endif %}>{% t "price_list" %}</option>
+                <option value="customer_price" {% if type_filter == 'customer_price' %}selected{% endif %}>{% t "customer_price" %}</option>
+                <option value="promotion" {% if type_filter == 'promotion' %}selected{% endif %}>{% t "promotion" %}</option>
+                <option value="coupon" {% if type_filter == 'coupon' %}selected{% endif %}>{% t "coupon" %}</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-search"></i></button>
+        {% if search or type_filter %}
+            <a href="{% url 'pricing:price_history' %}" class="btn-pro btn-pro-ghost btn-pro-sm" style="height:38px"><i class="bi bi-x-circle"></i></a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "old_price" %}</th>
+                    <th>{% t "new_price" %}</th>
+                    <th>{% t "change_type" %}</th>
+                    <th>{% t "price_list" %}</th>
+                    <th>{% t "changed_by" %}</th>
+                    <th>{% t "date_time" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in page %}
+                <tr>
+                    <td class="cell-primary">{{ entry.product }}</td>
+                    <td><span style="text-decoration:line-through;color:var(--text-muted)">{{ entry.old_price }}</span></td>
+                    <td class="fw-600">{{ entry.new_price }}</td>
+                    <td>
+                        {% if entry.change_type == 'product_base' %}
+                            <span class="badge-pro badge-pro-neutral">Base</span>
+                        {% elif entry.change_type == 'price_list' %}
+                            <span class="badge-pro badge-pro-info">Price List</span>
+                        {% elif entry.change_type == 'customer_price' %}
+                            <span class="badge-pro badge-pro-success">Customer</span>
+                        {% elif entry.change_type == 'promotion' %}
+                            <span class="badge-pro badge-pro-warning">Promo</span>
+                        {% elif entry.change_type == 'coupon' %}
+                            <span class="badge-pro badge-pro-danger">Coupon</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ entry.change_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.price_list %}
+                            <span class="badge-pro badge-pro-neutral">{{ entry.price_list }}</span>
+                        {% else %}
+                            <span class="text-pro-sm text-pro-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.changed_by|default:"—" }}</td>
+                    <td class="cell-muted text-pro-sm">{{ entry.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+                            <h5 class="empty-state-title">{% t "no_price_history" %}</h5>
+                            <p class="empty-state-desc">{% t "price_history_empty_desc" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "showing" %} {{ page.start_index }}-{% t "of" %} {{ page.paginator.count }}</span>
+    <div class="d-flex gap-1">
+        {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}&search={{ search }}&type={{ type_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        {% for num in page.paginator.page_range %}
+            {% if page.number == num %}
+                <span class="btn-pro btn-pro-primary btn-pro-sm">{{ num }}</span>
+            {% elif num > page.number|add:'-3' and num < page.number|add:'3' %}
+                <a href="?page={{ num }}&search={{ search }}&type={{ type_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page.has_next %}
+            <a href="?page={{ page.next_page_number }}&search={{ search }}&type={{ type_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

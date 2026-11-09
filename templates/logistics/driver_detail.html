@@ -1,0 +1,89 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ driver.full_name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'logistics:driver_list' %}">{% t "drivers" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ driver.full_name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{{ driver.full_name }}</h1>
+        <p class="page-subtitle">
+            {% if driver.status == 'available' %}<span class="badge-pro badge-pro-success">{% t "available" %}</span>
+            {% elif driver.status == 'on_route' %}<span class="badge-pro badge-pro-info">{% t "on_route" %}</span>
+            {% else %}<span class="badge-pro badge-pro-neutral">{{ driver.get_status_display }}</span>{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'logistics:driver_update' pk=driver.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'logistics:driver_delete' pk=driver.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:250px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "personal_info" %}</h5></div>
+        <div class="card-pro-body">
+            <div class="text-pro-sm text-pro-muted">{% t "phone" %}: {{ driver.phone|default:"-" }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "employee_id" %}: {{ driver.employee_id|default:"-" }}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:250px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "license" %}</h5></div>
+        <div class="card-pro-body">
+            <div class="text-pro-sm text-pro-muted">{% t "license_number" %}: {{ driver.license_number|default:"-" }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "category" %}: {{ driver.license_category|default:"-" }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "expiry" %}: {{ driver.license_expiry|date:"d.m.Y"|default:"-" }}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:250px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "performance" %}</h5></div>
+        <div class="card-pro-body">
+            <div class="d-flex gap-4">
+                <div><div class="text-pro-sm text-pro-muted">{% t "total_deliveries" %}</div><div style="font-weight:600;font-size:1.2rem">{{ delivery_stats.total|default:0 }}</div></div>
+                <div><div class="text-pro-sm text-pro-muted">{% t "delivered" %}</div><div style="font-weight:600;font-size:1.2rem;color:var(--color-success)">{{ delivery_stats.delivered|default:0 }}</div></div>
+                <div><div class="text-pro-sm text-pro-muted">{% t "failed" %}</div><div style="font-weight:600;font-size:1.2rem;color:var(--color-danger)">{{ delivery_stats.failed|default:0 }}</div></div>
+                <div><div class="text-pro-sm text-pro-muted">{% t "on_time_rate" %}</div><div style="font-weight:600;font-size:1.2rem">{{ on_time_rate }}%</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-6">
+    <form method="post" action="{% url 'logistics:driver_update_status' pk=driver.pk %}" class="d-flex gap-2">{% csrf_token %}
+        {% for val, label in driver.STATUS_CHOICES %}
+            {% if val != driver.status %}
+                <button type="submit" name="status" value="{{ val }}" class="btn-pro btn-pro-ghost btn-pro-sm">{{ label }}</button>
+            {% endif %}
+        {% endfor %}
+    </form>
+</div>
+
+{% if routes %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "recent_routes" %}</h5></div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead><tr><th>{% t "reference" %}</th><th>{% t "date" %}</th><th>{% t "vehicle" %}</th><th>{% t "status" %}</th></tr></thead>
+            <tbody>
+                {% for r in routes %}
+                <tr>
+                    <td class="cell-primary"><a href="{% url 'logistics:route_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.reference }}</a></td>
+                    <td>{{ r.route_date|date:"d.m.Y" }}</td>
+                    <td>{{ r.vehicle|default:"-" }}</td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ r.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

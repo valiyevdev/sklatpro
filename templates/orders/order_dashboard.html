@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "orders" %} {% t "dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'orders:order_list' %}">{% t "orders" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "orders" %} {% t "dashboard" %}</h1>
+        <p class="page-subtitle">{% t "order_overview_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'orders:order_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_order" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "orders_today" %}</div>
+            <div class="stat-card-value">{{ orders_today }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "pending_confirmation" %}</div>
+            <div class="stat-card-value">{{ pending_count }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-clock-history"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "ready_to_ship" %}</div>
+            <div class="stat-card-value">{{ ready_to_ship }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "overdue" %}</div>
+            <div class="stat-card-value">{{ overdue_payments }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "confirmed" %}</div>
+            <div class="stat-card-value">{{ confirmed_count }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "reserved" %}</div>
+            <div class="stat-card-value">{{ reserved_count }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-bookmark-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "processing" %}</div>
+            <div class="stat-card-value">{{ processing_count }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-gear"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "backordered" %}</div>
+            <div class="stat-card-value">{{ backordered_count }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-return-left"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "shipped" %}</div>
+            <div class="stat-card-value">{{ shipped_count }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-send"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "completed" %}</div>
+            <div class="stat-card-value">{{ delivered_count }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check2-circle"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2 gap-6 mb-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-people" style="color:var(--primary-600)"></i> {% t "top_customers" %}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "orders_count" %}</th>
+                        <th>{% t "total_value" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in top_customers %}
+                    <tr>
+                        <td class="cell-primary">{{ c.name }}</td>
+                        <td>{{ c.orders_cnt }}</td>
+                        <td class="fw-600">${{ c.total_value|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_customers" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "recent_orders" %}</span>
+            <a href="{% url 'orders:order_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in recent_orders %}
+                    <tr>
+                        <td class="cell-primary">
+                            <a href="{% url 'orders:order_detail' pk=o.pk %}" style="color:var(--text-primary);text-decoration:none">{{ o.reference }}</a>
+                        </td>
+                        <td>{{ o.customer.name }}</td>
+                        <td>
+                            {% if o.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                            {% elif o.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                            {% elif o.status == 'shipped' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "shipped" %}</span>
+                            {% elif o.status == 'reserved' %}
+                                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "reserved" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ o.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-600">${{ o.total|floatformat:0 }}</td>
+                        <td class="cell-muted">{{ o.created_at|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_orders" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

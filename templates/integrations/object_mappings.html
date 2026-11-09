@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "external_object_mappings" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "external_object_mappings" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-500)"></i> {% t "external_object_mappings" %}</h1>
+        <p class="page-subtitle">{{ mappings|length }} {% t "mappings" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+            <label class="input-pro-label">{% t "entity_type" %}</label>
+            <select name="entity_type" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_entity_types" %}</option>
+                <option value="product" {% if entity_type_filter == 'product' %}selected{% endif %}>Product</option>
+                <option value="customer" {% if entity_type_filter == 'customer' %}selected{% endif %}>Customer</option>
+                <option value="order" {% if entity_type_filter == 'order' %}selected{% endif %}>Order</option>
+                <option value="shipment" {% if entity_type_filter == 'shipment' %}selected{% endif %}>Shipment</option>
+                <option value="payment" {% if entity_type_filter == 'payment' %}selected{% endif %}>Payment</option>
+                <option value="document" {% if entity_type_filter == 'document' %}selected{% endif %}>Document</option>
+                <option value="category" {% if entity_type_filter == 'category' %}selected{% endif %}>Category</option>
+                <option value="supplier" {% if entity_type_filter == 'supplier' %}selected{% endif %}>Supplier</option>
+            </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--sp-2);height:38px">
+            <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer;white-space:nowrap">
+                <input type="checkbox" name="conflict_only" value="1" {% if conflict_only %}checked{% endif %} onchange="this.form.submit()" style="accent-color:var(--primary-500)">
+                {% t "conflicts_only" %}
+            </label>
+        </div>
+        <a href="{% url 'integrations:object_mappings' %}" class="btn-pro btn-pro-secondary btn-pro-sm" style="height:38px"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+    </form>
+</div>
+
+{% if mappings %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "entity_type" %}</th>
+                    <th>{% t "internal_id" %}</th>
+                    <th>{% t "external_id" %}</th>
+                    <th>{% t "external_system" %}</th>
+                    <th>{% t "source_of_truth" %}</th>
+                    <th>{% t "conflict" %}</th>
+                    <th>{% t "last_synced" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mapping in mappings %}
+                <tr class="mapping-expand-row" data-mapping-id="{{ mapping.pk }}" onclick="toggleMappingDetail({{ mapping.pk }})" style="cursor:pointer{% if mapping.has_conflict %};background:var(--danger-50){% endif %}">
+                    <td>
+                        <span class="badge-pro badge-pro-info">{{ mapping.entity_type }}</span>
+                    </td>
+                    <td style="font-family:'SF Mono',Consolas,monospace;font-size:var(--text-xs)">{{ mapping.internal_id }}</td>
+                    <td style="font-family:'SF Mono',Consolas,monospace;font-size:var(--text-xs)">{{ mapping.external_id }}</td>
+                    <td style="font-size:var(--text-sm);font-weight:500">{{ mapping.external_system }}</td>
+                    <td>
+                        {% if mapping.source_of_truth == 'internal' %}
+                        <span class="badge-pro badge-pro-success">Internal</span>
+                        {% elif mapping.source_of_truth == 'external' %}
+                        <span class="badge-pro badge-pro-info">External</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-warning">Manual</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if mapping.has_conflict %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> Conflict</span>
+                        {% else %}
+                        <span style="color:var(--text-muted);font-size:var(--text-xs)">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">
+                        {% if mapping.last_synced %}{{ mapping.last_synced|date:"d M Y H:i" }}{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% if mapping.has_conflict %}
+                <tr id="mappingDetail{{ mapping.pk }}" style="display:none">
+                    <td colspan="7" style="padding:0;background:var(--danger-50);border-top:1px solid var(--border-subtle)">
+                        <div style="padding:var(--sp-4)">
+                            <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+                                <i class="bi bi-exclamation-triangle-fill" style="color:var(--danger-600)"></i>
+                                <span style="font-weight:600;font-size:var(--text-sm);color:var(--danger-700)">{% t "sync_conflict_detected" %}</span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-4)">
+                                <div>
+                                    <label class="input-pro-label">{% t "internal_value" %}</label>
+                                    <pre style="font-size:var(--text-xs);background:var(--bg-surface);padding:var(--sp-3);border-radius:var(--radius-md);margin:var(--sp-1) 0 0 0;white-space:pre-wrap;word-break:break-all;border:1px solid var(--border-default);max-height:150px;overflow-y:auto;font-family:'SF Mono',Consolas,monospace;color:var(--text-primary)">{{ mapping.internal_value|default:"—" }}</pre>
+                                </div>
+                                <div>
+                                    <label class="input-pro-label">{% t "external_value" %}</label>
+                                    <pre style="font-size:var(--text-xs);background:var(--bg-surface);padding:var(--sp-3);border-radius:var(--radius-md);margin:var(--sp-1) 0 0 0;white-space:pre-wrap;word-break:break-all;border:1px solid var(--border-default);max-height:150px;overflow-y:auto;font-family:'SF Mono',Consolas,monospace;color:var(--text-primary)">{{ mapping.external_value|default:"—" }}</pre>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:var(--sp-2)">
+                                <form method="post" action="{% url 'integrations:object_mappings' %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="resolve_internal">
+                                    <input type="hidden" name="mapping_id" value="{{ mapping.pk }}">
+                                    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" onclick="return confirm('{% t "confirm_keep_internal" %}')">
+                                        <i class="bi bi-arrow-left"></i> {% t "keep_internal" %}
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'integrations:object_mappings' %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="resolve_external">
+                                    <input type="hidden" name="mapping_id" value="{{ mapping.pk }}">
+                                    <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="return confirm('{% t "confirm_keep_external" %}')">
+                                        <i class="bi bi-arrow-right"></i> {% t "keep_external" %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-arrow-left-right"></i></div>
+    <h5 class="empty-state-title">{% t "no_mappings" %}</h5>
+    <p class="empty-state-desc">{% t "no_mappings_desc" %}</p>
+</div>
+{% endif %}
+
+<script>
+function toggleMappingDetail(id){
+    var detail=document.getElementById('mappingDetail'+id);
+    if(!detail)return;
+    if(detail.style.display==='none'){
+        detail.style.display='';
+    } else {
+        detail.style.display='none';
+    }
+}
+</script>
+{% endblock %}

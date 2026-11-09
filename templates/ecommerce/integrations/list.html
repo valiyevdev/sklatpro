@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Integrations - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Integrations" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Integration Center" %}</h1>
+        <p class="page-subtitle">{% t "Manage marketplaces, payment providers, shipping, and webhooks" %}</p>
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-6)">
+    <a href="#marketplaces" style="text-decoration:none">
+        <div class="stat-card" style="cursor:pointer;transition:all var(--transition-fast);border-color:var(--primary-200)">
+            <div class="stat-card-content">
+                <div class="stat-card-label">{% t "Marketplaces" %}</div>
+                <div class="stat-card-value">{{ marketplaces.count }}</div>
+                <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ marketplaces.count }} {% t "connected" %}</div>
+            </div>
+            <div class="stat-card-icon primary"><i class="bi bi-shop"></i></div>
+        </div>
+    </a>
+    <a href="{% url 'ecommerce:payment_providers' %}" style="text-decoration:none">
+        <div class="stat-card" style="cursor:pointer;transition:all var(--transition-fast);border-color:var(--success-200)">
+            <div class="stat-card-content">
+                <div class="stat-card-label">{% t "Payment Providers" %}</div>
+                <div class="stat-card-value">{{ payment_providers.count }}</div>
+                <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ payment_providers.count }} {% t "active" %}</div>
+            </div>
+            <div class="stat-card-icon success"><i class="bi bi-credit-card"></i></div>
+        </div>
+    </a>
+    <a href="{% url 'ecommerce:shipping_methods' %}" style="text-decoration:none">
+        <div class="stat-card" style="cursor:pointer;transition:all var(--transition-fast);border-color:var(--warning-200)">
+            <div class="stat-card-content">
+                <div class="stat-card-label">{% t "Shipping Methods" %}</div>
+                <div class="stat-card-value">{{ shipping_methods.count }}</div>
+                <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ shipping_methods.count }} {% t "configured" %}</div>
+            </div>
+            <div class="stat-card-icon warning"><i class="bi bi-truck"></i></div>
+        </div>
+    </a>
+    <div class="stat-card" style="border-color:var(--info-200)">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Webhooks" %}</div>
+            <div class="stat-card-value">{{ webhooks.count }}</div>
+            <div class="stat-card-trend up"><i class="bi bi-arrow-up-short"></i> {{ webhooks.count }} {% t "configured" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-hdd-network"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-shop" style="margin-right:var(--sp-2);color:var(--primary-500)"></i>{% t "Marketplaces" %}</h3>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for mp in marketplaces %}
+            <a href="{% url 'ecommerce:marketplace_detail' pk=mp.pk %}" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle);text-decoration:none;transition:background var(--transition-fast)" onmouseover="this.style.background='var(--bg-surface-hover)'" onmouseout="this.style.background=''">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-shop"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ mp.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ mp.get_marketplace_type_display }}</div>
+                    </div>
+                </div>
+                <span class="badge-pro badge-pro-{% if mp.status == 'active' %}success{% else %}neutral{% endif %} badge-pro-dot">{{ mp.get_status_display }}</span>
+            </a>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-shop" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No marketplace integrations." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-credit-card" style="margin-right:var(--sp-2);color:var(--success-500)"></i>{% t "Payment Providers" %}</h3>
+            <a href="{% url 'ecommerce:payment_providers' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "Manage" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for pp in payment_providers %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--success-50);color:var(--success-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-credit-card"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ pp.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ pp.get_provider_type_display }}</div>
+                    </div>
+                </div>
+                <span class="badge-pro badge-pro-{% if pp.status == 'active' %}success{% else %}neutral{% endif %} badge-pro-dot">{{ pp.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-credit-card" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No payment providers configured." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-truck" style="margin-right:var(--sp-2);color:var(--warning-500)"></i>{% t "Shipping Methods" %}</h3>
+            <a href="{% url 'ecommerce:shipping_methods' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "Manage" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for sm in shipping_methods %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--warning-50);color:var(--warning-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-truck"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ sm.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ sm.get_calculation_display }} &middot; {{ sm.base_fee|floatformat:0 }} so'm</div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-truck" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No shipping methods configured." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-hdd-network" style="margin-right:var(--sp-2);color:var(--info-500)"></i>{% t "Webhooks" %}</h3>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for wh in webhooks %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--info-50);color:var(--info-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-hdd-network"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ wh.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">{{ wh.url }}</div>
+                    </div>
+                </div>
+                <span class="badge-pro badge-pro-{% if wh.is_active %}success{% else %}neutral{% endif %} badge-pro-dot">{% if wh.is_active %}{% t "Active" %}{% else %}{% t "Inactive" %}{% endif %}</span>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-hdd-network" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No webhooks configured." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

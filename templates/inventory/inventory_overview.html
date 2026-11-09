@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "inventory_overview" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "inventory_overview" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'inventory_table' %}" class="btn-pro btn-pro-outline-primary">
+            <i class="bi bi-table"></i> {% t "inventory_table_title" %}
+        </a>
+        <a href="{% url 'adjustment_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_adjustment" %}
+        </a>
+    </div>
+</header>
+
+<style>
+.inv-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-5);margin-bottom:var(--sp-6)}
+.inv-stat-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);transition:transform 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
+.inv-stat-card:hover{transform:translateY(-2px);border-color:#334155;box-shadow:var(--shadow-md)}
+.inv-stat-card>div:first-child{min-width:0}
+.inv-stat-icon{width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.inv-stat-icon.primary{background:var(--primary-50);color:var(--primary-600)}
+.inv-stat-icon.success{background:var(--success-50);color:var(--success-600)}
+.inv-stat-icon.info{background:var(--info-50);color:var(--info-600)}
+.inv-stat-icon.warning{background:var(--warning-50);color:var(--warning-600)}
+.inv-stat-value{font-size:clamp(1.25rem,1rem + .8vw,1.75rem);font-weight:700;color:var(--text-primary);line-height:1.12;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.inv-stat-label{font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--sp-2);line-height:1.4;letter-spacing:.01em}
+.inv-sections{display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6)}
+.inv-movement-row{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle);transition:background var(--transition-fast)}
+.inv-movement-row:last-child{border-bottom:none}
+.inv-movement-row:hover{background:var(--bg-surface-hover)}
+.inv-movement-info{min-width:0;flex:1;margin-right:var(--sp-4)}
+.inv-movement-meta{display:flex;align-items:center;gap:var(--sp-3);margin-top:2px}
+.inv-alert-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-8);color:var(--text-muted);text-align:center}
+.inv-alert-empty i{font-size:2rem;margin-bottom:var(--sp-2);animation:inv-float 4s ease-in-out infinite}
+
+/* ---------- Unified inventory alert widget ----------
+   Replaces three stacked alert cards. Every rule is .daw- scoped so the
+   GLOBAL .card-pro / .badge-pro / .btn-pro are never touched. */
+.daw{align-self:start;display:flex;flex-direction:column;gap:var(--sp-4);padding:var(--sp-5);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);box-shadow:var(--shadow-xs);transition:transform 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
+.daw:hover{border-color:#334155;box-shadow:var(--shadow-md)}
+.daw-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);padding-bottom:var(--sp-3);border-bottom:1px solid var(--border-subtle)}
+.daw-tab{--daw-fg:#fbbf24;--daw-bg:rgba(245,158,11,.1);--daw-bd:rgba(245,158,11,.25);-webkit-appearance:none;appearance:none;margin:0;padding:var(--sp-3) var(--sp-2);border:1px solid var(--daw-bd);border-radius:var(--radius-lg);background:var(--daw-bg);color:var(--daw-fg);font:inherit;text-align:center;cursor:pointer;opacity:.55;transition:transform 200ms ease,opacity 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
+.daw-tab:hover{opacity:.9;transform:translateY(-1px);border-color:var(--daw-fg)}
+.daw-tab:focus-visible{outline:none;box-shadow:0 0 0 3px var(--primary-500,#6366f1)}
+.daw-tab.is-active{opacity:1;box-shadow:0 0 0 1px var(--daw-fg) inset,0 4px 14px rgba(15,23,42,.16)}
+.daw-tab--out{--daw-fg:#fb7185;--daw-bg:rgba(244,63,94,.1);--daw-bd:rgba(244,63,94,.25)}
+.daw-tab--over{--daw-fg:#34d399;--daw-bg:rgba(16,185,129,.1);--daw-bd:rgba(16,185,129,.25)}
+.daw-tab__label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;line-height:1.3}
+.daw-tab__count{display:block;margin-top:3px;font-size:18px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.daw-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+.daw-title{margin:0;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.daw-all{font-size:11px;font-weight:600;color:var(--text-link);text-decoration:none;white-space:nowrap;flex-shrink:0}
+.daw-all:hover{color:var(--text-link-hover);text-decoration:underline}
+.daw-panels{display:flex;flex-direction:column;gap:var(--sp-2)}
+.daw-panel{display:flex;flex-direction:column;gap:var(--sp-2)}
+/* Without JS every panel stays visible; JS sets data-daw-ready to enable filtering. */
+.daw[data-daw-ready] .daw-panel{display:none}
+.daw[data-daw-ready] .daw-panel.is-active{display:flex}
+.daw-item{--daw-fg:#fbbf24;--daw-bg:rgba(245,158,11,.1);--daw-bd:rgba(245,158,11,.25);display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-page);border:1px solid var(--daw-bd);border-radius:var(--radius-lg);transition:transform 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
+.daw-item:hover{transform:translateY(-1px);border-color:var(--daw-fg);box-shadow:var(--shadow-sm)}
+.daw-item--out{--daw-fg:#fb7185;--daw-bg:rgba(244,63,94,.1);--daw-bd:rgba(244,63,94,.25)}
+.daw-item--over{--daw-fg:#34d399;--daw-bg:rgba(16,185,129,.1);--daw-bd:rgba(16,185,129,.25)}
+.daw-item__lead{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
+.daw-item__icon{width:34px;height:34px;border-radius:var(--radius-lg);background:var(--daw-bg);color:var(--daw-fg);display:flex;align-items:center;justify-content:center;font-size:.875rem;flex-shrink:0}
+.daw-item__icon--warn{animation:inv-warn-pulse 3s ease-in-out infinite}
+.daw-item__text{display:flex;flex-direction:column;min-width:0}
+.daw-item__name{display:block;font-size:12px;font-weight:700;color:var(--text-primary);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daw-item__meta{display:block;margin-top:2px;font-size:10px;font-weight:600;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.daw-item--out .daw-item__meta{color:var(--daw-fg)}
+.daw-item__action{flex-shrink:0;padding:5px 11px;font-size:11px;font-weight:600;color:var(--daw-fg);background:var(--daw-bg);border:1px solid var(--daw-bd);border-radius:var(--radius-md);text-decoration:none;white-space:nowrap;transition:background 200ms ease,transform 200ms ease}
+.daw-item__action:hover{background:var(--daw-bd);transform:translateY(-1px)}
+.daw-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-2);padding:var(--sp-6) var(--sp-3);color:var(--text-muted);font-size:12px;text-align:center}
+.daw-empty i{font-size:1.4rem;color:var(--success-600,#16a34a);animation:inv-float 4s ease-in-out infinite}
+
+@keyframes inv-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes inv-warn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0);transform:translateY(0)}50%{box-shadow:0 0 0 5px rgba(245,158,11,.1);transform:translateY(-1px)}}
+
+[data-theme="light"] .daw-tab,
+[data-theme="light"] .daw-item{--daw-fg:#b45309;--daw-bg:rgba(245,158,11,.12);--daw-bd:rgba(180,83,9,.3)}
+[data-theme="light"] .daw-tab--out,
+[data-theme="light"] .daw-item--out{--daw-fg:#e11d48;--daw-bg:rgba(225,29,72,.08);--daw-bd:rgba(225,29,72,.28)}
+[data-theme="light"] .daw-tab--over,
+[data-theme="light"] .daw-item--over{--daw-fg:#059669;--daw-bg:rgba(5,150,105,.08);--daw-bd:rgba(5,150,105,.28)}
+[data-theme="light"] .daw-empty i{color:#059669}
+
+@media(prefers-reduced-motion:reduce){
+  .inv-stat-card,.daw,.daw-tab,.daw-item,.daw-item__action{transition:none}
+  .inv-stat-card:hover,.daw:hover,.daw-tab:hover,.daw-item:hover,.daw-item__action:hover{transform:none}
+  .inv-alert-empty i,.daw-empty i,.daw-item__icon--warn{animation:none}
+}
+@media(max-width:1024px){.inv-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.inv-sections{grid-template-columns:1fr}}
+@media(max-width:480px){.inv-stat-grid{grid-template-columns:1fr}}
+@media(max-width:360px){.daw-tab__label{font-size:9px}.daw-tab__count{font-size:16px}}
+
+/* ---------- Mobile bottom clearance ----------
+   On phones the last "To'ldirish" (replenish) action sits at the very
+   bottom of the scroll container, where the mobile Safari URL bar and the
+   iOS home indicator overlap it and swallow the tap.
+
+   base.html sizes the shared scroll container with `.app-content`
+   (padding:var(--sp-6), tightened to --sp-4/--sp-3 at 1024px/480px), so
+   that ~12-24px bottom padding is all this page had. `--sp-20` is 5rem
+   (80px), matching Tailwind's `pb-20`, plus the device safe-area inset for
+   the home indicator. This is the one rule here that reaches outside the
+   `.inv-`/`.daw-` prefixes: the element is `<main class="app-content"
+   id="main-content">` in base.html, which sits outside `{% block
+   content %}` and so cannot be given a page-scoped class. Scoping is by
+   the id instead, and the page's own <style> is only emitted on this
+   template, so no other page is affected. The id selector also outranks
+   base.html's `.app-content` class rule, so this padding wins over the
+   shorthand `padding` there without needing !important. */
+@media(max-width:767px){
+  #main-content{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom, 0px))}
+}
+</style>
+
+<div class="inv-stat-grid">
+    <div class="inv-stat-card">
+        <div>
+            <div class="inv-stat-value">{{ total_products|default:"0"|num }}</div>
+            <div class="inv-stat-label">{% t "total_products_count" %}</div>
+        </div>
+        <div class="inv-stat-icon primary"><i class="bi bi-box-seam"></i></div>
+    </div>
+    <div class="inv-stat-card">
+        <div>
+            <div class="inv-stat-value">{{ total_units|default:"0"|num }}</div>
+            <div class="inv-stat-label">{% t "total_stock_qty" %}</div>
+        </div>
+        <div class="inv-stat-icon success"><i class="bi bi-stack"></i></div>
+    </div>
+    <div class="inv-stat-card">
+        <div>
+            <div class="inv-stat-value">{{ total_value|default:"0"|uzs }}</div>
+            <div class="inv-stat-label">{% t "total_inventory_value" %}</div>
+        </div>
+        <div class="inv-stat-icon info"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    {% comment %}
+      The "low stock products" stat card was removed: it duplicated the
+      KAM QOLGAN filter tab below, which already counts and filters the
+      same bucket. The tab count is now the single place that number
+      appears.
+    {% endcomment %}
+</div>
+
+<div class="inv-sections">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <div class="card-pro-title">{% t "recent_movements" %}</div>
+            <a href="{% url 'movement_history' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %}</a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for movement in recent_movements %}
+            <div class="inv-movement-row">
+                <div class="inv-movement-info">
+                    <div class="cell-primary">{{ movement.product.name }}</div>
+                    <div class="inv-movement-meta">
+                        <span class="cell-muted">{% t movement.movement_type %}</span>
+                        {% if movement.warehouse %}
+                        <span class="cell-muted">· {{ movement.warehouse.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="cell-muted text-pro-sm">{{ movement.created_at|timesince }}</span>
+                {% if movement.direction == 'IN' %}
+                    <span class="badge-pro badge-pro-success" style="margin-left:var(--sp-3)">+{{ movement.quantity|num }}</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-danger" style="margin-left:var(--sp-3)">-{{ movement.quantity|num }}</span>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="inv-alert-empty">
+                <i class="bi bi-inbox"></i>
+                <div>{% t "no_recent_movements" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Unified inventory alert widget: 3 filter tabs + one dynamic item list -->
+    <div class="daw" data-daw>
+        <div class="daw-tabs" role="tablist" aria-label="{% t "stock_alerts" %}">
+            <button type="button" class="daw-tab is-active" id="daw-tab-low" role="tab"
+                    aria-selected="true" aria-controls="daw-panel-low" tabindex="0"
+                    data-daw-tab="daw-panel-low" data-daw-url="{% url 'low_stock_list' %}">
+                <span class="daw-tab__label">{% t "low_stock" %}</span>
+                <span class="daw-tab__count">{{ low_stock|default:"0"|num }}</span>
+            </button>
+            <button type="button" class="daw-tab daw-tab--out" id="daw-tab-out" role="tab"
+                    aria-selected="false" aria-controls="daw-panel-out" tabindex="-1"
+                    data-daw-tab="daw-panel-out" data-daw-url="{% url 'out_of_stock_list' %}">
+                <span class="daw-tab__label">{% t "out_of_stock" %}</span>
+                <span class="daw-tab__count">{{ out_of_stock|default:"0"|num }}</span>
+            </button>
+            <button type="button" class="daw-tab daw-tab--over" id="daw-tab-over" role="tab"
+                    aria-selected="false" aria-controls="daw-panel-over" tabindex="-1"
+                    data-daw-tab="daw-panel-over" data-daw-url="{% url 'overstock_list' %}">
+                <span class="daw-tab__label">{% t "overstock" %}</span>
+                <span class="daw-tab__count">{{ overstock|default:"0"|num }}</span>
+            </button>
+        </div>
+
+        <div class="daw-body">
+            <div class="daw-head">
+                <h4 class="daw-title">{% t "attention_products" %}</h4>
+                <a href="{% url 'low_stock_list' %}" class="daw-all" data-daw-all>{% t "all" %}</a>
+            </div>
+
+            <div class="daw-panels">
+                <div class="daw-panel is-active" id="daw-panel-low" role="tabpanel"
+                     aria-labelledby="daw-tab-low" data-daw-panel>
+                    {% for product in low_stock_products %}
+                    <div class="daw-item">
+                        <div class="daw-item__lead">
+                            <span class="daw-item__icon daw-item__icon--warn"><i class="bi bi-exclamation-triangle"></i></span>
+                            <span class="daw-item__text">
+                                <span class="daw-item__name">{{ product.name }}</span>
+                                <span class="daw-item__meta">{{ product.quantity|num }} {% t "units_left" %}</span>
+                            </span>
+                        </div>
+                        <a href="{% url 'purchases:purchase_create' %}" class="daw-item__action">{% t "replenish" %}</a>
+                    </div>
+                    {% empty %}
+                    <div class="daw-empty">
+                        <i class="bi bi-check-circle"></i>
+                        <span>{% t "no_low_stock_products" %}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="daw-panel" id="daw-panel-out" role="tabpanel"
+                     aria-labelledby="daw-tab-out" data-daw-panel>
+                    {% for product in out_of_stock_products %}
+                    <div class="daw-item daw-item--out">
+                        <div class="daw-item__lead">
+                            <span class="daw-item__icon"><i class="bi bi-x-octagon"></i></span>
+                            <span class="daw-item__text">
+                                <span class="daw-item__name">{{ product.name }}</span>
+                                <span class="daw-item__meta">{% t "out_of_stock" %} ({{ product.quantity|num }})</span>
+                            </span>
+                        </div>
+                        <a href="{% url 'purchases:purchase_create' %}" class="daw-item__action">{% t "replenish" %}</a>
+                    </div>
+                    {% empty %}
+                    <div class="daw-empty">
+                        <i class="bi bi-check-circle"></i>
+                        <span>{% t "all_in_stock" %}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="daw-panel" id="daw-panel-over" role="tabpanel"
+                     aria-labelledby="daw-tab-over" data-daw-panel>
+                    {% for product in overstock_products %}
+                    <div class="daw-item daw-item--over">
+                        <div class="daw-item__lead">
+                            <span class="daw-item__icon"><i class="bi bi-arrow-up-circle"></i></span>
+                            <span class="daw-item__text">
+                                <span class="daw-item__name">{{ product.name }}</span>
+                                <span class="daw-item__meta">{{ product.quantity|num }} ({% t "max_stock_label" %}: {{ product.max_stock|num }})</span>
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="daw-empty">
+                        <i class="bi bi-check-circle"></i>
+                        <span>{% t "no_overstock" %}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var root = document.querySelector('[data-daw]');
+    if (!root) { return; }
+    var tabs = Array.prototype.slice.call(root.querySelectorAll('[data-daw-tab]'));
+    var panels = Array.prototype.slice.call(root.querySelectorAll('[data-daw-panel]'));
+    if (!tabs.length || !panels.length) { return; }
+    var allLink = root.querySelector('[data-daw-all]');
+
+    root.setAttribute('data-daw-ready', '1');
+
+    function activate(tab) {
+        var target = tab.getAttribute('data-daw-tab');
+        tabs.forEach(function (t) {
+            var on = t === tab;
+            t.classList.toggle('is-active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.setAttribute('tabindex', on ? '0' : '-1');
+        });
+        panels.forEach(function (p) {
+            p.classList.toggle('is-active', p.id === target);
+        });
+        if (allLink && tab.getAttribute('data-daw-url')) {
+            allLink.setAttribute('href', tab.getAttribute('data-daw-url'));
+        }
+    }
+
+    tabs.forEach(function (tab, i) {
+        tab.addEventListener('click', function () { activate(tab); });
+        tab.addEventListener('keydown', function (e) {
+            var next = null;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { next = tabs[(i + 1) % tabs.length]; }
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { next = tabs[(i - 1 + tabs.length) % tabs.length]; }
+            else if (e.key === 'Home') { next = tabs[0]; }
+            else if (e.key === 'End') { next = tabs[tabs.length - 1]; }
+            if (!next) { return; }
+            e.preventDefault();
+            activate(next);
+            next.focus();
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "inventory_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "inventory_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:export_inventory_csv' %}?{{ request.GET.urlencode }}" class="btn-pro btn-pro-ghost"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.total_stock_value|floatformat:0 }}</div><div class="stat-card-label">{% t "total_stock_value" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-currency-dollar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.total_products }}</div><div class="stat-card-label">{% t "total_products" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-box-seam"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.low_stock_count }}</div><div class="stat-card-label">{% t "low_stock" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.out_of_stock_count }}</div><div class="stat-card-label">{% t "out_of_stock" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+</div>
+
+{% if by_warehouse %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "stock_by_warehouse" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "warehouse" %}</th><th>{% t "units" %}</th><th>{% t "value" %}</th><th>{% t "products" %}</th></tr></thead>
+            <tbody>
+                {% for item in by_warehouse %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.warehouse__name|default:"—" }}</td>
+                    <td>{{ item.total_qty|floatformat:0 }}</td>
+                    <td class="fw-600">{{ item.total_value|floatformat:0 }}</td>
+                    <td>{{ item.product_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if by_category %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "stock_by_category" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "category" %}</th><th>{% t "units" %}</th><th>{% t "value" %}</th><th>{% t "products" %}</th></tr></thead>
+            <tbody>
+                {% for item in by_category %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.category_fk__name|default:"—" }}</td>
+                    <td>{{ item.total_qty|floatformat:0 }}</td>
+                    <td class="fw-600">{{ item.total_value|floatformat:0 }}</td>
+                    <td>{{ item.product_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if low_stock %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title" style="color:var(--warning-600)">{% t "low_stock_products" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "product_name" %}</th><th>{% t "sku" %}</th><th>{% t "quantity" %}</th><th>{% t "max_stock" %}</th><th>{% t "price" %}</th></tr></thead>
+            <tbody>
+                {% for item in low_stock %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-warning">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.name }}</td>
+                    <td>{{ item.sku|default:"—" }}</td>
+                    <td class="fw-600" style="color:var(--danger-500)">{{ item.quantity|floatformat:0 }}</td>
+                    <td>{{ item.max_stock|floatformat:0 }}</td>
+                    <td>{{ item.price|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

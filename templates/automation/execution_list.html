@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "execution_history" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">{% t "automation" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "execution_history" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-play-circle" style="color:var(--primary-500)"></i> {% t "execution_history" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "executions" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'automation:logs' %}" class="btn-pro btn-pro-secondary btn-pro-sm">
+            <i class="bi bi-journal-text"></i> {% t "view_logs" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+            <label class="input-pro-label">{% t "rule" %}</label>
+            <select name="rule" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_rules" %}</option>
+                {% for rule in rules %}
+                <option value="{{ rule.pk }}" {% if rule_filter == rule.pk|stringformat:"s" %}selected{% endif %}>{{ rule.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:140px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:140px">
+            <label class="input-pro-label">{% t "event_type" %}</label>
+            <input type="text" name="event_type" class="input-pro" value="{{ event_type|default:'' }}" placeholder="{% t 'filter_by_event_type' %}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "date_from" %}</label>
+            <input type="date" name="date_from" class="input-pro" value="{{ date_from|default:'' }}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "date_to" %}</label>
+            <input type="date" name="date_to" class="input-pro" value="{{ date_to|default:'' }}">
+        </div>
+        <div style="flex:2;min-width:180px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="q" class="input-pro" value="{{ search|default:'' }}" placeholder="{% t 'search_executions' %}">
+        </div>
+        <div style="display:flex;gap:var(--sp-2)">
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-funnel"></i> {% t "apply_filters" %}</button>
+            <a href="{% url 'automation:execution_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm" style="height:38px"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+        </div>
+    </form>
+</div>
+
+{% if executions %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "rule" %}</th>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "object" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "duration_ms" %}</th>
+                    <th>{% t "actions" %}</th>
+                    <th>{% t "time" %}</th>
+                    <th style="text-align:right">{% t "view" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for execution in executions %}
+                <tr>
+                    <td>
+                        <a href="{% url 'automation:rule_detail' pk=execution.rule.pk %}" style="color:var(--primary-600);font-weight:500;font-size:var(--text-sm);text-decoration:none">
+                            {{ execution.rule.name }}
+                        </a>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ execution.event_type }}</td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if execution.object_type %}
+                        <span style="color:var(--text-secondary)">{{ execution.object_type }}</span>
+                        <code style="font-size:var(--text-xs);color:var(--text-muted);margin-left:4px">{{ execution.object_id|truncatechars:12 }}</code>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if execution.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                        {% elif execution.status == 'failed' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif execution.status == 'running' %}
+                        <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                            {% t "running" %}
+                        </span>
+                        {% elif execution.status == 'pending' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pending" %}</span>
+                        {% elif execution.status == 'partial' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "partial" %}</span>
+                        {% elif execution.status == 'skipped' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "skipped" %}</span>
+                        {% elif execution.status == 'cancelled' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "cancelled" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ execution.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);font-variant-numeric:tabular-nums;color:var(--text-secondary)">
+                        {% if execution.duration_ms %}{{ execution.duration_ms }}ms{% else %}—{% endif %}
+                    </td>
+                    <td style="min-width:120px">
+                        {% if execution.actions_total > 0 %}
+                        <div class="d-flex align-center gap-2">
+                            <div class="progress-pro" style="flex:1;height:6px">
+                                {% if execution.status == 'completed' %}
+                                <div class="progress-pro-bar success" style="width:100%"></div>
+                                {% elif execution.status == 'failed' %}
+                                <div class="progress-pro-bar danger" style="width:100%"></div>
+                                {% elif execution.status == 'partial' %}
+                                <div class="progress-pro-bar warning" style="width:100%"></div>
+                                {% else %}
+                                <div class="progress-pro-bar" style="width:100%"></div>
+                                {% endif %}
+                            </div>
+                            <span style="font-size:var(--text-xs);color:var(--text-secondary);white-space:nowrap">{{ execution.actions_succeeded }}/{{ execution.actions_total }}</span>
+                        </div>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="white-space:nowrap;font-size:var(--text-xs);color:var(--text-muted)">{{ execution.created_at|date:"d M Y H:i:s" }}</td>
+                    <td style="text-align:right">
+                        <a href="{% url 'automation:execution_detail' pk=execution.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&rule={{ rule_filter }}&status={{ status_filter }}&event_type={{ event_type }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&rule={{ rule_filter }}&status={{ status_filter }}&event_type={{ event_type }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&rule={{ rule_filter }}&status={{ status_filter }}&event_type={{ event_type }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-play-circle"></i></div>
+    <h5 class="empty-state-title">{% t "no_executions_found" %}</h5>
+    <p class="empty-state-desc">{% t "no_executions_desc" %}</p>
+</div>
+{% endif %}
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+{% endblock %}

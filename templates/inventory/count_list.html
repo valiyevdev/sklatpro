@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "inventory_counts" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex align-center justify-between mb-4">
+    <div>
+        <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "inventory_counts" %}</h2>
+        <p class="text-pro-sm text-pro-muted mb-0">{{ page_obj.paginator.count }} {% t "counts_total" %}</p>
+    </div>
+    <a href="{% url 'count_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "new_count" %}</a>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "created_by" %}</th>
+                    <th>{% t "progress" %}</th>
+                    <th>{% t "created_at" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for count in page_obj %}
+                <tr>
+                    <td class="fw-500">{{ count.reference }}</td>
+                    <td>{{ count.warehouse.name }}</td>
+                    <td>
+                        {% if count.status == 'draft' %}
+                            <span class="badge-pro badge-pro-neutral">{% t "count_status_draft" %}</span>
+                        {% elif count.status == 'in_progress' %}
+                            <span class="badge-pro badge-pro-warning">{% t "count_status_in_progress" %}</span>
+                        {% elif count.status == 'submitted' %}
+                            <span class="badge-pro badge-pro-info">{% t "count_status_submitted" %}</span>
+                        {% elif count.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "count_status_completed" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ count.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ count.created_by.get_full_name|default:count.created_by.email }}</td>
+                    <td class="text-pro-sm">{{ count.counted_items }} / {{ count.total_items }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ count.created_at|date:"d.m.Y" }}</td>
+                    <td><a href="{% url 'count_detail' pk=count.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-clipboard-check"></i></div>
+                            <h5 class="empty-state-title">{% t "no_counts" %}</h5>
+                            <p class="empty-state-desc">{% t "no_counts_created" %}</p>
+                            <a href="{% url 'count_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "new_count" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

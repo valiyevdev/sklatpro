@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "cash_flow_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "cash_flow_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="?period=day" class="btn-pro {% if period == 'day' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}">{% t "day" %}</a>
+        <a href="?period=week" class="btn-pro {% if period == 'week' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}">{% t "week" %}</a>
+        <a href="?period=month" class="btn-pro {% if period == 'month' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}">{% t "month" %}</a>
+        <a href="?period=quarter" class="btn-pro {% if period == 'quarter' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}">{% t "quarter" %}</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ total_in|floatformat:0 }}</div><div class="stat-card-label">{% t "total_income" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-left"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--danger-500)">{{ total_out|floatformat:0 }}</div><div class="stat-card-label">{% t "total_expenses" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-right"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:{% if net >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ net|floatformat:0 }}</div><div class="stat-card-label">{% t "net" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+</div>
+
+{% if flow_list %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "cash_flow_details" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "period" %}</th><th>{% t "income" %}</th><th>{% t "expense" %}</th><th>{% t "net" %}</th></tr></thead>
+            <tbody>
+                {% for row in flow_list %}
+                <tr>
+                    <td class="fw-500">{{ row.period|date:"M Y" }}</td>
+                    <td class="fw-600" style="color:var(--success-600)">{{ row.income|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:var(--danger-500)">{{ row.expense|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:{% if row.net >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ row.net|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

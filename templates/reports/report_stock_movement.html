@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "stock_movements" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "stock_movements" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:export_stock_movement_csv' %}?{{ request.GET.urlencode }}" class="btn-pro btn-pro-ghost"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+{% if movements %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "stock_movements" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "direction" %}</th>
+                    <th>{% t "movement_type" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "before" %}</th>
+                    <th>{% t "after" %}</th>
+                    <th>{% t "user" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in movements %}
+                <tr>
+                    <td class="text-pro-sm">{{ item.created_at|date:"d M Y H:i" }}</td>
+                    <td class="fw-500">{{ item.product__name }}</td>
+                    <td>{{ item.warehouse__name|default:"—" }}</td>
+                    <td>
+                        {% if item.direction == "in" %}
+                            <span class="badge-pro badge-pro-success">{% t "in" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "out" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.movement_type|default:"—" }}</td>
+                    <td class="fw-600">{{ item.quantity|floatformat:0 }}</td>
+                    <td>{{ item.before_quantity|floatformat:0 }}</td>
+                    <td>{{ item.after_quantity|floatformat:0 }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.user__email|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-pro">
+    <div class="card-pro-body text-center" style="padding:2rem">
+        <p class="text-pro-muted">{% t "no_data" %}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

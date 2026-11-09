@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ title }} — SKLAT PRO{% endblock %}
+{% block content %}
+<div style="max-width:600px">
+    <div class="page-head">
+        <a href="{% url 'product_detail' pk=product.pk %}" class="back-btn" aria-label="Orqaga">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </a>
+        <div class="page-header-content">
+            <h1 class="page-title" style="margin:0">{{ title }}</h1>
+            <p class="page-subtitle" style="margin-top:4px">{{ product.name }}</p>
+        </div>
+    </div>
+    <div class="card-pro" style="padding:var(--sp-6)">
+        <form method="post" enctype="multipart/form-data">{% csrf_token %}
+            {% if form.errors %}<div class="alert-pro alert-pro-danger" style="margin-bottom:var(--sp-4)"><i class="bi bi-exclamation-circle-fill"></i> {% for f in form %}{% for e in f.errors %}{{ e }} {% endfor %}{% endfor %}</div>{% endif %}
+            <div class="input-pro-group"><label class="input-pro-label">{% t "variant_name" %} <span style="color:var(--danger-500)">*</span></label>{{ form.name }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                <div class="input-pro-group"><label class="input-pro-label">SKU</label>{{ form.sku }}</div>
+                <div class="input-pro-group"><label class="input-pro-label">Barcode</label>{{ form.barcode }}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                <div class="input-pro-group"><label class="input-pro-label">{% t "purchase_price" %}</label>{{ form.purchase_price }}</div>
+                <div class="input-pro-group"><label class="input-pro-label">{% t "sale_price" %} <span style="color:var(--danger-500)">*</span></label>{{ form.price }}</div>
+            </div>
+            <div class="input-pro-group"><label class="input-pro-label">{% t "stock" %}</label>{{ form.quantity }}</div>
+            <div class="input-pro-group"><label class="input-pro-label">{% t "product_image" %}</label>{{ form.image }}</div>
+            <div class="input-pro-group"><label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">{{ form.is_active }} {% t "active" %}</label></div>
+            <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-6)"><button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save_changes" %}</button><a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-outline">{% t "cancel" %}</a></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

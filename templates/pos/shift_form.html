@@ -1,0 +1,56 @@
+﻿{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t 'pos_open_shift' %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{% t 'pos_open_shift' %}</h1>
+        <a href="{% url 'pos:shift_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {% t 'pos_back' %}
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="terminal">{% t 'pos_terminal' %} *</label>
+                            <select class="form-control" id="terminal" name="terminal" required>
+                                <option value="">{% t 'pos_select_terminal' %}</option>
+                                {% for terminal in terminals %}
+                                <option value="{{ terminal.pk }}">{{ terminal.name }} ({{ terminal.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="opening_amount">{% t 'pos_opening_amount' %} *</label>
+                            <input type="number" class="form-control" id="opening_amount" name="opening_amount" step="0.01" value="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">{% t 'pos_notes' %}</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-cash-register"></i> {% t 'pos_open_shift' %}
+                    </button>
+                    <a href="{% url 'pos:shift_list' %}" class="btn btn-secondary">
+                        {% t 'pos_cancel' %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

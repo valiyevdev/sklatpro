@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pricing" %} - {% t "overview" %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{% t "pricing" %}</h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'pricing:price_list_create' %}" class="btn-pro btn-pro-primary">{% t "create_price_list" %}</a>
+      <a href="{% url 'pricing:promotion_create' %}" class="btn-pro btn-pro-primary">{% t "create_promotion" %}</a>
+      <a href="{% url 'pricing:coupon_create' %}" class="btn-pro btn-pro-primary">{% t "create_coupon" %}</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "total_lists" %}</div>
+        <div class="h4 mb-0 mt-1">{{ total_plists }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "active_lists" %}</div>
+        <div class="h4 mb-0 mt-1">{{ active_plists }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "total_entries" %}</div>
+        <div class="h4 mb-0 mt-1">{{ total_entries }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "active_promotions" %}</div>
+        <div class="h4 mb-0 mt-1">{{ active_promos }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "active_coupons" %}</div>
+        <div class="h4 mb-0 mt-1">{{ active_coupons }}</div>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+      <div class="card-pro text-center p-3">
+        <div class="text-muted small">{% t "customer_prices" %}</div>
+        <div class="h4 mb-0 mt-1">{{ total_customer_prices }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card-pro">
+        <div class="card-pro-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% t "recent_changes" %}</h5>
+          <a href="{% url 'pricing:price_history' %}" class="btn-pro btn-pro-sm">{% t "price_history" %}</a>
+        </div>
+        <div class="table-pro" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>{% t "products" %}</th>
+                <th>{% t "old_price" %}</th>
+                <th>{% t "new_price" %}</th>
+                <th>{% t "change_type" %}</th>
+                <th>{% t "date" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in recent_history %}
+              <tr>
+                <td>{{ entry.product.name }}</td>
+                <td>{{ entry.old_price }}</td>
+                <td>{{ entry.new_price }}</td>
+                <td><span class="badge-pro badge-pro-info">{{ entry.get_change_type_display }}</span></td>
+                <td>{{ entry.changed_at|date:"d.m.Y H:i" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">{% t "no_history" %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card-pro mb-4">
+        <div class="card-pro-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% t "price_lists" %}</h5>
+          <a href="{% url 'pricing:price_list_list' %}" class="btn-pro btn-pro-sm">{% t "price_lists" %}</a>
+        </div>
+        <div class="card-pro-body">
+          <ul class="list-unstyled mb-0">
+            {% for plist in active_plists_list %}
+            <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+              <a href="{% url 'pricing:price_list_detail' pk=plist.pk %}" style="color:var(--text-primary);text-decoration:none">{{ plist.name }}</a>
+              <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+            </li>
+            {% empty %}
+            <li class="text-center text-muted py-2">{% t "no_price_lists" %}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-pro">
+        <div class="card-pro-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% t "promotions" %}</h5>
+          <a href="{% url 'pricing:promotion_list' %}" class="btn-pro btn-pro-sm">{% t "promotions" %}</a>
+        </div>
+        <div class="card-pro-body">
+          <ul class="list-unstyled mb-0">
+            {% for promo in active_promos_list %}
+            <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+              <span>{{ promo.name }}</span>
+              <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+            </li>
+            {% empty %}
+            <li class="text-center text-muted py-2">{% t "no_promotions" %}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-4">
+    <div class="col-md-4">
+      <a href="{% url 'pricing:coupon_list' %}" class="card-pro text-decoration-none">
+        <div class="card-pro-body text-center py-4">
+          <i class="bi bi-ticket-perforated" style="font-size:2rem;color:var(--primary-500)"></i>
+          <h5 class="mt-2">{% t "coupons" %}</h5>
+          <p class="text-muted small mb-0">{{ total_coupons }} {% t "active_coupons" %}</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="{% url 'pricing:customer_price_list' %}" class="card-pro text-decoration-none">
+        <div class="card-pro-body text-center py-4">
+          <i class="bi bi-person-check" style="font-size:2rem;color:var(--primary-500)"></i>
+          <h5 class="mt-2">{% t "customer_prices" %}</h5>
+          <p class="text-muted small mb-0">{{ total_customer_prices }} {% t "customer_specific_price" %}</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="{% url 'pricing:pricing_simulator' %}" class="card-pro text-decoration-none">
+        <div class="card-pro-body text-center py-4">
+          <i class="bi bi-calculator" style="font-size:2rem;color:var(--primary-500)"></i>
+          <h5 class="mt-2">{% t "pricing_simulator" %}</h5>
+          <p class="text-muted small mb-0">{% t "simulate_price" %}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

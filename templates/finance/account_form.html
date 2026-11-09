@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% if account %}{% t "fin_edit_account" %}{% else %}{% t "fin_new_account" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if account %}{% t "fin_edit_account" %}{% else %}{% t "fin_new_account" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:600px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "fin_name" %} *</label>
+                    <input class="form-control" type="text" name="name" value="{{ account.name|default:'' }}" required placeholder="{% t "fin_account_name_placeholder" %}">
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_code" %}</label>
+                        <input class="form-control" type="text" name="code" value="{{ account.code|default:'' }}" placeholder="ACC-001">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_type" %} *</label>
+                        <select class="form-control" name="account_type" required>
+                            <option value="cash" {% if account.account_type == 'cash' %}selected{% endif %}>{% t "fin_account_type_cash" %}</option>
+                            <option value="bank" {% if account.account_type == 'bank' %}selected{% endif %}>{% t "fin_account_type_bank" %}</option>
+                            <option value="mobile" {% if account.account_type == 'mobile' %}selected{% endif %}>{% t "fin_account_type_mobile" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_currency" %}</label>
+                        <select class="form-control" name="currency">
+                            <option value="UZS" {% if account.currency == 'UZS' %}selected{% endif %}>UZS</option>
+                            <option value="USD" {% if account.currency == 'USD' %}selected{% endif %}>USD</option>
+                            <option value="EUR" {% if account.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                            <option value="RUB" {% if account.currency == 'RUB' %}selected{% endif %}>RUB</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_opening_balance" %}</label>
+                        <input class="form-control" type="number" name="opening_balance" step="0.01" value="{{ account.opening_balance|default:'0' }}">
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">
+                        <input type="checkbox" name="is_active" value="1" {% if account.is_active or not account %}checked{% endif %} style="margin-right:var(--sp-2)">
+                        {% t "fin_active" %}
+                    </label>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="form-control" name="notes" rows="2">{{ account.notes|default:'' }}</textarea>
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="{% url 'finance:account_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> {% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if account %}{% t "fin_update_account" %}{% else %}{% t "fin_create_account" %}{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

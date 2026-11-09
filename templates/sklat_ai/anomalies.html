@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}AI Anomaly Detection - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-page-header{margin-bottom:var(--sp-6)}
+.ai-page-header h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.ai-page-header p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+
+.ai-tabs{display:flex;gap:var(--sp-1);margin-bottom:var(--sp-6);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-1);width:fit-content}
+.ai-tab-btn{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-4);border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);background:none;border:none;cursor:pointer;transition:all var(--transition-fast);font-family:var(--font-sans);white-space:nowrap}
+.ai-tab-btn:hover{color:var(--text-primary);background:var(--bg-page)}
+.ai-tab-btn.active{background:var(--primary-600);color:#fff;box-shadow:var(--shadow-sm)}
+.ai-tab-btn .tab-count{font-size:var(--text-xs);background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:var(--radius-full);font-weight:600}
+.ai-tab-btn:not(.active) .tab-count{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-tab-content{display:none}
+.ai-tab-content.active{display:block}
+
+.ai-anomaly-list{display:flex;flex-direction:column;gap:var(--sp-4)}
+.ai-anomaly-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:all var(--transition-fast)}
+.ai-anomaly-card:hover{border-color:var(--primary-400);box-shadow:var(--shadow-sm)}
+.ai-anomaly-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4);margin-bottom:var(--sp-3)}
+.ai-anomaly-title{font-size:var(--text-base);font-weight:600;color:var(--text-primary);line-height:1.4}
+.ai-anomaly-period{font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--sp-1)}
+.ai-anomaly-values{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-3);padding:var(--sp-3);background:var(--bg-page);border-radius:var(--radius-lg)}
+.ai-anomaly-value{display:flex;flex-direction:column;gap:2px}
+.ai-anomaly-value .val-label{font-size:var(--text-xs);color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.03em}
+.ai-anomaly-value .val-actual{font-size:var(--text-lg);font-weight:700;color:var(--text-primary)}
+.ai-anomaly-value .val-expected{font-size:var(--text-sm);color:var(--text-secondary)}
+.ai-anomaly-value .val-deviation{font-size:var(--text-sm);font-weight:600}
+.ai-anomaly-detail{font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--leading-relaxed);margin-bottom:var(--sp-3)}
+.ai-anomaly-detail i{width:16px;text-align:center;margin-right:var(--sp-2);color:var(--text-muted)}
+.ai-anomaly-section{margin-bottom:var(--sp-3)}
+.ai-anomaly-section-label{font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:var(--sp-1)}
+.ai-anomaly-actions{display:flex;gap:var(--sp-2);flex-wrap:wrap;padding-top:var(--sp-3);border-top:1px solid var(--border-subtle)}
+
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.ai-badge-critical{background:var(--danger-50);color:var(--danger-700)}
+.ai-badge-high{background:var(--warning-50);color:var(--warning-700)}
+.ai-badge-medium{background:var(--info-50);color:var(--info-700)}
+.ai-badge-low{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-severity-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6}
+.ai-severity-critical{background:var(--danger-50);color:var(--danger-700)}
+.ai-severity-high{background:var(--warning-50);color:var(--warning-700)}
+.ai-severity-medium{background:var(--info-50);color:var(--info-700)}
+.ai-severity-low{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-anomaly-type-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6}
+.ai-type-decrease{background:var(--danger-50);color:var(--danger-700)}
+.ai-type-increase{background:var(--success-50);color:var(--success-700)}
+.ai-type-unusual{background:var(--warning-50);color:var(--warning-700)}
+
+.ai-action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.ai-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+
+.ai-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.ai-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-empty p{font-size:var(--text-sm)}
+
+.ai-amount{font-weight:600;font-variant-numeric:tabular-nums}
+.ai-range{font-size:var(--text-xs);color:var(--text-muted)}
+</style>
+
+<div class="ai-page-header">
+    <h2><i class="bi bi-exclamation-octagon" style="color:var(--danger-500)"></i> AI Anomaly Detection</h2>
+    <p>AI-powered detection of unusual patterns across your business data</p>
+</div>
+
+<div class="ai-tabs">
+    <button class="ai-tab-btn active" onclick="switchTab('sales', this)">
+        <i class="bi bi-graph-up-arrow"></i> Sales
+        <span class="tab-count">{{ sales_anomalies|length }}</span>
+    </button>
+    <button class="ai-tab-btn" onclick="switchTab('inventory', this)">
+        <i class="bi bi-box-seam"></i> Inventory
+        <span class="tab-count">{{ inventory_anomalies|length }}</span>
+    </button>
+    <button class="ai-tab-btn" onclick="switchTab('financial', this)">
+        <i class="bi bi-currency-dollar"></i> Financial
+        <span class="tab-count">{{ financial_anomalies|length }}</span>
+    </button>
+</div>
+
+<div class="ai-tab-content active" id="tab-sales">
+    <div class="ai-anomaly-list">
+        {% for anomaly in sales_anomalies %}
+        <div class="ai-anomaly-card">
+            <div class="ai-anomaly-header">
+                <div>
+                    <div class="ai-anomaly-title">{{ anomaly.metric }}</div>
+                    <div class="ai-anomaly-period">{{ anomaly.date|default:anomaly.period }}</div>
+                </div>
+                {% if anomaly.severity == 'critical' %}
+                <span class="ai-severity-badge ai-severity-critical"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> Critical</span>
+                {% elif anomaly.severity == 'high' %}
+                <span class="ai-severity-badge ai-severity-high"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> High</span>
+                {% elif anomaly.severity == 'medium' %}
+                <span class="ai-severity-badge ai-severity-medium">Medium</span>
+                {% else %}
+                <span class="ai-severity-badge ai-severity-low">Low</span>
+                {% endif %}
+            </div>
+            <div class="ai-anomaly-values">
+                <div class="ai-anomaly-value">
+                    <span class="val-label">Actual</span>
+                    <span class="val-actual">{{ anomaly.actual_value }}</span>
+                </div>
+                <div class="ai-anomaly-value">
+                    <span class="val-label">Expected</span>
+                    <span class="val-expected">{{ anomaly.expected_value }}</span>
+                </div>
+                <div class="ai-anomaly-value">
+                    <span class="val-label">Deviation</span>
+                    <span class="val-deviation" style="color:{% if anomaly.deviation > 0 %}var(--success-600){% else %}var(--danger-600){% endif %}">{{ anomaly.deviation }}%</span>
+                </div>
+            </div>
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-info-circle"></i> What happened</div>
+                <div class="ai-anomaly-detail">{{ anomaly.evidence }}</div>
+            </div>
+            {% if anomaly.why_it_matters %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-lightbulb"></i> Why it matters</div>
+                <div class="ai-anomaly-detail">{{ anomaly.why_it_matters }}</div>
+            </div>
+            {% endif %}
+            {% if anomaly.suggested_action %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-arrow-right-circle"></i> Suggested action</div>
+                <div class="ai-anomaly-detail">{{ anomaly.suggested_action }}</div>
+            </div>
+            {% endif %}
+            <div class="ai-anomaly-actions">
+                <a href="{% url 'sklat_ai:anomalies' %}?id={{ anomaly.id }}" class="ai-action-btn"><i class="bi bi-eye"></i> View Details</a>
+                <button class="ai-action-btn" onclick="investigateAnomaly('{{ anomaly.id }}', this)"><i class="bi bi-search"></i> Investigate</button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="ai-empty">
+            <i class="bi bi-check-circle"></i>
+            <h4>No sales anomalies detected</h4>
+            <p>Sales patterns appear normal. The AI will continue monitoring for unusual activity.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ai-tab-content" id="tab-inventory">
+    <div class="ai-anomaly-list">
+        {% for anomaly in inventory_anomalies %}
+        <div class="ai-anomaly-card">
+            <div class="ai-anomaly-header">
+                <div>
+                    <div class="ai-anomaly-title">{{ anomaly.product_name }}</div>
+                    <div class="ai-anomaly-period">
+                        {% if anomaly.anomaly_type == 'sudden_decrease' %}
+                        <span class="ai-anomaly-type-badge ai-type-decrease"><i class="bi bi-arrow-down-short"></i> Sudden Decrease</span>
+                        {% elif anomaly.anomaly_type == 'unusual_movement' %}
+                        <span class="ai-anomaly-type-badge ai-type-unusual"><i class="bi bi-arrow-left-right"></i> Unusual Movement</span>
+                        {% else %}
+                        <span class="ai-anomaly-type-badge ai-type-increase"><i class="bi bi-arrow-up-short"></i> {{ anomaly.anomaly_type|title }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if anomaly.severity == 'critical' %}
+                <span class="ai-severity-badge ai-severity-critical"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> Critical</span>
+                {% elif anomaly.severity == 'high' %}
+                <span class="ai-severity-badge ai-severity-high"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> High</span>
+                {% elif anomaly.severity == 'medium' %}
+                <span class="ai-severity-badge ai-severity-medium">Medium</span>
+                {% else %}
+                <span class="ai-severity-badge ai-severity-low">Low</span>
+                {% endif %}
+            </div>
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-info-circle"></i> What happened</div>
+                <div class="ai-anomaly-detail">{{ anomaly.evidence }}</div>
+            </div>
+            {% if anomaly.why_it_matters %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-lightbulb"></i> Why it matters</div>
+                <div class="ai-anomaly-detail">{{ anomaly.why_it_matters }}</div>
+            </div>
+            {% endif %}
+            {% if anomaly.suggested_action %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-arrow-right-circle"></i> Suggested action</div>
+                <div class="ai-anomaly-detail">{{ anomaly.suggested_action }}</div>
+            </div>
+            {% endif %}
+            <div class="ai-anomaly-actions">
+                <a href="{% url 'sklat_ai:anomalies' %}?id={{ anomaly.id }}" class="ai-action-btn"><i class="bi bi-eye"></i> View Details</a>
+                <button class="ai-action-btn" onclick="investigateAnomaly('{{ anomaly.id }}', this)"><i class="bi bi-search"></i> Investigate</button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="ai-empty">
+            <i class="bi bi-check-circle"></i>
+            <h4>No inventory anomalies detected</h4>
+            <p>Inventory movements are within expected ranges. The AI will continue monitoring.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ai-tab-content" id="tab-financial">
+    <div class="ai-anomaly-list">
+        {% for anomaly in financial_anomalies %}
+        <div class="ai-anomaly-card">
+            <div class="ai-anomaly-header">
+                <div>
+                    <div class="ai-anomaly-title">{{ anomaly.description }}</div>
+                    <div class="ai-anomaly-period">
+                        <span class="ai-amount">{{ anomaly.amount }}</span>
+                        {% if anomaly.expected_range %}
+                        <span class="ai-range">(expected: {{ anomaly.expected_range }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if anomaly.severity == 'critical' %}
+                <span class="ai-severity-badge ai-severity-critical"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> Critical</span>
+                {% elif anomaly.severity == 'high' %}
+                <span class="ai-severity-badge ai-severity-high"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> High</span>
+                {% elif anomaly.severity == 'medium' %}
+                <span class="ai-severity-badge ai-severity-medium">Medium</span>
+                {% else %}
+                <span class="ai-severity-badge ai-severity-low">Low</span>
+                {% endif %}
+            </div>
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-info-circle"></i> What happened</div>
+                <div class="ai-anomaly-detail">{{ anomaly.evidence }}</div>
+            </div>
+            {% if anomaly.why_it_matters %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-lightbulb"></i> Why it matters</div>
+                <div class="ai-anomaly-detail">{{ anomaly.why_it_matters }}</div>
+            </div>
+            {% endif %}
+            {% if anomaly.suggested_action %}
+            <div class="ai-anomaly-section">
+                <div class="ai-anomaly-section-label"><i class="bi bi-arrow-right-circle"></i> Suggested action</div>
+                <div class="ai-anomaly-detail">{{ anomaly.suggested_action }}</div>
+            </div>
+            {% endif %}
+            <div class="ai-anomaly-actions">
+                <a href="{% url 'sklat_ai:anomalies' %}?id={{ anomaly.id }}" class="ai-action-btn"><i class="bi bi-eye"></i> View Details</a>
+                <button class="ai-action-btn" onclick="investigateAnomaly('{{ anomaly.id }}', this)"><i class="bi bi-search"></i> Investigate</button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="ai-empty">
+            <i class="bi bi-check-circle"></i>
+            <h4>No financial anomalies detected</h4>
+            <p>Financial data appears normal. The AI will continue monitoring for unusual patterns.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.ai-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.ai-tab-content').forEach(function(c) { c.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+function investigateAnomaly(id, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Analyzing...';
+    fetch("{% url 'sklat_ai:anomalies' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ anomaly_id: id })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            window.location.href = "{% url 'sklat_ai:anomalies' %}?id=" + id;
+        } else {
+            btn.innerHTML = '<i class="bi bi-x-lg"></i> Failed';
+            setTimeout(function() {
+                btn.innerHTML = '<i class="bi bi-search"></i> Investigate';
+                btn.disabled = false;
+            }, 3000);
+        }
+    })
+    .catch(function() {
+        btn.innerHTML = '<i class="bi bi-search"></i> Investigate';
+        btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "integration_events" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "integration_events" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-lightning-charge" style="color:var(--primary-500)"></i> {% t "integration_events" %}</h1>
+        <p class="page-subtitle">{{ events.paginator.count }} {% t "events" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:200px">
+            <label class="input-pro-label">{% t "event_type" %}</label>
+            <select name="event_type" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_event_types" %}</option>
+                {% for et in event_types %}
+                <option value="{{ et }}" {% if event_type_filter == et %}selected{% endif %}>{{ et }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "processed" %}</label>
+            <select name="processed" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all" %}</option>
+                <option value="yes" {% if processed_filter == 'yes' %}selected{% endif %}>Yes</option>
+                <option value="no" {% if processed_filter == 'no' %}selected{% endif %}>No</option>
+            </select>
+        </div>
+        <a href="{% url 'integrations:events' %}" class="btn-pro btn-pro-secondary btn-pro-sm" style="height:38px"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+    </form>
+</div>
+
+{% if events %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="width:30px"></th>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "source" %}</th>
+                    <th>{% t "schema_version" %}</th>
+                    <th>{% t "processed" %}</th>
+                    <th>{% t "created_at" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr class="event-expand-row" data-event-id="{{ event.pk }}" onclick="toggleEventDetail({{ event.pk }})" style="cursor:pointer">
+                    <td style="width:30px;text-align:center"><i class="bi bi-chevron-right" id="eventChevron{{ event.pk }}" style="font-size:var(--text-xs);color:var(--text-muted);transition:transform 0.2s"></i></td>
+                    <td style="font-weight:500;font-size:var(--text-sm)">{{ event.event_type }}</td>
+                    <td style="font-size:var(--text-sm)">{{ event.source }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-secondary)">{{ event.schema_version|default:"—" }}</td>
+                    <td>
+                        {% if event.processed %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot"><i class="bi bi-check-lg" style="font-size:0.625rem"></i> {% t "processed" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot"><i class="bi bi-x-lg" style="font-size:0.625rem"></i> {% t "pending" %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap">{{ event.created_at|date:"d M Y H:i:s" }}</td>
+                </tr>
+                <tr id="eventDetail{{ event.pk }}" style="display:none">
+                    <td colspan="6" style="padding:0;background:var(--bg-page);border-top:1px solid var(--border-subtle)">
+                        <div style="padding:var(--sp-4)">
+                            <label class="input-pro-label">{% t "event_payload" %}</label>
+                            <div id="eventPayload{{ event.pk }}" style="margin-top:var(--sp-1);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:var(--sp-3);max-height:300px;overflow-y:auto">
+                                <pre style="margin:0;font-family:'SF Mono',Consolas,monospace;font-size:var(--text-xs);white-space:pre-wrap;word-break:break-all;color:var(--text-primary)"></pre>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if events.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if events.has_previous %}
+    <a href="?page={{ events.previous_page_number }}&event_type={{ event_type_filter }}&processed={{ processed_filter }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in events.paginator.page_range %}
+        {% if events.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > events.number|add:'-3' and num < events.number|add:'3' %}
+        <a href="?page={{ num }}&event_type={{ event_type_filter }}&processed={{ processed_filter }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if events.has_next %}
+    <a href="?page={{ events.next_page_number }}&event_type={{ event_type_filter }}&processed={{ processed_filter }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-lightning-charge"></i></div>
+    <h5 class="empty-state-title">{% t "no_events" %}</h5>
+    <p class="empty-state-desc">{% t "no_events_desc" %}</p>
+</div>
+{% endif %}
+
+<style>
+.json-key{color:#0550ae}
+.json-string{color:#0a3069}
+.json-number{color:#0550ae}
+.json-boolean{color:#cf222e}
+.json-null{color:#6e7781}
+.json-brace{color:var(--text-secondary)}
+.json-bracket{color:var(--text-secondary)}
+.json-colon{color:var(--text-secondary)}
+.json-comma{color:var(--text-secondary)}
+</style>
+
+<script>
+var eventPayloads={};
+{% for event in events %}
+eventPayloads[{{ event.pk }}]={{ event.payload_json|safe|default:"{}" }};
+{% endfor %}
+
+function syntaxHighlight(json){
+    if(typeof json!=='string'){
+        try{json=JSON.stringify(json,null,2)}catch(e){return json}
+    }
+    json=json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(match){
+        var cls='json-number';
+        if(/^"/.test(match)){
+            if(/:$/.test(match)){
+                cls='json-key';
+            }else{
+                cls='json-string';
+            }
+        }else if(/true|false/.test(match)){
+            cls='json-boolean';
+        }else if(/null/.test(match)){
+            cls='json-null';
+        }
+        return '<span class="'+cls+'">'+match+'</span>';
+    });
+}
+
+function toggleEventDetail(id){
+    var detail=document.getElementById('eventDetail'+id);
+    var chevron=document.getElementById('eventChevron'+id);
+    if(detail.style.display==='none'){
+        detail.style.display='';
+        chevron.style.transform='rotate(90deg)';
+        var payloadEl=detail.querySelector('pre');
+        if(payloadEl&&!payloadEl.innerHTML){
+            var data=eventPayloads[id];
+            if(data){
+                payloadEl.innerHTML=syntaxHighlight(data);
+            }else{
+                payloadEl.textContent='No payload data.';
+            }
+        }
+    }else{
+        detail.style.display='none';
+        chevron.style.transform='';
+    }
+}
+</script>
+{% endblock %}

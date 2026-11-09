@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "tasks_report" %}</h1>
+    </div>
+
+    <div class="card-pro">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "employee" %}</label>
+                <select name="employee" class="form-select">
+                    <option value="">{% t "all_employees" %}</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.id }}" {% if emp.id|stringformat:"s" == selected_employee %}selected{% endif %}>{{ emp.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ total|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "completed" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-success">{{ completed|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "overdue" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-danger">{{ overdue|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "in_progress" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-info">{{ in_progress|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "completion_rate" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ completion_rate|floatformat:1 }}%</span>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="card-pro flex-1">
+            <h2 class="text-pro-lg fw-bold mb-3">{% t "by_type" %}</h2>
+            <div class="table-pro-wrapper">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "task_type" %}</th>
+                            <th>{% t "count" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in by_type %}
+                        <tr>
+                            <td class="fw-semibold">{{ row.task_type }}</td>
+                            <td>{{ row.count|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-pro flex-1">
+            <h2 class="text-pro-lg fw-bold mb-3">{% t "by_priority" %}</h2>
+            <div class="table-pro-wrapper">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "priority" %}</th>
+                            <th>{% t "count" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in by_priority %}
+                        <tr>
+                            <td class="fw-semibold">{{ row.priority }}</td>
+                            <td>{{ row.count|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "by_employee" %}</h2>
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "employee" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "completed" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in by_employee %}
+                    <tr>
+                        <td class="fw-semibold">{{ row.first_name }} {{ row.last_name }}</td>
+                        <td>{{ row.total|floatformat:0 }}</td>
+                        <td>{{ row.completed|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

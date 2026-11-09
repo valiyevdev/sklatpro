@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% if transaction %}{% t "fin_edit_transaction" %}{% else %}{% t "fin_new_transaction" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if transaction %}{% t "fin_edit_transaction" %}{% else %}{% t "fin_new_transaction" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:600px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "date" %} *</label>
+                    <input class="form-control" type="date" name="date" value="{{ transaction.date|date:'Y-m-d'|default:'' }}" required>
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_type" %} *</label>
+                        <select class="form-control" name="txn_type" required>
+                            <option value="sale" {% if transaction.txn_type == 'sale' %}selected{% endif %}>{% t "fin_type_sale" %}</option>
+                            <option value="purchase" {% if transaction.txn_type == 'purchase' %}selected{% endif %}>{% t "fin_type_purchase" %}</option>
+                            <option value="customer_payment" {% if transaction.txn_type == 'customer_payment' %}selected{% endif %}>{% t "fin_type_customer_payment" %}</option>
+                            <option value="supplier_payment" {% if transaction.txn_type == 'supplier_payment' %}selected{% endif %}>{% t "fin_type_supplier_payment" %}</option>
+                            <option value="customer_refund" {% if transaction.txn_type == 'customer_refund' %}selected{% endif %}>{% t "fin_type_customer_refund" %}</option>
+                            <option value="supplier_refund" {% if transaction.txn_type == 'supplier_refund' %}selected{% endif %}>{% t "fin_type_supplier_refund" %}</option>
+                            <option value="income" {% if transaction.txn_type == 'income' %}selected{% endif %}>{% t "fin_type_income" %}</option>
+                            <option value="expense" {% if transaction.txn_type == 'expense' %}selected{% endif %}>{% t "fin_type_expense" %}</option>
+                            <option value="transfer_in" {% if transaction.txn_type == 'transfer_in' %}selected{% endif %}>{% t "fin_type_transfer_in" %}</option>
+                            <option value="transfer_out" {% if transaction.txn_type == 'transfer_out' %}selected{% endif %}>{% t "fin_type_transfer_out" %}</option>
+                            <option value="adjustment" {% if transaction.txn_type == 'adjustment' %}selected{% endif %}>{% t "fin_type_adjustment" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_direction" %} *</label>
+                        <select class="form-control" name="direction" required>
+                            <option value="income" {% if transaction.direction == 'income' %}selected{% endif %}>{% t "fin_direction_income" %}</option>
+                            <option value="expense" {% if transaction.direction == 'expense' %}selected{% endif %}>{% t "fin_direction_expense" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "amount" %} *</label>
+                        <input class="form-control" type="number" name="amount" step="0.01" min="0" value="{{ transaction.amount|default:'' }}" required>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_account" %}</label>
+                        <select class="form-control" name="account">
+                            <option value="">{% t "fin_select_account" %}</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.pk }}" {% if transaction.account.pk == acc.pk %}selected{% endif %}>{{ acc.name }} ({{ acc.get_account_type_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "fin_category" %}</label>
+                    <input class="form-control" type="text" name="category" value="{{ transaction.category|default:'' }}" placeholder="{% t "fin_enter_category" %}">
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_reference" %}</label>
+                        <input class="form-control" type="text" name="reference_number" value="{{ transaction.reference_number|default:'' }}" placeholder="{% t "fin_enter_reference" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_method" %}</label>
+                        <select class="form-control" name="payment_method">
+                            <option value="">{% t "fin_select_method" %}</option>
+                            <option value="cash" {% if transaction.payment_method == 'cash' %}selected{% endif %}>{% t "fin_method_cash" %}</option>
+                            <option value="card" {% if transaction.payment_method == 'card' %}selected{% endif %}>{% t "fin_method_card" %}</option>
+                            <option value="transfer" {% if transaction.payment_method == 'transfer' %}selected{% endif %}>{% t "fin_method_transfer" %}</option>
+                            <option value="terminal" {% if transaction.payment_method == 'terminal' %}selected{% endif %}>{% t "fin_method_terminal" %}</option>
+                            <option value="online" {% if transaction.payment_method == 'online' %}selected{% endif %}>{% t "fin_method_online" %}</option>
+                            <option value="other" {% if transaction.payment_method == 'other' %}selected{% endif %}>{% t "fin_method_other" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "description" %}</label>
+                    <textarea class="form-control" name="description" rows="3">{{ transaction.description|default:'' }}</textarea>
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="{% url 'finance:transaction_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> {% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if transaction %}{% t "fin_update_transaction" %}{% else %}{% t "fin_create_transaction" %}{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "code_validate" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "code_validate" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "code_validate" %}</h1>
+        <p class="page-subtitle">{% t "scan_or_enter_code" %}</p>
+    </div>
+</div>
+
+<div style="max-width:640px;margin:0 auto">
+    <form method="get">
+        <div class="card-pro mb-4">
+            <div class="card-pro-body">
+                <div class="input-pro-group">
+                    <input type="text" name="code_input" value="{{ form.code_input.value|default:'' }}" class="input-pro" placeholder="{% t "scan_or_enter_code" %}" autofocus style="font-size:var(--text-xl);padding:var(--sp-4);text-align:center;font-family:monospace;letter-spacing:0.05em">
+                </div>
+                <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-upc-scan"></i> {% t "validate" %}</button>
+            </div>
+        </div>
+    </form>
+
+    {% if result %}
+    <div class="card-pro mb-4" style="border-left:4px solid {% if result.result == 'valid' %}var(--success-500){% elif result.result == 'unknown' %}var(--danger-500){% else %}var(--warning-500){% endif %}">
+        <div class="card-pro-header">
+            <span class="card-pro-title">{% t "validation_result" %}</span>
+            {% if result.result == 'valid' %}
+                <span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "valid" %}</span>
+            {% elif result.result == 'unknown' %}
+                <span class="badge-pro badge-pro-danger"><i class="bi bi-x-circle"></i> {% t "not_found" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning"><i class="bi bi-exclamation-triangle"></i> {{ result.result }}</span>
+            {% endif %}
+        </div>
+        <div class="card-pro-body">
+            {% if result.result != 'unknown' %}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                {% if result.product %}
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "product" %}</div>
+                    <div class="fw-600">{{ result.product }}</div>
+                </div>
+                {% endif %}
+                {% if result.code_type %}
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "code_type" %}</div>
+                    <div><span class="badge-pro badge-pro-info">{{ result.code_type }}</span></div>
+                </div>
+                {% endif %}
+                {% if result.status %}
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "status" %}</div>
+                    <span class="badge-pro {% if result.status == 'sold' %}badge-pro-success{% elif result.status == 'in_stock' %}badge-pro-info{% elif result.status == 'quarantined' %}badge-pro-warning{% else %}badge-pro-primary{% endif %}">{{ result.status }}</span>
+                </div>
+                {% endif %}
+                {% if result.warehouse %}
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "warehouse" %}</div>
+                    <div class="fw-500">{{ result.warehouse }}</div>
+                </div>
+                {% endif %}
+            </div>
+            {% if result.product_id %}
+            <div style="margin-top:var(--sp-4)">
+                <a href="{% url 'markings:traceability_timeline' product_id=result.product_id %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-clock-history"></i> {% t "product_trace" %}</a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-pro-sm text-pro-muted">{{ result.message }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

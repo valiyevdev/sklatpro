@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "purchase_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "purchase_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:export_purchases_csv' %}?{{ request.GET.urlencode }}" class="btn-pro btn-pro-ghost"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.net_purchases|floatformat:0 }}</div><div class="stat-card-label">{% t "net_purchases" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-currency-dollar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.total_count }}</div><div class="stat-card-label">{% t "transactions" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.avg_purchase|floatformat:0 }}</div><div class="stat-card-label">{% t "avg_purchase" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-graph-up"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.items_purchased }}</div><div class="stat-card-label">{% t "items_purchased" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-box-seam"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm">{{ summary.gross_purchases|floatformat:0 }}</div><div class="stat-card-label">{% t "gross_purchases" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm" style="color:var(--danger-500)">-{{ summary.discounts|floatformat:0 }}</div><div class="stat-card-label">{% t "discounts" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm" style="color:var(--warning-500)">-{{ summary.returns|floatformat:0 }}</div><div class="stat-card-label">{% t "returns" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm">{{ summary.tax|floatformat:0 }}</div><div class="stat-card-label">{% t "tax" %}</div></div>
+    </div>
+</div>
+
+{% if by_supplier %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "purchases_by_supplier" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "supplier" %}</th><th>{% t "revenue" %}</th><th>{% t "units" %}</th><th>{% t "orders" %}</th></tr></thead>
+            <tbody>
+                {% for item in by_supplier %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.purchase__supplier__name|default:"—" }}</td>
+                    <td class="fw-600">{{ item.total_amount|floatformat:0 }}</td>
+                    <td>{{ item.total_qty|floatformat:0 }}</td>
+                    <td>{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

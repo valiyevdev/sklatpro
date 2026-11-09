@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_product" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:0 auto;text-align:center">
+    <div class="card-pro" style="padding:var(--sp-10)">
+        <div style="width:64px;height:64px;border-radius:var(--radius-full);background:var(--danger-50);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4)">
+            <i class="bi bi-exclamation-triangle" style="font-size:1.75rem;color:var(--danger-600)"></i>
+        </div>
+        <h2 style="font-size:var(--text-xl);font-weight:700;color:var(--text-primary);margin-bottom:var(--sp-2)">{% t "delete_product" %}</h2>
+        <p style="color:var(--text-secondary);margin-bottom:var(--sp-2)">{% t "confirm_delete_product" %}</p>
+        <p style="font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-1)">{{ product.name }}</p>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--sp-2)">SKU: {{ product.sku }}</p>
+        <p style="font-size:var(--text-sm);color:var(--danger-600);margin-bottom:var(--sp-6)"><i class="bi bi-info-circle"></i> {% t "this_action_cannot" %}</p>
+        <div style="display:flex;gap:var(--sp-3);justify-content:center">
+            <a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-outline">{% t "cancel" %}</a>
+            <form method="post" style="display:inline">{% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-danger">{% t "yes_delete" %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

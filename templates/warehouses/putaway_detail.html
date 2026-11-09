@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ putaway.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:putaway_list' %}">{% t "put_away" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ putaway.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ putaway.reference }}</h1>
+            {% if putaway.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif putaway.status == 'in_progress' %}
+                <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+            {% elif putaway.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ putaway.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if putaway.receiving %}{{ putaway.receiving.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "receiving" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-inbox"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ putaway.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if putaway.assigned_to %}{{ putaway.assigned_to.get_full_name|default:putaway.assigned_to.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "assigned_to" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-arrow-in-right" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "from_location" %}</th>
+                    <th>{% t "to_location" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "notes" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{% if item.from_location %}{{ item.from_location.code }}{% else %}—{% endif %}</td>
+                    <td>{{ item.to_location.code }}</td>
+                    <td>
+                        {% if item.is_putaway %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "done" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{% t "pending" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.notes %}{{ item.notes|truncatechars:40 }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if not item.is_putaway and putaway.status != 'completed' and putaway.status != 'cancelled' %}
+                        <form method="post" action="{% url 'warehouses:putaway_confirm_item' pk=putaway.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item.pk }}">
+                            <button type="submit" class="btn-pro btn-pro-success btn-pro-sm">
+                                <i class="bi bi-check-lg"></i> {% t "confirm" %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-arrow-in-right"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pricing_simulator" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "pricing_simulator" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "pricing_simulator" %}</h1>
+        <p class="page-subtitle">{% t "simulator_subtitle" %}</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);align-items:start">
+    <div>
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <h5 class="mb-0">{% t "simulation_parameters" %}</h5>
+            </div>
+            <form method="post" style="display:flex;flex-direction:column;gap:var(--sp-4);padding:var(--sp-5)">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label required">{% t "product" %}</label>
+                    <select class="input-pro" name="product" required>
+                        <option value="">{% t "select_product" %}</option>
+                        {% for product in products %}
+                            <option value="{{ product.pk }}" {% if selected_product == product.pk|stringformat:"s" %}selected{% endif %}>{{ product }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "customer" %}</label>
+                    <select class="input-pro" name="customer">
+                        <option value="">{% t "select_customer_optional" %}</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.pk }}" {% if selected_customer == customer.pk|stringformat:"s" %}selected{% endif %}>{{ customer }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "quantity" %}</label>
+                        <input type="number" name="quantity" class="input-pro" min="1" value="{{ selected_quantity|default:'1' }}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "channel" %}</label>
+                        <select class="input-pro" name="channel">
+                            <option value="">{% t "all_channels" %}</option>
+                            <option value="Retail" {% if selected_channel == 'Retail' %}selected{% endif %}>{% t "retail" %}</option>
+                            <option value="POS" {% if selected_channel == 'POS' %}selected{% endif %}>{% t "pos" %}</option>
+                            <option value="Website" {% if selected_channel == 'Website' %}selected{% endif %}>{% t "website" %}</option>
+                            <option value="Telegram" {% if selected_channel == 'Telegram' %}selected{% endif %}>{% t "telegram" %}</option>
+                            <option value="Marketplace" {% if selected_channel == 'Marketplace' %}selected{% endif %}>{% t "marketplace" %}</option>
+                            <option value="Wholesale" {% if selected_channel == 'Wholesale' %}selected{% endif %}>{% t "wholesale" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "coupon_code" %}</label>
+                    <input type="text" name="coupon_code" class="input-pro" value="{{ selected_coupon|default:'' }}" placeholder="{% t "enter_coupon_code" %}">
+                </div>
+                <button type="submit" class="btn-pro btn-pro-primary" style="align-self:flex-start">
+                    <i class="bi bi-play-circle"></i> {% t "run_simulation" %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        {% if result %}
+        <div class="card-pro" style="border-left:4px solid var(--primary-500)">
+            <div class="card-pro-header">
+                <h5 class="mb-0"><i class="bi bi-receipt-cutoff" style="margin-right:var(--sp-2)"></i>{% t "simulation_result" %}</h5>
+            </div>
+            <div style="padding:var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-4)">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "base_price" %}</span>
+                    <span class="fw-600">{{ result.base_price }} UZS</span>
+                </div>
+                {% if result.applied_rule %}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "applied_rule" %}</span>
+                    <span class="badge-pro badge-pro-info">{{ result.applied_rule }}</span>
+                </div>
+                {% endif %}
+                {% if result.price_list %}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "price_list" %}</span>
+                    <span>{{ result.price_list }}</span>
+                </div>
+                {% endif %}
+                {% if result.promo_name %}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "promotion" %}</span>
+                    <div>
+                        <span class="badge-pro badge-pro-warning">{{ result.promo_name }}</span>
+                        {% if result.promo_discount %}<span style="margin-left:var(--sp-2);color:var(--success-600);font-weight:600">-{{ result.promo_discount }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if result.coupon_code %}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "coupon" %}</span>
+                    <div>
+                        <span class="badge-pro badge-pro-danger">{{ result.coupon_code }}</span>
+                        {% if result.coupon_discount %}<span style="margin-left:var(--sp-2);color:var(--success-600);font-weight:600">-{{ result.coupon_discount }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                <div style="border-top:1px solid var(--border-default);padding-top:var(--sp-4);display:flex;justify-content:space-between;align-items:center">
+                    <span class="text-pro-sm text-pro-muted">{% t "total_discount" %}</span>
+                    <span style="font-weight:600;color:var(--success-600)">-{{ result.discount_amount }} UZS</span>
+                </div>
+                <div style="background:var(--primary-50);border-radius:var(--radius-lg);padding:var(--sp-4);display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:var(--text-lg);font-weight:700;color:var(--text-primary)">{% t "final_price" %}</span>
+                    <span style="font-size:var(--text-2xl);font-weight:800;color:var(--primary-600)">{{ result.final_price }} UZS</span>
+                </div>
+            </div>
+        </div>
+
+        {% if explanation %}
+        <div class="card-pro mt-4">
+            <div class="card-pro-header">
+                <h5 class="mb-0"><i class="bi bi-list-ol" style="margin-right:var(--sp-2)"></i>{% t "price_breakdown" %}</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th>{% t "step" %}</th>
+                            <th>{% t "price" %}</th>
+                            <th>{% t "detail" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in explanation %}
+                        <tr>
+                            <td class="text-pro-sm text-pro-muted">{{ forloop.counter }}</td>
+                            <td class="cell-primary">{{ item.label }}</td>
+                            <td class="fw-600">{{ item.price }}</td>
+                            <td class="text-pro-sm">{{ item.detail }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="card-pro">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-calculator"></i></div>
+                <h5 class="empty-state-title">{% t "no_simulation_result" %}</h5>
+                <p class="empty-state-desc">{% t "simulator_empty_desc" %}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

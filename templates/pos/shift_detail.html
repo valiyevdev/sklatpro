@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos_shift" %} {{ shift.shift_number }} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== MOBILE (<768px) ===== */
+@media (max-width: 767px) {
+  .breadcrumb-pro { display: none !important; }
+
+  .page-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+  }
+  .page-header-content { min-width: 0 !important; }
+  .page-header-content .page-title { font-size: 18px !important; }
+  .page-subtitle { font-size: 12px !important; margin: 0 !important; }
+  .page-actions .btn-pro { font-size: 12px !important; padding: 6px 10px !important; }
+
+  .shift-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .shift-desktop-view { display: none !important; }
+  .shift-mobile-view { display: block !important; }
+
+  .shift-table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Payment breakdown rows */
+  .shift-pb-cards { padding: 12px; }
+  .shift-pb-card {
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .shift-pb-card:last-child { margin-bottom: 0; }
+  .shift-pb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .shift-pb-row + .shift-pb-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+  .shift-pb-label {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+  .shift-pb-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Cash movement cards */
+  .shift-cm-cards { padding: 12px; }
+  .shift-cm-card {
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .shift-cm-card:last-child { margin-bottom: 0; }
+  .shift-cm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .shift-cm-row + .shift-cm-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+  .shift-cm-label {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+  .shift-cm-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Receipt cards */
+  .shift-rc-cards { padding: 12px; }
+  .shift-rc-card {
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .shift-rc-card:last-child { margin-bottom: 0; }
+  .shift-rc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .shift-rc-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .shift-rc-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 11px;
+    color: #9ca3af;
+  }
+  .shift-rc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .shift-rc-row:last-child { border-bottom: none; }
+  .shift-rc-label {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+    flex-shrink: 0;
+    padding-right: 8px;
+  }
+  .shift-rc-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+  }
+}
+
+/* ===== DESKTOP (>=768px) ===== */
+.shift-mobile-view { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pos:pos_dashboard' %}">{% t "pos" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:shift_list' %}">{% t "pos_shifts" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ shift.shift_number }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ shift.shift_number }}</h1>
+            {% if shift.status == 'open' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_open" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pos_closed" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {{ shift.terminal.name }} &middot; {{ shift.cashier.get_full_name|default:shift.cashier.username }} &middot; {{ shift.opened_at|date:"d.m.Y H:i" }}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if shift.status == 'open' %}
+            <a href="{% url 'pos:workspace' %}?terminal={{ shift.terminal.pk }}" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-pc-display-horizontal"></i> {% t "pos_open_workspace" %}</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="shift-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ shift.opening_amount|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_opening_cash" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-door-open"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ shift_stats.total_sales|default:0|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_total_sales" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ shift_stats.receipt_count|default:0 }}</div>
+            <div class="stat-card-label">{% t "pos_receipts" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">
+                {% if shift.status == 'closed' %}
+                    {% if shift.difference == 0 %}
+                        <span style="color:var(--success-600)">0</span>
+                    {% elif shift.difference > 0 %}
+                        <span style="color:var(--info-600)">+{{ shift.difference|floatformat:0 }}</span>
+                    {% else %}
+                        <span style="color:var(--danger-600)">{{ shift.difference|floatformat:0 }}</span>
+                    {% endif %}
+                {% else %}—{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "pos_difference" %}</div>
+        </div>
+        <div class="stat-card-icon {% if shift.status == 'closed' %}{% if shift.difference == 0 %}success{% elif shift.difference > 0 %}info{% else %}danger{% endif %}{% else %}warning{% endif %}"><i class="bi bi-scale"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "pos_shift_info" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-5)">
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-pc-display"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_terminal" %}</div>
+                    <div class="text-pro-sm fw-500">{{ shift.terminal.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_cashier" %}</div>
+                    <div class="text-pro-sm fw-500">{{ shift.cashier.get_full_name|default:shift.cashier.username }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_opened" %}</div>
+                    <div class="text-pro-sm fw-500">{{ shift.opened_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon {% if shift.status == 'closed' %}warning{% else %}success{% endif %}" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-{% if shift.status == 'closed' %}door-closed{% else %}door-open{% endif %}"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% if shift.status == 'closed' %}{% t "pos_closed" %}{% else %}{% t "pos_status" %}{% endif %}</div>
+                    <div class="text-pro-sm fw-500">
+                        {% if shift.status == 'closed' %}
+                            {{ shift.closed_at|date:"d.m.Y H:i" }}
+                        {% else %}
+                            {% t "pos_currently_open" %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-wallet2" style="color:var(--primary-600)"></i> {% t "pos_payment_breakdown" %}</span>
+    </div>
+    {# Desktop table #}
+    <div class="table-responsive shift-desktop-view">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "pos_payment_method" %}</th>
+                    <th>{% t "pos_count" %}</th>
+                    <th>{% t "pos_total" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pb in payment_breakdown %}
+                <tr>
+                    <td>
+                        {% if pb.payment_method == 'cash' %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "pos_cash" %}</span>
+                        {% elif pb.payment_method == 'card' %}
+                            <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "pos_card" %}</span>
+                        {% elif pb.payment_method == 'transfer' %}
+                            <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "pos_transfer" %}</span>
+                        {% elif pb.payment_method == 'online' %}
+                            <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "pos_online" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ pb.payment_method }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ pb.count }}</td>
+                    <td class="cell-primary fw-600">{{ pb.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Mobile row list #}
+    <div class="shift-mobile-view shift-pb-cards">
+        {% for pb in payment_breakdown %}
+        <div class="shift-pb-card">
+            <div class="shift-pb-row">
+                <span class="shift-pb-label">{% t "pos_payment_method" %}</span>
+                <span class="shift-pb-value">
+                    {% if pb.payment_method == 'cash' %}
+                        <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "pos_cash" %}</span>
+                    {% elif pb.payment_method == 'card' %}
+                        <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "pos_card" %}</span>
+                    {% elif pb.payment_method == 'transfer' %}
+                        <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "pos_transfer" %}</span>
+                    {% elif pb.payment_method == 'online' %}
+                        <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "pos_online" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ pb.payment_method }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="shift-pb-row">
+                <span class="shift-pb-label">{% t "pos_count" %}</span>
+                <span class="shift-pb-value">{{ pb.count }}</span>
+            </div>
+            <div class="shift-pb-row">
+                <span class="shift-pb-label">{% t "pos_total" %}</span>
+                <span class="shift-pb-value">{{ pb.total|floatformat:0 }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:var(--sp-6)">
+            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-600)"></i> {% t "pos_cash_movements" %}</span>
+    </div>
+    {# Desktop table #}
+    <div class="table-responsive shift-desktop-view">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "pos_type" %}</th>
+                    <th>{% t "pos_amount" %}</th>
+                    <th>{% t "pos_reference" %}</th>
+                    <th>{% t "pos_description" %}</th>
+                    <th>{% t "pos_time" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movements %}
+                <tr>
+                    <td>
+                        {% if m.movement_type == 'opening' %}
+                            <span class="badge-pro badge-pro-primary">{% t "pos_opening" %}</span>
+                        {% elif m.movement_type == 'sale_cash' %}
+                            <span class="badge-pro badge-pro-success">{% t "pos_sale_cash" %}</span>
+                        {% elif m.movement_type == 'refund' %}
+                            <span class="badge-pro badge-pro-danger">{% t "pos_refund" %}</span>
+                        {% elif m.movement_type == 'cash_in' %}
+                            <span class="badge-pro badge-pro-info">{% t "pos_cash_in" %}</span>
+                        {% elif m.movement_type == 'cash_out' %}
+                            <span class="badge-pro badge-pro-warning">{% t "pos_cash_out" %}</span>
+                        {% elif m.movement_type == 'closing' %}
+                            <span class="badge-pro badge-pro-neutral">{% t "pos_closing" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ m.get_movement_type_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">
+                        {% if m.movement_type == 'cash_out' or m.movement_type == 'refund' %}
+                            <span style="color:var(--danger-600)">-{{ m.amount|floatformat:0 }}</span>
+                        {% else %}
+                            <span style="color:var(--success-600)">{{ m.amount|floatformat:0 }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.reference_number|default:"—" }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ m.description|default:"—" }}</td>
+                    <td class="cell-muted">{{ m.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_movements" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Mobile cards #}
+    <div class="shift-mobile-view shift-cm-cards">
+        {% for m in movements %}
+        <div class="shift-cm-card">
+            <div class="shift-cm-row">
+                <span>
+                    {% if m.movement_type == 'opening' %}
+                        <span class="badge-pro badge-pro-primary">{% t "pos_opening" %}</span>
+                    {% elif m.movement_type == 'sale_cash' %}
+                        <span class="badge-pro badge-pro-success">{% t "pos_sale_cash" %}</span>
+                    {% elif m.movement_type == 'refund' %}
+                        <span class="badge-pro badge-pro-danger">{% t "pos_refund" %}</span>
+                    {% elif m.movement_type == 'cash_in' %}
+                        <span class="badge-pro badge-pro-info">{% t "pos_cash_in" %}</span>
+                    {% elif m.movement_type == 'cash_out' %}
+                        <span class="badge-pro badge-pro-warning">{% t "pos_cash_out" %}</span>
+                    {% elif m.movement_type == 'closing' %}
+                        <span class="badge-pro badge-pro-neutral">{% t "pos_closing" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ m.get_movement_type_display }}</span>
+                    {% endif %}
+                </span>
+                <span class="fw-600">
+                    {% if m.movement_type == 'cash_out' or m.movement_type == 'refund' %}
+                        <span style="color:var(--danger-600)">-{{ m.amount|floatformat:0 }}</span>
+                    {% else %}
+                        <span style="color:var(--success-600)">{{ m.amount|floatformat:0 }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="shift-cm-row">
+                <span class="shift-cm-label">{% t "pos_reference" %}</span>
+                <span class="shift-cm-value">{{ m.reference_number|default:"—" }}</span>
+            </div>
+            <div class="shift-cm-row">
+                <span class="shift-cm-label">{% t "pos_description" %}</span>
+                <span class="shift-cm-value">{{ m.description|default:"—" }}</span>
+            </div>
+            <div class="shift-cm-row">
+                <span class="shift-cm-label">{% t "pos_time" %}</span>
+                <span class="shift-cm-value">{{ m.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:var(--sp-6)">
+            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_movements" %}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-receipt" style="color:var(--primary-600)"></i> {% t "pos_receipts" %}</span>
+    </div>
+    {# Desktop table #}
+    <div class="table-responsive shift-desktop-view">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "pos_receipt_number" %}</th>
+                    <th>{% t "pos_customer" %}</th>
+                    <th>{% t "pos_payment_method" %}</th>
+                    <th>{% t "pos_total" %}</th>
+                    <th>{% t "pos_status" %}</th>
+                    <th>{% t "pos_time" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in receipts %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'pos:receipt_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.receipt_number }}</a>
+                    </td>
+                    <td>{{ r.customer.name|default:"Walk-in" }}</td>
+                    <td>
+                        {% if r.payment_method == 'cash' %}
+                            <span class="badge-pro badge-pro-success">{% t "pos_cash" %}</span>
+                        {% elif r.payment_method == 'card' %}
+                            <span class="badge-pro badge-pro-info">{% t "pos_card" %}</span>
+                        {% elif r.payment_method == 'transfer' %}
+                            <span class="badge-pro badge-pro-primary">{% t "pos_transfer" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ r.payment_method }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">{{ r.total|floatformat:0 }}</td>
+                    <td>
+                        {% if r.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                        {% elif r.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ r.created_at|date:"H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Mobile cards #}
+    <div class="shift-mobile-view shift-rc-cards">
+        {% for r in receipts %}
+        <div class="shift-rc-card">
+            <div class="shift-rc-header">
+                <a href="{% url 'pos:receipt_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none;font-weight:600;font-size:13px">{{ r.receipt_number }}</a>
+                <span style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+                    {% if r.payment_method == 'cash' %}
+                        <span class="badge-pro badge-pro-success">{% t "pos_cash" %}</span>
+                    {% elif r.payment_method == 'card' %}
+                        <span class="badge-pro badge-pro-info">{% t "pos_card" %}</span>
+                    {% elif r.payment_method == 'transfer' %}
+                        <span class="badge-pro badge-pro-primary">{% t "pos_transfer" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ r.payment_method }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="shift-rc-row">
+                <span class="shift-rc-label">{% t "pos_customer" %}</span>
+                <span class="shift-rc-value">{{ r.customer.name|default:"Walk-in" }}</span>
+            </div>
+            <div class="shift-rc-row">
+                <span class="shift-rc-label">{% t "pos_status" %}</span>
+                <span class="shift-rc-value">
+                    {% if r.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                    {% elif r.status == 'cancelled' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="shift-rc-row">
+                <span class="shift-rc-label">{% t "pos_time" %}</span>
+                <span class="shift-rc-value">{{ r.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            <div class="shift-rc-row" style="border-top:2px solid var(--border-default);padding-top:8px;margin-top:4px">
+                <span class="shift-rc-label" style="font-weight:600">{% t "pos_total" %}</span>
+                <span class="shift-rc-value" style="font-size:15px">{{ r.total|floatformat:0 }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:var(--sp-6)">
+            <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

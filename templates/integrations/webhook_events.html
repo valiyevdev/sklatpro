@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "webhook_events" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "webhook_events" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "webhook_events" %}</h1>
+        <p class="page-subtitle">{{ events.paginator.count }} {% t "results" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+            <label class="input-pro-label">{% t "event_type" %}</label>
+            <input type="text" name="event_type" value="{{ event_type }}" class="input-pro" placeholder="{% t "filter_event_type" %}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:180px">
+            <label class="input-pro-label">{% t "endpoint" %}</label>
+            <select name="endpoint" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_endpoints" %}</option>
+                {% for ep in endpoints %}
+                <option value="{{ ep.pk }}" {% if endpoint_id == ep.pk|stringformat:"s" %}selected{% endif %}>{{ ep.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-funnel"></i></button>
+    </form>
+</div>
+
+{% if events %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "event_id" %}</th>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "direction" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "duration" %}</th>
+                    <th>{% t "attempts" %}</th>
+                    <th>{% t "created" %}</th>
+                    <th>{% t "processed" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr style="cursor:pointer" onclick="togglePayload('payload-{{ event.pk }}')">
+                    <td>
+                        <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ event.event_id|truncatechars:12 }}</code>
+                    </td>
+                    <td class="cell-primary">
+                        <span class="badge-pro badge-pro-neutral">{{ event.event_type }}</span>
+                    </td>
+                    <td>
+                        {% if event.direction == 'outgoing' %}
+                            <span class="badge-pro badge-pro-info"><i class="bi bi-arrow-up-right" style="font-size:0.65rem"></i> {% t "outgoing" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-primary"><i class="bi bi-arrow-down-left" style="font-size:0.65rem"></i> {% t "incoming" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if event.status == 'processed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "processed" %}</span>
+                        {% elif event.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif event.status == 'processing' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "processing" %}</span>
+                        {% elif event.status == 'retrying' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "retrying" %}</span>
+                        {% elif event.status == 'received' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "received" %}</span>
+                        {% elif event.status == 'dropped' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "dropped" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ event.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if event.duration_ms %}{{ event.duration_ms }}ms{% else %}—{% endif %}</td>
+                    <td>
+                        <span class="text-pro-sm">{{ event.attempt_count }}/{{ event.max_attempts }}</span>
+                    </td>
+                    <td class="cell-muted">{{ event.created_at|date:"d M Y H:i:s" }}</td>
+                    <td class="cell-muted">{% if event.processed_at %}{{ event.processed_at|date:"d M Y H:i:s" }}{% else %}—{% endif %}</td>
+                    <td>
+                        <i class="bi bi-chevron-down text-pro-muted" id="chevron-{{ event.pk }}" style="font-size:0.75rem;transition:transform 0.15s"></i>
+                    </td>
+                </tr>
+                <tr id="payload-{{ event.pk }}" style="display:none">
+                    <td colspan="9" style="padding:0;border-bottom:1px solid var(--border-subtle)">
+                        <div style="padding:var(--sp-4);background:var(--bg-page)">
+                            <div class="d-flex align-center justify-between mb-3">
+                                <span class="text-pro-sm fw-600">{% t "payload" %}</span>
+                                <div class="d-flex gap-2">
+                                    {% if event.response_status %}
+                                    <span class="badge-pro {% if event.response_status < 300 %}badge-pro-success{% else %}badge-pro-danger{% endif %}">HTTP {{ event.response_status }}</span>
+                                    {% endif %}
+                                    {% if event.signature_valid == True %}
+                                    <span class="badge-pro badge-pro-success"><i class="bi bi-shield-check"></i> {% t "signature_valid" %}</span>
+                                    {% elif event.signature_valid == False %}
+                                    <span class="badge-pro badge-pro-danger"><i class="bi bi-shield-x"></i> {% t "signature_invalid" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-lg);overflow:hidden">
+                                <div style="padding:var(--sp-2) var(--sp-3);background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center">
+                                    <span class="text-pro-xs fw-600 text-pro-muted">JSON</span>
+                                    <button class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:2px 8px" onclick="sklatCopyBtn(this, document.getElementById('json-{{ event.pk }}').textContent)"><i class="bi bi-clipboard"></i> {% t "copy" %}</button>
+                                </div>
+                                <pre id="json-{{ event.pk }}" style="padding:var(--sp-4);margin:0;font-size:var(--text-sm);font-family:monospace;overflow-x:auto;max-height:400px;color:var(--text-primary);white-space:pre-wrap;word-break:break-all">{{ event.payload|pprint }}</pre>
+                            </div>
+                            {% if event.error_message %}
+                            <div style="margin-top:var(--sp-3);background:var(--danger-50);border:1px solid var(--danger-200);border-radius:var(--radius-lg);padding:var(--sp-3)">
+                                <span class="text-pro-xs fw-600" style="color:var(--danger-700)">{% t "error" %}:</span>
+                                <span class="text-pro-sm" style="color:var(--danger-700)">{{ event.error_message }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if events.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if events.has_previous %}
+    <a href="?page={{ events.previous_page_number }}&event_type={{ event_type }}&status={{ status }}&endpoint={{ endpoint_id }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in events.paginator.page_range %}
+        {% if events.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > events.number|add:'-3' and num < events.number|add:'3' %}
+        <a href="?page={{ num }}&event_type={{ event_type }}&status={{ status }}&endpoint={{ endpoint_id }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if events.has_next %}
+    <a href="?page={{ events.next_page_number }}&event_type={{ event_type }}&status={{ status }}&endpoint={{ endpoint_id }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-broadcast"></i></div>
+    <h5 class="empty-state-title">{% t "no_webhook_events" %}</h5>
+    <p class="empty-state-desc">{% t "no_webhook_events_desc" %}</p>
+</div>
+{% endif %}
+
+<script>
+function sklatCopyText(text){
+    if(navigator.clipboard&&window.isSecureContext){
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve,reject){
+        var ta=document.createElement('textarea');
+        ta.value=text;
+        ta.style.position='fixed';
+        ta.style.opacity='0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try{
+            if(document.execCommand('copy')){resolve();}
+            else{reject(new Error('copy failed'));}
+        }catch(err){reject(err);}
+        finally{document.body.removeChild(ta);}
+    });
+}
+function sklatCopyBtn(btn,text){
+    sklatCopyText(text).then(function(){
+        var orig=btn.innerHTML;
+        btn.innerHTML='<i class=\'bi bi-check\'></i> Copied';
+        setTimeout(function(){btn.innerHTML=orig;},1500);
+    }).catch(function(){});
+}
+function togglePayload(id){
+    var el=document.getElementById(id);
+    var pk=id.replace('payload-','');
+    var chevron=document.getElementById('chevron-'+pk);
+    if(el.style.display==='none'){
+        el.style.display='';
+        if(chevron)chevron.style.transform='rotate(180deg)';
+    }else{
+        el.style.display='none';
+        if(chevron)chevron.style.transform='';
+    }
+}
+</script>
+{% endblock %}

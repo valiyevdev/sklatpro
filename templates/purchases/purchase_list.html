@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "purchases" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <span class="current">{% t "purchases" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "purchases" %}</h1>
+        <p class="page-subtitle">{{ total_count }} {% t "purchases_total" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'purchases:purchase_dashboard' %}" class="btn-pro btn-pro-ghost">
+            <i class="bi bi-grid-1x2"></i> {% t "dashboard" %}
+        </a>
+        <a href="{% url 'purchases:supplier_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-people"></i> {% t "suppliers" %}
+        </a>
+        <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_purchase" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get" action="">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:var(--sp-3);align-items:end">
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <input class="input-pro" type="text" name="q" value="{{ q }}" placeholder="{% t "search_reference_product" %}...">
+                </div>
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <select class="input-pro" name="status">
+                        <option value="">{% t "all_statuses" %}</option>
+                        {% for val, label in status_choices %}
+                            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <select class="input-pro" name="payment">
+                        <option value="">{% t "all_payment_statuses" %}</option>
+                        {% for val, label in payment_choices %}
+                            <option value="{{ val }}" {% if payment_filter == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <select class="input-pro" name="supplier">
+                        <option value="">{% t "all_suppliers" %}</option>
+                        {% for s in suppliers %}
+                            <option value="{{ s.pk }}" {% if supplier_filter == s.pk|stringformat:"d" %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <input class="input-pro" type="date" name="date_from" value="{{ date_from }}" placeholder="{% t "date_from" %}">
+                </div>
+                <div class="input-pro-group" style="margin-bottom:0">
+                    <input class="input-pro" type="date" name="date_to" value="{{ date_to }}" placeholder="{% t "date_to" %}">
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-3" style="justify-content:flex-end">
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i> {% t "filter" %}</button>
+                {% if q or status_filter or payment_filter or supplier_filter or date_from or date_to %}
+                    <a href="{% url 'purchases:purchase_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "supplier" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "total" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "payment_status" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in page_obj %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'purchases:purchase_detail' pk=p.pk %}" style="color:var(--text-primary);text-decoration:none">{{ p.reference }}</a>
+                    </td>
+                    <td>{{ p.supplier.name }}</td>
+                    <td>{{ p.warehouse.name }}</td>
+                    <td class="cell-primary fw-600">${{ p.total|floatformat:0 }}</td>
+                    <td>
+                        {% if p.status == 'received' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "received" %}</span>
+                        {% elif p.status == 'partially_received' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "partially_received" %}</span>
+                        {% elif p.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                        {% elif p.status == 'approved' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+                        {% elif p.status == 'ordered' %}
+                            <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "ordered" %}</span>
+                        {% elif p.status == 'pending_approval' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending_approval" %}</span>
+                        {% elif p.status == 'returned' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "returned" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{{ p.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.payment_status == 'paid' %}
+                            <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+                        {% elif p.payment_status == 'partial' %}
+                            <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+                        {% elif p.payment_status == 'overdue' %}
+                            <span class="badge-pro badge-pro-danger">{% t "overdue" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ p.order_date|date:"d.m.Y" }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'purchases:purchase_detail' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "view" %}"><i class="bi bi-eye"></i></a>
+                            {% if p.status == 'draft' or p.status == 'pending_approval' %}
+                                <a href="{% url 'purchases:purchase_update' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+                            {% endif %}
+                            {% if p.status == 'draft' or p.status == 'cancelled' %}
+                                <a href="{% url 'purchases:purchase_delete' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "delete" %}" style="color:var(--danger-600)"><i class="bi bi-trash"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-cart-plus"></i></div>
+                            <h5 class="empty-state-title">{% t "no_purchases" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_purchase" %}</p>
+                            <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_purchase" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <div class="text-pro-sm text-pro-muted">
+        {% t "showing" %} {{ page_obj.start_index }}-{% t "of" %} {{ page_obj.paginator.count }}
+    </div>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment={{ payment_filter }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        {% else %}
+            <span class="disabled"><i class="bi bi-chevron-left"></i></span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment={{ payment_filter }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment={{ payment_filter }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        {% else %}
+            <span class="disabled"><i class="bi bi-chevron-right"></i></span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

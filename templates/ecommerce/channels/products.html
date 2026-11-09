@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Channel Products - {{ channel.name }} - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_list' %}">{% t "Channels" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}">{{ channel.name }}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Products" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Channel Products" %}</h1>
+        <p class="page-subtitle">{{ channel.name }} &middot; {{ channel_products.count }} {% t "products assigned" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back to Channel" %}
+        </a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-box-seam" style="margin-right:var(--sp-2);color:var(--primary-500)"></i>{% t "Published Products" %}</h3>
+            <span class="badge-pro badge-pro-primary">{{ channel_products.count }}</span>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for cp in channel_products %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3);flex:1;min-width:0">
+                    <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);color:var(--text-muted);flex-shrink:0"><i class="bi bi-box"></i></div>
+                    <div style="min-width:0">
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ cp.product.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ cp.product.sku|default:"-" }}</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--sp-2);flex-shrink:0">
+                    <form method="post" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_visibility">
+                        <input type="hidden" name="channel_product_id" value="{{ cp.pk }}">
+                        <select name="visibility" class="input-pro" style="width:auto;padding:2px 24px 2px 8px;font-size:var(--text-xs);min-height:28px" onchange="this.form.submit()">
+                            <option value="visible" {% if cp.visibility == 'visible' %}selected{% endif %}>{% t "Visible" %}</option>
+                            <option value="hidden" {% if cp.visibility == 'hidden' %}selected{% endif %}>{% t "Hidden" %}</option>
+                            <option value="draft" {% if cp.visibility == 'draft' %}selected{% endif %}>{% t "Draft" %}</option>
+                        </select>
+                    </form>
+                    <form method="post" style="display:inline" onsubmit="return confirm('{% t "Remove this product from the channel?" %}')">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove_product">
+                        <input type="hidden" name="channel_product_id" value="{{ cp.pk }}">
+                        <button type="submit" class="btn-pro btn-pro-sm btn-pro-danger" style="padding:2px 8px;min-height:28px" title="{% t "Remove" %}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-10) var(--sp-6);text-align:center">
+                <i class="bi bi-box-seam" style="font-size:2rem;color:var(--text-muted);margin-bottom:var(--sp-3);display:block"></i>
+                <div style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-1)">{% t "No products yet" %}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-muted)">{% t "Add products from the right panel" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-plus-circle" style="margin-right:var(--sp-2);color:var(--success-500)"></i>{% t "Available Products" %}</h3>
+            <span class="badge-pro badge-pro-neutral">{{ available_products.count }}</span>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for product in available_products %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3);flex:1;min-width:0">
+                    <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);color:var(--text-muted);flex-shrink:0"><i class="bi bi-box"></i></div>
+                    <div style="min-width:0">
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ product.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ product.sku|default:"-" }}</div>
+                    </div>
+                </div>
+                <form method="post" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_product">
+                    <input type="hidden" name="product_id" value="{{ product.pk }}">
+                    <button type="submit" class="btn-pro btn-pro-sm btn-pro-success" style="padding:2px 8px;min-height:28px" title="{% t "Add" %}">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </form>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-10) var(--sp-6);text-align:center">
+                <i class="bi bi-check-circle" style="font-size:2rem;color:var(--success-500);margin-bottom:var(--sp-3);display:block"></i>
+                <div style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-1)">{% t "All products assigned" %}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-muted)">{% t "All active products are already in this channel" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

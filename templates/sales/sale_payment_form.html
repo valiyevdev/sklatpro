@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "add_payment" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "add_payment" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ sale.reference }} — {{ sale.customer.name }}</p>
+    </div>
+</div>
+
+<div style="max-width:520px">
+    <div class="card-pro mb-4">
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "total_amount" %}</div>
+                    <div class="fw-700" style="font-size:1.25rem;color:var(--gray-900)">${{ sale.total|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "total_paid" %}</div>
+                    <div class="fw-600" style="font-size:1.25rem;color:var(--success-600)">${{ sale.total_paid|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "outstanding" %}</div>
+                    <div class="fw-600" style="font-size:1.25rem;color:var(--danger-600)">${{ sale.outstanding|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "amount" %} *</label>
+                    <input class="input-pro" type="number" name="amount" min="0.01" step="0.01" max="{{ sale.outstanding }}" value="{{ sale.outstanding|floatformat:2 }}" required placeholder="0.00">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "payment_method" %} *</label>
+                    <select class="input-pro" name="payment_method" required>
+                        <option value="cash">{% t "cash" %}</option>
+                        <option value="card">{% t "card" %}</option>
+                        <option value="transfer">{% t "bank_transfer" %}</option>
+                        <option value="online">{% t "online" %}</option>
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="2" placeholder="{% t "optional_notes" %}"></textarea>
+                </div>
+                <div class="d-flex justify-between mt-4">
+                    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "confirm_payment" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "webhooks" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "webhooks" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "webhooks" %}</h1>
+        <p class="page-subtitle">{{ webhooks.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'integrations:webhook_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_webhook" %}
+        </a>
+    </div>
+</div>
+
+<div class="tabs-pro mb-4">
+    <a href="?direction=&status={{ status }}" class="tab-pro {% if not direction %}active{% endif %}">
+        {% t "all" %} ({{ webhooks.paginator.count }})
+    </a>
+    <a href="?direction=outgoing&status={{ status }}" class="tab-pro {% if direction == 'outgoing' %}active{% endif %}">
+        <i class="bi bi-arrow-up-right"></i> {% t "outgoing" %}
+    </a>
+    <a href="?direction=incoming&status={{ status }}" class="tab-pro {% if direction == 'incoming' %}active{% endif %}">
+        <i class="bi bi-arrow-down-left"></i> {% t "incoming" %}
+    </a>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        {% if direction %}
+        <input type="hidden" name="direction" value="{{ direction }}">
+        {% endif %}
+        <div style="flex:2;min-width:200px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="q" value="{{ search }}" class="input-pro" placeholder="{% t "search_webhooks" %}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+{% if webhooks %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "direction" %}</th>
+                    <th>{% t "url" %}</th>
+                    <th>{% t "events" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "last_triggered" %}</th>
+                    <th>{% t "failures" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for wh in webhooks %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'integrations:webhook_detail' pk=wh.pk %}" style="color:var(--text-primary);text-decoration:none">
+                            {{ wh.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if wh.direction == 'outgoing' %}
+                            <span class="badge-pro badge-pro-info"><i class="bi bi-arrow-up-right" style="font-size:0.65rem"></i> {% t "outgoing" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-primary"><i class="bi bi-arrow-down-left" style="font-size:0.65rem"></i> {% t "incoming" %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width:250px">
+                        <span class="text-truncate text-pro-sm" style="display:block" title="{{ wh.url }}">{{ wh.url }}</span>
+                    </td>
+                    <td>
+                        {% if wh.event_types %}
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% for evt in wh.event_types|slice:":3" %}
+                                <span class="badge-pro badge-pro-neutral text-pro-xs">{{ evt }}</span>
+                                {% endfor %}
+                                {% if wh.event_types|length > 3 %}
+                                <span class="badge-pro badge-pro-neutral text-pro-xs">+{{ wh.event_types|length|add:"-3" }}</span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="text-pro-muted text-pro-sm">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if wh.status == 'active' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% elif wh.status == 'inactive' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+                        {% elif wh.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ wh.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{% if wh.last_triggered %}{{ wh.last_triggered|date:"d M Y H:i" }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if wh.failure_count > 0 %}
+                            <span class="badge-pro badge-pro-danger">{{ wh.failure_count }}</span>
+                        {% else %}
+                            <span class="text-pro-muted">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'integrations:webhook_detail' pk=wh.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% t 'view' %}">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <form method="post" action="{% url 'integrations:webhook_toggle' pk=wh.pk %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% if wh.is_active %}{% t 'deactivate' %}{% else %}{% t 'activate' %}{% endif %}">
+                                    {% if wh.is_active %}
+                                    <i class="bi bi-toggle2-on" style="color:var(--success-500)"></i>
+                                    {% else %}
+                                    <i class="bi bi-toggle2-off" style="color:var(--text-muted)"></i>
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if webhooks.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if webhooks.has_previous %}
+    <a href="?page={{ webhooks.previous_page_number }}&direction={{ direction }}&status={{ status }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in webhooks.paginator.page_range %}
+        {% if webhooks.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > webhooks.number|add:'-3' and num < webhooks.number|add:'3' %}
+        <a href="?page={{ num }}&direction={{ direction }}&status={{ status }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if webhooks.has_next %}
+    <a href="?page={{ webhooks.next_page_number }}&direction={{ direction }}&status={{ status }}&q={{ search }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-arrow-left-right"></i></div>
+    <h5 class="empty-state-title">{% t "no_webhooks" %}</h5>
+    <p class="empty-state-desc">{% t "no_webhooks_desc" %}</p>
+    <a href="{% url 'integrations:webhook_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_webhook" %}</a>
+</div>
+{% endif %}
+{% endblock %}

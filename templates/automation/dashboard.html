@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "automation_dashboard" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.auto-page-header{margin-bottom:var(--sp-6)}
+.auto-page-header h2{font-size:var(--text-3xl);font-weight:700;margin-bottom:var(--sp-1)}
+.auto-page-header p{color:var(--text-secondary);font-size:var(--text-sm)}
+
+.auto-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.auto-stat-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:box-shadow var(--transition-fast)}
+.auto-stat-card:hover{box-shadow:var(--shadow-md)}
+.auto-stat-card .stat-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;margin-bottom:var(--sp-3);flex-shrink:0}
+.auto-stat-card .stat-value{font-size:var(--text-3xl);font-weight:700;line-height:1;margin-bottom:var(--sp-1)}
+.auto-stat-card .stat-label{font-size:var(--text-xs);color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.auto-section{margin-bottom:var(--sp-6)}
+.auto-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.auto-section-header h3{font-size:var(--text-xl);font-weight:600}
+.auto-section-header .badge-count{font-size:var(--text-xs);background:var(--primary-50);color:var(--primary-600);padding:2px 8px;border-radius:var(--radius-full);font-weight:600}
+
+.auto-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.auto-table{width:100%;border-collapse:collapse}
+.auto-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page)}
+.auto-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.auto-table tr:last-child td{border-bottom:none}
+.auto-table tr:hover td{background:var(--bg-surface-hover)}
+
+.auto-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6}
+.auto-badge-success{background:var(--success-50);color:var(--success-700)}
+.auto-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.auto-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.auto-badge-info{background:var(--info-50);color:var(--info-700)}
+.auto-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.auto-badge-purple{background:var(--primary-50);color:var(--primary-700)}
+
+.auto-action-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.auto-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.auto-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.auto-action-btn.btn-primary:hover{background:var(--primary-700)}
+
+.auto-health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)}
+.auto-health-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);display:flex;align-items:center;gap:var(--sp-4)}
+.auto-health-card .health-icon{width:44px;height:44px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;flex-shrink:0}
+.auto-health-card .health-info{flex:1}
+.auto-health-card .health-value{font-size:var(--text-2xl);font-weight:700;line-height:1;margin-bottom:var(--sp-1)}
+.auto-health-card .health-label{font-size:var(--text-xs);color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.auto-quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--sp-4)}
+.auto-quick-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);display:flex;align-items:center;gap:var(--sp-4);text-decoration:none;color:var(--text-primary);transition:all var(--transition-fast)}
+.auto-quick-card:hover{border-color:var(--primary-400);box-shadow:var(--shadow-md);color:var(--text-primary)}
+.auto-quick-card .quick-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.auto-quick-card .quick-label{font-weight:600;font-size:var(--text-sm)}
+.auto-quick-card .quick-desc{font-size:var(--text-xs);color:var(--text-muted);margin-top:2px}
+
+.auto-empty{text-align:center;padding:var(--sp-10) var(--sp-4);color:var(--text-muted)}
+.auto-empty i{font-size:2rem;margin-bottom:var(--sp-3);display:block}
+</style>
+
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "automation_dashboard" %}</h1>
+        <p class="page-subtitle">{% t "overview_of_all_automation_rules" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'automation:rule_create' %}" class="auto-action-btn btn-primary" style="padding:var(--sp-2) var(--sp-5);font-size:var(--text-sm);height:40px">
+            <i class="bi bi-plus-lg"></i> Create Rule
+        </a>
+    </div>
+</header>
+
+<div class="auto-stats-grid">
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-play-circle"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">{{ active_rules }}</div>
+        <div class="stat-label">Active Rules</div>
+    </div>
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-calendar-check"></i></div>
+        <div class="stat-value" style="color:var(--info-600)">{{ total_executions_today }}</div>
+        <div class="stat-label">Executions Today</div>
+    </div>
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">
+            {% if total_executions_today %}{% widthratio successful_today total_executions_today 100 %}%{% else %}--{% endif %}
+        </div>
+        <div class="stat-label">Success Rate</div>
+    </div>
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-x-circle"></i></div>
+        <div class="stat-value" style="color:var(--danger-600)">{{ failed_today }}</div>
+        <div class="stat-label">Failed</div>
+    </div>
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-value" style="color:var(--warning-600)">{{ partial_today }}</div>
+        <div class="stat-label">Partial</div>
+    </div>
+    <div class="auto-stat-card">
+        <div class="stat-icon" style="background:var(--gray-100);color:var(--gray-600)"><i class="bi bi-pause-circle"></i></div>
+        <div class="stat-value" style="color:var(--gray-600)">{{ disabled_rules }}</div>
+        <div class="stat-label">Disabled</div>
+    </div>
+</div>
+
+<div class="auto-section">
+    <div class="auto-section-header">
+        <h3>Recent Failures</h3>
+        <a href="{% url 'automation:execution_list' %}?status=failed" style="font-size:var(--text-sm);font-weight:500">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="auto-table-wrap">
+        <table class="auto-table">
+            <thead>
+                <tr>
+                    <th>Rule</th>
+                    <th>Event</th>
+                    <th>Error</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exec in recent_failures %}
+                <tr>
+                    <td>
+                        <a href="{% url 'automation:rule_detail' pk=exec.rule.pk %}" style="font-weight:500;color:var(--primary-600);text-decoration:none">{{ exec.rule.name }}</a>
+                    </td>
+                    <td><span class="auto-badge auto-badge-gray">{{ exec.event_type }}</span></td>
+                    <td>
+                        <span style="font-size:var(--text-xs);color:var(--danger-600);max-width:300px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ exec.error_message|default:"—" }}</span>
+                    </td>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:var(--text-xs)">{{ exec.created_at|date:"d M H:i" }}</td>
+                    <td>
+                        <form method="post" action="{% url 'automation:execution_retry' pk=exec.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <button type="submit" class="auto-action-btn" title="Retry"><i class="bi bi-arrow-repeat"></i> Retry</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="auto-empty">
+                            <i class="bi bi-check-circle"></i>
+                            <div>No recent failures. All executions successful.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="auto-section">
+    <div class="auto-section-header">
+        <h3>Health Overview</h3>
+    </div>
+    <div class="auto-health-grid">
+        <div class="auto-health-card">
+            <div class="health-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-shield-check"></i></div>
+            <div class="health-info">
+                <div class="health-value" style="color:var(--success-600)">{{ healthy_rules }}</div>
+                <div class="health-label">Healthy</div>
+            </div>
+        </div>
+        <div class="auto-health-card">
+            <div class="health-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="health-info">
+                <div class="health-value" style="color:var(--warning-600)">{{ warning_rules }}</div>
+                <div class="health-label">Warning</div>
+            </div>
+        </div>
+        <div class="auto-health-card">
+            <div class="health-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-heart-pulse"></i></div>
+            <div class="health-info">
+                <div class="health-value" style="color:var(--danger-600)">{{ failing_rules }}</div>
+                <div class="health-label">Failing</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="auto-section">
+    <div class="auto-section-header">
+        <h3>Quick Links</h3>
+    </div>
+    <div class="auto-quick-grid">
+        <a href="{% url 'automation:rule_create' %}" class="auto-quick-card">
+            <div class="quick-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-plus-circle"></i></div>
+            <div>
+                <div class="quick-label">Create Rule</div>
+                <div class="quick-desc">Build a new automation rule</div>
+            </div>
+        </a>
+        <a href="{% url 'automation:execution_list' %}" class="auto-quick-card">
+            <div class="quick-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-journal-text"></i></div>
+            <div>
+                <div class="quick-label">View Logs</div>
+                <div class="quick-desc">Browse execution history</div>
+            </div>
+        </a>
+        <a href="{% url 'automation:templates' %}" class="auto-quick-card">
+            <div class="quick-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-collection"></i></div>
+            <div>
+                <div class="quick-label">Templates</div>
+                <div class="quick-desc">Pre-built rule templates</div>
+            </div>
+        </a>
+        <a href="{% url 'automation:analytics' %}" class="auto-quick-card">
+            <div class="quick-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-bar-chart"></i></div>
+            <div>
+                <div class="quick-label">Analytics</div>
+                <div class="quick-desc">Performance metrics</div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

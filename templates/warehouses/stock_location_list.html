@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "stock_by_location" %} — {{ warehouse.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}">{{ warehouse.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "stock_by_location" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{{ warehouse.name }} — {% t "stock_by_location" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "zone" %}</label>
+            <select name="zone" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_zones" %}</option>
+                {% for z in zones %}
+                <option value="{{ z.pk }}" {% if selected_zone == z.pk|stringformat:"d" %}selected{% endif %}>{{ z.name }} ({{ z.code }})</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "reserved" %}</th>
+                    <th>{% t "available" %}</th>
+                    <th>{% t "batch" %}</th>
+                    <th>{% t "last_updated" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.location.code }}</code></td>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.reserved|default:"0" }}</td>
+                    <td>
+                        <span class="{% if item.available > 0 %}fw-500{% else %}text-pro-muted{% endif %}">
+                            {{ item.available|default:item.quantity }}
+                        </span>
+                    </td>
+                    <td>{% if item.batch %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.batch }}</code>{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.last_updated|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div>
+                            <h5 class="empty-state-title">{% t "no_stock_at_locations" %}</h5>
+                            <p class="empty-state-desc">{% t "no_stock_records_found" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

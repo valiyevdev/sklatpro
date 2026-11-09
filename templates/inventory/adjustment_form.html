@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_adjustment" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+  .app-content {
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .app-content { padding: 1.5rem; }
+  }
+
+  @media (min-width: 1024px) {
+    .app-content { padding: 2rem; }
+  }
+
+  .adjf-shell {
+    width: 100%;
+    max-width: 768px;
+    margin: 0 auto;
+  }
+
+  .adjf-card {
+    width: 100%;
+    max-width: 768px;
+    padding: 24px;
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.8);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+  }
+
+  @media (min-width: 640px) {
+    .adjf-card { padding: 32px; }
+  }
+
+  .adjf-form {
+    display: block;
+  }
+
+  .adjf-field {
+    margin-bottom: 20px;
+  }
+
+  .adjf-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #cbd5e1;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .adjf-req {
+    margin-left: 2px;
+    color: #f87171;
+  }
+
+  .adjf-form .input-pro {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    background: rgba(2, 6, 23, 0.6);
+    color: #f1f5f9;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+
+  .adjf-form .input-pro::placeholder {
+    color: #64748b;
+  }
+
+  .adjf-form .input-pro:hover {
+    border-color: #334155;
+  }
+
+  .adjf-form .input-pro:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(2, 6, 23, 0.8);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  .adjf-form textarea.input-pro {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .adjf-form select.input-pro {
+    appearance: none;
+    padding-right: 44px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-size: 18px;
+  }
+
+  .adjf-form select.input-pro option {
+    background: #0f172a;
+    color: #e2e8f0;
+  }
+
+  .adjf-field--error .input-pro {
+    border-color: #ef4444;
+  }
+
+  .adjf-field--error .input-pro:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+
+  .adjf-error {
+    margin: 6px 0 0;
+    color: #fca5a5;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .adjf-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 12px;
+    background: rgba(127, 29, 29, 0.2);
+    color: #fca5a5;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .adjf-alert ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  .adjf-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(30, 41, 59, 0.7);
+  }
+
+  .adjf-actions > * {
+    width: 100%;
+  }
+
+  .adjf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 150ms ease, background-image 150ms ease,
+                border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  }
+
+  .adjf-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.45);
+  }
+
+  .adjf-btn--primary {
+    border: 1px solid transparent;
+    padding: 12px 24px;
+    background-color: #4f46e5;
+    background-image: linear-gradient(to right, #4f46e5, #7c3aed);
+    color: #fff;
+    box-shadow: 0 10px 20px -8px rgba(49, 46, 129, 0.65);
+  }
+
+  .adjf-btn--primary:hover {
+    background-image: linear-gradient(to right, #6366f1, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 14px 26px -8px rgba(79, 70, 229, 0.7);
+    transform: translateY(-1px);
+  }
+
+  .adjf-btn--primary:active {
+    transform: translateY(0);
+  }
+
+  .adjf-btn--secondary {
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    background: rgba(30, 41, 59, 0.6);
+    color: #cbd5e1;
+  }
+
+  .adjf-btn--secondary:hover {
+    border-color: rgba(71, 85, 105, 0.7);
+    background: #1e293b;
+    color: #f1f5f9;
+  }
+
+  .adjf-btn i {
+    font-size: 1.0625rem;
+  }
+
+  [data-theme="light"] .adjf-card {
+    border-color: rgba(203, 213, 225, 0.9);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1),
+                0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  }
+
+  [data-theme="light"] .adjf-label {
+    color: #334155;
+  }
+
+  [data-theme="light"] .adjf-form .input-pro {
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  [data-theme="light"] .adjf-form .input-pro::placeholder {
+    color: #94a3b8;
+  }
+
+  [data-theme="light"] .adjf-form .input-pro:hover {
+    border-color: #94a3b8;
+  }
+
+  [data-theme="light"] .adjf-form .input-pro:focus {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  }
+
+  [data-theme="light"] .adjf-form select.input-pro option {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  [data-theme="light"] .adjf-error {
+    color: #b91c1c;
+  }
+
+  [data-theme="light"] .adjf-alert {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  [data-theme="light"] .adjf-actions {
+    border-top-color: #e2e8f0;
+  }
+
+  [data-theme="light"] .adjf-btn--secondary {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  [data-theme="light"] .adjf-btn--secondary:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  @media (min-width: 640px) {
+    .adjf-actions {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .adjf-actions > * {
+      width: auto;
+    }
+  }
+
+</style>
+
+<div class="adjf-shell">
+  <div class="page-head adjf-head">
+    <a href="{% url 'adjustment_list' %}" class="back-btn" aria-label="Orqaga">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </a>
+    <div class="page-header-content">
+      <h1 class="page-title">{% t "create_adjustment" %}</h1>
+    </div>
+  </div>
+
+  <div class="adjf-card">
+    <form method="post" class="adjf-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="adjf-alert" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <div>
+          <ul>
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="adjf-field{% if form.warehouse.errors %} adjf-field--error{% endif %}">
+        <label class="adjf-label" for="{{ form.warehouse.id_for_label }}">
+          {% t "warehouse" %} <span class="adjf-req" aria-hidden="true">*</span>
+        </label>
+        {{ form.warehouse }}
+        {% if form.warehouse.errors %}
+        <p class="adjf-error" id="{{ form.warehouse.id_for_label }}_error">{{ form.warehouse.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="adjf-field{% if form.reason.errors %} adjf-field--error{% endif %}">
+        <label class="adjf-label" for="{{ form.reason.id_for_label }}">
+          {% t "reason" %}
+        </label>
+        {{ form.reason }}
+        {% if form.reason.errors %}
+        <p class="adjf-error" id="{{ form.reason.id_for_label }}_error">{{ form.reason.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="adjf-field{% if form.notes.errors %} adjf-field--error{% endif %}">
+        <label class="adjf-label" for="{{ form.notes.id_for_label }}">
+          {% t "notes" %}
+        </label>
+        {{ form.notes }}
+        {% if form.notes.errors %}
+        <p class="adjf-error" id="{{ form.notes.id_for_label }}_error">{{ form.notes.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="adjf-actions">
+        <a href="{% url 'adjustment_list' %}" class="adjf-btn adjf-btn--secondary">
+          {% t "cancel" %}
+        </a>
+        <button type="submit" class="adjf-btn adjf-btn--primary">
+          <i class="bi bi-check-circle" aria-hidden="true"></i>
+          {% t "create" %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

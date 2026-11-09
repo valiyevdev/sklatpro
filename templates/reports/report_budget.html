@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "budget_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "budget_report" %} {{ year }}</h1>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+{% if budgets %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "budgets" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "category" %}</th><th>{% t "month" %}</th><th>{% t "planned" %}</th><th>{% t "actual" %}</th><th>{% t "variance" %}</th><th>{% t "variance_percent" %}</th></tr></thead>
+            <tbody>
+                {% for b in budgets %}
+                <tr>
+                    <td class="fw-500">{{ b.category__name }}</td>
+                    <td>{{ b.month }}</td>
+                    <td>{{ b.planned|floatformat:0 }}</td>
+                    <td>{{ b.actual|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:{% with variance=b.actual|add:b.planned|add:"-0" %}{% if b.actual >= b.planned %}var(--danger-500){% else %}var(--success-600){% endif %}{% endwith %}">{{ b.variance|floatformat:0 }}</td>
+                    <td>
+                        {% if b.planned %}
+                        {% widthratio b.variance b.planned 100 as var_pct %}
+                        <span class="badge-pro {% if b.variance <= 0 %}badge-pro-success{% else %}badge-pro-danger{% endif %}">{{ var_pct|floatformat:1 }}%</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-pro">
+    <div class="card-pro-body text-center text-pro-muted">{% t "no_budgets_found" %}</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Integration Logs - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:integration_list' %}">{% t "Integrations" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Logs" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Integration Logs" %}</h1>
+        <p class="page-subtitle">{% t "Monitor API calls, sync operations, and integration events" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:integration_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro-body" style="padding:var(--sp-3) var(--sp-5)">
+        <form method="get" style="display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap">
+            <select name="provider" class="input-pro" style="width:auto;min-width:180px">
+                <option value="">{% t "All Providers" %}</option>
+                {% for p in providers %}
+                <option value="{{ p }}" {% if selected_provider == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="input-pro" style="width:auto;min-width:140px">
+                <option value="">{% t "All Statuses" %}</option>
+                <option value="success" {% if selected_status == 'success' %}selected{% endif %}>{% t "Success" %}</option>
+                <option value="error" {% if selected_status == 'error' %}selected{% endif %}>{% t "Error" %}</option>
+                <option value="warning" {% if selected_status == 'warning' %}selected{% endif %}>{% t "Warning" %}</option>
+                <option value="info" {% if selected_status == 'info' %}selected{% endif %}>{% t "Info" %}</option>
+            </select>
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-funnel"></i> {% t "Filter" %}</button>
+            {% if selected_provider or selected_status %}
+            <a href="{% url 'ecommerce:integration_logs' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-x-lg"></i> {% t "Clear" %}</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "Status" %}</th>
+                        <th>{% t "Action" %}</th>
+                        <th>{% t "Provider" %}</th>
+                        <th>{% t "Details" %}</th>
+                        <th>{% t "Timestamp" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>
+                            <span class="badge-pro badge-pro-{% if log.status == 'success' %}success{% elif log.status == 'error' %}danger{% elif log.status == 'warning' %}warning{% else %}info{% endif %} badge-pro-dot">
+                                {{ log.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="cell-primary">{{ log.action }}</td>
+                        <td><span class="badge-pro badge-pro-neutral">{{ log.provider }}</span></td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ log.details }}">{{ log.details|default:"-" }}</td>
+                        <td class="cell-muted">{{ log.created_at|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:var(--sp-10)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:56px;height:56px;margin:0 auto var(--sp-4)"><i class="bi bi-clock-history"></i></div>
+                                <div class="empty-state-title">{% t "No logs found" %}</div>
+                                <div class="empty-state-desc">{% t "Integration logs will appear here as operations occur." %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "business_insights_title" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "business_insights_title" %}</h2>
+    <p class="text-pro-sm text-pro-muted mb-0">{% t "business_insights_desc" %}</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ total_product_value|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_value" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ monthly_collections|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "monthly_collections" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-wallet2"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ overdue_count }}</div>
+            <div class="stat-card-label">{% t "overdue_debts" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ expiring_count }}</div>
+            <div class="stat-card-label">{% t "expiring_products" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-clock-history"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "category_breakdown" %}</span></div>
+        <div class="card-pro-body">
+            {% if category_data %}
+                {% for cat, count in category_data.items %}
+                <div class="d-flex justify-between align-center mb-2">
+                    <span class="text-pro-sm">{{ cat }}</span>
+                    <span class="badge-pro badge-pro-neutral">{{ count }}</span>
+                </div>
+                <div class="progress-pro mb-3">
+                    <div class="progress-pro-bar" style="width:{% widthratio count 20 100 %}%"></div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-pro-muted text-pro-sm" style="text-align:center;padding:2rem 0">{% t "no_data" %}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "stock_status" %}</span></div>
+        <div class="card-pro-body">
+            {% for label in stock_status_data.labels %}
+            <div class="d-flex justify-between align-center mb-2">
+                <span class="text-pro-sm">{{ label }}</span>
+                <span class="badge-pro badge-pro-neutral">{{ stock_status_data.data|slice:"0:1" }}</span>
+            </div>
+            {% endfor %}
+            {% for label in stock_status_data.labels %}
+            <div class="d-flex justify-between align-center" style="margin-bottom:0.5rem">
+                <span class="text-pro-sm">{{ label }}</span>
+                <span class="fw-600">{{ stock_status_data.data|length }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "top_products" %} (Top 10)</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr><th>{% t "product" %}</th><th>SKU</th><th>{% t "quantity_short" %}</th><th>{% t "unit_price" %}</th><th>{% t "total_value" %}</th></tr>
+            </thead>
+            <tbody>
+                {% for p in top_products %}
+                <tr>
+                    <td class="fw-500">{{ p.name }}</td>
+                    <td><code style="font-size:0.8rem;background:var(--gray-100);padding:0.125rem 0.375rem;border-radius:var(--radius-sm)">{{ p.sku }}</code></td>
+                    <td>{{ p.quantity }}</td>
+                    <td>${{ p.price }}</td>
+                    <td class="fw-600">${{ p.total_value|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5"><div class="empty-state"><p class="text-pro-muted">{% t "no_products" %}</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

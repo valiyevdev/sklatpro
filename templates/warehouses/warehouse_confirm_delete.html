@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_warehouse" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}">{{ warehouse.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "delete" %}</span>
+</div>
+
+<div style="max-width:480px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto var(--sp-5)">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 class="fw-600 mb-2">{% t "confirm_delete" %}</h3>
+            <p class="text-pro-muted mb-4"><strong>{{ warehouse.name }}</strong> ({{ warehouse.code }}) {% t "will_be_deleted_irreversible" %}</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-3 justify-center">
+                    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

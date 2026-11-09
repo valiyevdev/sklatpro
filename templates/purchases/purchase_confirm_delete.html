@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_purchase_confirm" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "delete_purchase_confirm" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:520px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto 1.5rem"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3 class="fw-600 mb-2" style="color:var(--gray-900)">{% t "confirm_delete" %}</h3>
+            <p class="text-pro-muted mb-4">{% t "will_be_deleted_irreversible" %}</p>
+        </div>
+        <div class="card-pro-body" style="border-top:1px solid var(--gray-200);padding:1.5rem 2rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 2rem;margin-bottom:1.5rem">
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "reference" %}</div>
+                    <div class="fw-600">{{ purchase.reference }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "supplier" %}</div>
+                    <div class="fw-600">{{ purchase.supplier.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "total_amount" %}</div>
+                    <div class="fw-600">${{ purchase.total|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "status" %}</div>
+                    <div>
+                        {% if purchase.status == 'draft' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "draft" %}</span>
+                        {% elif purchase.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                        {% elif purchase.status == 'received' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "received" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{{ purchase.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert-pro alert-pro-danger" style="margin-bottom:1.5rem;text-align:left">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span>{% t "delete_warning_irreversible" %}</span>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2" style="justify-content:center">
+                    <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

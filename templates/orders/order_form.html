@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "order" %} {% if order %}{% t "edit" %}{% else %}{% t "create" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'orders:order_list' %}">{% t "orders" %}</a>
+    <span class="separator">/</span>
+    {% if order %}
+        <a href="{% url 'orders:order_detail' pk=order.pk %}">{{ order.reference }}</a>
+        <span class="separator">/</span>
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-head">
+    <a href="{% url 'orders:order_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if order %}{% t "edit_order" %} {{ order.reference }}{% else %}{% t "new_order" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-people" style="color:var(--primary-600)"></i> {% t "general_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "customer" %} *</label>
+                        <select class="input-pro" name="customer" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for c in customers %}<option value="{{ c.pk }}" {% if order and order.customer_id == c.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "warehouse" %} *</label>
+                        <select class="input-pro" name="warehouse" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for w in warehouses %}<option value="{{ w.pk }}" {% if order and order.warehouse_id == w.pk %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "expected_delivery_date" %}</label>
+                        <input class="input-pro" type="date" name="expected_delivery_date" value="{% if order and order.expected_delivery_date %}{{ order.expected_delivery_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <select class="input-pro" name="priority">
+                            {% for val, label in priority_choices %}<option value="{{ val }}" {% if order and order.priority == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "payment_terms" %}</label>
+                        <select class="input-pro" name="payment_terms">
+                            {% for val, label in payment_terms_choices %}<option value="{{ val }}" {% if order and order.payment_terms == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "currency" %}</label>
+                        <select class="input-pro" name="currency">
+                            {% for val, label in currency_choices %}<option value="{{ val }}" {% if order and order.currency == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "discount" %}</label>
+                        <input class="input-pro" type="number" name="discount" step="0.01" min="0" value="{% if order %}{{ order.discount }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "tax" %}</label>
+                        <input class="input-pro" type="number" name="tax" step="0.01" min="0" value="{% if order %}{{ order.tax }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "coupon_code" %}</label>
+                        <input class="input-pro" type="text" name="coupon_code" value="" placeholder="{% t "enter_coupon" %}..." maxlength="50">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-truck" style="color:var(--primary-600)"></i> {% t "delivery_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group" style="grid-column:span 2">
+                        <label class="input-pro-label">{% t "delivery_address" %}</label>
+                        <textarea class="input-pro" name="delivery_address" rows="2">{% if order %}{{ order.delivery_address }}{% endif %}</textarea>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "delivery_phone" %}</label>
+                        <input class="input-pro" type="text" name="delivery_phone" value="{% if order %}{{ order.delivery_phone }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "delivery_method" %}</label>
+                        <input class="input-pro" type="text" name="delivery_method" value="{% if order %}{{ order.delivery_method }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "products" %}</span>
+                <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="addItem()"><i class="bi bi-plus"></i> {% t "add_product" %}</button>
+            </div>
+            <div id="items-container">
+                {% if items %}
+                    {% for item in items %}
+                    <div class="d-flex gap-2 mb-2 align-center" style="flex-wrap:wrap;padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--border-default)">
+                        <select class="input-pro" name="products" style="flex:2" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for p in products %}<option value="{{ p.pk }}" {% if item.product_id == p.pk %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+                        </select>
+                        <input class="input-pro" type="number" name="quantities" value="{{ item.quantity }}" placeholder="{% t "quantity_short" %}" min="1" style="flex:1" required>
+                        <input class="input-pro" type="number" name="prices" value="{{ item.unit_price }}" placeholder="{% t "unit_price" %}" min="0" step="0.01" style="flex:1" required>
+                        <input class="input-pro" type="number" name="item_discounts" value="{{ item.discount }}" placeholder="{% t "discount_short" %}" min="0" step="0.01" style="flex:0.7">
+                        <input class="input-pro" type="number" name="item_taxes" value="{{ item.tax }}" placeholder="{% t "tax_short" %}" min="0" step="0.01" style="flex:0.7">
+                        <button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="this.parentElement.remove();recalcTotal()" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="d-flex gap-2 mb-2 align-center" style="flex-wrap:wrap;padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--border-default)">
+                        <select class="input-pro" name="products" style="flex:2" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for p in products %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}
+                        </select>
+                        <input class="input-pro" type="number" name="quantities" placeholder="{% t "quantity_short" %}" min="1" style="flex:1" required>
+                        <input class="input-pro" type="number" name="prices" placeholder="{% t "unit_price" %}" min="0" step="0.01" style="flex:1" required>
+                        <input class="input-pro" type="number" name="item_discounts" placeholder="{% t "discount_short" %}" min="0" step="0.01" value="0" style="flex:0.7">
+                        <input class="input-pro" type="number" name="item_taxes" placeholder="{% t "tax_short" %}" min="0" step="0.01" value="0" style="flex:0.7">
+                        <button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="this.parentElement.remove();recalcTotal()" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "notes" %}</label>
+                        <textarea class="input-pro" name="notes" rows="2">{% if order %}{{ order.notes }}{% endif %}</textarea>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "customer_notes" %}</label>
+                        <textarea class="input-pro" name="customer_notes" rows="2">{% if order %}{{ order.customer_notes }}{% endif %}</textarea>
+                    </div>
+                    <div class="input-pro-group" style="grid-column:span 2">
+                        <label class="input-pro-label">{% t "internal_notes" %}</label>
+                        <textarea class="input-pro" name="internal_notes" rows="2">{% if order %}{{ order.internal_notes }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-between">
+            <a href="{% url 'orders:order_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if order %}{% t "update" %}{% else %}{% t "create" %}{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function addItem() {
+    var c = document.getElementById('items-container');
+    var tpl = '<div class="d-flex gap-2 mb-2 align-center" style="flex-wrap:wrap;padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--border-default)">';
+    tpl += '<select class="input-pro" name="products" style="flex:2" required><option value="">{% t "select" %}...</option>{% for p in products %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}</select>';
+    tpl += '<input class="input-pro" type="number" name="quantities" placeholder="{% t "quantity_short" %}" min="1" style="flex:1" required>';
+    tpl += '<input class="input-pro" type="number" name="prices" placeholder="{% t "unit_price" %}" min="0" step="0.01" style="flex:1" required>';
+    tpl += '<input class="input-pro" type="number" name="item_discounts" placeholder="{% t "discount_short" %}" min="0" step="0.01" value="0" style="flex:0.7">';
+    tpl += '<input class="input-pro" type="number" name="item_taxes" placeholder="{% t "tax_short" %}" min="0" step="0.01" value="0" style="flex:0.7">';
+    tpl += '<button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="this.parentElement.remove();recalcTotal()" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>';
+    tpl += '</div>';
+    c.insertAdjacentHTML('beforeend', tpl);
+}
+
+function getCsrfToken() {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var c = cookies[i].trim();
+        if (c.indexOf('csrftoken=') === 0) return c.substring(10);
+    }
+    return '';
+}
+
+function getItemRow(el) {
+    var container = document.getElementById('items-container');
+    while (el && el.parentElement !== container) el = el.parentElement;
+    return el;
+}
+
+function resolveItemPrice(row) {
+    var customerId = document.querySelector('form [name="customer"]').value;
+    var productEl = row.querySelector('select[name="products"]');
+    var productId = productEl ? productEl.value : '';
+    var qtyEl = row.querySelector('input[name="quantities"]');
+    var qty = qtyEl ? qtyEl.value || '1' : '1';
+    var priceInput = row.querySelector('input[name="prices"]');
+    var couponInput = document.querySelector('[name="coupon_code"]');
+    var couponCode = couponInput ? couponInput.value.trim() : '';
+
+    if (!productId || !customerId) return;
+
+    var params = new URLSearchParams({
+        product_id: productId,
+        customer_id: customerId,
+        quantity: qty
+    });
+    if (couponCode) params.set('coupon_code', couponCode);
+
+    fetch('/pricing/api/resolve/?' + params.toString(), {
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) return;
+        priceInput.value = data.final_price;
+        priceInput.setAttribute('data-auto-filled', 'true');
+        var tooltip = row.querySelector('.price-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('span');
+            tooltip.className = 'price-tooltip';
+            tooltip.style.cssText = 'font-size:11px;color:var(--primary-600);margin-left:4px;white-space:nowrap;';
+            priceInput.parentNode.insertBefore(tooltip, priceInput.nextSibling);
+        }
+        if (data.applied_rule !== 'product_default') {
+            var label = data.applied_rule === 'customer_specific' ? 'Customer Price' :
+                        data.applied_rule === 'price_list' ? (data.price_list || 'Price List') :
+                        data.applied_rule === 'promotion' ? 'Promo' :
+                        data.applied_rule === 'coupon' ? 'Coupon' : data.applied_rule;
+            tooltip.textContent = label;
+            tooltip.style.display = 'inline';
+        } else {
+            tooltip.style.display = 'none';
+        }
+    })
+    .catch(function() {});
+}
+
+document.getElementById('items-container').addEventListener('change', function(e) {
+    if (e.target.name === 'products') {
+        var row = getItemRow(e.target);
+        if (row) resolveItemPrice(row);
+    }
+});
+
+document.getElementById('items-container').addEventListener('input', function(e) {
+    if (e.target.name === 'quantities') {
+        var row = getItemRow(e.target);
+        if (row) resolveItemPrice(row);
+    }
+    if (e.target.name === 'prices') {
+        e.target.removeAttribute('data-auto-filled');
+        var row = getItemRow(e.target);
+        if (row) {
+            var tooltip = row.querySelector('.price-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    var couponInput = document.querySelector('[name="coupon_code"]');
+    if (couponInput) {
+        couponInput.addEventListener('input', function() {
+            document.querySelectorAll('#items-container > div').forEach(function(row) {
+                var priceInput = row.querySelector('input[name="prices"]');
+                if (priceInput && priceInput.getAttribute('data-auto-filled') === 'true') {
+                    resolveItemPrice(row);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

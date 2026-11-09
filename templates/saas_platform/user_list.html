@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}All Users — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-people" style="color:var(--primary-500)"></i> All Users</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Manage all users across the platform</p>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Users</div>
+            <div class="stat-card-value">{{ total_users }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Active Users</div>
+            <div class="stat-card-value">{{ active_users }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Super Admins</div>
+            <div class="stat-card-value">{{ super_admins }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-shield-lock"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <input class="input-pro" type="search" name="search" placeholder="{% t "search_by_name_or_email" %}" value="{{ search_query }}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="input-pro" name="role">
+                    <option value="">All Roles</option>
+                    <option value="SUPER_ADMIN" {% if role_filter == 'SUPER_ADMIN' %}selected{% endif %}>Super Admin</option>
+                    <option value="COMPANY_ADMIN" {% if role_filter == 'COMPANY_ADMIN' %}selected{% endif %}>Company Admin</option>
+                    <option value="MANAGER" {% if role_filter == 'MANAGER' %}selected{% endif %}>Manager</option>
+                    <option value="EMPLOYEE" {% if role_filter == 'EMPLOYEE' %}selected{% endif %}>Employee</option>
+                </select>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="cell-primary fw-500">
+                        <div class="d-flex align-center gap-2">
+                            <div style="width:32px;height:32px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--text-xs);flex-shrink:0">
+                                {% if u.profile_picture %}<img src="{{ u.profile_picture.url }}" style="width:32px;height:32px;border-radius:var(--radius-lg);object-fit:cover" alt="">
+                                {% else %}{{ u.get_full_name|default:u.username|first|upper }}{% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ u.get_full_name|default:u.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ u.email }}</td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if u.company %}
+                            <a href="{% url 'saas_platform:company_detail' company_id=u.company.pk %}" style="color:var(--text-link);text-decoration:none">{{ u.company.company_name }}</a>
+                        {% else %}
+                            <span style="color:var(--text-muted)">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge-pro {% if u.role == 'SUPER_ADMIN' %}badge-pro-danger{% elif u.role == 'COMPANY_ADMIN' %}badge-pro-warning{% elif u.role == 'MANAGER' %}badge-pro-primary{% else %}badge-pro-info{% endif %}">
+                            {{ u.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge-pro badge-pro-success">Active</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap">{{ u.date_joined|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                            <div class="empty-state-title">No users found</div>
+                            <div class="empty-state-desc">No users match your search criteria.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span style="font-size:var(--text-sm);color:var(--text-muted)">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

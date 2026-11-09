@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "sklat_ai" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:var(--sp-3)}
+.ai-page-header-left h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.ai-page-header-left h2 .ai-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;flex-shrink:0}
+.ai-page-header-left p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+
+.ai-gauge-section{display:grid;grid-template-columns:280px 1fr;gap:var(--sp-6);margin-bottom:var(--sp-6);align-items:start}
+.ai-gauge-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-6);text-align:center}
+.ai-gauge-wrap{position:relative;width:200px;height:200px;margin:0 auto var(--sp-4)}
+.ai-gauge-wrap svg{width:200px;height:200px;transform:rotate(-90deg)}
+.ai-gauge-wrap .gauge-bg{fill:none;stroke:var(--border-default);stroke-width:10}
+.ai-gauge-wrap .gauge-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1s ease}
+.ai-gauge-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ai-gauge-center .gauge-value{font-size:var(--text-4xl);font-weight:700;line-height:1}
+.ai-gauge-center .gauge-label{font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:var(--sp-1)}
+.ai-gauge-status{margin-top:var(--sp-3)}
+
+.ai-dimensions-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+.ai-dim-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:box-shadow var(--transition-fast)}
+.ai-dim-card:hover{box-shadow:var(--shadow-md)}
+.ai-dim-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3)}
+.ai-dim-card-header .dim-left{display:flex;align-items:center;gap:var(--sp-3)}
+.ai-dim-card-header .dim-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ai-dim-card-header .dim-name{font-weight:600;font-size:var(--text-sm)}
+.ai-dim-card-header .dim-score{font-size:var(--text-2xl);font-weight:700}
+.ai-dim-bar{height:6px;background:var(--bg-page);border-radius:3px;overflow:hidden;margin-bottom:var(--sp-2)}
+.ai-dim-bar-fill{height:100%;border-radius:3px;transition:width 0.8s ease}
+.ai-dim-status{font-size:var(--text-xs);font-weight:500;text-transform:uppercase;letter-spacing:0.03em}
+
+.ai-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.ai-stat-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:box-shadow var(--transition-fast)}
+.ai-stat-card:hover{box-shadow:var(--shadow-md)}
+.ai-stat-card .stat-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;margin-bottom:var(--sp-3);flex-shrink:0}
+.ai-stat-card .stat-value{font-size:var(--text-3xl);font-weight:700;line-height:1;margin-bottom:var(--sp-1)}
+.ai-stat-card .stat-label{font-size:var(--text-xs);color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.ai-section{margin-bottom:var(--sp-6)}
+.ai-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.ai-section-header h3{font-size:var(--text-xl);font-weight:600}
+.ai-section-header .badge-count{font-size:var(--text-xs);background:var(--primary-50);color:var(--primary-600);padding:2px 8px;border-radius:var(--radius-full);font-weight:600}
+
+.ai-insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--sp-4)}
+.ai-insight-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:all var(--transition-fast)}
+.ai-insight-card:hover{border-color:var(--primary-400);box-shadow:var(--shadow-md)}
+.ai-insight-card-header{display:flex;align-items:flex-start;gap:var(--sp-3);margin-bottom:var(--sp-3)}
+.ai-insight-card-header .insight-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ai-insight-card-header .insight-title{font-weight:600;font-size:var(--text-sm);line-height:1.4;flex:1}
+.ai-insight-card-desc{font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--leading-relaxed);margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ai-insight-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:var(--sp-3);border-top:1px solid var(--border-subtle)}
+.ai-insight-card-footer .insight-time{font-size:var(--text-xs);color:var(--text-muted)}
+
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.ai-badge-success{background:var(--success-50);color:var(--success-700)}
+.ai-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.ai-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.ai-badge-info{background:var(--info-50);color:var(--info-700)}
+.ai-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.ai-badge-purple{background:var(--primary-50);color:var(--primary-700)}
+
+.ai-recs-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ai-recs-table{width:100%;border-collapse:collapse}
+.ai-recs-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page)}
+.ai-recs-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.ai-recs-table tr:last-child td{border-bottom:none}
+.ai-recs-table tr:hover td{background:var(--bg-surface-hover)}
+
+.ai-action-btn{display:inline-flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-5);border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);font-family:var(--font-sans)}
+.ai-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.ai-action-btn .action-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ai-action-btn .action-text{text-align:left}
+.ai-action-btn .action-text .action-title{font-weight:600;font-size:var(--text-sm);color:var(--text-primary)}
+.ai-action-btn .action-text .action-desc{font-size:var(--text-xs);color:var(--text-muted)}
+
+.ai-actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4)}
+
+.ai-empty{text-align:center;padding:var(--sp-10) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2rem;margin-bottom:var(--sp-3);display:block}
+
+@media(max-width:1200px){
+    .ai-gauge-section{grid-template-columns:1fr}
+    .ai-dimensions-grid{grid-template-columns:1fr 1fr}
+    .ai-stats-grid{grid-template-columns:repeat(2,1fr)}
+    .ai-actions-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+    .ai-dimensions-grid{grid-template-columns:1fr}
+    .ai-stats-grid{grid-template-columns:1fr}
+    .ai-actions-grid{grid-template-columns:1fr}
+    .ai-insights-grid{grid-template-columns:1fr}
+}
+</style>
+
+<div class="ai-page-header">
+    <div class="ai-page-header-left">
+        <h2>
+            <span class="ai-icon"><i class="bi bi-stars"></i></span>
+            SKLAT AI
+        </h2>
+        <p>{% t "ai_business_intelligence" %}</p>
+    </div>
+</div>
+
+<div class="ai-gauge-section">
+    <div class="ai-gauge-card">
+        <div style="font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--sp-4);text-transform:uppercase;letter-spacing:0.04em">{% t "business_health_score" %}</div>
+        <div class="ai-gauge-wrap">
+            <svg viewBox="0 0 200 200">
+                <circle class="gauge-bg" cx="100" cy="100" r="85"/>
+                <circle class="gauge-fill" cx="100" cy="100" r="85"
+                    stroke="{% if health.status == 'healthy' %}var(--success-500){% elif health.status == 'watch' %}var(--warning-500){% else %}var(--danger-500){% endif %}"
+                    stroke-dasharray="534"
+                    stroke-dashoffset="534"/>
+            </svg>
+            <div class="ai-gauge-center">
+                <div class="gauge-value" style="color:{% if health.status == 'healthy' %}var(--success-600){% elif health.status == 'watch' %}var(--warning-600){% else %}var(--danger-600){% endif %}">{{ health.overall|default:"--" }}</div>
+                <div class="gauge-label">{% t "out_of_100" %}</div>
+            </div>
+        </div>
+        <div class="ai-gauge-status">
+            <span class="ai-badge ai-badge-{% if health.status == 'healthy' %}success{% elif health.status == 'watch' %}warning{% elif health.status == 'critical' %}danger{% else %}gray{% endif %}">
+                <i class="bi bi-{% if health.status == 'healthy' %}check-circle-fill{% elif health.status == 'watch' %}exclamation-triangle-fill{% elif health.status == 'critical' %}x-circle-fill{% else %}dash-circle{% endif %}" style="font-size:0.625rem"></i>
+                {{ health.status|title|default:"Unknown" }}
+            </span>
+        </div>
+    </div>
+
+    <div class="ai-dimensions-grid">
+        {% for dim in health.dimensions %}
+        <div class="ai-dim-card">
+            <div class="ai-dim-card-header">
+                <div class="dim-left">
+                    <div class="dim-icon" style="background:{% if dim.key == 'sales' %}var(--success-50);color:var(--success-600){% elif dim.key == 'inventory' %}var(--info-50);color:var(--info-600){% elif dim.key == 'finance' %}var(--primary-50);color:var(--primary-600){% elif dim.key == 'customers' %}var(--warning-50);color:var(--warning-600){% else %}var(--gray-100);color:var(--gray-600){% endif %}">
+                        <i class="bi bi-{% if dim.key == 'sales' %}graph-up-arrow{% elif dim.key == 'inventory' %}box-seam{% elif dim.key == 'finance' %}cash-stack{% elif dim.key == 'customers' %}people{% else %}gear{% endif %}"></i>
+                    </div>
+                    <span class="dim-name">{{ dim.name }}</span>
+                </div>
+                <span class="dim-score" style="color:{% if dim.score >= 75 %}var(--success-600){% elif dim.score >= 50 %}var(--warning-600){% else %}var(--danger-600){% endif %}">{{ dim.score }}</span>
+            </div>
+            <div class="ai-dim-bar">
+                <div class="ai-dim-bar-fill" style="width:{{ dim.score }}%;background:{% if dim.score >= 75 %}var(--success-500){% elif dim.score >= 50 %}var(--warning-500){% else %}var(--danger-500){% endif %}"></div>
+            </div>
+            <span class="ai-dim-status" style="color:{% if dim.status == 'healthy' %}var(--success-600){% elif dim.status == 'watch' %}var(--warning-600){% else %}var(--danger-600){% endif %}">{{ dim.status|title|default:"N/A" }}</span>
+        </div>
+        {% empty %}
+        <div class="ai-dim-card" style="grid-column:1/-1">
+            <div class="ai-empty">
+                <i class="bi bi-clipboard-data"></i>
+                <div>No health dimensions available.</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ai-stats-grid">
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-lightbulb"></i></div>
+        <div class="stat-value" style="color:var(--primary-600)">{{ insights_count|default:"0" }}</div>
+        <div class="stat-label">{% t "insights_today" %}</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-clipboard-check"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">{{ recommendations_count|default:"0" }}</div>
+        <div class="stat-label">{% t "recommendations_active" %}</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-cpu"></i></div>
+        <div class="stat-value" style="color:var(--info-600)">{{ usage_today.requests|default:"0" }}</div>
+        <div class="stat-label">{% t "ai_requests_today" %}</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-bullseye"></i></div>
+        <div class="stat-value" style="color:var(--warning-600)">{{ usage_today.confidence_avg|default:"0" }}<span style="font-size:var(--text-lg);font-weight:500">%</span></div>
+        <div class="stat-label">{% t "confidence_avg" %}</div>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-lightbulb" style="color:var(--primary-600);margin-right:var(--sp-2)"></i>{% t "recent_insights" %}</h3>
+        <a href="{% url 'sklat_ai:insights' %}" style="font-size:var(--text-sm);font-weight:500;text-decoration:none;color:var(--text-secondary)">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="ai-insights-grid">
+        {% for insight in recent_insights %}
+        <div class="ai-insight-card">
+            <div class="ai-insight-card-header">
+                <div class="insight-icon" style="background:{% if insight.type == 'trend' %}var(--info-50);color:var(--info-600){% elif insight.type == 'anomaly' %}var(--danger-50);color:var(--danger-600){% elif insight.type == 'opportunity' %}var(--success-50);color:var(--success-600){% elif insight.type == 'risk' %}var(--warning-50);color:var(--warning-600){% else %}var(--primary-50);color:var(--primary-600){% endif %}">
+                    <i class="bi bi-{% if insight.type == 'trend' %}graph-up{% elif insight.type == 'anomaly' %}exclamation-triangle{% elif insight.type == 'opportunity' %}lightning{% elif insight.type == 'risk' %}shield-exclamation{% else %}info-circle{% endif %}"></i>
+                </div>
+                <div class="insight-title">{{ insight.title }}</div>
+            </div>
+            <div class="ai-insight-card-desc">{{ insight.description }}</div>
+            <div class="ai-insight-card-footer">
+                <span class="ai-badge ai-badge-{% if insight.priority == 'high' %}danger{% elif insight.priority == 'medium' %}warning{% elif insight.priority == 'low' %}info{% else %}gray{% endif %}">{{ insight.priority|title|default:"Normal" }}</span>
+                <span class="insight-time">{{ insight.created_at|timesince|default:"recently" }} ago</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="ai-empty" style="grid-column:1/-1">
+            <i class="bi bi-lightbulb"></i>
+            <div>No insights generated yet. Start analyzing your data.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-clipboard-check" style="color:var(--success-600);margin-right:var(--sp-2)"></i>{% t "recommendations" %}</h3>
+        <a href="{% url 'sklat_ai:recommendations' %}" style="font-size:var(--text-sm);font-weight:500;text-decoration:none;color:var(--text-secondary)">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="ai-recs-table-wrap">
+        <table class="ai-recs-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th style="text-align:right">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recent_recommendations %}
+                <tr>
+                    <td><span class="ai-badge ai-badge-gray">{{ rec.category|title|default:"General" }}</span></td>
+                    <td>
+                        <span class="ai-badge ai-badge-{% if rec.priority == 'critical' %}danger{% elif rec.priority == 'high' %}danger{% elif rec.priority == 'medium' %}warning{% elif rec.priority == 'low' %}info{% else %}gray{% endif %}">
+                            {% if rec.priority == 'critical' or rec.priority == 'high' %}<i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i>{% endif %}
+                            {{ rec.priority|title|default:"Normal" }}
+                        </span>
+                    </td>
+                    <td style="font-weight:500;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rec.title }}</td>
+                    <td>
+                        <span class="ai-badge ai-badge-{% if rec.status == 'active' %}success{% elif rec.status == 'dismissed' %}gray{% elif rec.status == 'implemented' %}purple{% else %}info{% endif %}">
+                            {{ rec.status|title|default:"Pending" }}
+                        </span>
+                    </td>
+                    <td style="text-align:right">
+                        <a href="{% url 'sklat_ai:insights' pk=rec.pk %}" class="ai-action-btn" style="padding:var(--sp-1) var(--sp-3);font-size:var(--text-xs);height:28px">
+                            Review <i class="bi bi-arrow-right" style="font-size:0.625rem"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="ai-empty">
+                            <i class="bi bi-clipboard"></i>
+                            <div>No recommendations yet. AI is analyzing your business data.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-lightning-charge" style="color:var(--warning-600);margin-right:var(--sp-2)"></i>{% t "quick_actions" %}</h3>
+    </div>
+    <div class="ai-actions-grid">
+        <a href="{% url 'sklat_ai:chat' %}" class="ai-action-btn">
+            <div class="action-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-chat-dots"></i></div>
+            <div class="action-text">
+                <div class="action-title">{% t "ask_ai" %}</div>
+                <div class="action-desc">{% t "ask_ai_desc" %}</div>
+            </div>
+        </a>
+        <a href="{% url 'sklat_ai:insights' %}" class="ai-action-btn">
+            <div class="action-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-lightbulb"></i></div>
+            <div class="action-text">
+                <div class="action-title">{% t "view_insights" %}</div>
+                <div class="action-desc">{% t "view_insights_desc" %}</div>
+            </div>
+        </a>
+        <a href="{% url 'sklat_ai:forecasts' %}" class="ai-action-btn">
+            <div class="action-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="action-text">
+                <div class="action-title">{% t "forecasts" %}</div>
+                <div class="action-desc">{% t "forecasts_desc" %}</div>
+            </div>
+        </a>
+        <a href="{% url 'sklat_ai:action_center' %}" class="ai-action-btn">
+            <div class="action-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-bell"></i></div>
+            <div class="action-text">
+                <div class="action-title">{% t "action_center" %}</div>
+                <div class="action-desc">{% t "action_center_desc" %}</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<script>
+(function(){
+    var gaugeFill=document.querySelector('.gauge-fill');
+    if(!gaugeFill)return;
+    var score=parseInt('{{ health.overall|default:0 }}',10);
+    var circumference=2*Math.PI*85;
+    gaugeFill.setAttribute('stroke-dasharray',circumference);
+    gaugeFill.style.strokeDashoffset=circumference;
+    requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+            var offset=circumference-(score/100)*circumference;
+            gaugeFill.style.strokeDashoffset=offset;
+        });
+    });
+})();
+</script>
+{% endblock %}

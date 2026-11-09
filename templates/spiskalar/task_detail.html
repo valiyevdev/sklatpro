@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ task.title }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'spiskalar:task_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ task.title }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">
+            <span class="badge-pro badge-pro-neutral">{{ task.get_task_type_display }}</span>
+            {% if task.status == 'completed' %}<span class="badge-pro badge-pro-success">{% t "task_completed_status" %}</span>
+            {% elif task.status == 'in_progress' %}<span class="badge-pro badge-pro-info">{% t "task_in_progress" %}</span>
+            {% elif task.status == 'blocked' %}<span class="badge-pro badge-pro-danger">{% t "task_blocked" %}</span>
+            {% elif task.status == 'waiting' %}<span class="badge-pro badge-pro-warning">{% t "task_waiting" %}</span>
+            {% elif task.status == 'backlog' %}<span class="badge-pro badge-pro-neutral">{% t "task_backlog" %}</span>
+            {% else %}<span class="badge-pro badge-pro-warning">{% t "task_pending" %}</span>{% endif %}
+            {% if task.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+            {% elif task.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "priority_high" %}</span>
+            {% elif task.priority == 'normal' %}<span class="badge-pro badge-pro-info">{% t "priority_normal" %}</span>
+            {% else %}<span class="badge-pro badge-pro-neutral">{% t "priority_low" %}</span>{% endif %}
+            {% if task.is_overdue %}<span class="badge-pro badge-pro-danger">{% t "overdue_count" %}</span>{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <form method="post" action="{% url 'spiskalar:task_complete' pk=task.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "complete_task" %}</button>
+        </form>
+        <a href="{% url 'spiskalar:task_update' pk=task.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <form method="post" action="{% url 'spiskalar:task_delete' pk=task.pk %}" style="display:inline" onsubmit="return confirm('{% t "confirm_delete_task" %}')">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></button>
+        </form>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem">
+    <div>
+        {% if task.description %}
+        <div class="card-pro mb-4">
+            <div class="card-pro-header"><span class="card-pro-title">{% t "task_description" %}</span></div>
+            <div class="card-pro-body"><p class="text-pro-sm">{{ task.description|linebreaksbr }}</p></div>
+        </div>
+        {% endif %}
+
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title">{% t "checklist" %}</span>
+                <span class="text-pro-sm text-pro-muted">{{ task.progress }}%</span>
+            </div>
+            <div class="card-pro-body" style="padding:0.5rem 1rem">
+                <div class="progress-pro mb-3" style="height:6px"><div class="progress-pro-bar {% if task.progress == 100 %}success{% endif %}" style="width:{{ task.progress }}%"></div></div>
+                {% for item in checklist %}
+                <div class="d-flex align-center gap-3 mb-2" style="padding:0.5rem;border-radius:var(--radius-md);{% if item.completed %}opacity:0.6{% endif %}">
+                    <form method="post" action="{% url 'spiskalar:checklist_toggle' pk=task.pk item_pk=item.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit" style="background:none;border:none;cursor:pointer;padding:0">
+                            <i class="bi {% if item.completed %}bi-check-square-fill text-pro-success{% else %}bi-square{% endif %}" style="font-size:1.2rem"></i>
+                        </button>
+                    </form>
+                    <span class="text-pro-sm {% if item.completed %}text-pro-muted" style="text-decoration:line-through{% endif %}">{{ item.title }}</span>
+                    <form method="post" action="{% url 'spiskalar:checklist_delete' pk=task.pk item_pk=item.pk %}" style="display:inline;margin-left:auto">
+                        {% csrf_token %}
+                        <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--text-muted)"><i class="bi bi-x"></i></button>
+                    </form>
+                </div>
+                {% empty %}
+                <p class="text-pro-muted text-pro-sm mb-2">{% t "no_tasks" %}</p>
+                {% endfor %}
+                <form method="post" action="{% url 'spiskalar:checklist_add' pk=task.pk %}" class="d-flex gap-2 mt-3">
+                    {% csrf_token %}
+                    <input type="text" name="title" class="input-pro" placeholder="{% t "add_checklist_item" %}" style="flex:1" required>
+                    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-pro mb-4">
+            <div class="card-pro-header"><span class="card-pro-title">{% t "comments" %} ({{ comments|length }})</span></div>
+            <div class="card-pro-body">
+                {% for c in comments %}
+                <div class="d-flex gap-3 mb-3" style="padding-bottom:0.75rem;{% if not forloop.last %}border-bottom:1px solid var(--border-primary){% endif %}">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-100);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:var(--primary-600)">{{ c.user.first_name.0 }}{{ c.user.last_name.0 }}</div>
+                    <div style="flex:1">
+                        <div class="d-flex align-center gap-2 mb-1">
+                            <span class="fw-500 text-pro-sm">{{ c.user.get_full_name }}</span>
+                            <span class="text-pro-xs text-pro-muted">{{ c.created_at|date:"d.m.Y H:i" }}</span>
+                            {% if c.user == request.user or request.user.role == 'COMPANY_ADMIN' %}
+                            <form method="post" action="{% url 'spiskalar:task_comment_delete' pk=task.pk comment_pk=c.pk %}" style="display:inline;margin-left:auto">
+                                {% csrf_token %}
+                                <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--text-muted)"><i class="bi bi-trash" style="font-size:0.7rem"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <p class="text-pro-sm" style="margin:0">{{ c.text }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-pro-muted text-pro-sm">{% t "no_comments" %}</p>
+                {% endfor %}
+                <form method="post" action="{% url 'spiskalar:task_comment_add' pk=task.pk %}" class="mt-3">
+                    {% csrf_token %}
+                    <textarea name="text" class="input-pro" rows="3" placeholder="{% t "write_comment" %}" required></textarea>
+                    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm mt-2"><i class="bi bi-send"></i> {% t "add_comment" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header"><span class="card-pro-title">{% t "task_details_tab" %}</span></div>
+            <div class="card-pro-body">
+                <div class="mb-3">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "task_assigned_to" %}</div>
+                    <form method="post" action="{% url 'spiskalar:task_assign' pk=task.pk %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <select name="assigned_to" class="input-pro" style="flex:1" onchange="this.form.submit()">
+                            <option value="">{% t "unassigned" %}</option>
+                            {% for e in employees %}<option value="{{ e.pk }}" {% if task.assigned_to_id == e.pk %}selected{% endif %}>{{ e.get_full_name }}</option>{% endfor %}
+                        </select>
+                    </form>
+                </div>
+                <div class="mb-3">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "task_due_date" %}</div>
+                    <div class="text-pro-sm {% if task.is_overdue %}text-pro-danger fw-600{% endif %}">
+                        {% if task.due_date %}{{ task.due_date|date:"d.m.Y" }}{% if task.is_overdue %} ({% t "overdue_count" %}){% elif task.days_until_due == 0 %} ({% t "due_today" %}){% elif task.days_until_due <= 3 %} ({% t "due_soon" %}){% endif %}{% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "task_created_by" %}</div>
+                    <div class="text-pro-sm">{{ task.created_by.get_full_name }} <span class="text-pro-muted">{{ task.created_at|date:"d.m.Y H:i" }}</span></div>
+                </div>
+                {% if task.completed_by %}
+                <div class="mb-3">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "task_completed_by" %}</div>
+                    <div class="text-pro-sm">{{ task.completed_by.get_full_name }} <span class="text-pro-muted">{{ task.completed_at|date:"d.m.Y H:i" }}</span></div>
+                </div>
+                {% endif %}
+                {% if task.notes %}
+                <div class="mb-3">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "task_notes" %}</div>
+                    <div class="text-pro-sm">{{ task.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-pro mb-4">
+            <div class="card-pro-header"><span class="card-pro-title">{% t "task_status" %}</span></div>
+            <div class="card-pro-body">
+                <div class="d-flex gap-2" style="flex-wrap:wrap">
+                    {% for val, label in task.STATUS_CHOICES %}
+                    <form method="post" action="{% url 'spiskalar:task_update_status' pk=task.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="{{ val }}">
+                        <button type="submit" class="btn-pro btn-pro-sm {% if task.status == val %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}">{{ label }}</button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if activities %}
+        <div class="card-pro">
+            <div class="card-pro-header"><span class="card-pro-title">{% t "activity_log" %}</span></div>
+            <div class="card-pro-body" style="max-height:300px;overflow-y:auto">
+                {% for a in activities %}
+                <div class="d-flex gap-2 mb-2" style="padding-bottom:0.5rem;{% if not forloop.last %}border-bottom:1px solid var(--border-primary){% endif %}">
+                    <div style="width:6px;height:6px;border-radius:50%;background:var(--primary-400);margin-top:6px;flex-shrink:0"></div>
+                    <div>
+                        <div class="text-pro-xs" style="color:var(--text-primary)">{{ a.description }}</div>
+                        <div class="text-pro-xs text-pro-muted">{% if a.user %}{{ a.user.get_full_name }}{% endif %} · {{ a.created_at|date:"d.m H:i" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

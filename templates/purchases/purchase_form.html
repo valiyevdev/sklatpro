@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "purchase" %} {% if purchase %}{% t "edit" %}{% else %}{% t "create" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'purchases:purchase_list' %}">{% t "purchases" %}</a>
+    <span class="separator">/</span>
+    {% if purchase %}
+        <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}">{{ purchase.reference }}</a>
+        <span class="separator">/</span>
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if purchase %}{% t "edit_purchase" %}{% else %}{% t "new_purchase" %}{% endif %}</h1>
+        <p class="page-subtitle">{% if purchase %}{{ purchase.reference }}{% else %}{% t "fill_purchase_details" %}{% endif %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'purchases:purchase_list' %}" class="btn-pro btn-pro-ghost">
+            <i class="bi bi-arrow-left"></i> {% t "back" %}
+        </a>
+    </div>
+</div>
+
+<form method="post" id="purchaseForm">
+    {% csrf_token %}
+
+    <div class="form-section mb-6">
+        <h3 class="form-section-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "purchase_details" %}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "supplier" %} <span class="required">*</span></label>
+                <select class="input-pro" name="supplier" required>
+                    <option value="">{% t "select_supplier" %}...</option>
+                    {% for s in suppliers %}
+                        <option value="{{ s.pk }}" {% if purchase and purchase.supplier_id == s.pk %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "warehouse" %} <span class="required">*</span></label>
+                <select class="input-pro" name="warehouse" required>
+                    <option value="">{% t "select_warehouse" %}...</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.pk }}" {% if purchase and purchase.warehouse_id == w.pk %}selected{% endif %}>{{ w.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "expected_delivery_date" %}</label>
+                <input class="input-pro" type="date" name="expected_delivery_date" value="{% if purchase and purchase.expected_delivery_date %}{{ purchase.expected_delivery_date|date:'Y-m-d' }}{% endif %}">
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "payment_terms" %}</label>
+                <select class="input-pro" name="payment_terms">
+                    {% for val, label in payment_terms_choices %}
+                        <option value="{{ val }}" {% if purchase and purchase.payment_terms == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "currency" %}</label>
+                <select class="input-pro" name="currency">
+                    {% for val, label in currency_choices %}
+                        <option value="{{ val }}" {% if purchase and purchase.currency == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "discount" %}</label>
+                <input class="input-pro" type="number" name="discount" value="{% if purchase %}{{ purchase.discount }}{% else %}0{% endif %}" min="0" step="0.01">
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "tax" %}</label>
+                <input class="input-pro" type="number" name="tax" value="{% if purchase %}{{ purchase.tax }}{% else %}0{% endif %}" min="0" step="0.01">
+            </div>
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "notes" %}</label>
+                <textarea class="input-pro" name="notes" rows="1" placeholder="{% t "additional_notes" %}...">{% if purchase %}{{ purchase.notes }}{% endif %}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section mb-6">
+        <div class="d-flex align-center justify-between mb-4">
+            <h3 class="form-section-title" style="margin-bottom:0;padding-bottom:0;border-bottom:none"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</h3>
+            <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="addItem()"><i class="bi bi-plus-lg"></i> {% t "add_item" %}</button>
+        </div>
+
+        <div id="items-container">
+            {% if items %}
+                {% for item in items %}
+                <div class="item-row d-flex gap-3 mb-3 align-center" style="flex-wrap:wrap;padding:var(--sp-3);border:1px solid var(--border-default);border-radius:var(--radius-lg)">
+                    <select class="input-pro" name="products" style="flex:3;min-width:200px" required>
+                        <option value="">{% t "select_product" %}...</option>
+                        {% for p in products %}
+                            <option value="{{ p.pk }}" {% if item.product_id == p.pk %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="input-pro item-qty" type="number" name="quantities" value="{{ item.quantity }}" placeholder="{% t "qty" %}" min="1" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-price" type="number" name="prices" value="{{ item.unit_price }}" placeholder="{% t "unit_price" %}" min="0" step="0.01" style="flex:1;min-width:100px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-discount" type="number" name="item_discounts" value="{{ item.discount }}" placeholder="{% t "discount_short" %}" min="0" step="0.01" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-tax" type="number" name="item_taxes" value="{{ item.tax }}" placeholder="{% t "tax_short" %}" min="0" step="0.01" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <span class="item-total fw-600 text-pro-sm" style="min-width:80px;text-align:right">$0.00</span>
+                    <button type="button" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" onclick="removeItem(this)" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="item-row d-flex gap-3 mb-3 align-center" style="flex-wrap:wrap;padding:var(--sp-3);border:1px solid var(--border-default);border-radius:var(--radius-lg)">
+                    <select class="input-pro" name="products" style="flex:3;min-width:200px" required>
+                        <option value="">{% t "select_product" %}...</option>
+                        {% for p in products %}
+                            <option value="{{ p.pk }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="input-pro item-qty" type="number" name="quantities" placeholder="{% t "qty" %}" min="1" value="1" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-price" type="number" name="prices" placeholder="{% t "unit_price" %}" min="0" step="0.01" style="flex:1;min-width:100px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-discount" type="number" name="item_discounts" placeholder="{% t "discount_short" %}" min="0" step="0.01" value="0" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <input class="input-pro item-tax" type="number" name="item_taxes" placeholder="{% t "tax_short" %}" min="0" step="0.01" value="0" style="flex:1;min-width:80px" oninput="calcLineTotal(this)">
+                    <span class="item-total fw-600 text-pro-sm" style="min-width:80px;text-align:right">$0.00</span>
+                    <button type="button" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" onclick="removeItem(this)" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-between">
+        <a href="{% url 'purchases:purchase_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if purchase %}{% t "update" %}{% else %}{% t "create" %}{% endif %}</button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addItem() {
+    var container = document.getElementById('items-container');
+    var firstRow = container.querySelector('.item-row');
+    var newRow = firstRow.cloneNode(true);
+    newRow.querySelectorAll('select,input').forEach(function(el) {
+        if (el.type === 'number' && (el.name === 'quantities')) {
+            el.value = '1';
+        } else {
+            el.value = '';
+        }
+    });
+    newRow.querySelector('.item-total').textContent = '$0.00';
+    container.appendChild(newRow);
+    calcLineTotal(newRow.querySelector('.item-qty'));
+}
+
+function removeItem(btn) {
+    var container = document.getElementById('items-container');
+    var rows = container.querySelectorAll('.item-row');
+    if (rows.length > 1) {
+        btn.closest('.item-row').remove();
+    }
+}
+
+function calcLineTotal(el) {
+    var row = el.closest('.item-row');
+    var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+    var price = parseFloat(row.querySelector('.item-price').value) || 0;
+    var discount = parseFloat(row.querySelector('.item-discount').value) || 0;
+    var tax = parseFloat(row.querySelector('.item-tax').value) || 0;
+    var total = (qty * price) - discount + tax;
+    row.querySelector('.item-total').textContent = '$' + total.toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.item-qty').forEach(function(el) {
+        calcLineTotal(el);
+    });
+});
+</script>
+{% endblock %}

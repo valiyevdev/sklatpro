@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Shipping Methods - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:integration_list' %}">{% t "Integrations" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Shipping" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Shipping Methods" %}</h1>
+        <p class="page-subtitle">{% t "Configure shipping rates and delivery options" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:integration_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back" %}
+        </a>
+    </div>
+</div>
+
+<div class="form-section" style="margin-bottom:var(--sp-6)">
+    <h3 class="form-section-title"><i class="bi bi-plus-circle" style="margin-right:var(--sp-2)"></i>{% t "Add Shipping Method" %}</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:var(--sp-4);align-items:end">
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Name" %} <span class="required">*</span></label>
+                <input type="text" name="name" class="input-pro" required placeholder="Masalan, standart yetkazib berish">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Code" %} <span class="required">*</span></label>
+                <input type="text" name="code" class="input-pro" required placeholder="Masalan, STD">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Calculation" %}</label>
+                <select name="calculation" class="input-pro">
+                    <option value="fixed">{% t "Fixed Fee" %}</option>
+                    <option value="per_kg">{% t "Per Kilogram" %}</option>
+                    <option value="free">{% t "Free Shipping" %}</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-pro btn-pro-primary" style="margin-bottom:0"><i class="bi bi-plus-lg"></i> {% t "Add" %}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:var(--sp-4);margin-top:var(--sp-4)">
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Base Fee" %} (so'm)</label>
+                <input type="number" name="base_fee" class="input-pro" min="0" step="100" value="0">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Per KG Fee" %} (so'm)</label>
+                <input type="number" name="per_kg_fee" class="input-pro" min="0" step="100" value="0">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Min Days" %}</label>
+                <input type="number" name="estimated_days_min" class="input-pro" min="0" value="1">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Max Days" %}</label>
+                <input type="number" name="estimated_days_max" class="input-pro" min="0" value="7">
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-truck" style="margin-right:var(--sp-2);color:var(--warning-500)"></i>{% t "Configured Methods" %}</h3>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "Method" %}</th>
+                        <th>{% t "Code" %}</th>
+                        <th>{% t "Calculation" %}</th>
+                        <th style="text-align:right">{% t "Base Fee" %}</th>
+                        <th style="text-align:right">{% t "Per KG" %}</th>
+                        <th>{% t "Delivery Time" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for method in methods %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                                <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--warning-50);color:var(--warning-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm)"><i class="bi bi-truck"></i></div>
+                                <div class="cell-primary">{{ method.name }}</div>
+                            </div>
+                        </td>
+                        <td class="cell-muted">{{ method.code }}</td>
+                        <td><span class="badge-pro badge-pro-neutral">{{ method.get_calculation_display }}</span></td>
+                        <td style="text-align:right;font-weight:600">{{ method.base_fee|floatformat:0 }} so'm</td>
+                        <td style="text-align:right">{{ method.per_kg_fee|floatformat:0 }} so'm</td>
+                        <td style="font-size:var(--text-sm);color:var(--text-secondary)">{{ method.estimated_days_min }}-{{ method.estimated_days_max }} {% t "days" %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:var(--sp-10)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:56px;height:56px;margin:0 auto var(--sp-4)"><i class="bi bi-truck"></i></div>
+                                <div class="empty-state-title">{% t "No shipping methods" %}</div>
+                                <div class="empty-state-desc">{% t "Add a shipping method above to configure delivery options." %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

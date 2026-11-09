@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "receiving" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "receiving" %}</h1>
+        <p class="page-subtitle">{{ receivings.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:receiving_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_receiving" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="expected" {% if selected_status == 'expected' %}selected{% endif %}>{% t "expected" %}</option>
+                <option value="arrived" {% if selected_status == 'arrived' %}selected{% endif %}>{% t "arrived" %}</option>
+                <option value="unloading" {% if selected_status == 'unloading' %}selected{% endif %}>{% t "unloading" %}</option>
+                <option value="inspection" {% if selected_status == 'inspection' %}selected{% endif %}>{% t "inspection" %}</option>
+                <option value="accepted" {% if selected_status == 'accepted' %}selected{% endif %}>{% t "accepted" %}</option>
+                <option value="putaway" {% if selected_status == 'putaway' %}selected{% endif %}>{% t "putaway" %}</option>
+                <option value="partial" {% if selected_status == 'partial' %}selected{% endif %}>{% t "partial" %}</option>
+                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>{% t "completed" %}</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>{% t "cancelled" %}</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "supplier" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "expected_date" %}</th>
+                    <th>{% t "progress" %}</th>
+                    <th>{% t "created_by" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in receivings %}
+                <tr>
+                    <td class="fw-500">{{ r.reference }}</td>
+                    <td>{{ r.warehouse.name }}</td>
+                    <td>{% if r.supplier %}{{ r.supplier.name }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if r.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif r.status == 'accepted' %}
+                            <span class="badge-pro badge-pro-success">{% t "accepted" %}</span>
+                        {% elif r.status == 'arrived' %}
+                            <span class="badge-pro badge-pro-info">{% t "arrived" %}</span>
+                        {% elif r.status == 'unloading' %}
+                            <span class="badge-pro badge-pro-warning">{% t "unloading" %}</span>
+                        {% elif r.status == 'inspection' %}
+                            <span class="badge-pro badge-pro-warning">{% t "inspection" %}</span>
+                        {% elif r.status == 'putaway' %}
+                            <span class="badge-pro badge-pro-info">{% t "putaway" %}</span>
+                        {% elif r.status == 'partial' %}
+                            <span class="badge-pro badge-pro-warning">{% t "partial" %}</span>
+                        {% elif r.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-info">{{ r.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{% if r.expected_date %}{{ r.expected_date|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if r.total_expected > 0 %}
+                        <div style="display:flex;align-items:center;gap:var(--sp-2)">
+                            <div style="flex:1;height:6px;background:var(--gray-100);border-radius:var(--radius-full);overflow:hidden;min-width:60px">
+                                <div style="height:100%;width:{{ r.progress_percent }}%;background:{% if r.progress_percent == 100 %}var(--success-500){% elif r.progress_percent >= 50 %}var(--primary-500){% else %}var(--warning-500){% endif %};border-radius:var(--radius-full)"></div>
+                            </div>
+                            <span class="text-pro-xs text-pro-muted" style="white-space:nowrap">{{ r.total_received }}/{{ r.total_expected }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-pro-xs text-pro-muted">0/0</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{% if r.created_by %}{{ r.created_by.get_full_name|default:r.created_by.email }}{% else %}—{% endif %}</td>
+                    <td>
+                        <a href="{% url 'warehouses:receiving_detail' pk=r.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <h5 class="empty-state-title">{% t "no_receiving_orders" %}</h5>
+                            <p class="empty-state-desc">{% t "no_receiving_created" %}</p>
+                            <a href="{% url 'warehouses:receiving_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_receiving" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if receivings.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if receivings.has_previous %}
+    <a href="?page={{ receivings.previous_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in receivings.paginator.page_range %}
+        {% if receivings.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > receivings.number|add:'-3' and num < receivings.number|add:'3' %}
+        <a href="?page={{ num }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if receivings.has_next %}
+    <a href="?page={{ receivings.next_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

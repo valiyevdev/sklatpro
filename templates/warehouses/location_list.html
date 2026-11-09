@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "locations" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}">{{ warehouse.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "locations" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "locations" %}</h1>
+        <p class="page-subtitle">{{ locations.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:location_create' warehouse_id=warehouse.pk %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "add_location" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "zone" %}</label>
+            <select name="zone" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_zones" %}</option>
+                {% for z in zones %}
+                <option value="{{ z.pk }}" {% if selected_zone == z.pk|stringformat:"d" %}selected{% endif %}>{{ z.name }} ({{ z.code }})</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if locations %}
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "code" %}</th>
+                    <th>{% t "full_code" %}</th>
+                    <th>{% t "zone" %}</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "rack" %}</th>
+                    <th>{% t "shelf" %}</th>
+                    <th>{% t "bin" %}</th>
+                    <th>{% t "capacity" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "barcode" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loc in locations %}
+                <tr>
+                    <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ loc.code }}</code></td>
+                    <td class="cell-primary">
+                        <a href="{% url 'warehouses:location_detail' pk=loc.pk %}" style="color:var(--text-primary);text-decoration:none">{{ loc.full_code|default:loc.code }}</a>
+                    </td>
+                    <td>{% if loc.zone %}{{ loc.zone.name }}{% else %}—{% endif %}</td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ loc.get_location_type_display }}</span></td>
+                    <td>{{ loc.rack|default:"—" }}</td>
+                    <td>{{ loc.shelf|default:"—" }}</td>
+                    <td>{{ loc.bin_code|default:"—" }}</td>
+                    <td>{{ loc.capacity_qty|default:"—" }}</td>
+                    <td>
+                        {% if loc.status == 'available' %}
+                            <span class="badge-pro badge-pro-success">{% t "available" %}</span>
+                        {% elif loc.status == 'occupied' %}
+                            <span class="badge-pro badge-pro-warning">{% t "occupied" %}</span>
+                        {% elif loc.status == 'full' %}
+                            <span class="badge-pro badge-pro-danger">{% t "full" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ loc.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if loc.barcode %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ loc.barcode }}</code>{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if locations.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if locations.has_previous %}
+    <a href="?page={{ locations.previous_page_number }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in locations.paginator.page_range %}
+        {% if locations.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > locations.number|add:'-3' and num < locations.number|add:'3' %}
+        <a href="?page={{ num }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if locations.has_next %}
+    <a href="?page={{ locations.next_page_number }}&zone={{ selected_zone }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div>
+    <h5 class="empty-state-title">{% t "no_locations" %}</h5>
+    <p class="empty-state-desc">{% t "create_first_location" %}</p>
+    <a href="{% url 'warehouses:location_create' warehouse_id=warehouse.pk %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_location" %}</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Conversations — SKLAT AI{% endblock %}
+{% block page_title %}Conversations{% endblock %}
+
+{% block content %}
+<style>
+.conv-list{display:flex;flex-direction:column;gap:var(--sp-2);max-width:800px;margin:0 auto}
+.conv-item{background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:var(--sp-4);cursor:pointer;transition:border-color .2s}
+.conv-item:hover{border-color:var(--primary-500)}
+.conv-item-title{font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-1)}
+.conv-item-meta{font-size:var(--text-xs);color:var(--text-muted)}
+.conv-item-count{font-size:var(--text-xs);color:var(--text-secondary)}
+</style>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-5)">
+    <h1 style="font-size:var(--text-xl);font-weight:700;color:var(--text-primary)"><i class="bi bi-chat-dots" style="color:var(--primary-500)"></i> {% t "ai_conversations" %}</h1>
+    <a href="{% url 'sklat_ai:chat' %}" class="ai-action-btn" style="background:var(--primary-600);color:#fff;border-color:var(--primary-600)"><i class="bi bi-plus-lg"></i> {% t "ai_new_conversation" %}</a>
+</div>
+{% if search %}
+<div style="margin-bottom:var(--sp-4)"><a href="{% url 'sklat_ai:conversation_list' %}" class="ai-action-btn" style="color:var(--danger-600)"><i class="bi bi-x-lg"></i> Clear</a></div>
+{% endif %}
+<div class="conv-list">
+{% for conv in conversations %}
+<a href="{% url 'sklat_ai:chat' %}?conversation_id={{ conv.pk }}" class="conv-item">
+    <div class="conv-item-title">{{ conv.title|default:"New Conversation" }}</div>
+    <div style="display:flex;justify-content:space-between">
+        <span class="conv-item-meta">{{ conv.updated_at|timesince }} ago</span>
+        <span class="conv-item-count">{{ conv.message_count }} messages</span>
+    </div>
+</a>
+{% empty %}
+<div class="empty-state"><i class="bi bi-chat-dots" style="font-size:var(--text-3xl);color:var(--text-muted);margin-bottom:var(--sp-3)"></i><p style="color:var(--text-secondary)">{% t "ai_no_conversations" %}</p></div>
+{% endfor %}
+</div>
+{% endblock %}

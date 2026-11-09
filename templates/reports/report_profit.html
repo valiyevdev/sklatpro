@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "profit_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "profit_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ total_revenue|floatformat:0 }}</div><div class="stat-card-label">{% t "total_revenue" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-left"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--danger-500)">{{ total_cost|floatformat:0 }}</div><div class="stat-card-label">{% t "total_cost" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-right"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:{% if net_profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ net_profit|floatformat:0 }}</div><div class="stat-card-label">{% t "net_profit" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ profit_margin|floatformat:1 }}%</div><div class="stat-card-label">{% t "profit_margin" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-percent"></i></div>
+    </div>
+</div>
+
+{% if monthly_profit %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "monthly_profit" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "period" %}</th><th>{% t "revenue" %}</th><th>{% t "cost" %}</th><th>{% t "profit" %}</th></tr></thead>
+            <tbody>
+                {% for row in monthly_profit %}
+                <tr>
+                    <td class="fw-500">{{ row.period|date:"M Y" }}</td>
+                    <td>{{ row.revenue|floatformat:0 }}</td>
+                    <td>{{ row.cost|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:{% if row.profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ row.profit|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

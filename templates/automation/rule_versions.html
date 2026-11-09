@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}Version History: {{ rule.name }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">Automation</a>
+    <span class="separator">/</span>
+    <a href="{% url 'automation:rule_list' %}">Rules</a>
+    <span class="separator">/</span>
+    <a href="{% url 'automation:rule_detail' pk=rule.pk %}">{{ rule.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">Version History</span>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:var(--sp-3)">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <div style="width:40px;height:40px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:1.125rem;flex-shrink:0">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div>
+                <h1 class="page-title" style="margin:0">Version History</h1>
+                <span style="font-size:var(--text-xs);color:var(--text-muted)">{{ rule.name }} &middot; Current version <span class="badge-pro badge-pro-info" style="font-size:11px">v{{ rule.version }}</span></span>
+            </div>
+        </div>
+    </div>
+    <a href="{% url 'automation:rule_detail' pk=rule.pk %}" class="btn-pro btn-pro-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Rule
+    </a>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> Current Version</span>
+        <span class="badge-pro badge-pro-info badge-pro-dot">v{{ rule.version }}</span>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+            <span style="font-size:var(--text-sm);color:var(--text-muted)">Rule</span>
+            <span style="font-weight:500;color:var(--text-primary);font-size:var(--text-sm)">{{ rule.name }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+            <span style="font-size:var(--text-sm);color:var(--text-muted)">Status</span>
+            <span class="badge-pro badge-pro-{% if rule.status == 'active' %}success{% elif rule.status == 'draft' %}warning{% elif rule.status == 'error' %}danger{% else %}neutral{% endif %} badge-pro-dot">{{ rule.get_status_display }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+            <span style="font-size:var(--text-sm);color:var(--text-muted)">Last Updated</span>
+            <span style="font-size:var(--text-sm);color:var(--text-primary)">{{ rule.updated_at|date:"M d, Y H:i" }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5)">
+            <span style="font-size:var(--text-sm);color:var(--text-muted)">Total Versions</span>
+            <span style="font-weight:500;color:var(--text-primary);font-size:var(--text-sm)">{{ rule.version }}</span>
+        </div>
+    </div>
+</div>
+
+{% if versions %}
+<div class="card-pro" style="overflow-x:auto">
+    <table class="table-pro" style="min-width:600px">
+        <thead>
+            <tr>
+                <th style="width:100px">Version</th>
+                <th>Changed At</th>
+                <th>Changed By</th>
+                <th>Changes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for version in versions %}
+            <tr>
+                <td>
+                    <span class="badge-pro {% if forloop.first %}badge-pro-info{% else %}badge-pro-neutral{% endif %}" style="font-size:11px">v{{ version.version|default:forloop.counter }}</span>
+                </td>
+                <td style="font-size:var(--text-sm)">
+                    {% if version.changed_at %}
+                    <div style="color:var(--text-primary)">{{ version.changed_at }}</div>
+                    {% elif version.timestamp %}
+                    <div style="color:var(--text-primary)">{{ version.timestamp }}</div>
+                    {% else %}
+                    <span style="color:var(--text-muted)">-</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:var(--text-sm)">
+                    {% if version.changed_by %}
+                    <div style="color:var(--text-primary)">{{ version.changed_by }}</div>
+                    {% elif version.user %}
+                    <div style="color:var(--text-primary)">{{ version.user }}</div>
+                    {% else %}
+                    <span style="color:var(--text-muted)">System</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if version.changes %}
+                        {% for change in version.changes %}
+                        <span class="badge-pro badge-pro-neutral" style="font-size:10px;margin-right:4px;margin-bottom:4px">{{ change }}</span>
+                        {% endfor %}
+                    {% elif version.summary %}
+                        <span style="font-size:var(--text-xs);color:var(--text-secondary)">{{ version.summary }}</span>
+                    {% else %}
+                        <span style="font-size:var(--text-xs);color:var(--text-muted)">Initial version</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card-pro" style="text-align:center;padding:var(--sp-16)">
+    <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+    <h3 class="empty-state-title">No Version History</h3>
+    <p class="empty-state-desc">This rule has not been modified since creation. Versions are tracked when changes are saved.</p>
+    <a href="{% url 'automation:rule_detail' pk=rule.pk %}" class="btn-pro btn-pro-primary">
+        <i class="bi bi-arrow-left"></i> Back to Rule
+    </a>
+</div>
+{% endif %}
+
+<div style="margin-top:var(--sp-4)">
+    <a href="{% url 'automation:rule_detail' pk=rule.pk %}" class="btn-pro btn-pro-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Rule Detail
+    </a>
+</div>
+{% endblock %}

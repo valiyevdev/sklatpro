@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_sale" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "delete_sale" %} <span class="text-pro-muted" style="font-weight:400;font-size:1.1rem">{{ sale.reference }}</span></h1>
+    </div>
+</div>
+
+<div style="max-width:520px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "customer" %}</div>
+                    <div class="fw-500">{{ sale.customer.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "total_amount" %}</div>
+                    <div class="fw-600">${{ sale.total|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "status" %}</div>
+                    <div>
+                        {% if sale.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif sale.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% elif sale.status == 'shipped' %}
+                            <span class="badge-pro badge-pro-info">{% t "shipped" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ sale.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "payment_status" %}</div>
+                    <div>
+                        {% if sale.payment_status == 'paid' %}
+                            <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+                        {% elif sale.payment_status == 'partial' %}
+                            <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if sale.status == 'completed' %}
+            <div class="alert-pro alert-pro-warning" style="margin-bottom:1.5rem">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>{% t "stock_will_be_reversed" %}</span>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2" style="justify-content:flex-end">
+                    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

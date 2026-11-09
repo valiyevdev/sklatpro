@@ -1,0 +1,46 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}Track Order - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section" style="max-width:700px">
+    <h1 class="store-section-title"><i class="bi bi-truck"></i> Track Your Order</h1>
+    <form method="get" style="display:flex;gap:0.5rem;margin-bottom:2rem">
+        <input type="text" name="order" value="{{ order_ref }}" class="form-control" placeholder="Buyurtma raqamini kiriting (masalan, SP-20260101-ABC123)" style="border-radius:var(--radius-sm)">
+        <button type="submit" class="btn-store-primary" style="white-space:nowrap">Track</button>
+    </form>
+    {% if error %}
+    <div style="background:#fee2e2;border-radius:var(--radius);padding:1.5rem;text-align:center;color:#991b1b">
+        <i class="bi bi-exclamation-circle" style="font-size:2rem;margin-bottom:0.5rem;display:block"></i>
+        {{ error }}
+    </div>
+    {% endif %}
+    {% if order %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border-light)">
+            <div><strong style="font-size:1.125rem">{{ order.reference }}</strong><div style="font-size:0.8125rem;color:var(--text-muted)">{{ order.date }}</div></div>
+            <div style="text-align:right">
+                <span style="padding:0.25rem 0.75rem;border-radius:999px;font-size:0.8125rem;font-weight:600;
+                    {% if order.status == 'completed' or order.status == 'delivered' %}background:#dcfce7;color:#166534
+                    {% elif order.status == 'shipped' %}background:#dbeafe;color:#1e40af
+                    {% elif order.status == 'cancelled' %}background:#fee2e2;color:#991b1b
+                    {% else %}background:#fef3c7;color:#92400e{% endif %}">{{ order.get_status_display }}</span>
+            </div>
+        </div>
+        {% for item in order.items.all %}
+        <div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:0.9375rem">
+            <span>{{ item.product.name }} x {{ item.quantity }}</span>
+            <span style="font-weight:600">{{ item.total|floatformat:0 }} so'm</span>
+        </div>
+        {% endfor %}
+        <div style="display:flex;justify-content:space-between;padding-top:1rem;margin-top:0.5rem;border-top:2px solid var(--border);font-weight:700">
+            <span>Total</span>
+            <span style="color:var(--primary)">{{ order.total|floatformat:0 }} so'm</span>
+        </div>
+        {% if order.tracking_number %}
+        <div style="margin-top:1rem;padding:0.75rem;background:var(--bg-alt);border-radius:var(--radius-sm)">
+            <strong>Tracking:</strong> {{ order.tracking_number }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

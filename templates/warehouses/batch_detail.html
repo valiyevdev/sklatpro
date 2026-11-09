@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ batch.batch_number }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:batch_list' %}">{% t "batches" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ batch.batch_number }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ batch.batch_number }}</h1>
+            <span class="text-pro-sm text-pro-muted">{{ batch.product.name }}</span>
+            {% if batch.status == 'active' %}
+                <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+            {% elif batch.status == 'expired' %}
+                <span class="badge-pro badge-pro-danger">{% t "expired" %}</span>
+            {% elif batch.status == 'quarantine' %}
+                <span class="badge-pro badge-pro-warning">{% t "quarantine" %}</span>
+            {% elif batch.status == 'consumed' %}
+                <span class="badge-pro badge-pro-info">{% t "consumed" %}</span>
+            {% elif batch.status == 'damaged' %}
+                <span class="badge-pro badge-pro-danger">{% t "damaged" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral">{{ batch.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ batch.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if batch.location %}{{ batch.location.code }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "location" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-geo-alt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if batch.supplier %}{{ batch.supplier.name }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "supplier" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ batch.receipt_date|date:"d.m.Y" }}</div>
+            <div class="stat-card-label">{% t "receipt_date" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-calendar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if batch.manufacturing_date %}{{ batch.manufacturing_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "manufacturing_date" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-calendar-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">
+                {% if batch.expiry_date %}
+                    {% if batch.is_expired %}
+                    <span style="color:var(--danger-600)">{{ batch.expiry_date|date:"d.m.Y" }}</span>
+                    {% elif batch.is_expiring_soon %}
+                    <span style="color:var(--warning-600)">{{ batch.expiry_date|date:"d.m.Y" }}</span>
+                    {% else %}
+                    {{ batch.expiry_date|date:"d.m.Y" }}
+                    {% endif %}
+                {% else %}—{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "expiry_date" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-calendar-x"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ batch.quantity }}</div>
+            <div class="stat-card-label">{% t "quantity" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-box"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ batch.reserved_quantity }}</div>
+            <div class="stat-card-label">{% t "reserved" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-bookmark"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ batch.available_quantity }}</div>
+            <div class="stat-card-label">{% t "available" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+</div>
+
+{% if batch.notes %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-sticky" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p class="text-pro-sm" style="margin:0">{{ batch.notes }}</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

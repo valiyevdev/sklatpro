@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Create Channel - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_list' %}">{% t "Channels" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Create" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Create Sales Channel" %}</h1>
+        <p class="page-subtitle">{% t "Add a new sales channel to start selling" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back to Channels" %}
+        </a>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6)">
+        <div class="form-section">
+            <h3 class="form-section-title"><i class="bi bi-info-circle" style="margin-right:var(--sp-2)"></i>{% t "Channel Information" %}</h3>
+
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "Channel Name" %} <span class="required">*</span></label>
+                <input type="text" name="name" required class="input-pro" placeholder="Masalan, asosiy veb-sayt">
+            </div>
+
+            <div class="form-grid form-grid-2">
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "Code" %} <span class="required">*</span></label>
+                    <input type="text" name="code" required class="input-pro" placeholder="Masalan, WEB01">
+                    <div class="input-pro-hint">{% t "Unique identifier for this channel" %}</div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "Channel Type" %} <span class="required">*</span></label>
+                    <select name="channel_type" class="input-pro">
+                        {% for val, label in channel_types %}
+                        <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "Website URL" %}</label>
+                <input type="url" name="website_url" class="input-pro" placeholder="{% t 'https://example.com' %}">
+            </div>
+
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "Description" %}</label>
+                <textarea name="description" class="input-pro" rows="3" placeholder="{% t 'Brief description of this channel' %}"></textarea>
+            </div>
+        </div>
+
+        <div>
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="bi bi-gear" style="margin-right:var(--sp-2)"></i>{% t "Settings" %}</h3>
+
+                <div class="form-grid form-grid-2">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "Currency" %} <span class="required">*</span></label>
+                        <select name="currency" class="input-pro">
+                            {% for val, label in currency_choices %}
+                            <option value="{{ val }}" {% if val == 'UZS' %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "Status" %}</label>
+                        <select name="status" class="input-pro">
+                            <option value="setup">{% t "Setup" %}</option>
+                            <option value="active">{% t "Active" %}</option>
+                            <option value="inactive">{% t "Inactive" %}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-pro-group">
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                        <input type="checkbox" name="is_default" style="width:16px;height:16px;accent-color:var(--primary-600)">
+                        <span class="input-pro-label" style="margin-bottom:0">{% t "Set as default channel" %}</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="bi bi-lightning" style="margin-right:var(--sp-2)"></i>{% t "Quick Actions" %}</h3>
+                <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--sp-4)">{% t "After creating the channel, you can:" %}</p>
+                <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+                    <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) 0;font-size:var(--text-sm);color:var(--text-secondary)">
+                        <i class="bi bi-check-circle-fill" style="color:var(--success-500)"></i> {% t "Add products to this channel" %}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) 0;font-size:var(--text-sm);color:var(--text-secondary)">
+                        <i class="bi bi-check-circle-fill" style="color:var(--success-500)"></i> {% t "Configure stock allocations" %}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) 0;font-size:var(--text-sm);color:var(--text-secondary)">
+                        <i class="bi bi-check-circle-fill" style="color:var(--success-500)"></i> {% t "Set up marketplace integration" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:var(--sp-3);justify-content:flex-end;margin-top:var(--sp-6)">
+        <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-secondary">{% t "Cancel" %}</a>
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "Create Channel" %}</button>
+    </div>
+</form>
+{% endblock %}

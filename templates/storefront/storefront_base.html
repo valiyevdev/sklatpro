@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block store_title %}{{ store_company.company_name|default:"Store" }}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --bg: #ffffff;
+            --bg-alt: #f9fafb;
+            --surface: #ffffff;
+            --text: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --border: #e5e7eb;
+            --border-light: #f3f4f6;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --bg-alt: #1e293b;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --border-light: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* Store Header */
+        .store-header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .store-header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: 1rem; height: 64px; }
+        .store-brand { font-weight: 800; font-size: 1.25rem; color: var(--primary); text-decoration: none; white-space: nowrap; }
+        .store-brand span { color: var(--text); }
+        .store-search { flex: 1; max-width: 480px; position: relative; }
+        .store-search input { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 24px; padding: 0 1rem 0 2.5rem; font-size: 0.875rem; color: var(--text); background: var(--bg-alt); transition: all 0.2s; font-family: var(--font); }
+        .store-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); background: var(--surface); }
+        .store-search i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .store-nav { display: flex; align-items: center; gap: 0.5rem; }
+        .store-nav-link { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+        .store-nav-link:hover { background: var(--bg-alt); color: var(--text); }
+        .cart-badge { position: relative; }
+        .cart-badge .count { position: absolute; top: -4px; right: -4px; background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* Hero */
+        .store-hero { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 4rem 1rem; text-align: center; }
+        .store-hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+        .store-hero p { font-size: 1.125rem; opacity: 0.9; margin-bottom: 1.5rem; }
+        .store-hero .btn-store { background: #fff; color: var(--primary-dark); padding: 0.75rem 2rem; border-radius: 24px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; }
+        .store-hero .btn-store:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+        /* Products Grid */
+        .store-section { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem; }
+        .store-section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+        .product-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; transition: all 0.3s; cursor: pointer; text-decoration: none; color: inherit; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); border-color: var(--primary); }
+        .product-card-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--bg-alt); }
+        .product-card-body { padding: 1rem; }
+        .product-card-name { font-weight: 600; font-size: 0.9375rem; color: var(--text); margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-card-price { font-size: 1.125rem; font-weight: 700; color: var(--primary); }
+        .product-card-sku { font-size: 0.75rem; color: var(--text-muted); }
+        .product-card-stock { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 999px; display: inline-block; margin-top: 0.25rem; }
+        .stock-in { background: #dcfce7; color: #166534; }
+        .stock-low { background: #fef3c7; color: #92400e; }
+        .stock-out { background: #fee2e2; color: #991b1b; }
+        [data-theme="dark"] .stock-in { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .stock-low { background: #78350f; color: #fcd34d; }
+        [data-theme="dark"] .stock-out { background: #7f1d1d; color: #fca5a5; }
+
+        /* Categories */
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+        .category-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 1.25rem; text-align: center; text-decoration: none; color: var(--text); transition: all 0.2s; }
+        .category-card:hover { border-color: var(--primary); background: rgba(99,102,241,0.05); }
+        .category-card i { font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem; display: block; }
+        .category-card-name { font-weight: 600; font-size: 0.875rem; }
+
+        /* Cart */
+        .cart-table { width: 100%; }
+        .cart-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .cart-table td { padding: 1rem 0; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+        .cart-item-img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); background: var(--bg-alt); }
+        .cart-qty-input { width: 60px; height: 36px; text-align: center; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font); }
+
+        /* Checkout */
+        .checkout-form .form-label { font-weight: 500; font-size: 0.875rem; color: var(--text-secondary); }
+        .checkout-form .form-control, .checkout-form .form-select { border-radius: var(--radius-sm); border-color: var(--border); padding: 0.625rem 0.875rem; }
+        .checkout-form .form-control:focus, .checkout-form .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        .checkout-summary { background: var(--bg-alt); border-radius: var(--radius); padding: 1.5rem; }
+        .checkout-summary-row { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9375rem; }
+        .checkout-summary-row.total { border-top: 2px solid var(--border); padding-top: 0.75rem; margin-top: 0.5rem; font-weight: 700; font-size: 1.125rem; }
+
+        /* Footer */
+        .store-footer { background: var(--bg-alt); border-top: 1px solid var(--border); padding: 2rem 1rem; margin-top: 3rem; }
+        .store-footer-inner { max-width: 1280px; margin: 0 auto; text-align: center; color: var(--text-muted); font-size: 0.875rem; }
+
+        /* Buttons */
+        .btn-store-primary { background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0.625rem 1.5rem; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; font-family: var(--font); }
+        .btn-store-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+        .btn-store-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius-sm); padding: 0.625rem 1.5rem; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; font-family: var(--font); }
+        .btn-store-outline:hover { background: var(--primary); color: #fff; }
+
+        /* Mobile */
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+        @media(max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            .store-search { display: none; }
+            .store-nav-link .nav-text { display: none; }
+            .store-hero h1 { font-size: 1.75rem; }
+            .products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+            .categories-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media(max-width: 480px) {
+            .products-grid { grid-template-columns: 1fr; }
+            .categories-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Messages */
+        .store-alert { padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
+        .store-alert-success { background: #dcfce7; color: #166534; }
+        .store-alert-error { background: #fee2e2; color: #991b1b; }
+        .store-alert-warning { background: #fef3c7; color: #92400e; }
+        .store-alert-info { background: #dbeafe; color: #1e40af; }
+    </style>
+    {% block store_css %}{% endblock %}
+</head>
+<body>
+    <header class="store-header">
+        <div class="store-header-inner">
+            <button class="mobile-menu-btn" onclick="document.querySelector('.store-mobile-menu').classList.toggle('show')">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="{% url 'storefront:home' %}" class="store-brand">SKLAT <span>PRO</span></a>
+            <div class="store-search">
+                <i class="bi bi-search"></i>
+                <form action="{% url 'storefront:catalog' %}" method="get">
+                    <input type="text" name="q" placeholder="Mahsulotlarni qidirish..." value="{{ search|default:'' }}">
+                </form>
+            </div>
+            <nav class="store-nav">
+                <a href="{% url 'storefront:catalog' %}" class="store-nav-link">
+                    <i class="bi bi-grid"></i> <span class="nav-text">Catalog</span>
+                </a>
+                <a href="{% url 'storefront:cart' %}" class="store-nav-link cart-badge">
+                    <i class="bi bi-bag"></i>
+                    {% if cart_count %}<span class="count">{{ cart_count }}</span>{% endif %}
+                    <span class="nav-text">Cart</span>
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'storefront:account' %}" class="store-nav-link">
+                    <i class="bi bi-person"></i> <span class="nav-text">Account</span>
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="store-nav-link">
+                    <i class="bi bi-person"></i> <span class="nav-text">Login</span>
+                </a>
+                {% endif %}
+                <button class="store-nav-link" onclick="toggleStoreTheme()" title="Toggle theme">
+                    <i class="bi bi-moon" id="storeThemeIcon"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div style="max-width:1280px;margin:0 auto;padding:1rem 1rem 0">
+        {% for message in messages %}
+        <div class="store-alert store-alert-{{ message.tags }}">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-circle-fill{% elif message.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block store_content %}{% endblock %}
+
+    <footer class="store-footer">
+        <div class="store-footer-inner">
+            <p>&copy; {{ store_company.company_name|default:"SKLAT PRO" }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function toggleStoreTheme() {
+        var h = document.documentElement;
+        var c = h.getAttribute('data-theme') || 'light';
+        var n = c === 'light' ? 'dark' : 'light';
+        h.setAttribute('data-theme', n);
+        localStorage.setItem('sklat-store-theme', n);
+        var icon = document.getElementById('storeThemeIcon');
+        if (icon) icon.className = n === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    }
+    (function() {
+        var saved = localStorage.getItem('sklat-store-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        var icon = document.getElementById('storeThemeIcon');
+        if (icon) icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    })();
+    </script>
+    {% block store_scripts %}{% endblock %}
+</body>
+</html>

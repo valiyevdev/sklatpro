@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ marketplace.name }} - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:integration_list' %}">{% t "Integrations" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{{ marketplace.name }}</span>
+        </nav>
+        <h1 class="page-title">{{ marketplace.name }}</h1>
+        <p class="page-subtitle">{{ marketplace.get_marketplace_type_display }} &middot; {% t "Marketplace Integration" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:integration_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Status" %}</div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">
+                {% if marketplace.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "Active" %}</span>
+                {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ marketplace.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card-icon {% if marketplace.status == 'active' %}success{% else %}warning{% endif %}"><i class="bi bi-shop"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Mapped Products" %}</div>
+            <div class="stat-card-value">{{ mappings.count }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-link-45deg"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Marketplace ID" %}</div>
+            <div class="stat-card-value" style="font-size:var(--text-sm);word-break:break-all">{{ marketplace.marketplace_id|default:"-" }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-key"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Last Sync" %}</div>
+            <div class="stat-card-value" style="font-size:var(--text-sm)">{{ marketplace.last_sync|date:"M d, H:i"|default:"Never" }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-arrow-repeat"></i></div>
+    </div>
+</div>
+
+<div class="card-pro" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-link-45deg" style="margin-right:var(--sp-2);color:var(--primary-500)"></i>{% t "Product Mappings" %}</h3>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "Product" %}</th>
+                        <th>{% t "SKU" %}</th>
+                        <th>{% t "Marketplace SKU" %}</th>
+                        <th>{% t "External ID" %}</th>
+                        <th>{% t "Price" %}</th>
+                        <th>{% t "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mapping in mappings %}
+                    <tr>
+                        <td class="cell-primary">{{ mapping.product.name }}</td>
+                        <td class="cell-muted">{{ mapping.product.sku|default:"-" }}</td>
+                        <td>{{ mapping.marketplace_sku|default:"-" }}</td>
+                        <td class="cell-muted">{{ mapping.external_id|default:"-" }}</td>
+                        <td style="font-weight:600">{{ mapping.price|floatformat:0 }} so'm</td>
+                        <td>
+                            <span class="badge-pro badge-pro-{% if mapping.status == 'active' %}success{% elif mapping.status == 'error' %}danger{% else %}neutral{% endif %} badge-pro-dot">{{ mapping.get_status_display }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:var(--sp-10)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:56px;height:56px;margin:0 auto var(--sp-4)"><i class="bi bi-link-45deg"></i></div>
+                                <div class="empty-state-title">{% t "No product mappings" %}</div>
+                                <div class="empty-state-desc">{% t "Map your products to marketplace listings to start selling." %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-clock-history" style="margin-right:var(--sp-2);color:var(--info-500)"></i>{% t "Recent Logs" %}</h3>
+        <a href="{% url 'ecommerce:integration_logs' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "View All" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        {% for log in recent_logs %}
+        <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                {% if log.status == 'success' %}background:var(--success-500)
+                {% elif log.status == 'error' %}background:var(--danger-500)
+                {% elif log.status == 'warning' %}background:var(--warning-500)
+                {% else %}background:var(--info-500){% endif %}"></span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:var(--text-sm);color:var(--text-primary)">{{ log.action }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ log.created_at|timesince }} {% t "ago" %}</div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+            <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No logs yet." %}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

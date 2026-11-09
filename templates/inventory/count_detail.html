@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "count_detail" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'count_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ count.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ count.warehouse.name }} | {{ count.created_at|date:"d.m.Y" }}
+            {% if count.status == 'draft' %}
+                <span class="badge-pro badge-pro-neutral">{% t "count_status_draft" %}</span>
+            {% elif count.status == 'in_progress' %}
+                <span class="badge-pro badge-pro-warning">{% t "count_status_in_progress" %}</span>
+            {% elif count.status == 'submitted' %}
+                <span class="badge-pro badge-pro-info">{% t "count_status_submitted" %}</span>
+            {% elif count.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "count_status_completed" %}</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if count.status == 'draft' %}
+            <form method="post" action="{% url 'count_start' pk=count.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-play-circle"></i> {% t "start_count" %}</button>
+            </form>
+        {% endif %}
+        {% if count.status == 'in_progress' %}
+            <form method="post" action="{% url 'count_submit' pk=count.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-send"></i> {% t "submit" %}</button>
+            </form>
+        {% endif %}
+        {% if count.status == 'submitted' %}
+            <form method="post" action="{% url 'count_approve' pk=count.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "approve" %}</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ count.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ count.counted_items }} / {{ count.total_items }}</div>
+            <div class="stat-card-label">{% t "progress" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-clipboard-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ count.created_by.get_full_name|default:count.created_by.email }}</div>
+            <div class="stat-card-label">{% t "created_by" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-person"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header" style="flex-wrap:wrap;gap:var(--sp-3)">
+        <span class="card-pro-title">{% t "count_items" %}</span>
+        <form method="get" action="" style="display:flex;gap:var(--sp-2);margin-left:auto">
+            <input type="text" name="q" value="{{ q|default:'' }}" class="input-pro" placeholder="{% t "search_products" %}..." style="height:36px;max-width:260px">
+            <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "expected_qty" %}</th>
+                    <th>{% t "actual_qty" %}</th>
+                    <th>{% t "difference" %}</th>
+                    <th>{% t "notes" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td>
+                        <div class="fw-500">{{ item.product.name }}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ item.product.sku }}</div>
+                    </td>
+                    <td>{{ item.expected_quantity }}</td>
+                    <td>
+                        <form method="post" action="{% url 'count_item_update' pk=count.pk item_pk=item.pk %}" style="display:flex;gap:var(--sp-1);align-items:center" class="count-item-form">
+                            {% csrf_token %}
+                            <input type="number" name="actual_quantity" value="{{ item.actual_quantity|default:'' }}" class="input-pro" style="width:80px;height:32px" step="any" min="0">
+                            <input type="text" name="notes" value="{{ item.notes|default:'' }}" class="input-pro" style="width:120px;height:32px" placeholder="{% t "notes" %}">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% t "save" %}"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                    </td>
+                    <td>
+                        {% if item.actual_quantity is not None %}
+                            {% widthratio item.actual_quantity 1 1 as actual %}
+                            {% widthratio item.expected_quantity 1 1 as expected %}
+                            {% if item.actual_quantity > item.expected_quantity %}
+                                <span class="fw-600" style="color:var(--success-600)">+{{ item.difference }}</span>
+                            {% elif item.actual_quantity < item.expected_quantity %}
+                                <span class="fw-600" style="color:var(--danger-600)">{{ item.difference }}</span>
+                            {% else %}
+                                <span class="text-pro-muted">0</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-pro-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.notes|default:"-"|truncatechars:30 }}</td>
+                    <td>
+                        <form method="post" action="{% url 'count_item_update' pk=count.pk item_pk=item.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_count_items" %}</h5>
+                            <p class="empty-state-desc">{% t "no_items_found" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

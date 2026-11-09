@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "sales_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "sales_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:export_sales_csv' %}?{{ request.GET.urlencode }}" class="btn-pro btn-pro-ghost"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.net_sales|floatformat:0 }}</div><div class="stat-card-label">{% t "net_sales" %}</div>
+        {% if summary.growth %}<div class="text-pro-xs {% if summary.growth > 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{% if summary.growth > 0 %}+{% endif %}{{ summary.growth|floatformat:1 }}%</div>{% endif %}
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-currency-dollar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.total_count }}</div><div class="stat-card-label">{% t "transactions" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.avg_sale|floatformat:0 }}</div><div class="stat-card-label">{% t "avg_sale" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-graph-up"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.items_sold }}</div><div class="stat-card-label">{% t "units_sold" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-box-seam"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm">{{ summary.gross_sales|floatformat:0 }}</div><div class="stat-card-label">{% t "gross_sales" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm" style="color:var(--danger-500)">-{{ summary.discounts|floatformat:0 }}</div><div class="stat-card-label">{% t "discounts" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm" style="color:var(--warning-500)">-{{ summary.returns|floatformat:0 }}</div><div class="stat-card-label">{% t "returns" %}</div></div>
+    </div>
+    <div class="stat-card" style="background:var(--bg-secondary)">
+        <div><div class="stat-card-value text-pro-sm">{{ summary.total_tax|floatformat:0 }}</div><div class="stat-card-label">{% t "tax" %}</div></div>
+    </div>
+</div>
+
+{% if top_products %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "top_products" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "product" %}</th><th>{% t "revenue" %}</th><th>{% t "units" %}</th></tr></thead>
+            <tbody>
+                {% for item in top_products %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.product__name }}</td>
+                    <td class="fw-600">{{ item.total_amount|floatformat:0 }}</td>
+                    <td>{{ item.total_qty }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if by_customer %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "sales_by_customer" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "customer" %}</th><th>{% t "revenue" %}</th><th>{% t "orders" %}</th></tr></thead>
+            <tbody>
+                {% for item in by_customer %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.sale__customer__name|default:"Walk-in" }}</td>
+                    <td class="fw-600">{{ item.total_amount|floatformat:0 }}</td>
+                    <td>{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if trend %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "sales_trend" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "period" %}</th><th>{% t "revenue" %}</th><th>{% t "transactions" %}</th><th>{% t "avg_sale" %}</th></tr></thead>
+            <tbody>
+                {% for row in trend %}
+                <tr>
+                    <td class="fw-500">{{ row.period|date:"M Y" }}</td>
+                    <td class="fw-600">{{ row.total_sales|floatformat:0 }}</td>
+                    <td>{{ row.count }}</td>
+                    <td>{{ row.avg|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

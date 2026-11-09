@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "integration_errors" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "integration_errors" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color:var(--danger-500)"></i> {% t "integration_errors" %}</h1>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-circle-fill"></i></div>
+        <div class="stat-value" style="color:var(--danger-600)">{{ open_count|default:0 }}</div>
+        <div class="stat-label">{% t "open" %}</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-clock-history"></i></div>
+        <div class="stat-value" style="color:var(--warning-600)">{{ acknowledged_count|default:0 }}</div>
+        <div class="stat-label">{% t "acknowledged" %}</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">{{ resolved_count|default:0 }}</div>
+        <div class="stat-label">{% t "resolved" %}</div>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "severity" %}</label>
+            <select name="severity" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_severities" %}</option>
+                <option value="low" {% if severity_filter == 'low' %}selected{% endif %}>Low</option>
+                <option value="medium" {% if severity_filter == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="high" {% if severity_filter == 'high' %}selected{% endif %}>High</option>
+                <option value="critical" {% if severity_filter == 'critical' %}selected{% endif %}>Critical</option>
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="open" {% if status_filter == 'open' %}selected{% endif %}>Open</option>
+                <option value="acknowledged" {% if status_filter == 'acknowledged' %}selected{% endif %}>Acknowledged</option>
+                <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+                <option value="ignored" {% if status_filter == 'ignored' %}selected{% endif %}>Ignored</option>
+            </select>
+        </div>
+        <div style="flex:1;min-width:180px">
+            <label class="input-pro-label">{% t "category" %}</label>
+            <select name="category" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_categories" %}</option>
+                <option value="authentication" {% if category_filter == 'authentication' %}selected{% endif %}>Authentication</option>
+                <option value="rate_limit" {% if category_filter == 'rate_limit' %}selected{% endif %}>Rate Limit</option>
+                <option value="validation" {% if category_filter == 'validation' %}selected{% endif %}>Validation</option>
+                <option value="network" {% if category_filter == 'network' %}selected{% endif %}>Network</option>
+                <option value="timeout" {% if category_filter == 'timeout' %}selected{% endif %}>Timeout</option>
+                <option value="external_rejection" {% if category_filter == 'external_rejection' %}selected{% endif %}>External Rejection</option>
+                <option value="internal_error" {% if category_filter == 'internal_error' %}selected{% endif %}>Internal Error</option>
+                <option value="configuration" {% if category_filter == 'configuration' %}selected{% endif %}>Configuration</option>
+            </select>
+        </div>
+        <a href="{% url 'integrations:errors' %}" class="btn-pro btn-pro-secondary btn-pro-sm" style="height:38px"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+    </form>
+</div>
+
+{% if errors %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "provider" %}</th>
+                    <th>{% t "error_type" %}</th>
+                    <th>{% t "category" %}</th>
+                    <th>{% t "severity" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "occurrences" %}</th>
+                    <th>{% t "first_seen" %}</th>
+                    <th>{% t "last_seen" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for error in errors %}
+                <tr>
+                    <td class="cell-primary">
+                        {% if error.connection %}
+                        <span style="font-weight:500">{{ error.connection.provider.name }}</span>
+                        <span style="color:var(--text-muted);font-size:var(--text-xs);display:block">{{ error.connection.name }}</span>
+                        {% else %}
+                        <span style="color:var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:500;font-size:var(--text-sm)">{{ error.error_type }}</td>
+                    <td><span class="intg-badge intg-badge-gray">{{ error.get_category_display }}</span></td>
+                    <td>
+                        {% if error.severity == 'critical' %}
+                        <span class="intg-badge intg-badge-danger"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> Critical</span>
+                        {% elif error.severity == 'high' %}
+                        <span class="intg-badge intg-badge-warning"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> High</span>
+                        {% elif error.severity == 'medium' %}
+                        <span class="intg-badge intg-badge-info">Medium</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-gray">Low</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if error.status == 'open' %}
+                        <span class="intg-badge intg-badge-danger">Open</span>
+                        {% elif error.status == 'acknowledged' %}
+                        <span class="intg-badge intg-badge-warning">Acknowledged</span>
+                        {% elif error.status == 'resolved' %}
+                        <span class="intg-badge intg-badge-success">Resolved</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-gray">Ignored</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;font-variant-numeric:tabular-nums">{{ error.occurrence_count }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ error.first_occurrence|date:"d M Y H:i" }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ error.last_occurrence|date:"d M Y H:i" }}</td>
+                    <td>
+                        <div style="display:flex;gap:4px;justify-content:flex-end">
+                            {% if error.status == 'open' %}
+                            <form method="post" action="{% url 'integrations:errors' %}" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="acknowledge">
+                                <input type="hidden" name="error_id" value="{{ error.pk }}">
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px" title="{% t 'acknowledge' %}">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'integrations:errors' %}" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="resolve">
+                                <input type="hidden" name="error_id" value="{{ error.pk }}">
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px;color:var(--success-600)" title="{% t 'resolve' %}">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </form>
+                            {% elif error.status == 'acknowledged' %}
+                            <form method="post" action="{% url 'integrations:errors' %}" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="resolve">
+                                <input type="hidden" name="error_id" value="{{ error.pk }}">
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px;color:var(--success-600)" title="{% t 'resolve' %}">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-check-circle"></i></div>
+    <h5 class="empty-state-title">{% t "no_errors" %}</h5>
+    <p class="empty-state-desc">{% t "no_errors_desc" %}</p>
+</div>
+{% endif %}
+{% endblock %}

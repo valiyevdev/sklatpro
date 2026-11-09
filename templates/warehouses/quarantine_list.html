@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "quarantine_stock" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "quarantine_stock" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:quarantine_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "move_to_quarantine" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="quarantined" {% if selected_status == 'quarantined' %}selected{% endif %}>{% t "quarantined" %}</option>
+                <option value="under_review" {% if selected_status == 'under_review' %}selected{% endif %}>{% t "under_review" %}</option>
+                <option value="cleared" {% if selected_status == 'cleared' %}selected{% endif %}>{% t "cleared" %}</option>
+                <option value="disposed" {% if selected_status == 'disposed' %}selected{% endif %}>{% t "disposed" %}</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "batch" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "reason" %}</th>
+                    <th>{% t "reported_by" %}</th>
+                    <th>{% t "created_at" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.warehouse.name }}</td>
+                    <td>{% if item.location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if item.batch %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.batch }}</code>{% else %}—{% endif %}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        {% if item.status == 'quarantined' %}
+                            <span class="badge-pro badge-pro-warning">{% t "quarantined" %}</span>
+                        {% elif item.status == 'under_review' %}
+                            <span class="badge-pro badge-pro-info">{% t "under_review" %}</span>
+                        {% elif item.status == 'cleared' %}
+                            <span class="badge-pro badge-pro-success">{% t "cleared" %}</span>
+                        {% elif item.status == 'disposed' %}
+                            <span class="badge-pro badge-pro-danger">{% t "disposed" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ item.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.reason|truncatewords:10 }}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.reported_by %}{{ item.reported_by.get_full_name|default:item.reported_by.email }}{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.created_at|date:"d.m.Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-shield-lock"></i></div>
+                            <h5 class="empty-state-title">{% t "no_quarantine_items" %}</h5>
+                            <p class="empty-state-desc">{% t "no_quarantine_created" %}</p>
+                            <a href="{% url 'warehouses:quarantine_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "move_to_quarantine" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

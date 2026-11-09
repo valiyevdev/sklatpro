@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "shipments" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "shipments" %}</h1>
+        <p class="page-subtitle">{{ total_count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:shipment_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_shipment" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>{% t "pending" %}</option>
+                <option value="shipped" {% if selected_status == 'shipped' %}selected{% endif %}>{% t "shipped" %}</option>
+                <option value="in_transit" {% if selected_status == 'in_transit' %}selected{% endif %}>{% t "in_transit" %}</option>
+                <option value="delivered" {% if selected_status == 'delivered' %}selected{% endif %}>{% t "delivered" %}</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>{% t "cancelled" %}</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "sale" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "carrier" %}</th>
+                    <th>{% t "tracking_number" %}</th>
+                    <th>{% t "shipped_date" %}</th>
+                    <th>{% t "packages" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:shipment_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.reference }}</a>
+                    </td>
+                    <td>{{ s.warehouse.name }}</td>
+                    <td>{% if s.sale %}{{ s.sale.reference }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if s.status == 'delivered' %}
+                            <span class="badge-pro badge-pro-success">{% t "delivered" %}</span>
+                        {% elif s.status == 'shipped' %}
+                            <span class="badge-pro badge-pro-info">{% t "shipped" %}</span>
+                        {% elif s.status == 'in_transit' %}
+                            <span class="badge-pro badge-pro-info">{% t "in_transit" %}</span>
+                        {% elif s.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ s.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if s.carrier %}{{ s.carrier }}{% else %}—{% endif %}</td>
+                    <td>{% if s.tracking_number %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ s.tracking_number }}</code>{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if s.shipped_date %}{{ s.shipped_date|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+                    <td>{{ s.package_count|default:"0" }}</td>
+                    <td>
+                        <a href="{% url 'warehouses:shipment_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-truck"></i></div>
+                            <h5 class="empty-state-title">{% t "no_shipments" %}</h5>
+                            <p class="empty-state-desc">{% t "no_shipments_created" %}</p>
+                            <a href="{% url 'warehouses:shipment_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_shipment" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

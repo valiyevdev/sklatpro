@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ purchase.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'purchases:purchase_list' %}">{% t "purchases" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ purchase.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ purchase.reference }}</h1>
+            {% if purchase.status == 'received' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "received" %}</span>
+            {% elif purchase.status == 'partially_received' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "partially_received" %}</span>
+            {% elif purchase.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+            {% elif purchase.status == 'ordered' %}
+                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "ordered" %}</span>
+            {% elif purchase.status == 'approved' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+            {% elif purchase.status == 'pending_approval' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending_approval" %}</span>
+            {% elif purchase.status == 'returned' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "returned" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ purchase.get_status_display }}</span>
+            {% endif %}
+
+            {% if purchase.payment_status == 'paid' %}
+                <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+            {% elif purchase.payment_status == 'partial' %}
+                <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+            {% elif purchase.payment_status == 'overdue' %}
+                <span class="badge-pro badge-pro-danger">{% t "overdue" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {{ purchase.supplier.name }} &middot; {{ purchase.order_date|date:"d.m.Y" }}
+            {% if purchase.is_overdue %}
+                <span style="color:var(--danger-600);margin-left:var(--sp-2)"><i class="bi bi-exclamation-triangle"></i> {% t "overdue" %} ({{ purchase.days_overdue }} {% t "days" %})</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if purchase.status == 'draft' or purchase.status == 'pending_approval' %}
+            <a href="{% url 'purchases:purchase_update' pk=purchase.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        {% endif %}
+        {% if purchase.status == 'ordered' or purchase.status == 'partially_received' %}
+            <a href="{% url 'purchases:purchase_receive' pk=purchase.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-truck"></i> {% t "receive" %}</a>
+        {% endif %}
+        {% if purchase.status == 'received' or purchase.status == 'partially_received' %}
+            <a href="{% url 'purchases:purchase_return_create' pk=purchase.pk %}" class="btn-pro btn-pro-warning btn-pro-sm"><i class="bi bi-arrow-return-left"></i> {% t "return" %}</a>
+        {% endif %}
+        {% if purchase.status == 'draft' or purchase.status == 'cancelled' %}
+            <a href="{% url 'purchases:purchase_delete' pk=purchase.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ purchase.total|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_amount" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ items.count }}</div>
+            <div class="stat-card-label">{% t "products" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-box-seam"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ purchase.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ purchase.total_received }} / {{ purchase.total_ordered }}</div>
+            <div class="stat-card-label">{% t "received_qty" %}</div>
+        </div>
+        <div class="stat-card-icon {% if purchase.receiving_progress == 100 %}success{% elif purchase.receiving_progress > 0 %}warning{% else %}info{% endif %}"><i class="bi bi-clipboard-check"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-5)">
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "supplier" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.supplier.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "warehouse" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.warehouse.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "order_date" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.order_date|date:"d.m.Y" }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar-event"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "expected_delivery_date" %}</div>
+                    <div class="text-pro-sm fw-500">{% if purchase.expected_delivery_date %}{{ purchase.expected_delivery_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-wallet2"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "payment_terms" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.get_payment_terms_display }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-cash"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "currency" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.currency }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "created_by" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.created_by.get_full_name|default:purchase.created_by.email }}</div>
+                </div>
+            </div>
+            {% if purchase.approved_by %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person-check"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "approved_by" %}</div>
+                    <div class="text-pro-sm fw-500">{{ purchase.approved_by.get_full_name|default:purchase.approved_by.email }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if purchase.notes %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p class="text-pro-sm" style="margin-bottom:0">{{ purchase.notes }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity_short" %}</th>
+                    <th>{% t "received_qty" %}</th>
+                    <th>{% t "damaged" %}</th>
+                    <th>{% t "rejected" %}</th>
+                    <th>{% t "unit_price" %}</th>
+                    <th>{% t "discount_short" %}</th>
+                    <th>{% t "tax_short" %}</th>
+                    <th>{% t "total" %}</th>
+                    <th>{% t "remaining" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        {% if item.received_quantity > 0 %}
+                            <span class="text-pro-success fw-600">{{ item.received_quantity }}</span>
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.damaged_quantity > 0 %}
+                            <span class="text-pro-danger">{{ item.damaged_quantity }}</span>
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.rejected_quantity > 0 %}
+                            <span class="text-pro-warning">{{ item.rejected_quantity }}</span>
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td>${{ item.unit_price }}</td>
+                    <td>{% if item.discount > 0 %}${{ item.discount }}{% else %}—{% endif %}</td>
+                    <td>{% if item.tax > 0 %}${{ item.tax }}{% else %}—{% endif %}</td>
+                    <td class="fw-600">${{ item.total|floatformat:0 }}</td>
+                    <td>
+                        {% if item.remaining_quantity > 0 %}
+                            <span class="badge-pro badge-pro-warning">{{ item.remaining_quantity }}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-success">0</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-desc" style="margin-bottom:0">{% t "no_products" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if purchase.status == 'ordered' or purchase.status == 'partially_received' %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-truck" style="color:var(--primary-600)"></i> {% t "receiving_progress" %}</span>
+        <span class="text-pro-sm fw-600">{{ purchase.receiving_progress }}%</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="progress-pro" style="height:10px;margin-bottom:var(--sp-3)">
+            <div class="progress-pro-bar {% if purchase.receiving_progress == 100 %}success{% elif purchase.receiving_progress > 50 %}{% else %}warning{% endif %}" style="width:{{ purchase.receiving_progress }}%"></div>
+        </div>
+        <div class="d-flex justify-between text-pro-sm text-pro-muted">
+            <span>{% t "received" %}: {{ purchase.total_received }} / {{ purchase.total_ordered }}</span>
+            <span>{% t "remaining" %}: {{ purchase.total_remaining }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if returns %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-return-left" style="color:var(--warning-600)"></i> {% t "returns" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ returns|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "reason" %}</th>
+                    <th>{% t "total" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in returns %}
+                <tr>
+                    <td class="cell-primary">{{ r.reference }}</td>
+                    <td>{{ r.get_reason_display }}</td>
+                    <td class="fw-600">${{ r.total|floatformat:0 }}</td>
+                    <td>
+                        {% if r.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif r.status == 'approved' %}
+                            <span class="badge-pro badge-pro-info">{% t "approved" %}</span>
+                        {% elif r.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ r.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ r.created_at|date:"d.m.Y" }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'purchases:purchase_return_detail' pk=r.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% with allowed=purchase.VALID_TRANSITIONS %}
+{% if allowed %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-repeat" style="color:var(--primary-600)"></i> {% t "status_workflow" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex gap-2 flex-wrap">
+            {% for status_key, allowed_list in purchase.VALID_TRANSITIONS.items %}
+                {% if purchase.status == status_key %}
+                    {% for next_status in allowed_list %}
+                        <form method="post" action="{% url 'purchases:purchase_update_status' pk=purchase.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="{{ next_status }}">
+                            {% if next_status == 'approved' or next_status == 'ordered' or next_status == 'received' or next_status == 'partially_received' %}
+                                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t next_status %}</button>
+                            {% elif next_status == 'cancelled' or next_status == 'returned' %}
+                                <button type="submit" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-x-circle"></i> {% t next_status %}</button>
+                            {% else %}
+                                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-arrow-repeat"></i> {% t next_status %}</button>
+                            {% endif %}
+                        </form>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4)">
+    {% if purchase.status == 'draft' or purchase.status == 'pending_approval' %}
+        <a href="{% url 'purchases:purchase_update' pk=purchase.pk %}" class="btn-pro btn-pro-secondary" style="justify-content:center"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+    {% endif %}
+    {% if purchase.status == 'ordered' or purchase.status == 'partially_received' %}
+        <a href="{% url 'purchases:purchase_receive' pk=purchase.pk %}" class="btn-pro btn-pro-primary" style="justify-content:center"><i class="bi bi-truck"></i> {% t "receive" %}</a>
+    {% endif %}
+    {% if purchase.status == 'received' or purchase.status == 'partially_received' %}
+        <a href="{% url 'purchases:purchase_return_create' pk=purchase.pk %}" class="btn-pro btn-pro-warning" style="justify-content:center"><i class="bi bi-arrow-return-left"></i> {% t "return" %}</a>
+    {% endif %}
+    {% if purchase.status == 'draft' or purchase.status == 'cancelled' %}
+        <a href="{% url 'purchases:purchase_delete' pk=purchase.pk %}" class="btn-pro btn-pro-danger" style="justify-content:center"><i class="bi bi-trash"></i> {% t "delete" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

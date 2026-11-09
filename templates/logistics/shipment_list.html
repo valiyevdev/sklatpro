@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "shipments" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "shipments" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "shipments" %}</h1>
+        <p class="page-subtitle">{{ total }} {% t "total" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'logistics:shipment_export' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-download"></i> {% t "export" %}</a>
+        <a href="{% url 'logistics:shipment_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_shipment" %}</a>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get">
+            <div class="d-flex gap-3 flex-wrap align-center">
+                <div style="flex:2;min-width:200px">
+                    <input class="input-pro" type="text" name="q" placeholder="{% t "search_shipments" %}" value="{{ search }}">
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <select class="input-pro" name="status">
+                        <option value="">{% t "all_statuses" %}</option>
+                        {% for val, label in status_choices %}
+                            <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <select class="input-pro" name="priority">
+                        <option value="">{% t "all_priorities" %}</option>
+                        {% for val, label in priority_choices %}
+                            <option value="{{ val }}" {% if priority == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <select class="input-pro" name="method">
+                        <option value="">{% t "all_methods" %}</option>
+                        {% for val, label in method_choices %}
+                            <option value="{{ val }}" {% if method == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i></button>
+                <a href="{% url 'logistics:shipment_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "customer" %}</th>
+                    <th>{% t "destination" %}</th>
+                    <th>{% t "driver" %}</th>
+                    <th>{% t "priority" %}</th>
+                    <th>{% t "method" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in shipments %}
+                <tr>
+                    <td class="cell-primary"><a href="{% url 'logistics:shipment_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.reference }}</a></td>
+                    <td>{{ s.customer|default:"-" }}</td>
+                    <td>{{ s.delivery_city|default:"-" }}</td>
+                    <td>{{ s.driver|default:"-" }}</td>
+                    <td>
+                        {% if s.priority == 'urgent' %}
+                            <span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>
+                        {% elif s.priority == 'high' %}
+                            <span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ s.get_priority_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ s.get_delivery_method_display }}</td>
+                    <td>
+                        {% if s.status == 'delivered' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "delivered" %}</span>
+                        {% elif s.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif s.status == 'in_transit' or s.status == 'dispatched' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_transit" %}</span>
+                        {% elif s.status == 'returned' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "returned" %}</span>
+                        {% elif s.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ s.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ s.created_at|date:"d.m.Y" }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'logistics:shipment_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'logistics:shipment_update' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_shipments" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_shipment" %}</p>
+                            <a href="{% url 'logistics:shipment_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_shipment" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page }} / {{ total_pages }}</span>
+    <div class="d-flex gap-1">
+        {% if page > 1 %}
+            <a href="?page={{ page|add:'-1' }}&q={{ search }}&status={{ status }}&priority={{ priority }}&method={{ method }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        {% if page < total_pages %}
+            <a href="?page={{ page|add:'1' }}&q={{ search }}&status={{ status }}&priority={{ priority }}&method={{ method }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

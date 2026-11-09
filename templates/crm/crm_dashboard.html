@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <nav class="breadcrumb-pro">
+        <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+        <span class="breadcrumb-pro-separator">/</span>
+        <span>{% t "CRM Dashboard" %}</span>
+      </nav>
+      <h1 class="page-title">{% t "CRM Dashboard" %}</h1>
+      <p class="page-subtitle">{% t "Customer relationship overview and analytics" %}</p>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'sales:customer_create' %}" class="btn-pro btn-pro-primary">
+        <i class="fas fa-plus"></i> {% t "New Customer" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Total Customers" %}</div>
+      <div class="stat-card-value">{{ total_customers }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-primary">
+      <i class="fas fa-users"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "New This Month" %}</div>
+      <div class="stat-card-value">{{ new_this_month }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-success">
+      <i class="fas fa-user-plus"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Active Customers" %}</div>
+      <div class="stat-card-value">{{ active_customers }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-info">
+      <i class="fas fa-user-check"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Inactive Customers" %}</div>
+      <div class="stat-card-value">{{ inactive_customers }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-warning">
+      <i class="fas fa-user-clock"></i>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Total Revenue" %}</div>
+      <div class="stat-card-value">${{ total_revenue|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-primary">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Monthly Revenue" %}</div>
+      <div class="stat-card-value">${{ monthly_revenue|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-success">
+      <i class="fas fa-chart-line"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Outstanding Debt" %}</div>
+      <div class="stat-card-value">${{ outstanding_debt|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-danger">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Avg Order Value" %}</div>
+      <div class="stat-card-value">${{ avg_order_value|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-info">
+      <i class="fas fa-receipt"></i>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Blocked" %}</div>
+      <div class="stat-card-value">{{ blocked_count }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-danger">
+      <i class="fas fa-ban"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Prospects" %}</div>
+      <div class="stat-card-value">{{ prospects_count }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-info">
+      <i class="fas fa-handshake"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "Overdue Tasks" %}</div>
+      <div class="stat-card-value">{{ overdue_tasks|length }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-warning">
+      <i class="fas fa-tasks"></i>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-card-label">{% t "At Risk" %}</div>
+      <div class="stat-card-value">{{ at_risk_count }}</div>
+    </div>
+    <div class="stat-card-icon stat-card-icon-danger">
+      <i class="fas fa-heartbeat"></i>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: var(--spacing-lg);">
+  <div class="card-pro">
+    <div class="card-pro-header">
+      <h3 class="card-pro-title">{% t "Top Customers" %}</h3>
+    </div>
+    <div class="card-pro-body">
+      <div class="table-responsive">
+        <table class="table-pro">
+          <thead>
+            <tr>
+              <th>{% t "Name" %}</th>
+              <th>{% t "Orders" %}</th>
+              <th>{% t "Revenue" %}</th>
+              <th>{% t "Outstanding" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in top_customers %}
+            <tr>
+              <td>
+                <a href="{% url 'crm:customer_360' customer.pk %}" class="fw-600">{{ customer.name }}</a>
+              </td>
+              <td>{{ customer.order_count }}</td>
+              <td class="text-pro-success">${{ customer.total_revenue|floatformat:2 }}</td>
+              <td class="{% if customer.total_outstanding > 0 %}text-pro-danger{% endif %}">
+                ${{ customer.total_outstanding|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-pro-muted" style="text-align: center;">{% t "No customers yet" %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-pro">
+    <div class="card-pro-header">
+      <h3 class="card-pro-title">{% t "Recent Customers" %}</h3>
+    </div>
+    <div class="card-pro-body">
+      <div class="table-responsive">
+        <table class="table-pro">
+          <thead>
+            <tr>
+              <th>{% t "Name" %}</th>
+              <th>{% t "Phone" %}</th>
+              <th>{% t "Status" %}</th>
+              <th>{% t "Created" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in recent_customers %}
+            <tr>
+              <td>
+                <a href="{% url 'crm:customer_360' customer.pk %}" class="fw-600">{{ customer.name }}</a>
+              </td>
+              <td>{{ customer.phone|default:"-" }}</td>
+              <td>
+                <span class="badge-pro badge-pro-{% if customer.status == 'active' %}success{% elif customer.status == 'inactive' %}neutral{% elif customer.status == 'blocked' %}danger{% else %}info{% endif %} badge-pro-dot">
+                  {{ customer.get_status_display }}
+                </span>
+              </td>
+              <td class="text-pro-sm text-pro-muted">{{ customer.created_at|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-pro-muted" style="text-align: center;">{% t "No customers yet" %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: var(--spacing-lg);">
+  <div class="card-pro">
+    <div class="card-pro-header">
+      <h3 class="card-pro-title">{% t "New vs Returning" %}</h3>
+    </div>
+    <div class="card-pro-body">
+      <div class="grid grid-2">
+        <div class="stat-card">
+          <div class="stat-card-content">
+            <div class="stat-card-label">{% t "New Customers" %}</div>
+            <div class="stat-card-value">{{ new_customers_count }}</div>
+          </div>
+          <div class="stat-card-icon stat-card-icon-success">
+            <i class="fas fa-user-plus"></i>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Returning Customers" %}</div>
+            <div class="stat-card-value">{{ returning_customers_count }}</div>
+          </div>
+          <div class="stat-card-icon stat-card-icon-primary">
+            <i class="fas fa-redo"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-pro">
+    <div class="card-pro-header">
+      <h3 class="card-pro-title">{% t "Action Center" %}</h3>
+    </div>
+    <div class="card-pro-body">
+      {% if overdue_tasks %}
+      <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+        {% for task in overdue_tasks %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+          <div>
+            <div class="fw-600 text-pro-sm">{{ task.title }}</div>
+            <div class="text-pro-sm text-pro-muted">{{ task.customer.name }} &middot; {{ task.get_task_type_display }}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "Overdue" %}</span>
+            <span class="text-pro-sm text-pro-muted">{{ task.due_date|date:"M d" }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-check-circle"></i>
+        <p>{% t "No overdue tasks" %}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+  <a href="{% url 'crm:segment_list' %}" class="btn-pro btn-pro-outline">
+    <i class="fas fa-layer-group"></i> {% t "Segments" %}
+  </a>
+  <a href="{% url 'crm:tag_list' %}" class="btn-pro btn-pro-outline">
+    <i class="fas fa-tags"></i> {% t "Tags" %}
+  </a>
+  <a href="{% url 'crm:rfm_analyze' %}" class="btn-pro btn-pro-outline">
+    <i class="fas fa-chart-pie"></i> {% t "RFM Analysis" %}
+  </a>
+</div>
+{% endblock %}

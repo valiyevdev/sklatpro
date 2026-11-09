@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "markings_dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <span class="current">{% t "markings_dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "markings_dashboard" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'markings:code_validate' %}" class="btn-pro btn-pro-primary"><i class="bi bi-upc-scan"></i> {% t "validate_code" %}</a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ stats.total }}</div><div class="stat-card-label">{% t "total_codes" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-upc-scan"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ stats.verified }}</div><div class="stat-card-label">{% t "verified" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--info-600)">{{ stats.sold }}</div><div class="stat-card-label">{% t "sold" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-cart-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--warning-500)">{{ stats.quarantined }}</div><div class="stat-card-label">{% t "quarantined" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-shield-exclamation"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "recent_activity" %}</span>
+            </div>
+            <div style="overflow-x:auto">
+                {% if recent_history %}
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "performed_at" %}</th>
+                            <th>{% t "marking_code" %}</th>
+                            <th>{% t "event_type" %}</th>
+                            <th>{% t "from_status" %} → {% t "to_status" %}</th>
+                            <th>{% t "performed_by" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in recent_history %}
+                        <tr>
+                            <td class="text-pro-sm">{{ entry.performed_at|date:"d M H:i" }}</td>
+                            <td><a href="{% url 'markings:marking_detail' pk=entry.marking_code.pk %}" class="fw-500" style="color:var(--primary-600);text-decoration:none">{{ entry.marking_code.code|truncatechars:20 }}</a></td>
+                            <td><span class="badge-pro badge-pro-info">{{ entry.event_type }}</span></td>
+                            <td>
+                                {% if entry.from_status %}<span class="badge-pro badge-pro-secondary">{{ entry.from_status }}</span>{% endif %}
+                                → <span class="badge-pro badge-pro-primary">{{ entry.to_status }}</span>
+                            </td>
+                            <td class="text-pro-sm text-pro-muted">{{ entry.performed_by.get_full_name|default:entry.performed_by.email|truncatechars:20 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+                    <h5 class="empty-state-title">{% t "no_recent_activity" %}</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-lightning-charge" style="color:var(--primary-600)"></i> {% t "quick_actions" %}</span>
+            </div>
+            <div class="card-pro-body d-flex flex-column gap-2">
+                <a href="{% url 'markings:code_validate' %}" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-upc-scan"></i> {% t "validate_code" %}</a>
+                <a href="{% url 'markings:marking_create' %}" class="btn-pro btn-pro-secondary" style="width:100%"><i class="bi bi-plus-lg"></i> {% t "register_code" %}</a>
+                <a href="{% url 'markings:gtin_create' %}" class="btn-pro btn-pro-secondary" style="width:100%"><i class="bi bi-plus-lg"></i> {% t "add_gtin" %}</a>
+            </div>
+        </div>
+
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-bar-chart" style="color:var(--primary-600)"></i> {% t "overview" %}</span>
+            </div>
+            <div class="card-pro-body d-flex flex-column gap-3">
+                <div class="d-flex align-center justify-between">
+                    <span class="text-pro-sm text-pro-muted">{% t "returned" %}</span>
+                    <span class="fw-600">{{ stats.returned }}</span>
+                </div>
+                <div class="d-flex align-center justify-between">
+                    <span class="text-pro-sm text-pro-muted">{% t "cancelled" %}</span>
+                    <span class="fw-600">{{ stats.expired }}</span>
+                </div>
+                <div class="d-flex align-center justify-between">
+                    <span class="text-pro-sm text-pro-muted">{% t "expiring_soon" %}</span>
+                    <span class="fw-600" style="color:var(--warning-500)">{{ stats.expiring_soon }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

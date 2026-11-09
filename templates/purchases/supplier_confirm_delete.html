@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_supplier" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:supplier_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "delete_supplier" %}?</h1>
+    </div>
+</div>
+
+<div style="max-width:480px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto 1.5rem"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3 class="fw-600 mb-2" style="color:var(--gray-900)">{% t "delete_supplier" %}?</h3>
+
+            <div class="mb-4" style="display:inline-flex;flex-direction:column;gap:0.5rem;text-align:left;background:var(--bg-page);border-radius:var(--radius-lg);padding:1rem 1.5rem">
+                <div class="d-flex align-center gap-2">
+                    <i class="bi bi-building text-pro-muted"></i>
+                    <span class="fw-500">{{ supplier.name }}</span>
+                </div>
+                {% if supplier.phone %}
+                <div class="d-flex align-center gap-2">
+                    <i class="bi bi-telephone text-pro-muted"></i>
+                    <span class="text-pro-sm">{{ supplier.phone }}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex align-center gap-2">
+                    <i class="bi bi-cart-plus text-pro-muted"></i>
+                    <span class="text-pro-sm">{% t "purchases" %}: {{ supplier.purchase_count|default:0 }}</span>
+                </div>
+            </div>
+
+            <p class="text-pro-muted mb-4"><i class="bi bi-info-circle"></i> {% t "delete_warning_undone" %}</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2" style="justify-content:center">
+                    <a href="{% url 'purchases:supplier_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-x-lg"></i> {% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

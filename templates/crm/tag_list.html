@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "tags" %} — CRM — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'crm:customer_crm_list' %}">CRM</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "tags" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-tags" style="color:var(--primary-500)"></i> {% t "tags" %}</h1>
+        <p class="page-subtitle">{{ tags|length }} {% t "tags_defined" %}</p>
+    </div>
+    <div class="page-actions">
+        <form method="post" action="{% url 'crm:tag_create' %}" class="d-flex gap-2 align-center" style="flex-wrap:wrap">
+            {% csrf_token %}
+            <div class="input-pro-group" style="margin-bottom:0">
+                <input class="input-pro" type="text" name="name" placeholder="{% t "tag_name" %}" required style="width:180px">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <input class="input-pro" type="color" name="color" value="#6366f1" title="{% t "color" %}" style="width:44px;height:38px;padding:2px;cursor:pointer">
+            </div>
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-circle"></i> {% t "new_tag" %}</button>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "customer_count" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tag in tags %}
+                <tr>
+                    <td class="fw-500">
+                        <span class="d-flex align-center gap-2">
+                            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{{ tag.color|default:'#6366f1' }};flex-shrink:0"></span>
+                            {{ tag.name }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge-pro badge-pro-neutral">{{ tag.customer_count|default:0 }}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1" style="justify-content:flex-end">
+                            <a href="{% url 'crm:tag_delete' pk=tag.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-500)" title="{% t "delete" %}"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-tags"></i></div>
+                            <h5 class="empty-state-title">{% t "no_tags" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_tag" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

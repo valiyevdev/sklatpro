@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "reports" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "reports" %}</h1>
+        <p class="page-subtitle">{% t "reports_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:saved_report_list' %}" class="btn-pro btn-pro-ghost"><i class="bi bi-bookmark"></i> {% t "saved_reports" %}</a>
+        <a href="{% url 'reports:saved_report_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "save_report" %}</a>
+    </div>
+</header>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ kpis.sales.gross_sales|floatformat:0 }}</div><div class="stat-card-label">{% t "total_sales" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-cart-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--info-600)">{{ kpis.purchases.gross_purchases|floatformat:0 }}</div><div class="stat-card-label">{% t "total_purchases" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-bag-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:{% if kpis.finance.profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ kpis.finance.profit|floatformat:0 }}</div><div class="stat-card-label">{% t "net_profit" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-graph-up-arrow"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ kpis.inventory.total_products }}</div><div class="stat-card-label">{% t "products" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-boxes"></i></div>
+    </div>
+</div>
+
+<h3 class="fw-600 mb-3" style="color:var(--text-primary)">{% t "report_categories" %}</h3>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <a href="{% url 'reports:report_sales' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon primary" style="width:48px;height:48px;min-width:48px"><i class="bi bi-cart-check"></i></div>
+            <div><div class="fw-600">{% t "sales_reports" %}</div><div class="text-pro-xs text-pro-muted">{% t "sales_report_desc" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_purchases' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon success" style="width:48px;height:48px;min-width:48px"><i class="bi bi-bag-check"></i></div>
+            <div><div class="fw-600">{% t "purchase_reports" %}</div><div class="text-pro-xs text-pro-muted">{% t "purchase_report_desc" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_inventory' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon warning" style="width:48px;height:48px;min-width:48px"><i class="bi bi-boxes"></i></div>
+            <div><div class="fw-600">{% t "inventory_reports" %}</div><div class="text-pro-xs text-pro-muted">{% t "inventory_report_desc" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_profit' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon danger" style="width:48px;height:48px;min-width:48px"><i class="bi bi-graph-up-arrow"></i></div>
+            <div><div class="fw-600">{% t "profitability" %}</div><div class="text-pro-xs text-pro-muted">{% t "profit_report_desc" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_finance' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon info" style="width:48px;height:48px;min-width:48px"><i class="bi bi-wallet2"></i></div>
+            <div><div class="fw-600">{% t "finance_reports" %}</div><div class="text-pro-xs text-pro-muted">{% t "finance_summary" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_customers' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon primary" style="width:48px;height:48px;min-width:48px"><i class="bi bi-people"></i></div>
+            <div><div class="fw-600">{% t "customer_analytics" %}</div><div class="text-pro-xs text-pro-muted">{% t "customer_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_suppliers' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon success" style="width:48px;height:48px;min-width:48px"><i class="bi bi-truck"></i></div>
+            <div><div class="fw-600">{% t "supplier_analytics" %}</div><div class="text-pro-xs text-pro-muted">{% t "supplier_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_orders' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon warning" style="width:48px;height:48px;min-width:48px"><i class="bi bi-clipboard-check"></i></div>
+            <div><div class="fw-600">{% t "order_analytics" %}</div><div class="text-pro-xs text-pro-muted">{% t "fulfillment_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_pos' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon info" style="width:48px;height:48px;min-width:48px"><i class="bi bi-upc-scan"></i></div>
+            <div><div class="fw-600">{% t "pos_reports" %}</div><div class="text-pro-xs text-pro-muted">{% t "retail_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_tasks' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon primary" style="width:48px;height:48px;min-width:48px"><i class="bi bi-list-task"></i></div>
+            <div><div class="fw-600">{% t "task_analytics" %}</div><div class="text-pro-xs text-pro-muted">{% t "work_management_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_warehouses' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon success" style="width:48px;height:48px;min-width:48px"><i class="bi bi-building"></i></div>
+            <div><div class="fw-600">{% t "warehouse_analytics" %}</div><div class="text-pro-xs text-pro-muted">{% t "warehouse_insights" %}</div></div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_kpi' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body d-flex align-center gap-3">
+            <div class="stat-card-icon danger" style="width:48px;height:48px;min-width:48px"><i class="bi bi-speedometer2"></i></div>
+            <div><div class="fw-600">{% t "kpi_dashboard" %}</div><div class="text-pro-xs text-pro-muted">{% t "key_performance_indicators" %}</div></div>
+        </div>
+    </a>
+</div>
+
+<h3 class="fw-600 mb-3" style="color:var(--text-primary)">{% t "advanced_analytics" %}</h3>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+    <a href="{% url 'reports:report_abc' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--primary-600)">ABC</div>
+            <div class="text-pro-xs text-pro-muted">{% t "abc_analysis_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_xyz' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--info-600)">XYZ</div>
+            <div class="text-pro-xs text-pro-muted">{% t "xyz_analysis_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_abc_xyz' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--warning-600)">ABC/XYZ</div>
+            <div class="text-pro-xs text-pro-muted">{% t "matrix_analysis_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_rfm' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--success-600)">RFM</div>
+            <div class="text-pro-xs text-pro-muted">{% t "rfm_analysis_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_product_profitability' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--success-600)">{% t "profit_short" %}</div>
+            <div class="text-pro-xs text-pro-muted">{% t "product_profitability_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_cash_flow' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--info-600)">{% t "cash_flow" %}</div>
+            <div class="text-pro-xs text-pro-muted">{% t "cash_flow_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_budget' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--warning-600)">{% t "budget" %}</div>
+            <div class="text-pro-xs text-pro-muted">{% t "budget_analysis_desc" %}</div>
+        </div>
+    </a>
+    <a href="{% url 'reports:report_stock_movement' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body text-center" style="padding:1.25rem">
+            <div class="fw-700 text-lg mb-1" style="color:var(--danger-500)">{% t "movements" %}</div>
+            <div class="text-pro-xs text-pro-muted">{% t "stock_movement_desc" %}</div>
+        </div>
+    </a>
+</div>
+
+<div class="card-pro mt-4">
+    <div class="card-pro-body" style="padding:1rem 1.5rem">
+        <div class="d-flex align-center justify-between">
+            <div class="d-flex align-center gap-2 text-pro-xs text-pro-muted">
+                <i class="bi bi-clock"></i> {% t "last_updated" %}: {{ now|date:"d M Y H:i" }}
+            </div>
+            <div class="d-flex gap-2">
+                <span class="text-pro-xs text-pro-muted">{% t "company" %}: {{ company.company_name|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

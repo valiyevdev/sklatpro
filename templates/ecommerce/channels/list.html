@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Channels - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Channels" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Sales Channels" %}</h1>
+        <p class="page-subtitle">{% t "Manage your sales channels and marketplace connections" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:channel_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "Add Channel" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro-body" style="padding:var(--sp-3) var(--sp-5)">
+        <form method="get" style="display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+                <div style="position:relative">
+                    <i class="bi bi-search" style="position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.875rem;pointer-events:none"></i>
+                    <input type="text" name="q" value="{{ search }}" placeholder="{% t "search_channels" %}" class="input-pro" style="padding-left:2.25rem">
+                </div>
+            </div>
+            <select name="type" class="input-pro" style="width:auto;min-width:160px">
+                <option value="">{% t "All Types" %}</option>
+                {% for val, label in channel_types %}
+                <option value="{{ val }}" {% if channel_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="input-pro" style="width:auto;min-width:140px">
+                <option value="">{% t "All Statuses" %}</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-funnel"></i> {% t "Filter" %}</button>
+            {% if search or channel_type or status %}
+            <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-x-lg"></i> {% t "Clear" %}</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "Channel" %}</th>
+                        <th>{% t "Type" %}</th>
+                        <th>{% t "Revenue (Today)" %}</th>
+                        <th>{% t "Status" %}</th>
+                        <th>{% t "Sync" %}</th>
+                        <th style="text-align:right">{% t "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for channel in channels %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none">
+                                <div style="width:36px;height:36px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);flex-shrink:0">
+                                    {% if channel.channel_type == 'website' %}<i class="bi bi-globe"></i>
+                                    {% elif channel.channel_type == 'marketplace' %}<i class="bi bi-shop"></i>
+                                    {% elif channel.channel_type == 'pos' %}<i class="bi bi-upc-scan"></i>
+                                    {% elif channel.channel_type == 'social' %}<i class="bi bi-megaphone"></i>
+                                    {% elif channel.channel_type == 'api' %}<i class="bi bi-hdd-network"></i>
+                                    {% else %}<i class="bi bi-broadcast"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <div class="cell-primary" style="font-weight:500">{{ channel.name }}</div>
+                                    <div class="cell-muted">{{ channel.code }}</div>
+                                </div>
+                            </a>
+                        </td>
+                        <td><span class="badge-pro badge-pro-neutral">{{ channel.get_channel_type_display }}</span></td>
+                        <td class="cell-primary">{{ channel.revenue_today|floatformat:0 }} so'm</td>
+                        <td>
+                            {% if channel.status == 'active' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "Active" %}</span>
+                            {% elif channel.status == 'inactive' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "Inactive" %}</span>
+                            {% elif channel.status == 'setup' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "Setup" %}</span>
+                            {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ channel.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if channel.last_sync %}
+                            <span style="font-size:var(--text-xs);color:var(--text-muted)">{{ channel.last_sync|timesince }} {% t "ago" %}</span>
+                            {% else %}
+                            <span style="font-size:var(--text-xs);color:var(--text-muted)">{% t "Never" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}" class="btn-pro btn-pro-sm btn-pro-ghost" title="{% t "View" %}">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:var(--sp-10)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:56px;height:56px;margin:0 auto var(--sp-4)"><i class="bi bi-broadcast"></i></div>
+                                <div class="empty-state-title">{% t "No channels found" %}</div>
+                                <div class="empty-state-desc">{% t "Create your first sales channel to start selling online." %}</div>
+                                <a href="{% url 'ecommerce:channel_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "Add Channel" %}</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ pl.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:price_list_list' %}">{% t "price_lists" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ pl.name }}</span>
+</div>
+
+<div class="page-head">
+    <a href="{% url 'pricing:price_list_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title" style="margin:0">{{ pl.name }}</h1>
+            <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 8px;border-radius:var(--radius-sm)">{{ pl.code }}</code>
+            {% if pl.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% elif pl.status == 'inactive' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+            {% elif pl.status == 'scheduled' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "scheduled" %}</span>
+            {% endif %}
+            <span class="badge-pro badge-pro-neutral">{{ pl.currency }}</span>
+            {% if pl.is_default %}
+                <span class="badge-pro badge-pro-primary">{% t "default" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle" style="margin-top:4px">
+            {% t "priority" %}: {{ pl.priority }}
+            {% if pl.channel %} &middot; {{ pl.get_channel_display }}{% endif %}
+            {% if pl.start_date or pl.end_date %}
+                &middot; {% if pl.start_date %}{{ pl.start_date|date:"d.m.Y" }}{% endif %}
+                {% if pl.start_date and pl.end_date %} — {% endif %}
+                {% if pl.end_date %}{{ pl.end_date|date:"d.m.Y" }}{% endif %}
+            {% endif %}
+            {% if pl.customer_segment %} &middot; {{ pl.customer_segment.name }}{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'pricing:price_list_edit' pk=pl.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'pricing:entry_add' pk=pl.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-lg"></i> {% t "add_item" %}</a>
+    </div>
+</div>
+
+{% if pl.description %}
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <div class="text-pro-sm text-pro-muted">{{ pl.description }}</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-tag" style="color:var(--primary-600)"></i> {% t "entries" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ entries.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "variant" %}</th>
+                    <th>{% t "price" %}</th>
+                    <th>{% t "min_qty" %}</th>
+                    <th>{% t "max_qty" %}</th>
+                    <th>{% t "dates" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entries %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ e.product.name }}</td>
+                    <td>
+                        {% if e.variant %}
+                            <span class="badge-pro badge-pro-neutral">{{ e.variant }}</span>
+                        {% else %}
+                            <span class="text-pro-sm text-pro-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-primary fw-600">{{ e.price|floatformat:2 }} {{ pl.currency }}</td>
+                    <td>{{ e.min_quantity }}</td>
+                    <td>{% if e.max_quantity %}{{ e.max_quantity }}{% else %}∞{% endif %}</td>
+                    <td class="cell-muted text-pro-sm">
+                        {% if e.start_date or e.end_date %}
+                            {% if e.start_date %}{{ e.start_date|date:"d.m.Y" }}{% endif %}
+                            {% if e.start_date and e.end_date %} — {% endif %}
+                            {% if e.end_date %}{{ e.end_date|date:"d.m.Y" }}{% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if e.is_active %}
+                            <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions" style="justify-content:flex-end">
+                            <a href="{% url 'pricing:entry_edit' pk=e.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'pricing:entry_delete' pk=e.pk %}" style="display:inline" onsubmit="return confirm('{% t "confirm_delete" %}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "delete" %}" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-tag"></i></div>
+                            <h5 class="empty-state-title">{% t "no_entries" %}</h5>
+                            <p class="empty-state-desc">{% t "add_first_entry" %}</p>
+                            <a href="{% url 'pricing:entry_add' pk=pl.pk %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_item" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

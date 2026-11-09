@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "task_list" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "all_tasks" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:task_kanban' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-kanban"></i></a>
+        <a href="{% url 'spiskalar:task_calendar' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-calendar3"></i></a>
+        <a href="{% url 'spiskalar:task_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "task_create" %}</a>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body" style="padding:0.75rem 1rem">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:center">
+            <input type="text" name="q" class="input-pro" placeholder="{% t "search_tasks" %}" value="{{ filters.q }}" style="max-width:220px">
+            <select name="status" class="input-pro" style="max-width:160px">
+                <option value="">{% t "task_status" %}</option>
+                <option value="backlog" {% if filters.status == 'backlog' %}selected{% endif %}>{% t "task_backlog" %}</option>
+                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>{% t "task_pending" %}</option>
+                <option value="in_progress" {% if filters.status == 'in_progress' %}selected{% endif %}>{% t "task_in_progress" %}</option>
+                <option value="waiting" {% if filters.status == 'waiting' %}selected{% endif %}>{% t "task_waiting" %}</option>
+                <option value="blocked" {% if filters.status == 'blocked' %}selected{% endif %}>{% t "task_blocked" %}</option>
+                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>{% t "task_completed_status" %}</option>
+                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>{% t "task_cancelled" %}</option>
+            </select>
+            <select name="priority" class="input-pro" style="max-width:140px">
+                <option value="">{% t "task_priority" %}</option>
+                <option value="low" {% if filters.priority == 'low' %}selected{% endif %}>{% t "priority_low" %}</option>
+                <option value="normal" {% if filters.priority == 'normal' %}selected{% endif %}>{% t "priority_normal" %}</option>
+                <option value="high" {% if filters.priority == 'high' %}selected{% endif %}>{% t "priority_high" %}</option>
+                <option value="urgent" {% if filters.priority == 'urgent' %}selected{% endif %}>{% t "priority_urgent" %}</option>
+            </select>
+            <select name="type" class="input-pro" style="max-width:160px">
+                <option value="">{% t "task_type" %}</option>
+                <option value="operational" {% if filters.type == 'operational' %}selected{% endif %}>{% t "task_operational" %}</option>
+                <option value="warehouse" {% if filters.type == 'warehouse' %}selected{% endif %}>{% t "task_warehouse" %}</option>
+                <option value="sales" {% if filters.type == 'sales' %}selected{% endif %}>{% t "task_sales" %}</option>
+                <option value="customer" {% if filters.type == 'customer' %}selected{% endif %}>{% t "task_customer" %}</option>
+                <option value="finance" {% if filters.type == 'finance' %}selected{% endif %}>{% t "task_finance" %}</option>
+                <option value="administrative" {% if filters.type == 'administrative' %}selected{% endif %}>{% t "task_administrative" %}</option>
+                <option value="custom" {% if filters.type == 'custom' %}selected{% endif %}>{% t "task_custom" %}</option>
+            </select>
+            <select name="assigned" class="input-pro" style="max-width:180px">
+                <option value="">{% t "task_assigned_to" %}</option>
+                {% for e in employees %}<option value="{{ e.pk }}" {% if filters.assigned == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.get_full_name }}</option>{% endfor %}
+            </select>
+            <input type="hidden" name="overdue" value="{{ filters.overdue }}">
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i></button>
+            {% if filters.q or filters.status or filters.priority or filters.type or filters.assigned %}
+            <a href="{% url 'spiskalar:task_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="width:40px"><input type="checkbox" id="select-all" style="width:16px;height:16px"></th>
+                    <th>{% t "task_title" %}</th>
+                    <th>{% t "task_type" %}</th>
+                    <th>{% t "task_status" %}</th>
+                    <th>{% t "task_priority" %}</th>
+                    <th>{% t "task_assigned_to" %}</th>
+                    <th>{% t "task_due_date" %}</th>
+                    <th>{% t "task_progress" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr style="cursor:pointer" onclick="window.location='{% url 'spiskalar:task_detail' pk=task.pk %}'">
+                    <td onclick="event.stopPropagation()"><input type="checkbox" name="task_ids" value="{{ task.pk }}" class="task-checkbox" style="width:16px;height:16px"></td>
+                    <td class="fw-500">{{ task.title|truncatechars:60 }}</td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ task.get_task_type_display }}</span></td>
+                    <td>
+                        {% if task.status == 'completed' %}<span class="badge-pro badge-pro-success">{% t "task_completed_status" %}</span>
+                        {% elif task.status == 'in_progress' %}<span class="badge-pro badge-pro-info">{% t "task_in_progress" %}</span>
+                        {% elif task.status == 'blocked' %}<span class="badge-pro badge-pro-danger">{% t "task_blocked" %}</span>
+                        {% elif task.status == 'waiting' %}<span class="badge-pro badge-pro-warning">{% t "task_waiting" %}</span>
+                        {% elif task.status == 'backlog' %}<span class="badge-pro badge-pro-neutral">{% t "task_backlog" %}</span>
+                        {% elif task.status == 'cancelled' %}<span class="badge-pro badge-pro-neutral" style="opacity:0.5">{% t "task_cancelled" %}</span>
+                        {% else %}<span class="badge-pro badge-pro-warning">{% t "task_pending" %}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+                        {% elif task.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "priority_high" %}</span>
+                        {% elif task.priority == 'normal' %}<span class="badge-pro badge-pro-info">{% t "priority_normal" %}</span>
+                        {% else %}<span class="badge-pro badge-pro-neutral">{% t "priority_low" %}</span>{% endif %}
+                    </td>
+                    <td class="text-pro-sm">{% if task.assigned_to %}{{ task.assigned_to.get_full_name }}{% else %}<span class="text-pro-muted">{% t "unassigned" %}</span>{% endif %}</td>
+                    <td class="text-pro-sm {% if task.is_overdue %}text-pro-danger fw-600{% else %}text-pro-muted{% endif %}">
+                        {% if task.due_date %}{{ task.due_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-center gap-2">
+                            <div class="progress-pro" style="width:60px"><div class="progress-pro-bar" style="width:{{ task.progress }}%"></div></div>
+                            <span class="text-pro-xs text-pro-muted">{{ task.progress }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8"><div class="empty-state"><p class="text-pro-muted">{% t "no_tasks" %}</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if tasks.has_other_pages %}
+<div class="d-flex justify-center mt-4">
+    <div class="d-flex gap-2">
+        {% if tasks.has_previous %}<a href="?page={{ tasks.previous_page_number }}&q={{ filters.q }}&status={{ filters.status }}&priority={{ filters.priority }}&type={{ filters.type }}&assigned={{ filters.assigned }}" class="btn-pro btn-pro-secondary btn-pro-sm">Prev</a>{% endif %}
+        <span class="d-flex align-center px-3 text-pro-sm">Page {{ tasks.number }} of {{ tasks.paginator.num_pages }}</span>
+        {% if tasks.has_next %}<a href="?page={{ tasks.next_page_number }}&q={{ filters.q }}&status={{ filters.status }}&priority={{ filters.priority }}&type={{ filters.type }}&assigned={{ filters.assigned }}" class="btn-pro btn-pro-secondary btn-pro-sm">Next</a>{% endif %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.getElementById('select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

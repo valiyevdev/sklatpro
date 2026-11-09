@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_return" %} - {{ purchase.reference }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "create_return_for" %} {{ purchase.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ purchase.supplier.name }} | {{ purchase.warehouse.name }}</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "return_details" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "return_reason" %} *</label>
+                    <select class="input-pro" name="reason" required>
+                        <option value="damaged">{% t "reason_damaged" %}</option>
+                        <option value="wrong_product">{% t "reason_wrong_product" %}</option>
+                        <option value="quality_issue">{% t "reason_quality_issue" %}</option>
+                        <option value="overage">{% t "reason_overage" %}</option>
+                        <option value="other">{% t "reason_other" %}</option>
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "reason_notes" %}</label>
+                    <textarea class="input-pro" name="reason_notes" rows="2" placeholder="{% t "describe_reason" %}..."></textarea>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="2" placeholder="{% t "additional_notes" %}..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--info-600)"></i> {% t "purchase_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "reference" %}</div>
+                        <div class="fw-600">{{ purchase.reference }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "supplier" %}</div>
+                        <div class="fw-600">{{ purchase.supplier.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "warehouse" %}</div>
+                        <div class="fw-600">{{ purchase.warehouse.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "total_amount" %}</div>
+                        <div class="fw-600">${{ purchase.total|floatformat:0 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro mb-4">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-arrow-return-left" style="color:var(--warning-600)"></i> {% t "items_to_return" %}</span>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th style="width:40px"></th>
+                        <th>{% t "product" %}</th>
+                        <th style="text-align:center">{% t "quantity_short" %}</th>
+                        <th style="text-align:center">{% t "received_qty" %}</th>
+                        <th style="text-align:center">{% t "unit_price" %}</th>
+                        <th style="text-align:center">{% t "return_quantity" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in receivable_items %}
+                    <tr>
+                        <td style="text-align:center">
+                            <input type="checkbox" class="return-checkbox" name="return_items" value="{{ item.pk }}" onchange="toggleReturnRow(this)">
+                        </td>
+                        <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                        <td style="text-align:center">{{ item.quantity }}</td>
+                        <td style="text-align:center">
+                            <span class="fw-600" style="color:var(--success-600)">{{ item.received_quantity }}</span>
+                        </td>
+                        <td style="text-align:center">${{ item.unit_price }}</td>
+                        <td style="text-align:center">
+                            <input class="input-pro return-qty-input" type="number" name="return_quantities" value="0" min="1" max="{{ item.received_quantity }}" style="width:80px;text-align:center" disabled>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-arrow-return-left"></i></div>
+                                <h5 class="empty-state-title">{% t "no_items_to_return" %}</h5>
+                                <p class="empty-state-desc">{% t "all_items_received_zero" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-between">
+        <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="btn-pro btn-pro-secondary"><i class="bi bi-x"></i> {% t "cancel" %}</a>
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-arrow-return-left"></i> {% t "create_return" %}</button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleReturnRow(checkbox) {
+    var row = checkbox.closest('tr');
+    var qtyInput = row.querySelector('.return-qty-input');
+    if (checkbox.checked) {
+        qtyInput.disabled = false;
+        qtyInput.focus();
+    } else {
+        qtyInput.disabled = true;
+        qtyInput.value = 0;
+    }
+}
+</script>
+{% endblock %}

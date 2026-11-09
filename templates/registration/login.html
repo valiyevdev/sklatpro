@@ -1,0 +1,882 @@
+{% load static i18n_tags %}<!DOCTYPE html>
+<html lang="{% lang_attrs %}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% t "login" %} — SKLAT PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link href="{% static 'css/design-system.css' %}" rel="stylesheet">
+    <style>
+        /* ===== Login page base — deep dark canvas ===== */
+        html, body {
+            background: radial-gradient(1100px 480px at 15% -10%, rgba(99,102,241,0.16), transparent 60%),
+                        radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.12), transparent 55%),
+                        #020617;
+            min-height: 100%; margin: 0; color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Soft fade-in on load for seamless transition from the welcome slider */
+        body {
+            animation: authFadeIn 0.5s ease-out;
+            will-change: opacity;
+        }
+        @keyframes authFadeIn {
+            from { opacity: 0; transform: scale(0.985); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        /* ===== Desktop hero banner (left) — visual layer ===== */
+        /* Show/hide + width are enforced by the split-screen engine
+           (.auth-screen / .auth-panel-l / .auth-panel-r) further below. */
+        .auth-hero.lg-hero {
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(1100px 520px at 15% -5%, rgba(99,102,241,0.24), transparent 60%),
+                        radial-gradient(900px 460px at 88% 110%, rgba(168,85,247,0.18), transparent 55%),
+                        #020617;
+            color: #f8fafc;
+            text-align: left;
+        }
+        .lg-glow { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(70px); z-index: 0; }
+        .lg-glow-1 { width: 420px; height: 420px; top: -140px; left: -90px; background: rgba(99,102,241,0.30); }
+        .lg-glow-2 { width: 380px; height: 380px; bottom: -150px; right: -70px; background: rgba(168,85,247,0.24); }
+        .lg-hero::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.045) 1px, transparent 0);
+            background-size: 30px 30px;
+        }
+        .lg-hero-inner { position: relative; z-index: 2; margin: auto; max-width: 480px; width: 100%; }
+
+        .lg-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+        .lg-logo {
+            width: 42px; height: 42px; flex-shrink: 0; border-radius: 14px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 18px; color: #ffffff; letter-spacing: -0.02em;
+            box-shadow: 0 0 26px rgba(99,102,241,0.55);
+        }
+        .lg-brand span { font-size: 15px; font-weight: 800; letter-spacing: 0.01em; color: #f8fafc; }
+
+        .lg-title {
+            font-size: 28px; line-height: 1.18; font-weight: 800; letter-spacing: -0.02em;
+            margin: 0 0 8px;
+            background: linear-gradient(90deg, #ffffff 10%, #c7d2fe);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .lg-subtitle {
+            font-size: 13.5px; line-height: 1.6; color: #94a3b8; margin: 0 0 24px;
+            max-width: 430px; font-weight: 500;
+        }
+
+        /* ===== Interactive live-system preview card ===== */
+        .lg-demo {
+            position: relative;
+            display: flex; flex-direction: column;
+            height: 190px; max-height: 190px; overflow: hidden;
+            background: rgba(15,23,42,0.6);
+            border: 1px solid rgba(30,41,59,0.8);
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+            padding: 12px 14px 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 45px -20px rgba(0,0,0,0.6), 0 0 42px -18px rgba(99,102,241,0.45);
+            animation: lg-float 7s ease-in-out infinite;
+        }
+        .lg-demo-head, .lg-demo-scan, .lg-demo-result, .lg-demo-stats { flex-shrink: 0; }
+        @keyframes lg-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .lg-demo-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .lg-demo-dots { display: flex; gap: 6px; }
+        .lg-demo-dots i { width: 9px; height: 9px; border-radius: 50%; }
+        .lg-demo-dots .dot-red { background: #f43f5e; }
+        .lg-demo-dots .dot-amber { background: #f59e0b; }
+        .lg-demo-dots .dot-green { background: #10b981; }
+        .lg-demo-live {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #34d399;
+        }
+        .live-pulse { width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: lg-pulse 1.6s ease-in-out infinite; }
+        @keyframes lg-pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
+            50% { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+        }
+        .lg-demo-scan {
+            position: relative; height: 48px; border-radius: 14px; overflow: hidden;
+            border: 1px solid rgba(30,41,59,0.9); background: #020617;
+        }
+        .lg-demo-barcode {
+            position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(90deg,
+                #e2e8f0 0 2px, transparent 2px 5px, #cbd5e1 5px 8px, transparent 8px 13px,
+                #e2e8f0 13px 15px, transparent 15px 20px, #e2e8f0 20px 23px, transparent 23px 29px);
+            background-size: 58px 100%;
+        }
+        .lg-demo-laser {
+            position: absolute; left: 0; right: 0; height: 2px; top: -2px;
+            background: linear-gradient(90deg, transparent, #818cf8, #c4b5fd, transparent);
+            box-shadow: 0 0 12px #818cf8, 0 0 30px rgba(99,102,241,0.6);
+            animation: lg-scan 2.6s ease-in-out infinite;
+        }
+        @keyframes lg-scan {
+            0%   { top: -2px; }
+            50%  { top: calc(100% - 2px); }
+            55%  { top: -2px; }
+            100% { top: -2px; }
+        }
+        .lg-demo-result { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .lg-demo-item { flex: 1; min-width: 0; }
+        .lg-demo-item-name {
+            font-size: 14px; font-weight: 700; color: #f1f5f9;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .lg-demo-item-code { font-size: 11px; color: #64748b; font-family: Consolas, monospace; margin-top: 2px; letter-spacing: 0.03em; }
+        .lg-demo-stock { text-align: right; min-width: 64px; }
+        .lg-demo-stock-label {
+            display: block; font-size: 9.5px; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .lg-demo-stock-count {
+            font-size: 22px; font-weight: 800; color: #34d399; line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        .lg-demo-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 10.5px; font-weight: 700; color: #34d399;
+            background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+            padding: 4px 9px; border-radius: 999px; white-space: nowrap;
+            box-shadow: 0 0 14px rgba(16,185,129,0.25);
+            transition: all 0.25s ease;
+        }
+        .lg-demo-badge.pop { animation: lg-pop 0.42s ease; }
+        @keyframes lg-pop {
+            0%   { transform: scale(1); }
+            45%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+        .lg-demo-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
+        }
+        .lg-demo-stat {
+            background: rgba(2,6,23,0.55); border: 1px solid rgba(30,41,59,0.9);
+            border-radius: 12px; padding: 6px 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .lg-demo-stat i { font-size: 12px; color: #6366f1; }
+        .lg-demo-stat b {
+            font-size: 13px; color: #e2e8f0; margin-left: auto;
+            font-variant-numeric: tabular-nums; font-weight: 700;
+        }
+        .lg-demo-stat b.pop { animation: lg-stat-pop 0.3s ease; }
+        @keyframes lg-stat-pop { 0% { transform: scale(1); } 50% { transform: scale(1.18); color: #94a3b8; } 100% { transform: scale(1); } }
+
+        /* ===== Glassmorphic feature cards ===== */
+        .lg-features { display: flex; flex-direction: column; gap: 10px; }
+        .lg-feature {
+            display: flex; align-items: flex-start; gap: 12px;
+            background: rgba(15,23,42,0.5); border: 1px solid rgba(30,41,59,0.8);
+            border-radius: 14px; padding: 12px 14px;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .lg-feature:hover {
+            border-color: rgba(99,102,241,0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px -8px rgba(99,102,241,0.35);
+        }
+        .lg-feature-icon {
+            width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 15px;
+            background: rgba(99,102,241,0.12); color: #818cf8;
+            border: 1px solid rgba(99,102,241,0.18);
+            box-shadow: 0 0 18px rgba(99,102,241,0.25);
+        }
+        .lg-feature-text { min-width: 0; }
+        .lg-feature-title { font-size: 12.5px; font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+        .lg-feature-desc { font-size: 11.5px; line-height: 1.45; color: #94a3b8; }
+
+        /* ===== Mobile brand header (lg:flex hidden hero) ===== */
+        .lg-mobile-brand {
+            display: none;
+            width: 100%; align-items: center; justify-content: center;
+            gap: 13px; margin-bottom: 16px; text-align: center;
+        }
+        .lg-mobile-brand-name { text-align: center; }
+        @media (max-width: 1023px) {
+            .auth-form-side {
+                width: 100%; max-width: 448px; margin: 0 auto;
+                display: flex; flex-direction: column;
+                align-items: center;
+            }
+            /* Form card — same glass surface as desktop, just tighter gutters */
+            .auth-form-wrapper {
+                width: 100%; max-width: 448px;
+                border-radius: 16px;                 /* rounded-2xl */
+                padding: 28px 24px;                 /* p-8 (compact on mobile) */
+                background: rgba(15, 23, 42, 0.80);  /* bg-slate-900/80 */
+                border: 1px solid #1e293b;           /* border-slate-800 */
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                -webkit-backdrop-filter: blur(24px); /* backdrop-blur-xl */
+                backdrop-filter: blur(24px);
+            }
+            .lg-mobile-brand { display: flex; }
+            .lg-mobile-brand .lg-logo { width: 46px; height: 46px; border-radius: 15px; font-size: 20px; }
+            .lg-mobile-brand-name { display: block; font-size: 16px; font-weight: 800; letter-spacing: 0.01em; color: #f1f5f9; }
+            .lg-mobile-brand-sub { display: block; font-size: 12.5px; color: #94a3b8; margin-top: 3px; max-width: 300px; line-height: 1.4; }
+        }
+        @media (max-width: 480px) {
+            .auth-form-side { padding: 24px 16px; }
+        }
+        [data-theme="light"] .lg-mobile-brand-name { color: #1e293b; }
+        [data-theme="light"] .lg-mobile-brand-sub { color: #64748b; }
+
+        /* ============================================================
+           SPLIT-SCREEN ENGINE — 50/50, locked to exact 100dvh.
+           Desktop only: fixed no-scroll split (lg). Mobile: natural
+           vertical stacking with scrolling (min-h-screen overflow-y-auto).
+           ============================================================ */
+        .auth-screen {
+            /* Mobile-first: clean vertical stacking, natural scroll when
+               content is taller than the viewport (min-h-screen w-full
+               overflow-y-auto). The fixed no-scroll lock applies ONLY
+               at lg+ below. */
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;                    /* handles mobile URL bar */
+            display: flex;
+            flex-direction: column;                /* mobile: single stacked column */
+            overflow-y: auto;                      /* allow scrolling when needed */
+            -webkit-overflow-scrolling: touch;
+            /* gradient-to-br from-indigo-900/40 via-slate-900 to-slate-950,
+               layered under the indigo/violet glows */
+            background:
+                radial-gradient(1100px 480px at 15% -10%, rgba(99,102,241,0.16), transparent 60%),
+                radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.12), transparent 55%),
+                linear-gradient(135deg, rgba(49,46,129,0.40) 0%, #0f172a 45%, #020617 100%),
+                #020617;
+        }
+        /* LEFT HERO PANEL — strictly hidden below lg (hidden lg:flex),
+           strict 50% width, h-full. */
+        .auth-panel-l {
+            display: none !important;          /* hidden (mobile) */
+            width: 100%;
+            flex: 0 0 auto;
+            height: 100%;                      /* h-full */
+            flex-direction: column;
+            justify-content: space-between;    /* justify-between */
+            padding: 24px;                     /* p-6 */
+            border-right: 1px solid rgba(30, 41, 59, 0.8); /* border-slate-800/80 */
+            position: relative;
+            overflow: hidden;
+        }
+        /* RIGHT FORM PANEL — full-width stacked column on mobile,
+           strict 50% desktop. Flex flow (flex flex-col items-center
+           justify-center gap-4 w-full) grows with content and scrolls
+           instead of clipping/overlapping. */
+        .auth-panel-r {
+            display: flex;
+            width: 100% !important;               /* w-full */
+            flex: 0 0 auto;
+            flex-direction: column;
+            align-items: center;                  /* items-center */
+            justify-content: center;              /* centered flow */
+            gap: 16px;                            /* gap-4 */
+            min-height: 100vh;                    /* min-h-screen */
+            min-height: 100dvh;
+            padding: 24px 16px 24px;              /* p-4 (pb-6 bottom clearance) */
+            /* transparent so the .auth-screen gradient canvas shows through */
+            background: transparent !important;
+        }
+        @media (min-width: 1024px) {
+            .auth-screen {
+                /* lg:fixed inset-0 lg:h-screen lg:overflow-hidden — the
+                   rigid split-screen lock applies ONLY on desktop. */
+                position: fixed;
+                inset: 0;
+                height: 100dvh;
+                min-height: 0;
+                overflow: hidden;
+                flex-direction: row;           /* desktop: side-by-side */
+            }
+            .auth-panel-l {
+                display: flex !important;      /* lg:flex */
+                width: 50% !important;         /* lg:w-1/2 — 50/50 split */
+                padding: 32px !important;      /* lg:p-8 */
+            }
+            .auth-panel-r {
+                width: 50% !important;         /* lg:w-1/2 — 50/50 split */
+                min-height: 0;
+                height: 100dvh;                /* lg:h-screen */
+                justify-content: space-between;/* dock lang switcher at bottom */
+                gap: 0;
+                padding: 32px !important;      /* lg:p-8 */
+            }
+            /* bg-slate-900/40 tint layered over the hero's radial glows */
+            .auth-screen .auth-panel-l {
+                background:
+                    linear-gradient(rgba(15, 23, 42, 0.40), rgba(15, 23, 42, 0.40)),
+                    radial-gradient(1100px 520px at 15% -5%, rgba(99,102,241,0.24), transparent 60%),
+                    radial-gradient(900px 460px at 88% 110%, rgba(168,85,247,0.18), transparent 55%),
+                    #020617;
+            }
+            /* Form card: rounded-2xl bg-slate-900/80 border-slate-800 p-8
+               shadow-2xl backdrop-blur-xl, max-w-sm+ gutters and centred. */
+            .auth-panel-r .auth-form-wrapper {
+                width: 100%; max-width: 448px;   /* 448 - 2*32 padding = 384 of field */
+                margin: auto 0;                  /* my-auto */
+                border-radius: 16px;             /* rounded-2xl */
+                padding: 32px;                   /* p-8 */
+                background: rgba(15, 23, 42, 0.80);
+                border: 1px solid #1e293b;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                -webkit-backdrop-filter: blur(24px);
+                backdrop-filter: blur(24px);
+            }
+            /* hero showcase spreads to fill the 50% column */
+            .auth-panel-l .lg-hero-inner {
+                max-width: 560px;
+            }
+            .auth-panel-l .lg-features {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr)); /* grid-cols-2 */
+                gap: 12px;                     /* gap-3 */
+                margin-top: 16px;              /* mt-4 */
+            }
+            .auth-panel-l .lg-demo { margin-bottom: 20px; }
+        }
+
+        /* ===== Right form panel — dark-theme compliant =====
+           Inputs mirror `w-full px-4 py-3 bg-slate-950/60 border
+           border-slate-800 rounded-xl text-white placeholder-slate-500
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+           transition-all`; the CTA mirrors `w-full py-3.5
+           bg-indigo-600 hover:bg-indigo-500 text-white font-semibold
+           rounded-xl shadow-lg shadow-indigo-600/30 active:scale-[0.99]`. */
+        .auth-form-side { background: transparent; }
+        [data-theme="light"] .auth-form-side { background: transparent; }
+
+        [data-theme="dark"] .auth-form-wrapper h2 { color: #f1f5f9; }
+        [data-theme="dark"] .auth-form-wrapper .auth-subtitle { color: #94a3b8; }
+        [data-theme="dark"] .auth-form-side .input-pro,
+        [data-theme="dark"] .auth-form-side select.input-pro {
+            background-color: rgba(2,6,23,0.6); border: 1px solid #1e293b; border-radius: 12px;
+            color: #ffffff; box-shadow: none; padding: 12px 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        [data-theme="dark"] .auth-form-side .input-pro::placeholder { color: #64748b; opacity: 1; } /* placeholder-slate-500 */
+        [data-theme="dark"] .auth-form-side .input-pro:hover { border-color: #334155; }
+        [data-theme="dark"] .auth-form-side .input-pro:focus {
+            outline: none; border-color: #6366f1;                   /* focus:border-indigo-500 */
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.20);            /* focus:ring-2 indigo-500/20 */
+            background-color: rgba(2,6,23,0.6); color: #ffffff;
+        }
+        [data-theme="dark"] .auth-form-side .input-pro-label { color: #ffffff; } /* dark:text-white (Email/Parol) */
+        [data-theme="dark"] .auth-form-side .auth-options label { color: #cbd5e1; }
+        [data-theme="dark"] .auth-form-side .auth-options a {
+            transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        [data-theme="dark"] .auth-form-side .auth-options a:hover { color: var(--text-link-hover); }
+
+        /* ===== Options row: checkbox + forgot-password, no overlap on mobile ===== */
+        .auth-form-side .auth-options {
+            width: 100%; display: flex; flex-wrap: wrap;
+            align-items: center; justify-content: space-between;
+            font-size: 12px; margin-top: 12px; gap: 6px 12px; color: var(--text-link-helper);
+        }
+        .auth-form-side .auth-options label {
+            flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px;
+            white-space: nowrap;
+        }
+        .auth-form-side .auth-options label input { flex-shrink: 0; }
+        .auth-form-side .auth-options a {
+            margin-left: auto; white-space: nowrap; text-decoration: none;
+            font-weight: 500; border-radius: 2px; cursor: pointer;
+            /* reserve the 2px so the hover border causes no layout shift */
+            border-bottom: 2px solid transparent; padding-bottom: 2px;
+        }
+        .auth-form-side .auth-options a:hover,
+        .auth-form-side .auth-options a:active {
+            border-bottom-color: var(--text-link-border);
+        }
+        .auth-form-side .auth-options a:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--text-link-ring); }
+        [data-theme="light"] .auth-form-side .auth-options a { color: var(--text-link); }
+        [data-theme="light"] .auth-form-side .auth-options a:hover { color: var(--text-link-hover); }
+        [data-theme="light"] .auth-form-side .auth-options label { color: #475569; }
+        /* Link contrast: palette now comes from the GLOBAL TEXT LINK
+           SYSTEM tokens in design-system.css (dark: indigo-400 ->
+           indigo-300, helper slate-400). The old hardcoded
+           --primary-600 (#4f46e5) on a dark surface fell to ~2.3:1 and
+           read as dark-blue-on-dark. */
+        [data-theme="dark"] .auth-form-side .auth-footer-link { color: var(--text-link-helper); }
+        [data-theme="dark"] .auth-form-side .auth-footer-link a { color: var(--text-link); }
+        [data-theme="dark"] .auth-form-side .auth-pw-toggle { color: #64748b; }
+        [data-theme="dark"] .auth-form-side .auth-pw-toggle:hover { color: #e2e8f0; background: rgba(30,41,59,0.6); }
+        [data-theme="dark"] .auth-form-side .auth-btn {
+            height: auto; min-height: 50px; padding: 14px 24px; border-radius: 12px;
+            font-weight: 600;
+            background: #4f46e5;
+            box-shadow: 0 10px 15px -3px rgba(79,70,229,0.30), 0 4px 6px -4px rgba(79,70,229,0.30);
+        }
+        [data-theme="dark"] .auth-form-side .auth-btn:hover { background: #6366f1; }
+        [data-theme="dark"] .auth-form-side .auth-btn:active { transform: scale(0.99); }
+
+        /* ===== Bottom links: comfortable clearance, full visibility ===== */
+        .auth-form-side .auth-footer-link {
+            position: relative; z-index: 10;
+            padding-top: 8px; margin-bottom: 2px;
+            text-align: center;
+        }
+        /* Modern hover = brighten + animated bottom border (no text-decoration,
+           which the global purge rule forbids). */
+        .auth-form-side .auth-footer-link a {
+            font-weight: 500; text-decoration: none; border-radius: 2px; cursor: pointer;
+            border-bottom: 2px solid transparent; padding-bottom: 2px;
+            transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .auth-form-side .auth-footer-link a:hover,
+        .auth-form-side .auth-footer-link a:active {
+            color: var(--text-link-hover);
+            border-bottom-color: var(--text-link-border);
+        }
+        .auth-form-side .auth-footer-link a:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--text-link-ring); }
+        .auth-form-side .auth-footer-link a:visited { color: var(--text-link); }
+
+        /* ===== Language switcher — in normal flex flow (mt-4 mb-2),
+           relative z-10 so it never overlaps or cuts adjacent text ===== */
+        .auth-lang {
+            display: flex; justify-content: center; width: 100%;
+            margin-top: 16px;                 /* mt-4 */
+            margin-bottom: 8px;               /* mb-2 */
+            position: relative; z-index: 10;
+        }
+        .lang-switcher {
+            display: flex; gap: 2px;
+            background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 3px;
+        }
+        .lang-btn {
+            border: none; cursor: pointer; font-weight: 600; font-size: 11px;
+            color: #94a3b8; padding: 5px 11px; border-radius: 8px;
+            background: transparent; transition: background 0.2s ease, color 0.2s ease;
+        }
+        [data-theme="light"] .lang-switcher {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 3px;
+        }
+        [data-theme="light"] .lang-btn { background: #e2e8f0; color: #334155; }
+        [data-theme="light"] .lang-btn:hover { background: #cbd5e1; color: #0f172a; }
+        .lang-btn.active {
+            background: #4f46e5 !important;    /* bg-indigo-600 active pill */
+            color: #ffffff !important;         /* text-white          */
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+        }
+        /* fallback inactive pills if data-theme scoping is bypassed */
+        [data-theme="dark"] .lang-btn { background: #1e293b; color: #cbd5e1; }      /* bg-slate-800 text-slate-300 */
+        [data-theme="dark"] .lang-btn:hover { background: #334155; color: #f1f5f9; }
+        [data-theme="dark"] .lang-btn.active { background: #4f46e5; color: #ffffff; box-shadow: none; border: none; }
+        [data-theme="light"] .lang-btn.active {
+            background: #4f46e5 !important; color: #ffffff !important; box-shadow: none; border: none;
+        }
+
+        /* ============================================================
+           FLUID LIGHT MODE (Kunduzgi rejim) — high-contrast overrides
+           ============================================================ */
+
+        /* Page background: bg-slate-50 */
+        [data-theme="light"] body {
+            background: radial-gradient(1100px 480px at 15% -10%, rgba(99,102,241,0.10), transparent 60%),
+                        radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.08), transparent 55%),
+                        #f8fafc;
+            color: #0f172a;
+        }
+        [data-theme="light"] .auth-screen {
+            background:
+                radial-gradient(1100px 480px at 15% -10%, rgba(99,102,241,0.10), transparent 60%),
+                radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.08), transparent 55%),
+                linear-gradient(135deg, rgba(79,70,229,0.10) 0%, #f8fafc 45%, #ffffff 100%),
+                #f8fafc;
+        }
+        [data-theme="light"] .auth-panel-r { background: transparent !important; }
+        [data-theme="light"] .auth-form-side { background: transparent !important; }
+        [data-theme="light"] .auth-panel-r .auth-form-wrapper {
+            background: rgba(255, 255, 255, 0.80);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+        }
+
+        /* Left hero (50%) — bg-slate-100/80, border-slate-200/80 */
+        [data-theme="light"] .auth-panel-l { border-right-color: rgba(226, 232, 240, 0.9); }
+        [data-theme="light"] .auth-screen .auth-panel-l,
+        [data-theme="light"] .auth-hero.lg-hero {
+            background:
+                linear-gradient(rgba(241, 245, 249, 0.90), rgba(241, 245, 249, 0.90)), /* bg-slate-100/90 */
+                radial-gradient(1100px 520px at 15% -5%, rgba(99,102,241,0.16), transparent 60%),
+                radial-gradient(900px 460px at 88% 110%, rgba(168,85,247,0.12), transparent 55%),
+                #f1f5f9;
+            color: #0f172a;
+            box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.06);  /* shadow-inner */
+        }
+        [data-theme="light"] .lg-glow-1 { background: rgba(99, 102, 241, 0.18); }
+        [data-theme="light"] .lg-glow-2 { background: rgba(168, 85, 247, 0.14); }
+        [data-theme="light"] .lg-hero::after {
+            background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.10) 1px, transparent 0);
+        }
+        [data-theme="light"] .lg-brand span,
+        [data-theme="light"] .lg-demo-item-name,
+        [data-theme="light"] .lg-feature-title { color: #0f172a; }              /* text-slate-900 */
+        [data-theme="light"] .lg-title {
+            background: linear-gradient(90deg, #0f172a 10%, #4f46e5);          /* dark slate → indigo */
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        [data-theme="light"] .lg-subtitle,
+        [data-theme="light"] .lg-feature-desc { color: #475569; }               /* text-slate-600 */
+        [data-theme="light"] .lg-demo {
+            background: rgba(255, 255, 255, 0.85); border: 1px solid #e2e8f0;
+            box-shadow: 0 18px 40px -20px rgba(15, 23, 42, 0.18), 0 0 30px -20px rgba(79,70,229,0.35);
+        }
+        [data-theme="light"] .lg-demo-scan { background: #f1f5f9; border-color: #e2e8f0; }
+        [data-theme="light"] .lg-demo-barcode {
+            background-image: repeating-linear-gradient(90deg,
+                #334155 0 2px, transparent 2px 5px, #475569 5px 8px, transparent 8px 13px,
+                #334155 13px 15px, transparent 15px 20px, #475569 20px 23px, transparent 23px 29px);
+            filter: invert(0.06);
+        }
+        [data-theme="light"] .lg-demo-live { color: #059669; }
+        [data-theme="light"] .live-pulse { background: #10b981; }
+        [data-theme="light"] .lg-demo-item-code { color: #64748b; }
+        [data-theme="light"] .lg-demo-stock-count { color: #059669; }
+        [data-theme="light"] .lg-demo-badge {
+            color: #047857; background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        [data-theme="light"] .lg-demo-stat { background: rgba(248, 250, 252, 0.9); border-color: #e2e8f0; }
+        [data-theme="light"] .lg-demo-stat i { color: #4f46e5; }
+        [data-theme="light"] .lg-demo-stat b { color: #0f172a; }
+        [data-theme="light"] .lg-feature {
+            background: rgba(255, 255, 255, 0.8);                       /* bg-white/80 */
+            border: 1px solid rgba(226, 232, 240, 0.8);                 /* border-slate-200/80 */
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);               /* shadow-sm */
+            color: #1e293b;                                              /* text-slate-800 */
+        }
+        [data-theme="dark"] .lg-feature {
+            background: rgba(15, 23, 42, 0.5);                          /* dark:bg-slate-900/50 */
+            border-color: rgba(30, 41, 59, 0.8);                        /* dark:border-slate-800 */
+            color: #f8fafc;                                              /* dark:text-white */
+        }
+        [data-theme="dark"] .lg-feature-title { color: #f8fafc; }        /* dark:text-white */
+        [data-theme="dark"] .lg-feature-desc { color: #94a3b8; }         /* dark:text-slate-400 */
+        [data-theme="light"] .lg-feature:hover {
+            border-color: rgba(79, 70, 229, 0.35);
+            box-shadow: 0 8px 24px -10px rgba(79, 70, 229, 0.25);
+        }
+        [data-theme="light"] .lg-feature-icon { background: rgba(79, 70, 229, 0.10); color: #4f46e5; border-color: rgba(79, 70, 229, 0.20); }
+
+        /* Right form (50%) — text + inputs */
+        [data-theme="light"] .auth-form-wrapper h2 { color: #0f172a; }          /* text-slate-900 */
+        [data-theme="light"] .auth-form-wrapper .auth-subtitle { color: #475569; } /* text-slate-600 */
+        [data-theme="light"] .auth-form-side .input-pro,
+        [data-theme="light"] .auth-form-side select.input-pro {
+            background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;
+            color: #0f172a; box-shadow: none; padding: 12px 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        [data-theme="light"] .auth-form-side .input-pro::placeholder { color: #94a3b8; opacity: 1; }
+        [data-theme="light"] .auth-form-side .input-pro:hover { border-color: #94a3b8; }
+        [data-theme="light"] .auth-form-side .input-pro:focus {
+            outline: none; border-color: #4f46e5;                               /* focus:border-indigo-600 */
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.20);                    /* focus:ring-2 indigo-500/20 */
+            background-color: #ffffff; color: #0f172a;
+        }
+        [data-theme="light"] .auth-form-side .input-pro-label { color: #0f172a; } /* text-slate-900 (Email/Parol) */
+        [data-theme="light"] .auth-form-side .auth-options label { color: #475569; }
+        /* Light: slate-600 helper + indigo-600 -> indigo-800 hover. */
+        [data-theme="light"] .auth-form-side .auth-footer-link { color: var(--text-link-helper); }
+        [data-theme="light"] .auth-form-side .auth-footer-link a { color: var(--text-link); }
+        [data-theme="light"] .auth-form-side .auth-footer-link a:hover { color: var(--text-link-hover); }
+        [data-theme="light"] .auth-form-side .auth-pw-toggle { color: #64748b; }
+        [data-theme="light"] .auth-form-side .auth-pw-toggle:hover { color: #0f172a; background: rgba(226, 232, 240, 0.7); }
+        [data-theme="light"] .auth-form-side .auth-btn {
+            height: auto; min-height: 50px; padding: 14px 24px; border-radius: 12px;
+            font-weight: 600;
+            background: #4f46e5;
+            box-shadow: 0 10px 15px -3px rgba(79,70,229,0.35), 0 4px 6px -4px rgba(79,70,229,0.25);
+        }
+        [data-theme="light"] .auth-form-side .auth-btn:hover { background: #6366f1; }
+        [data-theme="light"] .auth-form-side .auth-btn:active { transform: scale(0.99); }
+    </style>
+</head>
+<body>
+    <button class="auth-theme-toggle" onclick="toggleAuthTheme()" aria-label="{% t "toggle_theme" %}">
+        <i class="bi bi-moon" id="authThemeIcon"></i>
+    </button>
+
+    <div class="auth-screen">
+        <!-- LEFT HERO PANEL — strict 50% width, desktop only -->
+        <div class="auth-panel-l auth-hero lg-hero">
+            <div class="lg-glow lg-glow-1"></div>
+            <div class="lg-glow lg-glow-2"></div>
+            <div class="lg-hero-inner">
+                <div class="lg-brand">
+                    <div class="lg-logo">S</div>
+                    <span>SKLAT PRO</span>
+                </div>
+
+                <h1 class="lg-title">{% t "hero_smart_title" %}</h1>
+                <p class="lg-subtitle">{% t "hero_smart_subtitle" %}</p>
+
+                <!-- Live system preview -->
+                <div class="lg-demo" aria-hidden="true">
+                    <div class="lg-demo-head">
+                        <div class="lg-demo-dots">
+                            <i class="dot-red"></i><i class="dot-amber"></i><i class="dot-green"></i>
+                        </div>
+                        <div class="lg-demo-live"><span class="live-pulse"></span>LIVE</div>
+                    </div>
+                    <div class="lg-demo-scan">
+                        <div class="lg-demo-barcode"></div>
+                        <div class="lg-demo-laser"></div>
+                    </div>
+                    <div class="lg-demo-result">
+                        <div class="lg-demo-item">
+                            <div class="lg-demo-item-name" id="demoItemName">SKU-2041</div>
+                            <div class="lg-demo-item-code" id="demoItemCode">9912 0450 0321</div>
+                        </div>
+                        <div class="lg-demo-stock">
+                            <span class="lg-demo-stock-label">{% t "stock" %}</span>
+                            <span class="lg-demo-stock-count" id="demoStockCount">148</span>
+                        </div>
+                        <div class="lg-demo-badge" id="demoBadge"><i class="bi bi-check-circle-fill"></i></div>
+                    </div>
+                    <div class="lg-demo-stats">
+                        <div class="lg-demo-stat"><i class="bi bi-download"></i><b id="demoIn">24</b></div>
+                        <div class="lg-demo-stat"><i class="bi bi-upload"></i><b id="demoOut">7</b></div>
+                        <div class="lg-demo-stat"><i class="bi bi-arrow-repeat"></i><b id="demoTurn">18</b></div>
+                    </div>
+                </div>
+
+                <!-- Feature highlights -->
+                <div class="lg-features">
+                    <div class="lg-feature">
+                        <div class="lg-feature-icon"><i class="bi bi-box-seam"></i></div>
+                        <div class="lg-feature-text">
+                            <div class="lg-feature-title">{% t "feature_stock_title" %}</div>
+                            <div class="lg-feature-desc">{% t "feature_stock_desc" %}</div>
+                        </div>
+                    </div>
+                    <div class="lg-feature">
+                        <div class="lg-feature-icon"><i class="bi bi-qr-code-scan"></i></div>
+                        <div class="lg-feature-text">
+                            <div class="lg-feature-title">{% t "feature_scan_title" %}</div>
+                            <div class="lg-feature-desc">{% t "feature_scan_desc" %}</div>
+                        </div>
+                    </div>
+                    <div class="lg-feature">
+                        <div class="lg-feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                        <div class="lg-feature-text">
+                            <div class="lg-feature-title">{% t "feature_analytics_title" %}</div>
+                            <div class="lg-feature-desc">{% t "feature_analytics_desc" %}</div>
+                        </div>
+                    </div>
+                    <div class="lg-feature">
+                        <div class="lg-feature-icon"><i class="bi bi-buildings"></i></div>
+                        <div class="lg-feature-text">
+                            <div class="lg-feature-title">{% t "feature_multi_title" %}</div>
+                            <div class="lg-feature-desc">{% t "feature_multi_desc" %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT FORM PANEL — strict 50% width -->
+        <div class="auth-panel-r auth-form-side">
+            <!-- Mobile brand header -->
+            <div class="lg-mobile-brand">
+                <div class="lg-logo">S</div>
+                <div>
+                    <span class="lg-mobile-brand-name">SKLAT PRO</span>
+                    <span class="lg-mobile-brand-sub">{% t "hero_smart_title" %}</span>
+                </div>
+            </div>
+
+            <div class="auth-form-wrapper">
+                <h2>{% t "welcome" %}</h2>
+                <p class="auth-subtitle">{% t "login_subtitle" %}</p>
+
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert-pro alert-pro-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}" style="margin-bottom:var(--sp-5)" role="alert">
+                    <i class="bi bi-{% if message.tags == 'error' %}exclamation-circle-fill{% elif message.tags == 'success' %}check-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if error and not messages %}
+                <div class="alert-pro alert-pro-danger" style="margin-bottom:var(--sp-5)" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{{ error }}</span>
+                </div>
+                {% endif %}
+
+                <form method="post" id="loginForm" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+                    <div class="input-pro-group">
+                        <label class="input-pro-label" for="id_username">Email</label>
+                        <input class="input-pro" type="email" name="username" id="id_username"
+                               placeholder="name@company.com" required autofocus
+                               value="{{ request.POST.username|default:'' }}"
+                               autocomplete="username">
+                    </div>
+
+                    <div class="input-pro-group">
+                        <label class="input-pro-label" for="id_password">{% t "password" %}</label>
+                        <div class="auth-input-wrap">
+                            <input class="input-pro" type="password" name="password" id="id_password"
+                                   placeholder="{% t "enter_password" %}" required autocomplete="current-password">
+                            <button type="button" class="auth-pw-toggle" onclick="togglePassword()"
+                                    aria-label="{% t "toggle_password" %}">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="auth-options">
+                        <label>
+                            <input type="checkbox" name="remember_me">
+                            {% t "remember_me" %}
+                        </label>
+                        <a href="{% url 'users:password_reset' %}">{% t "forgot_password" %}</a>
+                    </div>
+
+                    <button type="submit" class="auth-btn" id="loginBtn">
+                        <span class="btn-text">{% t "login" %}</span>
+                        <span class="spinner"></span>
+                    </button>
+                </form>
+
+                <div class="auth-footer-link">
+                    {% t "no_account" %} <a href="{% url 'register' %}">{% t "register" %}</a>
+                </div>
+            </div>
+
+            <!-- Language Switcher -->
+            <div class="auth-lang">
+                <div class="lang-switcher" role="group" aria-label="{% t "language" %}">
+                    <button class="lang-btn {% if current_language == 'uz' %}active{% endif %}"
+                            onclick="setLang('uz')" type="button">UZ</button>
+                    <button class="lang-btn {% if current_language == 'uz_cyr' %}active{% endif %}"
+                            onclick="setLang('uz_cyr')" type="button">ЎЗ</button>
+                    <button class="lang-btn {% if current_language == 'ru' %}active{% endif %}"
+                            onclick="setLang('ru')" type="button">RU</button>
+                    <button class="lang-btn {% if current_language == 'en' %}active{% endif %}"
+                            onclick="setLang('en')" type="button">EN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function togglePassword() {
+        var input = document.getElementById('id_password');
+        var icon = document.querySelector('.auth-pw-toggle i');
+        if (input.type === 'password') { input.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+        else { input.type = 'password'; icon.className = 'bi bi-eye'; }
+    }
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        var btn = document.getElementById('loginBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+    function toggleAuthTheme() {
+        var h = document.documentElement;
+        var c = h.getAttribute('data-theme') || 'dark';
+        var n = c === 'light' ? 'dark' : 'light';
+        h.setAttribute('data-theme', n);
+        localStorage.setItem('sklat-theme', n);
+        document.getElementById('authThemeIcon').className = n === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    }
+    (function() {
+        var saved = localStorage.getItem('sklat-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        var icon = document.getElementById('authThemeIcon');
+        if (icon) icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    })();
+    function setLang(lang) {
+        fetch('/set-language/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: 'language=' + lang
+        }).then(function() { location.reload(); });
+    }
+
+    /* ===== Live preview demo loop ===== */
+    (function() {
+        var nameEl = document.getElementById('demoItemName');
+        var codeEl = document.getElementById('demoItemCode');
+        var countEl = document.getElementById('demoStockCount');
+        var badgeEl = document.getElementById('demoBadge');
+        var statEls = [document.getElementById('demoIn'), document.getElementById('demoOut'), document.getElementById('demoTurn')];
+        if (!nameEl || !countEl) return;
+
+        var items = [
+            { name: 'SKU-2041', code: '9912 0450 0321', stock: 148 },
+            { name: 'SKU-1182', code: '9633 2291 7740', stock: 263 },
+            { name: 'SKU-3301', code: '9785 1103 4492', stock: 89 },
+            { name: 'SKU-0572', code: '9544 7802 1163', stock: 512 }
+        ];
+        var idx = 0;
+
+        function animateCount(el, from, to, dur) {
+            var start = null;
+            function step(ts) {
+                if (start === null) start = ts;
+                var p = Math.min((ts - start) / dur, 1);
+                el.textContent = Math.round(from + (to - from) * (p * (2 - p)));
+                if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function cycle() {
+            var it = items[idx % items.length];
+            idx++;
+            var prev = parseInt(countEl.textContent, 10) || it.stock;
+
+            nameEl.style.opacity = 0;
+            nameEl.style.transform = 'translateX(8px)';
+            codeEl.textContent = it.code;
+            setTimeout(function() {
+                nameEl.textContent = it.name;
+                nameEl.style.opacity = 1;
+                nameEl.style.transform = 'none';
+            }, 170);
+            badgeEl.classList.remove('pop');
+            void badgeEl.offsetWidth;
+            badgeEl.classList.add('pop');
+            animateCount(countEl, prev, it.stock, 720);
+
+            statEls.forEach(function(el) {
+                var f = parseInt(el.textContent, 10) || 0;
+                var d = Math.max(1, Math.round(Math.random() * 9));
+                var t = Math.max(1, f + (Math.random() > 0.35 ? d : -d));
+                el.classList.remove('pop');
+                void el.offsetWidth;
+                el.textContent = t;
+                el.classList.add('pop');
+            });
+        }
+        setInterval(cycle, 3200);
+    })();
+    </script>
+    <script>
+    window.SKLAT_LANG='{{ current_language|default:"uz" }}';
+    window.SKLAT_T=JSON.parse('{{ translations_json|escapejs }}');
+    window.t=function(key,fallback){return(window.SKLAT_T&&window.SKLAT_T[key])||fallback||key};
+    </script>
+</body>
+</html>

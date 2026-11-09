@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ customer.name }} — {% t "fin_statement" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'finance:financial_dashboard' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ customer.name }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{% t "fin_customer_statement" %}</p>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_debt" %}</div>
+            <div class="stat-card-value">${{ total_debt|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_paid" %}</div>
+            <div class="stat-card-value" style="color:var(--success-600)">${{ total_paid|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_outstanding" %}</div>
+            <div class="stat-card-value" style="color:{% if total_debt > total_paid %}var(--danger-500){% else %}var(--success-600){% endif %}">${{ total_outstanding|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+
+{% if payments %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_payment_history" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "amount" %}</th>
+                    <th>{% t "fin_account" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.payment_date|date:"d.m.Y H:i" }}</td>
+                    <td class="fw-600" style="color:var(--success-600)">${{ p.amount|floatformat:2 }}</td>
+                    <td>{{ p.account|default:"-" }}</td>
+                    <td class="text-pro-sm">{{ p.notes|default:"-"|truncatechars:40 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if transactions %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_transactions" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "fin_type" %}</th>
+                    <th>{% t "fin_direction" %}</th>
+                    <th>{% t "amount" %}</th>
+                    <th>{% t "description" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.date|date:"d.m.Y" }}</td>
+                    <td>{{ txn.get_txn_type_display }}</td>
+                    <td>
+                        {% if txn.direction == 'income' %}
+                            <span class="badge-pro badge-pro-success">{% t "fin_direction_income" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "fin_direction_expense" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">${{ txn.amount|floatformat:2 }}</td>
+                    <td class="text-pro-sm">{{ txn.description|truncatechars:40|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

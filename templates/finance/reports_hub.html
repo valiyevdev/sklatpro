@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_reports" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_reports" %}</h1>
+    </div>
+</div>
+
+<div class="grid grid-3 gap-6">
+    <a href="{% url 'finance:profit_loss_report' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon primary" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-graph-up"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_profit_loss" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_profit_loss_desc" %}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'finance:cash_flow_report' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon success" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_cash_flow" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_cash_flow_desc" %}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'finance:receivables_aging' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon warning" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-person-check"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_receivables_aging" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_receivables_aging_desc" %}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'finance:payables_aging' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon danger" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-person-dash"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_payables_aging" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_payables_aging_desc" %}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'finance:customer_debt_list' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon primary" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-file-earmark-person"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_customer_statements" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_customer_statements_desc" %}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'finance:supplier_debt_list' %}" class="card-pro" style="text-decoration:none;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-4)">
+            <div class="stat-card-icon warning" style="width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-file-earmark-buildings"></i></div>
+            <div>
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{% t "fin_supplier_statements" %}</div>
+                <div class="text-pro-sm text-pro-muted">{% t "fin_supplier_statements_desc" %}</div>
+            </div>
+        </div>
+    </a>
+</div>
+{% endblock %}

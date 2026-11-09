@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "movement_history_title" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     Header: title pinned left, movement count pinned right.
+     `.page-header` is GLOBAL (277 templates) so the surface and the
+     truncation rules are scoped under `.mvh-` to avoid changing
+     every other page.
+     ============================================================ -->
+<header class="page-header">
+  <div class="page-header-content">
+    <h1 class="page-title">{% t "movement_history_title" %}</h1>
+  </div>
+  <div class="page-actions">
+    <span class="badge-pro mvh-count">{{ total_count }}</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     Compact bar: search + "Filtrlar" toggle. The advanced filters
+     live in a collapsible sheet that the toggle reveals, so the
+     default view is one clean search row instead of six stacked
+     browser-default controls. The sheet auto-expands server-side
+     whenever a filter is already active, so a filtered result set
+     is never hidden behind a collapsed control.
+     ============================================================ -->
+<div class="mvh-bar">
+  <form method="GET" action="{% url 'movement_history' %}" class="mvh-bar__form" id="mvh-filter-form">
+    <input type="hidden" name="page" value="1">
+
+    <!-- Search: icon absolutely positioned, input padded to clear it. -->
+    <div class="mvh-search">
+      <svg class="mvh-search__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input
+        type="search"
+        id="mvh-search-input"
+        name="q"
+        value="{{ q }}"
+        class="mvh-search__input"
+        autocomplete="off"
+        placeholder="{% t "search_movements_placeholder" %}"
+        aria-label="{% t "search_movements_placeholder" %}"
+      >
+    </div>
+
+    <button
+      type="button"
+      class="mvh-filter-toggle{% if movement_type or direction or product_id or date_from or date_to %} is-active{% endif %}"
+      id="mvh-filter-toggle"
+      aria-expanded="{% if movement_type or direction or product_id or date_from or date_to %}true{% else %}false{% endif %}"
+      aria-controls="mvh-filter-sheet"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+      </svg>
+      <span>{% t "filters" %}</span>
+      {% if movement_type or direction or product_id or date_from or date_to %}
+      <span class="mvh-filter-toggle__badge" aria-hidden="true">&#9679;</span>
+      {% endif %}
+    </button>
+
+    <!-- The sheet lives INSIDE the form so the selects submit together
+         with the search term. A bare `hidden` attribute keeps it out of
+         the way without stranding the controls if JS never runs: the
+         toggle simply becomes an inert button and the sheet stays
+         open. -->
+    <div
+      class="mvh-sheet{% if movement_type or direction or product_id or date_from or date_to %} is-open{% endif %}"
+      id="mvh-filter-sheet"
+      {% if not movement_type and not direction and not product_id and not date_from and not date_to %}hidden{% endif %}
+    >
+      <div class="mvh-sheet__grid">
+        <div class="mvh-field">
+          <label class="mvh-label" for="mvh-type">{% t "movement_type" %}</label>
+          <select id="mvh-type" name="movement_type" class="mvh-select">
+            <option value="">{% t "all_movement_types" %}</option>
+            {% for mt_value, mt_label in movement_type_choices %}
+            <option value="{{ mt_value }}" {% if movement_type == mt_value %}selected{% endif %}>{{ mt_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mvh-field">
+          <label class="mvh-label" for="mvh-direction">{% t "direction" %}</label>
+          <select id="mvh-direction" name="direction" class="mvh-select">
+            <option value="">{% t "all_directions" %}</option>
+            <option value="IN" {% if direction == "IN" %}selected{% endif %}>{% t "in" %}</option>
+            <option value="OUT" {% if direction == "OUT" %}selected{% endif %}>{% t "out" %}</option>
+          </select>
+        </div>
+
+        <div class="mvh-field">
+          <label class="mvh-label" for="mvh-product">{% t "product" %}</label>
+          <select id="mvh-product" name="product_id" class="mvh-select">
+            <option value="">{% t "all_products" %}</option>
+            {% for product in products %}
+            <option value="{{ product.id }}" {% if product_id|stringformat:"s" == product.id|stringformat:"s" %}selected{% endif %}>{{ product.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mvh-field">
+          <label class="mvh-label" for="mvh-date-from">{% t "date_from" %}</label>
+          <input type="date" id="mvh-date-from" name="date_from" value="{{ date_from }}" class="mvh-input">
+        </div>
+
+        <div class="mvh-field">
+          <label class="mvh-label" for="mvh-date-to">{% t "date_to" %}</label>
+          <input type="date" id="mvh-date-to" name="date_to" value="{{ date_to }}" class="mvh-input">
+        </div>
+      </div>
+
+      <div class="mvh-sheet__actions">
+        <button type="submit" class="mvh-btn mvh-btn--primary">
+          <i class="bi bi-funnel"></i> {% t "apply_filters" %}
+        </button>
+        <a href="{% url 'movement_history' %}" class="mvh-btn mvh-btn--ghost">
+          <i class="bi bi-x-circle"></i> {% t "clear_filters" %}
+        </a>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if page_obj.object_list %}
+<div class="table-container">
+  <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="table-pro">
+      <thead>
+        <tr>
+          <th>{% t "date_time" %}</th>
+          <th>{% t "product" %}</th>
+          <th>{% t "movement_type" %}</th>
+          <th>{% t "direction" %}</th>
+          <th>{% t "quantity" %}</th>
+          <th>{% t "before_after" %}</th>
+          <th>{% t "warehouse" %}</th>
+          <th>{% t "user" %}</th>
+          <th>{% t "reference" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for movement in page_obj %}
+        <tr>
+          <td>{{ movement.created_at|date:"d M Y H:i" }}</td>
+          <td>
+            <span class="product-name">{{ movement.product.name }}</span>
+            <span class="product-sku">{{ movement.product.sku }}</span>
+          </td>
+          <td>{{ movement.get_movement_type_display }}</td>
+          <td>
+            {% if movement.direction == "IN" %}
+            <span class="badge badge-success">{% t "in" %}</span>
+            {% elif movement.direction == "OUT" %}
+            <span class="badge badge-danger">{% t "out" %}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if movement.direction == "IN" %}
+            <span class="text-success">+{{ movement.quantity }}</span>
+            {% else %}
+            <span class="text-danger">-{{ movement.quantity }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {{ movement.quantity_before }} / {{ movement.quantity_after }}
+          </td>
+          <!-- `warehouse` and `user` are both nullable. A chained lookup on
+               a NULL relation raises inside the template engine, so they
+               must be guarded explicitly rather than with `default`. -->
+          <td>{% if movement.warehouse %}{{ movement.warehouse.name }}{% else %}&mdash;{% endif %}</td>
+          <td>
+            {% if movement.user %}
+              {{ movement.user.get_full_name|default:movement.user.username }}
+            {% else %}&mdash;{% endif %}
+          </td>
+          <td>
+            {% if movement.reference_number %}
+            #{{ movement.reference_number }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<!-- Every link carries the active filter state forward, otherwise
+     paging silently drops the user's filter selection. -->
+<div class="mvh-pagination">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&movement_type={{ movement_type|urlencode }}&direction={{ direction|urlencode }}&product_id={{ product_id|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}" class="mvh-page-link">{% t "previous" %}</a>
+  {% else %}
+  <span class="mvh-page-link is-disabled">{% t "previous" %}</span>
+  {% endif %}
+  <span class="mvh-page-info">{% t "page" %} {{ page_obj.number }} {% t "of" %} {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&movement_type={{ movement_type|urlencode }}&direction={{ direction|urlencode }}&product_id={{ product_id|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}" class="mvh-page-link">{% t "next" %}</a>
+  {% else %}
+  <span class="mvh-page-link is-disabled">{% t "next" %}</span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty state: mirrors the card language of the rest of the app.
+     When filters are active we point at the filter sheet rather than
+     leaving the user with a dead end. -->
+<div class="mvh-empty">
+  <span class="empty-state-icon" aria-hidden="true">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-3l-2 3h-6l-2-3H4"></path>
+    </svg>
+  </span>
+  <p class="mvh-empty__title">{% t "no_movements_found" %}</p>
+  <p class="mvh-empty__desc">{% t "no_movements_found_desc" %}</p>
+  {% if q or movement_type or direction or product_id or date_from or date_to %}
+  <a href="{% url 'movement_history' %}" class="mvh-btn mvh-btn--ghost mvh-empty__action">
+    <i class="bi bi-x-circle"></i> {% t "clear_filters" %}
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ==========================================================
+     Scoped styles for movement_history.html only.
+     Prefixed `.mvh-` so the GLOBAL `.page-header`, `.badge-pro` and
+     `.table-pro` (shared by 277 templates) are never modified.
+     Values mirror the slate/indigo palette already used by
+     inventory_table.html so the two inventory pages read as one.
+     ========================================================== */
+
+  .mvh-count {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
+
+  /* ---------- 2. Compact bar ---------- */
+  .mvh-bar {
+    margin-bottom: 24px;
+  }
+
+  /* `wrap` + the sheet's `flex-basis:100%` puts the search row and the
+     filter sheet on separate lines instead of side by side. */
+  .mvh-bar__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mvh-search {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;                                     /* shrink below the toggle */
+  }
+
+  .mvh-search__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    color: var(--slate-500, #64748b);
+  }
+
+  .mvh-search__input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px 10px 36px;                     /* pl-9 */
+    font-size: 0.875rem;
+    font-family: var(--font-sans, inherit);
+    color: var(--slate-100, #f1f5f9);
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* `type="search"` renders a WebKit clear button that ignores the
+     dark surface; hide it so the field matches the other controls. */
+  .mvh-search__input::-webkit-search-decoration,
+  .mvh-search__input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .mvh-search__input::placeholder {
+    color: var(--slate-500, #64748b);
+  }
+
+  .mvh-search__input:focus,
+  .mvh-search__input:focus-visible {
+    outline: none;
+    border-color: var(--indigo-500, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  .mvh-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    font-family: var(--font-sans, inherit);
+    color: var(--slate-300, #cbd5e1);
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .mvh-filter-toggle svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: #818cf8;                                   /* indigo-400 */
+  }
+
+  .mvh-filter-toggle:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: var(--slate-700, #334155);
+  }
+
+  .mvh-filter-toggle:active {
+    transform: scale(0.95);
+  }
+
+  .mvh-filter-toggle.is-active,
+  .mvh-filter-toggle[aria-expanded="true"] {
+    color: #fff;
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+
+  /* Dot so an active-but-collapsed filter set is still obvious. */
+  .mvh-filter-toggle__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 1;
+    color: #fff;
+    background: var(--indigo-500, #6366f1);
+    border-radius: 9999px;
+  }
+
+  /* ---------- 3. Collapsible filter sheet ---------- */
+  /* flex-basis:100% forces this onto its own row inside the wrapping
+     search-row form above. */
+  .mvh-sheet {
+    display: flex;
+    flex: 1 0 100%;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 4px;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* The `hidden` attribute drives collapse, so this has to
+     out-specify `.mvh-sheet { display:flex }` above. */
+  .mvh-sheet[hidden] {
+    display: none;
+  }
+
+  .mvh-sheet__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 640px) {                        /* sm */
+    .mvh-sheet__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {                       /* lg */
+    .mvh-sheet__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .mvh-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .mvh-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--slate-400, #94a3b8);
+  }
+
+  .mvh-sheet__actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .mvh-sheet__actions .mvh-btn {
+    flex: 1 1 0;
+  }
+
+  @media (min-width: 640px) {
+    .mvh-sheet__actions {
+      justify-content: flex-end;
+    }
+
+    .mvh-sheet__actions .mvh-btn {
+      flex: 0 0 auto;
+    }
+  }
+
+  /* ---------- 4. Selects & date inputs ---------- */
+  .mvh-select,
+  .mvh-input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.875rem;
+    font-family: var(--font-sans, inherit);
+    color: var(--slate-100, #f1f5f9);
+    background-color: rgba(2, 6, 23, 0.7);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  /* Strip the native dropdown arrow, add our own chevron. */
+  .mvh-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    cursor: pointer;
+  }
+
+  /* Without this the native picker icon renders black on the dark
+     surface in Chromium. */
+  .mvh-input::-webkit-calendar-picker-indicator {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    opacity: 0.55;
+  }
+
+  .mvh-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  .mvh-select:hover,
+  .mvh-input:hover {
+    border-color: var(--slate-700, #334155);
+  }
+
+  .mvh-select:focus,
+  .mvh-select:focus-visible,
+  .mvh-input:focus,
+  .mvh-input:focus-visible {
+    outline: none;
+    border-color: var(--indigo-500, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  /* Native option lists ignore most page styling, so pin both the text
+     and the list surface explicitly for light/dark. */
+  .mvh-select option {
+    background: var(--slate-900, #0f172a);
+    color: var(--slate-100, #f1f5f9);
+  }
+
+  /* ---------- 5. Buttons ---------- */
+  .mvh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--font-sans, inherit);
+    text-decoration: none;
+    color: var(--slate-100, #f1f5f9);
+    background: var(--slate-800, #1e293b);
+    border: 1px solid var(--slate-700, #334155);
+    border-radius: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .mvh-btn:active {
+    transform: scale(0.97);
+  }
+
+  .mvh-btn--primary {
+    color: #fff;
+    background: var(--primary-600, #4f46e5);
+    border-color: var(--primary-600, #4f46e5);
+  }
+
+  .mvh-btn--primary:hover {
+    background: var(--indigo-500, #6366f1);
+    border-color: var(--indigo-500, #6366f1);
+  }
+
+  .mvh-btn--ghost {
+    color: var(--slate-300, #cbd5e1);
+    background: var(--slate-800, #1e293b);
+  }
+
+  .mvh-btn--ghost:hover {
+    color: #fff;
+    background: var(--slate-700, #334155);
+  }
+
+  /* ---------- 6. Empty state ---------- */
+  .mvh-empty {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--slate-500, #64748b);
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(30, 41, 59, 0.6);
+    border-radius: 16px;
+  }
+
+  .mvh-empty__title {
+    margin: 0 0 8px;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--slate-200, #e2e8f0);
+  }
+
+  .mvh-empty__desc {
+    max-width: 360px;
+    margin: 0 auto;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .mvh-empty__action {
+    margin-top: 20px;
+  }
+
+  /* ---------- 7. Pagination ---------- */
+  .mvh-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .mvh-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    color: var(--text-secondary, #cbd5e1);
+    background: var(--bg-surface, #1e293b);
+    border: 1px solid var(--border-default, #334155);
+    border-radius: var(--radius-md, 8px);
+    transition: all var(--transition-fast, 0.15s ease);
+  }
+
+  a.mvh-page-link:hover {
+    background: var(--bg-surface-hover, #334155);
+    color: var(--text-primary, #f1f5f9);
+  }
+
+  .mvh-page-link.is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .mvh-page-info {
+    padding: 0 4px;
+    font-size: 0.875rem;
+    color: var(--text-muted, #94a3b8);
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Progressive enhancement: the sheet starts collapsed via the `hidden`
+  // attribute. If JS fails, every filter control stays reachable.
+  //
+  // This script lives outside `#main-content`, so the app's SPA router
+  // does NOT re-run it when the user navigates here from the sidebar -
+  // it only re-runs scripts found inside the swapped content and then
+  // dispatches `DOMContentLoaded`. Listening for that event is therefore
+  // what keeps the toggle working after a soft navigation. The
+  // `data-bound` marker makes re-entry idempotent.
+  (function () {
+    function init() {
+      var toggle = document.getElementById('mvh-filter-toggle');
+      var sheet = document.getElementById('mvh-filter-sheet');
+      if (!toggle || !sheet) return;
+      if (toggle.getAttribute('data-bound') === '1') return;
+      toggle.setAttribute('data-bound', '1');
+
+      // The server already rendered the correct initial state (expanded
+      // when a filter is active); just bind the click.
+      toggle.addEventListener('click', function () {
+        setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+      });
+    }
+
+    // Looks the controls up on each call so it always acts on whichever
+    // copy of the page is currently in the document.
+    function setOpen(open) {
+      var toggle = document.getElementById('mvh-filter-toggle');
+      var sheet = document.getElementById('mvh-filter-sheet');
+      if (!toggle || !sheet) return;
+      sheet.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    // Registered once, so repeated soft navigations cannot stack them.
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var toggle = document.getElementById('mvh-filter-toggle');
+      if (!toggle || toggle.getAttribute('aria-expanded') !== 'true') return;
+      setOpen(false);
+      toggle.focus();
+    });
+
+    init();
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+</script>
+{% endblock %}

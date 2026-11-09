@@ -1,0 +1,74 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}{{ store_company.company_name }} - Home{% endblock %}
+{% block store_content %}
+<div class="store-hero">
+    <h1>Welcome to {{ store_company.company_name|default:"Our Store" }}</h1>
+    <p>Discover our wide range of quality products</p>
+    <a href="{% url 'storefront:catalog' %}" class="btn-store">Browse Catalog</a>
+</div>
+
+{% if categories %}
+<div class="store-section">
+    <h2 class="store-section-title">Categories</h2>
+    <div class="categories-grid">
+        {% for cat in categories %}
+        <a href="{% url 'storefront:category' slug=cat.slug %}" class="category-card">
+            <i class="bi bi-folder"></i>
+            <div class="category-card-name">{{ cat.name }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if featured_products %}
+<div class="store-section">
+    <h2 class="store-section-title">Featured Products</h2>
+    <div class="products-grid">
+        {% for product in featured_products %}
+        <a href="{% if product.slug %}{% url 'storefront:product_detail' slug=product.slug %}{% else %}{% url 'storefront:product_detail' slug=product.pk %}{% endif %}" class="product-card">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+            {% else %}
+            <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+            {% endif %}
+            <div class="product-card-body">
+                <div class="product-card-name">{{ product.name }}</div>
+                <div class="product-card-price">{{ product.price|floatformat:0 }} so'm</div>
+                <span class="product-card-sku">{{ product.sku }}</span>
+                {% if product.stock_status == 'in_stock' %}
+                <span class="product-card-stock stock-in">In Stock</span>
+                {% elif product.stock_status == 'low_stock' %}
+                <span class="product-card-stock stock-low">Low Stock</span>
+                {% else %}
+                <span class="product-card-stock stock-out">Out of Stock</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if products %}
+<div class="store-section">
+    <h2 class="store-section-title">Latest Products</h2>
+    <div class="products-grid">
+        {% for product in products %}
+        <a href="{% if product.slug %}{% url 'storefront:product_detail' slug=product.slug %}{% else %}{% url 'storefront:product_detail' slug=product.pk %}{% endif %}" class="product-card">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+            {% else %}
+            <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+            {% endif %}
+            <div class="product-card-body">
+                <div class="product-card-name">{{ product.name }}</div>
+                <div class="product-card-price">{{ product.price|floatformat:0 }} so'm</div>
+                <span class="product-card-sku">{{ product.sku }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

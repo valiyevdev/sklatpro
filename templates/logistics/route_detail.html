@@ -1,0 +1,64 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ route.reference }} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:route_list' %}">{% t "routes" %}</a><span class="separator">/</span><span class="current">{{ route.reference }}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{{ route.reference }}</h1><p class="page-subtitle">{{ route.route_date|date:"d.m.Y" }} &middot; {% if route.status == 'completed' %}<span class="badge-pro badge-pro-success">{% t "completed" %}</span>{% elif route.status == 'in_progress' or route.status == 'started' %}<span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{{ route.get_status_display }}</span>{% endif %}</p></div>
+<div class="page-actions"><a href="{% url 'logistics:route_update' pk=route.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a></div></div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body"><div class="text-pro-sm text-pro-muted">{% t "driver" %}</div><div style="font-weight:600">{{ route.driver|default:"-" }}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body"><div class="text-pro-sm text-pro-muted">{% t "vehicle" %}</div><div style="font-weight:600">{{ route.vehicle|default:"-" }}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body"><div class="text-pro-sm text-pro-muted">{% t "warehouse" %}</div><div style="font-weight:600">{{ route.warehouse|default:"-" }}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body"><div class="text-pro-sm text-pro-muted">{% t "progress" %}</div><div style="font-weight:600">{{ route.completed_stops }}/{{ route.total_stops }} ({{ route.progress_percent }}%)</div></div></div>
+</div>
+
+<div class="card-pro mb-6"><div class="card-pro-header"><h5 class="card-pro-title">{% t "update_status" %}</h5></div><div class="card-pro-body">
+    <form method="post" action="{% url 'logistics:route_update_status' pk=route.pk %}">{% csrf_token %}
+    <div class="d-flex gap-2 flex-wrap">
+        {% for val, label in route.STATUS_CHOICES %}{% if val != route.status %}<button type="submit" name="status" value="{{ val }}" class="btn-pro {% if val == 'completed' %}btn-pro-success{% elif val == 'cancelled' %}btn-pro-danger{% else %}btn-pro-primary{% endif %} btn-pro-sm">{{ label }}</button>{% endif %}{% endfor %}
+    </div></form>
+</div></div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:2;min-width:300px"><div class="card-pro-header">
+        <h5 class="card-pro-title">{% t "stops" %}</h5>
+        <form method="post" action="{% url 'logistics:route_add_stop' pk=route.pk %}" class="d-flex gap-2">{% csrf_token %}
+            <select class="input-pro" name="customer" style="width:auto"><option value="">{% t "add_customer_stop" %}</option></select>
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus"></i></button>
+        </form>
+    </div>
+    <div class="table-responsive"><table class="table-pro">
+        <thead><tr><th>#</th><th>{% t "customer" %}</th><th>{% t "address" %}</th><th>{% t "expected" %}</th><th>{% t "packages" %}</th><th>{% t "status" %}</th><th></th></tr></thead>
+        <tbody>
+            {% for s in stops %}
+            <tr>
+                <td style="font-weight:600">{{ s.sequence }}</td>
+                <td>{{ s.customer_name|default:s.customer|default:"-" }}</td>
+                <td>{{ s.address|truncatewords:10|default:"-" }}</td>
+                <td>{{ s.expected_arrival|time:"H:i"|default:"-" }}</td>
+                <td>{{ s.packages_count }}</td>
+                <td>{% if s.status == 'completed' %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>{% elif s.status == 'in_progress' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_progress" %}</span>{% elif s.status == 'failed' %}<span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>{% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{{ s.get_status_display }}</span>{% endif %}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        {% if s.status != 'completed' %}<form method="post" action="{% url 'logistics:route_stop_update_status' route_pk=route.pk stop_pk=s.pk %}">{% csrf_token %}<button type="submit" name="status" value="completed" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-check-lg"></i></button></form>{% endif %}
+                        <form method="post" action="{% url 'logistics:route_stop_delete' route_pk=route.pk stop_pk=s.pk %}">{% csrf_token %}<button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-trash"></i></button></form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7"><div class="text-pro-muted text-center p-4">{% t "no_stops" %}</div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table></div></div>
+
+    <div class="card-pro" style="flex:1;min-width:250px"><div class="card-pro-header"><h5 class="card-pro-title">{% t "timing" %}</h5></div><div class="card-pro-body">
+        <div class="text-pro-sm text-pro-muted">{% t "planned_start" %}: {{ route.planned_start|time:"H:i"|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "planned_end" %}: {{ route.planned_end|time:"H:i"|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "actual_start" %}: {{ route.actual_start|time:"H:i"|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "actual_end" %}: {{ route.actual_end|time:"H:i"|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "est_distance" %}: {{ route.estimated_distance_km|default:"-" }} km</div>
+        <div class="text-pro-sm text-pro-muted">{% t "est_duration" %}: {{ route.estimated_duration_minutes|default:"-" }} min</div>
+    </div></div>
+</div>
+{% endblock %}

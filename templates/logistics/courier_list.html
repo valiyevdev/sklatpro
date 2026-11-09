@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "couriers" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "couriers" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "courier_providers" %}</h1></div><div class="page-actions"><a href="{% url 'logistics:courier_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_courier" %}</a></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "name" %}</th><th>{% t "code" %}</th><th>{% t "api_url" %}</th><th>{% t "active" %}</th><th></th></tr></thead>
+<tbody>{% for c in couriers %}<tr><td class="cell-primary">{{ c.name }}</td><td>{{ c.code|default:"-" }}</td><td>{{ c.api_url|default:"-" }}</td><td>{% if c.is_active %}<span class="badge-pro badge-pro-success">{% t "active" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{% t "inactive" %}</span>{% endif %}</td><td><a href="{% url 'logistics:courier_update' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a></td></tr>{% empty %}<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-truck"></i></div><h5 class="empty-state-title">{% t "no_couriers" %}</h5><a href="{% url 'logistics:courier_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_courier" %}</a></div></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

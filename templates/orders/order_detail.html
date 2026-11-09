@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ order.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'orders:order_list' %}">{% t "orders" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ order.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ order.reference }}</h1>
+            {% if order.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif order.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+            {% elif order.status == 'shipped' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "shipped" %}</span>
+            {% elif order.status == 'reserved' %}
+                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "reserved" %}</span>
+            {% elif order.status == 'processing' or order.status == 'picking' or order.status == 'packing' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "processing" %}</span>
+            {% elif order.status == 'backordered' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "backordered" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ order.get_status_display }}</span>
+            {% endif %}
+
+            {% if order.payment_status == 'paid' %}
+                <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+            {% elif order.payment_status == 'partial' %}
+                <span class="badge-pro badge-pro-warning">{% t "partial" %}</span>
+            {% elif order.payment_status == 'overdue' %}
+                <span class="badge-pro badge-pro-danger">{% t "overdue" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral">{% t "unpaid" %}</span>
+            {% endif %}
+
+            {% if order.priority == 'urgent' %}
+                <span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>
+            {% elif order.priority == 'high' %}
+                <span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {{ order.customer.name }} &middot; {{ order.created_at|date:"d.m.Y H:i" }}
+            {% if order.expected_delivery_date %}
+                &middot; {% t "delivery_date" %}: {{ order.expected_delivery_date|date:"d.m.Y" }}
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if order.status == 'draft' or order.status == 'pending' %}
+            <a href="{% url 'orders:order_update' pk=order.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        {% endif %}
+        {% if order.status != 'cancelled' and order.status != 'completed' %}
+            <form method="post" action="{% url 'orders:order_duplicate' pk=order.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-copy"></i> {% t "duplicate" %}</button>
+            </form>
+        {% endif %}
+        {% if order.status == 'draft' or order.status == 'cancelled' %}
+            <a href="{% url 'orders:order_delete' pk=order.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ order.total|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_amount" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ items.count }}</div>
+            <div class="stat-card-label">{% t "products" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-box-seam"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ fulfillment_percentage }}%</div>
+            <div class="stat-card-label">{% t "fulfilled" %}</div>
+        </div>
+        <div class="stat-card-icon {% if fulfillment_percentage == 100 %}success{% elif fulfillment_percentage > 0 %}warning{% else %}info{% endif %}"><i class="bi bi-clipboard-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ outstanding|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "outstanding" %}</div>
+        </div>
+        <div class="stat-card-icon {% if outstanding > 0 %}danger{% else %}success{% endif %}"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-5)">
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "customer" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.customer.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "warehouse" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.warehouse.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "order_date" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.date|date:"d.m.Y" }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar-event"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "expected_delivery_date" %}</div>
+                    <div class="text-pro-sm fw-500">{% if order.expected_delivery_date %}{{ order.expected_delivery_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-wallet2"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "payment_terms" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.get_payment_terms_display }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-cash"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "currency" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.currency }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "created_by" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.created_by.get_full_name|default:order.created_by.email }}</div>
+                </div>
+            </div>
+            {% if order.delivery_method %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-truck"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "delivery_method" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.delivery_method }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if order.tracking_number %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-upc-scan"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "tracking_number" %}</div>
+                    <div class="text-pro-sm fw-500">{{ order.tracking_number }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "requested" %}</th>
+                    <th>{% t "reserved" %}</th>
+                    <th>{% t "picked" %}</th>
+                    <th>{% t "packed" %}</th>
+                    <th>{% t "shipped" %}</th>
+                    <th>{% t "delivered" %}</th>
+                    <th>{% t "returned" %}</th>
+                    <th>{% t "backordered" %}</th>
+                    <th>{% t "unit_price" %}</th>
+                    <th>{% t "total" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{% if item.reserved_quantity > 0 %}<span class="text-pro-primary fw-600">{{ item.reserved_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.picked_quantity > 0 %}<span class="text-pro-info fw-600">{{ item.picked_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.packed_quantity > 0 %}<span class="text-pro-success fw-600">{{ item.packed_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.shipped_quantity > 0 %}<span class="text-pro-info fw-600">{{ item.shipped_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.delivered_quantity > 0 %}<span class="text-pro-success fw-600">{{ item.delivered_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.returned_quantity > 0 %}<span class="text-pro-danger">{{ item.returned_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.backordered_quantity > 0 %}<span class="text-pro-danger">{{ item.backordered_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>${{ item.unit_price }}</td>
+                    <td class="fw-600">${{ item.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-desc" style="margin-bottom:0">{% t "no_products" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if reservation_status != 'not_reserved' %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-bookmark-check" style="color:var(--primary-600)"></i> {% t "reservation" %}</span>
+        <span class="badge-pro {% if reservation_status == 'fully_reserved' %}badge-pro-success{% else %}badge-pro-warning{% endif %}">
+            {% if reservation_status == 'fully_reserved' %}{% t "fully_reserved" %}{% else %}{% t "partially_reserved" %}{% endif %}
+        </span>
+    </div>
+    <div class="card-pro-body">
+        <div class="progress-pro" style="height:10px;margin-bottom:var(--sp-3)">
+            <div class="progress-pro-bar {% if reservation_status == 'fully_reserved' %}success{% else %}warning{% endif %}" style="width:{{ order.total_reserved }}%;max-width:100%"></div>
+        </div>
+        <div class="d-flex justify-between text-pro-sm text-pro-muted">
+            <span>{% t "reserved" %}: {{ order.total_reserved }} / {{ order.total_requested }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if fulfillment_percentage > 0 and fulfillment_percentage < 100 %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-clipboard-check" style="color:var(--primary-600)"></i> {% t "fulfillment" %}</span>
+        <span class="text-pro-sm fw-600">{{ fulfillment_percentage }}%</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="progress-pro" style="height:10px;margin-bottom:var(--sp-3)">
+            <div class="progress-pro-bar {% if fulfillment_percentage == 100 %}success{% elif fulfillment_percentage > 50 %}info{% else %}warning{% endif %}" style="width:{{ fulfillment_percentage }}%"></div>
+        </div>
+        <div class="d-flex justify-between text-pro-sm text-pro-muted">
+            <span>{% t "delivered" %}: {{ order.total_delivered }} / {{ order.total_requested }}</span>
+            <span>{% t "shipped" %}: {{ order.total_shipped }} / {{ order.total_requested }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% with allowed=order.VALID_TRANSITIONS %}
+{% if allowed %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-repeat" style="color:var(--primary-600)"></i> {% t "status_workflow" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex gap-2 flex-wrap">
+            {% for status_key, allowed_list in order.VALID_TRANSITIONS.items %}
+                {% if order.status == status_key %}
+                    {% for next_status in allowed_list %}
+                        <form method="post" action="{% url 'orders:order_update_status' pk=order.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="{{ next_status }}">
+                            {% if next_status == 'completed' or next_status == 'reserved' or next_status == 'delivered' %}
+                                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t next_status %}</button>
+                            {% elif next_status == 'cancelled' or next_status == 'backordered' %}
+                                <button type="submit" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-x-circle"></i> {% t next_status %}</button>
+                            {% else %}
+                                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-arrow-repeat"></i> {% t next_status %}</button>
+                            {% endif %}
+                        </form>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="grid grid-2 gap-6 mb-6">
+    {% if payments %}
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-wallet2" style="color:var(--primary-600)"></i> {% t "payments" %}</span>
+            <span class="badge-pro badge-pro-neutral">{{ payments|length }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "amount" %}</th>
+                        <th>{% t "method" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                    <tr>
+                        <td class="cell-primary fw-600">${{ p.amount|floatformat:0 }}</td>
+                        <td>{{ p.get_payment_method_display }}</td>
+                        <td class="cell-muted">{{ p.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if timeline %}
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "activity" %}</span>
+        </div>
+        <div style="max-height:300px;overflow-y:auto;padding:var(--sp-4)">
+            {% for t in timeline %}
+            <div class="d-flex gap-3" style="margin-bottom:var(--sp-4)">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--primary-600);margin-top:6px;flex-shrink:0"></div>
+                <div>
+                    <div class="text-pro-sm">{{ t.description }}</div>
+                    <div class="text-pro-xs text-pro-muted">
+                        {% if t.user %}{{ t.user.get_full_name|default:t.user.email }} &middot; {% endif %}{{ t.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if order.notes or order.internal_notes or order.customer_notes or order.delivery_address %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--sp-4)">
+            {% if order.notes %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "notes" %}</div>
+                <div class="text-pro-sm">{{ order.notes }}</div>
+            </div>
+            {% endif %}
+            {% if order.customer_notes %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "customer_notes" %}</div>
+                <div class="text-pro-sm">{{ order.customer_notes }}</div>
+            </div>
+            {% endif %}
+            {% if order.delivery_address %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "delivery_address" %}</div>
+                <div class="text-pro-sm">{{ order.delivery_address }}</div>
+            </div>
+            {% endif %}
+            {% if order.internal_notes %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "internal_notes" %}</div>
+                <div class="text-pro-sm">{{ order.internal_notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if order.status != 'cancelled' and order.status != 'completed' %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-wallet2" style="color:var(--primary-600)"></i> {% t "record_payment" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <form method="post" action="{% url 'orders:order_payment_create' pk=order.pk %}">
+            {% csrf_token %}
+            <div class="d-flex gap-3 align-end flex-wrap">
+                <div style="flex:1;min-width:150px">
+                    <label class="input-pro-label">{% t "amount" %}</label>
+                    <input class="input-pro" type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00">
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="input-pro-label">{% t "method" %}</label>
+                    <select class="input-pro" name="payment_method">
+                        <option value="cash">{% t "cash" %}</option>
+                        <option value="card">{% t "card" %}</option>
+                        <option value="transfer">{% t "bank_transfer" %}</option>
+                        <option value="online">{% t "online" %}</option>
+                    </select>
+                </div>
+                <div style="flex:2;min-width:200px">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <input class="input-pro" type="text" name="notes" placeholder="{% t "notes" %}">
+                </div>
+                <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-plus-circle"></i> {% t "record" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if order.status != 'cancelled' and order.status != 'completed' and order.status != 'draft' and order.status != 'pending' %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-clipboard-check" style="color:var(--primary-600)"></i> {% t "update_fulfillment" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <form method="post" action="{% url 'orders:order_update_fulfillment' pk=order.pk %}">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "product" %}</th>
+                            <th>{% t "requested" %}</th>
+                            <th>{% t "picked" %}</th>
+                            <th>{% t "packed" %}</th>
+                            <th>{% t "shipped" %}</th>
+                            <th>{% t "delivered" %}</th>
+                            <th>{% t "returned" %}</th>
+                            <th>{% t "backordered" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <input type="hidden" name="item_ids" value="{{ item.pk }}">
+                            <td><input class="input-pro" type="number" name="picked_{{ item.pk }}" value="{{ item.picked_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                            <td><input class="input-pro" type="number" name="packed_{{ item.pk }}" value="{{ item.packed_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                            <td><input class="input-pro" type="number" name="shipped_{{ item.pk }}" value="{{ item.shipped_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                            <td><input class="input-pro" type="number" name="delivered_{{ item.pk }}" value="{{ item.delivered_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                            <td><input class="input-pro" type="number" name="returned_{{ item.pk }}" value="{{ item.returned_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                            <td><input class="input-pro" type="number" name="backordered_{{ item.pk }}" value="{{ item.backordered_quantity }}" min="0" max="{{ item.quantity }}" style="width:70px"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-end mt-3">
+                <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "update_fulfillment" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

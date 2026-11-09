@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_template" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'documents:document_template_list' %}" class="breadcrumb-link">{% t "document_templates" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "create_template" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "create_template" %}</h1>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card-pro mb-6">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-file-earmark-text" style="color:var(--primary-600)"></i> {% t "document_templates" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div class="grid grid-2" style="gap:var(--sp-4)">
+                <div class="form-group" style="grid-column:1/-1">
+                    <label class="form-label">{% t "template_name" %}</label>
+                    {{ form.name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{% t "document_type" %}</label>
+                    {{ form.doc_type }}
+                </div>
+                <div class="form-group">
+                    <div style="display:flex;gap:var(--sp-6);padding-top:var(--sp-6)">
+                        <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                            {{ form.is_default }}
+                            <span>{% t "is_default" %}</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                            {{ form.is_active }}
+                            <span>{% t "is_active" %}</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label class="form-label">{% t "template_html" %}</label>
+                    {{ form.template_html }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:var(--sp-3);justify-content:flex-end">
+        <a href="{% url 'documents:document_template_list' %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button>
+    </div>
+</form>
+{% endblock %}

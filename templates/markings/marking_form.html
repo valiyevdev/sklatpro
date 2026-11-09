@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "marking_form" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:marking_list' %}">{% t "marking_list" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% if form.instance.pk %}{% t "edit" %}{% else %}{% t "create_marking_code" %}{% endif %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if form.instance.pk %}{% t "edit" %}{% else %}{% t "create_marking_code" %}{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger mb-4">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-upc-scan" style="color:var(--primary-600)"></i> {% t "code_info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "marking_code" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.code }}
+                        {% if form.code.errors %}<div class="input-pro-error">{{ form.code.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "product" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.product }}
+                            {% if form.product.errors %}<div class="input-pro-error">{{ form.product.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "status" %}</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "gtin" %}</label>
+                            {{ form.gtin }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "serial_number" %}</label>
+                            {{ form.serial_number }}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "verification_status" %}</label>
+                        {{ form.verification_status }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "verification_notes" %}</label>
+                        {{ form.verification_notes }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-geo-alt" style="color:var(--primary-600)"></i> {% t "location" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "warehouse" %}</label>
+                            {{ form.warehouse }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "location" %}</label>
+                            {{ form.location }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-link-45deg" style="color:var(--primary-600)"></i> {% t "references" %}</span>
+                </div>
+                <div class="card-pro-body d-flex flex-column gap-3">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "batch" %}</label>
+                        {{ form.batch }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "supplier" %}</label>
+                        {{ form.supplier }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "purchase" %}</label>
+                        {{ form.purchase }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% url 'markings:marking_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "save" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

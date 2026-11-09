@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Business Summary - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:var(--sp-3)}
+.ai-page-header-left h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.ai-page-header-left p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+.ai-page-header-right{display:flex;gap:var(--sp-3);align-items:center}
+
+.ai-tabs{display:flex;gap:var(--sp-1);margin-bottom:var(--sp-6);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-1);width:fit-content}
+.ai-tab-btn{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-4);border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);background:none;border:none;cursor:pointer;transition:all var(--transition-fast);font-family:var(--font-sans);white-space:nowrap}
+.ai-tab-btn:hover{color:var(--text-primary);background:var(--bg-page)}
+.ai-tab-btn.active{background:var(--primary-600);color:#fff;box-shadow:var(--shadow-sm)}
+
+.ai-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.ai-summary-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow:hidden;transition:all var(--transition-fast)}
+.ai-summary-card:hover{border-color:var(--primary-400);box-shadow:var(--shadow-md)}
+.ai-summary-card-header{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border-subtle)}
+.ai-summary-card-header .card-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ai-summary-card-header h3{font-size:var(--text-base);font-weight:600;flex:1}
+.ai-summary-card-body{padding:var(--sp-4) var(--sp-5)}
+
+.ai-metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3)}
+.ai-metric{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2);background:var(--bg-page);border-radius:var(--radius-lg)}
+.ai-metric .metric-label{font-size:var(--text-xs);color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.03em}
+.ai-metric .metric-value{font-size:var(--text-lg);font-weight:700;color:var(--text-primary);line-height:1}
+.ai-metric .metric-change{font-size:var(--text-xs);font-weight:600;display:flex;align-items:center;gap:2px}
+.ai-metric .metric-change.positive{color:var(--success-600)}
+.ai-metric .metric-change.negative{color:var(--danger-600)}
+
+.ai-list{list-style:none;padding:0;margin:var(--sp-2) 0 0}
+.ai-list li{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-2) 0;font-size:var(--text-sm);border-bottom:1px solid var(--border-subtle)}
+.ai-list li:last-child{border-bottom:none}
+.ai-list .item-label{color:var(--text-secondary)}
+.ai-list .item-value{font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums}
+
+.ai-alert-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+.ai-alert-item{display:flex;align-items:flex-start;gap:var(--sp-3);padding:var(--sp-3);border-radius:var(--radius-lg);font-size:var(--text-sm)}
+.ai-alert-item.critical{background:var(--danger-50);color:var(--danger-700);border:1px solid var(--danger-200)}
+.ai-alert-item.warning{background:var(--warning-50);color:var(--warning-700);border:1px solid var(--warning-200)}
+.ai-alert-item.info{background:var(--info-50);color:var(--info-700);border:1px solid var(--info-200)}
+.ai-alert-item i{font-size:1rem;flex-shrink:0;margin-top:1px}
+
+.ai-action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.ai-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.ai-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.ai-action-btn.btn-primary:hover{background:var(--primary-700)}
+
+.ai-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.ai-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-empty p{font-size:var(--text-sm)}
+
+.ai-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);margin-top:var(--sp-6)}
+.ai-meta-item{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-xs);color:var(--text-muted)}
+.ai-meta-item i{font-size:0.875rem}
+
+.ai-sources{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
+.ai-source-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:500;background:var(--gray-100);color:var(--gray-600)}
+</style>
+
+<div class="ai-page-header">
+    <div class="ai-page-header-left">
+        <h2><i class="bi bi-file-earmark-text" style="color:var(--primary-500)"></i> Business Summary</h2>
+        <p>AI-generated overview of your business performance</p>
+    </div>
+    <div class="ai-page-header-right">
+        <a href="{% url 'sklat_ai:export_summary' %}?period={{ period }}" class="ai-action-btn"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+    </div>
+</div>
+
+<div class="ai-tabs">
+    <a href="{% url 'sklat_ai:business_summary' %}?period=daily" class="ai-tab-btn {% if period == 'daily' %}active{% endif %}">
+        <i class="bi bi-calendar-day"></i> Daily
+    </a>
+    <a href="{% url 'sklat_ai:business_summary' %}?period=weekly" class="ai-tab-btn {% if period == 'weekly' %}active{% endif %}">
+        <i class="bi bi-calendar-week"></i> Weekly
+    </a>
+    <a href="{% url 'sklat_ai:business_summary' %}?period=monthly" class="ai-tab-btn {% if period == 'monthly' %}active{% endif %}">
+        <i class="bi bi-calendar-month"></i> Monthly
+    </a>
+</div>
+
+{% if summary %}
+
+<div class="ai-summary-grid">
+
+    {% if summary.sections.sales %}
+    <div class="ai-summary-card">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-graph-up-arrow"></i></div>
+            <h3>Sales Summary</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-metric-grid">
+                <div class="ai-metric">
+                    <span class="metric-label">Total Sales</span>
+                    <span class="metric-value">${{ summary.sections.sales.total|default:"0.00" }}</span>
+                    {% if summary.sections.sales.growth %}
+                    <span class="metric-change {% if summary.sections.sales.growth > 0 %}positive{% else %}negative{% endif %}">
+                        <i class="bi bi-arrow-{% if summary.sections.sales.growth > 0 %}up{% else %}down{% endif %}"></i>
+                        {{ summary.sections.sales.growth }}%
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Orders</span>
+                    <span class="metric-value">{{ summary.sections.sales.order_count|default:"0" }}</span>
+                </div>
+            </div>
+            {% if summary.sections.sales.top_products %}
+            <div style="margin-top:var(--sp-3)">
+                <div style="font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:var(--sp-2)">Top Products</div>
+                <ul class="ai-list">
+                    {% for product in summary.sections.sales.top_products %}
+                    <li>
+                        <span class="item-label">{{ product.name }}</span>
+                        <span class="item-value">${{ product.revenue|default:"0.00" }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% if summary.sections.sales.trend %}
+            <div style="margin-top:var(--sp-3);font-size:var(--text-sm);color:var(--text-secondary)">
+                <i class="bi bi-info-circle" style="margin-right:var(--sp-1)"></i> {{ summary.sections.sales.trend }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summary.sections.inventory %}
+    <div class="ai-summary-card">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-box-seam"></i></div>
+            <h3>Inventory Summary</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-metric-grid">
+                <div class="ai-metric">
+                    <span class="metric-label">Total Products</span>
+                    <span class="metric-value">{{ summary.sections.inventory.total_products|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Low Stock</span>
+                    <span class="metric-value" style="color:var(--warning-600)">{{ summary.sections.inventory.low_stock|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Out of Stock</span>
+                    <span class="metric-value" style="color:var(--danger-600)">{{ summary.sections.inventory.out_of_stock|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Total Value</span>
+                    <span class="metric-value">${{ summary.sections.inventory.total_value|default:"0.00" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summary.sections.finance %}
+    <div class="ai-summary-card">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-wallet2"></i></div>
+            <h3>Finance Summary</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-metric-grid">
+                <div class="ai-metric">
+                    <span class="metric-label">Income</span>
+                    <span class="metric-value" style="color:var(--success-600)">${{ summary.sections.finance.income|default:"0.00" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Expenses</span>
+                    <span class="metric-value" style="color:var(--danger-600)">${{ summary.sections.finance.expenses|default:"0.00" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Profit</span>
+                    <span class="metric-value" style="color:{% if summary.sections.finance.profit > 0 %}var(--success-600){% else %}var(--danger-600){% endif %}">${{ summary.sections.finance.profit|default:"0.00" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Margin</span>
+                    <span class="metric-value">{{ summary.sections.finance.margin|default:"0" }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summary.sections.customers %}
+    <div class="ai-summary-card">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-people"></i></div>
+            <h3>Customer Summary</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-metric-grid">
+                <div class="ai-metric">
+                    <span class="metric-label">Total Customers</span>
+                    <span class="metric-value">{{ summary.sections.customers.total|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Active</span>
+                    <span class="metric-value" style="color:var(--success-600)">{{ summary.sections.customers.active|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">At Risk</span>
+                    <span class="metric-value" style="color:var(--danger-600)">{{ summary.sections.customers.at_risk|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">New This Period</span>
+                    <span class="metric-value">{{ summary.sections.customers.new|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summary.sections.orders %}
+    <div class="ai-summary-card">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-receipt"></i></div>
+            <h3>Orders Summary</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-metric-grid">
+                <div class="ai-metric">
+                    <span class="metric-label">Total Orders</span>
+                    <span class="metric-value">{{ summary.sections.orders.total|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Completed</span>
+                    <span class="metric-value" style="color:var(--success-600)">{{ summary.sections.orders.completed|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Pending</span>
+                    <span class="metric-value" style="color:var(--warning-600)">{{ summary.sections.orders.pending|default:"0" }}</span>
+                </div>
+                <div class="ai-metric">
+                    <span class="metric-label">Cancelled</span>
+                    <span class="metric-value" style="color:var(--danger-600)">{{ summary.sections.orders.cancelled|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summary.sections.alerts %}
+    <div class="ai-summary-card" style="grid-column:1/-1">
+        <div class="ai-summary-card-header">
+            <div class="card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-bell"></i></div>
+            <h3>Alerts</h3>
+        </div>
+        <div class="ai-summary-card-body">
+            <div class="ai-alert-list">
+                {% for alert in summary.sections.alerts %}
+                <div class="ai-alert-item {{ alert.severity|default:'info' }}">
+                    {% if alert.severity == 'critical' %}
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                    {% elif alert.severity == 'warning' %}
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    {% else %}
+                    <i class="bi bi-info-circle-fill"></i>
+                    {% endif %}
+                    <div>
+                        <div style="font-weight:600;margin-bottom:2px">{{ alert.title|default:alert.message }}</div>
+                        {% if alert.description %}
+                        <div style="font-size:var(--text-xs);opacity:0.8">{{ alert.description }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align:center;padding:var(--sp-4);color:var(--text-muted);font-size:var(--text-sm)">
+                    <i class="bi bi-check-circle" style="margin-right:var(--sp-2)"></i> No critical alerts at this time.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% else %}
+<div class="ai-empty">
+    <i class="bi bi-file-earmark-text"></i>
+    <h4>No summary available</h4>
+    <p>No business summary data has been generated for this period yet. AI generates summaries based on your recent business activity.</p>
+</div>
+{% endif %}
+
+<div class="ai-meta">
+    <div style="display:flex;gap:var(--sp-4);flex-wrap:wrap">
+        <div class="ai-meta-item">
+            <i class="bi bi-clock"></i>
+            Generated: {{ summary.generated_at|date:"d M Y H:i"|default:"Not yet generated" }}
+        </div>
+        <div class="ai-meta-item">
+            <i class="bi bi-calendar3"></i>
+            Period: {{ period|title }}
+        </div>
+    </div>
+    {% if summary.sources %}
+    <div class="ai-sources">
+        <span class="ai-meta-item"><i class="bi bi-database"></i> Sources:</span>
+        {% for source in summary.sources %}
+        <span class="ai-source-tag"><i class="bi bi-check2"></i> {{ source }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

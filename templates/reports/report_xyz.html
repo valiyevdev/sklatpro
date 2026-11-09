@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "xyz_analysis" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "xyz_analysis" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ x_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_x" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle-fill"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--warning-600)">{{ y_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_y" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-exclamation-circle-fill"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--danger-500)">{{ z_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_z" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle-fill"></i></div>
+    </div>
+</div>
+
+{% if xyz_list %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "xyz_details" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "product" %}</th><th>{% t "avg_sales" %}</th><th>{% t "coefficient_of_variation" %}</th><th>{% t "class" %}</th></tr></thead>
+            <tbody>
+                {% for item in xyz_list %}
+                <tr>
+                    <td class="fw-500">{{ item.product }}</td>
+                    <td class="fw-600">{{ item.avg|floatformat:0 }}</td>
+                    <td>{{ item.cv|floatformat:1 }}%</td>
+                    <td>
+                        {% if item.class == 'X' %}
+                        <span class="badge-pro badge-pro-success">X</span>
+                        {% elif item.class == 'Y' %}
+                        <span class="badge-pro badge-pro-warning">Y</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-danger">Z</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

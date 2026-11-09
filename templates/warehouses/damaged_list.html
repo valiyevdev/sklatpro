@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "damaged_stock" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "damaged_stock" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:damaged_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "report_damage" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "reason" %}</th>
+                    <th>{% t "reported_by" %}</th>
+                    <th>{% t "created_at" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.warehouse.name }}</td>
+                    <td>{% if item.location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.reason|truncatewords:10 }}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.reported_by %}{{ item.reported_by.get_full_name|default:item.reported_by.email }}{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.created_at|date:"d.m.Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                            <h5 class="empty-state-title">{% t "no_damaged_items" %}</h5>
+                            <p class="empty-state-desc">{% t "no_damaged_reported" %}</p>
+                            <a href="{% url 'warehouses:damaged_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "report_damage" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

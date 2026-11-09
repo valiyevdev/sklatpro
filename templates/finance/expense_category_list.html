@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_expense_categories" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_expense_categories" %}</h1>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "fin_name" %}</th>
+                    <th>{% t "fin_code" %}</th>
+                    <th>{% t "description" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ cat.name }}</td>
+                    <td>{{ cat.code|default:"-" }}</td>
+                    <td class="text-pro-sm">{{ cat.description|default:"-"|truncatechars:60 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_expense_categories" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if promo %}{% t "edit" %} {% t "promotion" %}{% else %}{% t "create_promotion" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pricing:promotion_list' %}">{% t "promotions" %}</a>
+    <span class="separator">/</span>
+    {% if promo %}
+        <a href="{% url 'pricing:promotion_edit' pk=promo.pk %}">{{ promo.name }}</a>
+        <span class="separator">/</span>
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create_promotion" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-head">
+    <a href="{% url 'pricing:promotion_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if promo %}{% t "edit_promotion" %}: {{ promo.name }}{% else %}{% t "create_promotion" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "general_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "name" %} <span class="required">*</span></label>
+                        <input class="input-pro" type="text" name="name" value="{% if promo %}{{ promo.name }}{% endif %}" required maxlength="200" placeholder="{% t "name" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "code" %}</label>
+                        <input class="input-pro" type="text" name="code" value="{% if promo %}{{ promo.code }}{% endif %}" maxlength="50" placeholder="{% t "optional_code" %}">
+                    </div>
+                    <div class="input-pro-group" style="grid-column:span 2">
+                        <label class="input-pro-label">{% t "description" %}</label>
+                        <textarea class="input-pro" name="description" rows="2">{% if promo %}{{ promo.description }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-percent" style="color:var(--primary-600)"></i> {% t "discount_settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "discount_type" %} <span class="required">*</span></label>
+                        <select class="input-pro" name="discount_type" id="discount_type" onchange="toggleBogoFields()">
+                            <option value="percentage" {% if promo and promo.discount_type == 'percentage' %}selected{% endif %}>{% t "percentage" %}</option>
+                            <option value="fixed" {% if promo and promo.discount_type == 'fixed' %}selected{% endif %}>{% t "fixed_amount" %}</option>
+                            <option value="fixed_price" {% if promo and promo.discount_type == 'fixed_price' %}selected{% endif %}>{% t "fixed_price" %}</option>
+                            <option value="bogo" {% if promo and promo.discount_type == 'bogo' %}selected{% endif %}>BOGO</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group" id="discount_value_group">
+                        <label class="input-pro-label">{% t "discount_value" %}</label>
+                        <input class="input-pro" type="number" name="discount_value" step="0.01" min="0" value="{% if promo %}{{ promo.discount_value }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group" id="buy_quantity_group" style="display:none">
+                        <label class="input-pro-label">{% t "buy_quantity" %}</label>
+                        <input class="input-pro" type="number" name="buy_quantity" min="1" value="{% if promo %}{{ promo.buy_quantity }}{% else %}1{% endif %}">
+                    </div>
+                    <div class="input-pro-group" id="free_quantity_group" style="display:none">
+                        <label class="input-pro-label">{% t "free_quantity" %}</label>
+                        <input class="input-pro" type="number" name="free_quantity" min="1" value="{% if promo %}{{ promo.free_quantity }}{% else %}1{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "promotion_settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "status" %}</label>
+                        <select class="input-pro" name="status">
+                            <option value="active" {% if not promo or promo.status == 'active' %}selected{% endif %}>{% t "active" %}</option>
+                            <option value="inactive" {% if promo and promo.status == 'inactive' %}selected{% endif %}>{% t "inactive" %}</option>
+                            <option value="scheduled" {% if promo and promo.status == 'scheduled' %}selected{% endif %}>{% t "scheduled" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <input class="input-pro" type="number" name="priority" min="0" value="{% if promo %}{{ promo.priority }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "combine_with" %}</label>
+                        <select class="input-pro" name="combine_with">
+                            <option value="none" {% if not promo or promo.combine_with == 'none' %}selected{% endif %}>{% t "none" %}</option>
+                            <option value="price_list" {% if promo and promo.combine_with == 'price_list' %}selected{% endif %}>{% t "price_list" %}</option>
+                            <option value="coupon" {% if promo and promo.combine_with == 'coupon' %}selected{% endif %}>{% t "coupon" %}</option>
+                            <option value="all" {% if promo and promo.combine_with == 'all' %}selected{% endif %}>{% t "all" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "min_order_total" %}</label>
+                        <input class="input-pro" type="number" name="min_order_total" step="0.01" min="0" value="{% if promo %}{{ promo.min_order_total }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "min_quantity" %}</label>
+                        <input class="input-pro" type="number" name="min_quantity" min="1" value="{% if promo %}{{ promo.min_quantity }}{% else %}1{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_total_uses" %}</label>
+                        <input class="input-pro" type="number" name="max_total_uses" min="1" value="{% if promo and promo.max_total_uses %}{{ promo.max_total_uses }}{% endif %}" placeholder="{% t "unlimited" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_per_customer" %}</label>
+                        <input class="input-pro" type="number" name="max_per_customer" min="1" value="{% if promo and promo.max_per_customer %}{{ promo.max_per_customer }}{% endif %}" placeholder="{% t "unlimited" %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calendar-range" style="color:var(--primary-600)"></i> {% t "validity_period" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "start_date" %}</label>
+                        <input class="input-pro" type="date" name="start_date" value="{% if promo and promo.start_date %}{{ promo.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "end_date" %}</label>
+                        <input class="input-pro" type="date" name="end_date" value="{% if promo and promo.end_date %}{{ promo.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-diagram-3" style="color:var(--primary-600)"></i> {% t "targeting" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div class="input-pro-group mb-4">
+                    <label class="input-pro-label">{% t "applicable_products" %}</label>
+                    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-3)">
+                        {% for p in products %}
+                            <label style="display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) 0;cursor:pointer;font-size:var(--text-sm);color:var(--text-primary)">
+                                <input type="checkbox" name="applicable_products" value="{{ p.pk }}" {% if promo and p in promo.applicable_products.all %}checked{% endif %} style="width:auto">
+                                {{ p.name }}
+                            </label>
+                        {% empty %}
+                            <div class="text-pro-sm text-pro-muted">{% t "no_products_available" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="input-pro-group mb-4">
+                    <label class="input-pro-label">{% t "applicable_segments" %}</label>
+                    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-3)">
+                        {% for seg in segments %}
+                            <label style="display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) 0;cursor:pointer;font-size:var(--text-sm);color:var(--text-primary)">
+                                <input type="checkbox" name="applicable_segments" value="{{ seg.pk }}" {% if promo and seg in promo.applicable_segments.all %}checked{% endif %} style="width:auto">
+                                {{ seg.name }}
+                            </label>
+                        {% empty %}
+                            <div class="text-pro-sm text-pro-muted">{% t "no_segments_available" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "applicable_customers" %}</label>
+                    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-3)">
+                        {% for c in customers %}
+                            <label style="display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) 0;cursor:pointer;font-size:var(--text-sm);color:var(--text-primary)">
+                                <input type="checkbox" name="applicable_customers" value="{{ c.pk }}" {% if promo and c in promo.applicable_customers.all %}checked{% endif %} style="width:auto">
+                                {{ c.name }}
+                            </label>
+                        {% empty %}
+                            <div class="text-pro-sm text-pro-muted">{% t "no_customers_available" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-between">
+            <a href="{% url 'pricing:promotion_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if promo %}{% t "save_changes" %}{% else %}{% t "create" %}{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleBogoFields(){
+    var dt=document.getElementById('discount_type').value;
+    var dv=document.getElementById('discount_value_group');
+    var bq=document.getElementById('buy_quantity_group');
+    var fq=document.getElementById('free_quantity_group');
+    if(dt==='bogo'){
+        dv.style.display='none';
+        bq.style.display='';
+        fq.style.display='';
+    }else{
+        dv.style.display='';
+        bq.style.display='none';
+        fq.style.display='none';
+    }
+}
+document.addEventListener('DOMContentLoaded',toggleBogoFields);
+</script>
+{% endblock %}

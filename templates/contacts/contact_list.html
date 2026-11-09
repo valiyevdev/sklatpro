@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "contacts_title" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "contacts_title" %}</h1>
+        <p class="page-subtitle">{% t "contacts_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'contacts:contact_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "add_contact_btn" %}
+        </a>
+    </div>
+</div>
+
+<div class="tabs-pro mb-6">
+    <a href="{% url 'contacts:contact_list' %}" class="tab-pro {% if not current_type %}active{% endif %}">{% t "all_contacts" %}</a>
+    <a href="{% url 'contacts:contact_list' %}?type=customer" class="tab-pro {% if current_type == 'customer' %}active{% endif %}">{% t "contact_type_customer" %}</a>
+    <a href="{% url 'contacts:contact_list' %}?type=supplier" class="tab-pro {% if current_type == 'supplier' %}active{% endif %}">{% t "contact_type_supplier" %}</a>
+    <a href="{% url 'contacts:contact_list' %}?type=employee" class="tab-pro {% if current_type == 'employee' %}active{% endif %}">{% t "contact_type_employee" %}</a>
+    <a href="{% url 'contacts:contact_list' %}?type=other" class="tab-pro {% if current_type == 'other' %}active{% endif %}">{% t "contact_type_other" %}</a>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "type_th" %}</th>
+                    <th>{% t "company_name_th" %}</th>
+                    <th>{% t "phone" %}</th>
+                    <th>{% t "email" %}</th>
+                    <th>{% t "balance" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contacts %}
+                <tr>
+                    <td class="cell-primary">{{ c.name }}</td>
+                    <td>
+                        {% if c.type == 'customer' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "customer" %}</span>
+                        {% elif c.type == 'supplier' %}<span class="badge-pro badge-pro-warning badge-pro-dot">{% t "supplier" %}</span>
+                        {% elif c.type == 'employee' %}<span class="badge-pro badge-pro-primary badge-pro-dot">{% t "employee" %}</span>
+                        {% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "other" %}</span>{% endif %}
+                    </td>
+                    <td>{{ c.company_name|default:"-" }}</td>
+                    <td>{{ c.phone|default:"-" }}</td>
+                    <td>{{ c.email|default:"-" }}</td>
+                    <td class="cell-primary fw-600">${{ c.balance|floatformat:0 }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'contacts:contact_detail' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'contacts:contact_update' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                            <h5 class="empty-state-title">{% t "no_contacts" %}</h5>
+                            <p class="empty-state-desc">{% t "add_first_contact" %}</p>
+                            <a href="{% url 'contacts:contact_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_contact_btn" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ channel.name }} - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_list' %}">{% t "Channels" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{{ channel.name }}</span>
+        </nav>
+        <h1 class="page-title">{{ channel.name }}</h1>
+        <p class="page-subtitle">{{ channel.get_channel_type_display }} &middot; {{ channel.code }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:channel_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back" %}
+        </a>
+        <a href="{% url 'ecommerce:channel_toggle' pk=channel.pk %}" class="btn-pro {% if channel.status == 'active' %}btn-pro-danger{% else %}btn-pro-success{% endif %}">
+            {% if channel.status == 'active' %}
+            <i class="bi bi-pause-fill"></i> {% t "Disable" %}
+            {% else %}
+            <i class="bi bi-play-fill"></i> {% t "Enable" %}
+            {% endif %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Status" %}</div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">
+                {% if channel.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "Active" %}</span>
+                {% elif channel.status == 'inactive' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "Inactive" %}</span>
+                {% elif channel.status == 'setup' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "Setup" %}</span>
+                {% else %}
+                <span class="badge-pro badge-pro-neutral">{{ channel.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card-icon {% if channel.status == 'active' %}success{% else %}warning{% endif %}"><i class="bi bi-toggle2-{% if channel.status == 'active' %}on{% else %}off{% endif %}"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Orders Today" %}</div>
+            <div class="stat-card-value">{{ today_orders }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Revenue Today" %}</div>
+            <div class="stat-card-value">{{ today_revenue|floatformat:0 }} so'm</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cash-coin"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "Products" %}</div>
+            <div class="stat-card-value">{{ channel_products.count }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-box-seam"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-box-seam" style="margin-right:var(--sp-2);color:var(--primary-500)"></i>{% t "Channel Products" %}</h3>
+            <a href="{% url 'ecommerce:channel_products' pk=channel.pk %}" class="btn-pro btn-pro-sm btn-pro-primary"><i class="bi bi-gear"></i> {% t "Manage" %}</a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for cp in channel_products|slice:":5" %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);color:var(--text-muted)"><i class="bi bi-box"></i></div>
+                    <div>
+                        <div style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ cp.product.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ cp.product.sku|default:"-" }}</div>
+                    </div>
+                </div>
+                <span class="badge-pro {% if cp.visibility == 'visible' %}badge-pro-success{% elif cp.visibility == 'hidden' %}badge-pro-warning{% else %}badge-pro-neutral{% endif %}" style="font-size:10px">{{ cp.get_visibility_display }}</span>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-box-seam" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No products in this channel." %}</p>
+            </div>
+            {% endfor %}
+            {% if channel_products.count > 5 %}
+            <div style="padding:var(--sp-3);text-align:center">
+                <a href="{% url 'ecommerce:channel_products' pk=channel.pk %}" style="font-size:var(--text-sm);color:var(--primary-600)">{% t "View all" %} {{ channel_products.count }} {% t "products" %} &rarr;</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-clock-history" style="margin-right:var(--sp-2);color:var(--info-500)"></i>{% t "Integration Logs" %}</h3>
+            <a href="{% url 'ecommerce:integration_logs' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "View All" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-pro-body" style="padding:0">
+            {% for log in recent_logs %}
+            <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-6);border-bottom:1px solid var(--border-subtle)">
+                <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                    {% if log.status == 'success' %}background:var(--success-500)
+                    {% elif log.status == 'error' %}background:var(--danger-500)
+                    {% elif log.status == 'warning' %}background:var(--warning-500)
+                    {% else %}background:var(--info-500){% endif %}"></span>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:var(--text-sm);color:var(--text-primary)">{{ log.action }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ log.created_at|timesince }} {% t "ago" %}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:var(--sp-8) var(--sp-6);text-align:center">
+                <i class="bi bi-clock-history" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                <p style="color:var(--text-muted);font-size:var(--text-sm)">{% t "No logs yet." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div style="display:flex;gap:var(--sp-3);flex-wrap:wrap">
+    <a href="{% url 'ecommerce:channel_products' pk=channel.pk %}" class="btn-pro btn-pro-outline-primary"><i class="bi bi-box-seam"></i> {% t "Manage Products" %}</a>
+    <a href="{% url 'ecommerce:channel_stock' pk=channel.pk %}" class="btn-pro btn-pro-outline-primary"><i class="bi bi-stack"></i> {% t "Stock Allocation" %}</a>
+</div>
+{% endblock %}

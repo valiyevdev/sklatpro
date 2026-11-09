@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "suppliers_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "suppliers_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ total_suppliers|floatformat:0 }}</div><div class="stat-card-label">{% t "total_suppliers" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--danger-500)">{{ total_debt|floatformat:0 }}</div><div class="stat-card-label">{% t "total_debt" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+</div>
+
+{% if supplier_data %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "supplier_details" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "supplier" %}</th><th>{% t "total_value" %}</th><th>{% t "count" %}</th><th>{% t "avg_value" %}</th></tr></thead>
+            <tbody>
+                {% for s in supplier_data %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ s.supplier__name }}</td>
+                    <td class="fw-600">{{ s.total_value|floatformat:0 }}</td>
+                    <td>{{ s.count }}</td>
+                    <td>{{ s.avg_value|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

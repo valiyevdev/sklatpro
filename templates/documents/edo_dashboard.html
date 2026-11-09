@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "edo_dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "edo_dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "edo_dashboard" %}</h1>
+    </div>
+</div>
+
+{% if configs %}
+<div class="grid mb-6" style="gap:var(--sp-4)">
+    {% for cfg in configs %}
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-usb-symbol" style="color:var(--primary-600)"></i> {{ cfg.provider_name }}</span>
+            {% if cfg.is_active %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-dot">{% t "inactive" %}</span>
+            {% endif %}
+        </div>
+        <div class="card-pro-body">
+            <div style="display:flex;gap:var(--sp-8)">
+                <div>
+                    <div class="cell-muted" style="font-size:var(--text-sm)">{% t "provider" %}</div>
+                    <div>{{ cfg.provider_code }}</div>
+                </div>
+                {% if cfg.last_request_at %}
+                <div>
+                    <div class="cell-muted" style="font-size:var(--text-sm)">{% t "last_request" %}</div>
+                    <div>{{ cfg.last_request_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                {% endif %}
+                {% if cfg.last_status %}
+                <div>
+                    <div class="cell-muted" style="font-size:var(--text-sm)">{% t "last_status" %}</div>
+                    <div>{{ cfg.last_status }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <div class="empty-state" style="padding:var(--sp-8)">
+            <div class="empty-state-icon"><i class="bi bi-usb-symbol"></i></div>
+            <h5 class="empty-state-title">{% t "integration_status" %}</h5>
+            <p class="cell-muted">{% t "not_configured" %}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-600)"></i> {% t "recent_transactions" %}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "document_number" %}</th>
+                    <th>{% t "direction" %}</th>
+                    <th>{% t "action" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "edo_error" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_txns %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'documents:document_detail' pk=txn.document.pk %}" style="color:var(--text-primary);text-decoration:none">{{ txn.document.number }}</a>
+                    </td>
+                    <td>
+                        {% if txn.direction == 'out' %}
+                            <span class="badge-pro badge-pro-info">{% t "outbound" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-success">{% t "inbound" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ txn.action }}</td>
+                    <td>
+                        {% if txn.status == 'success' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "success" %}</span>
+                        {% elif txn.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif txn.status == 'pending' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{{ txn.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ txn.created_at|date:"d.m.Y H:i" }}</td>
+                    <td class="cell-muted" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ txn.error_message|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-arrow-left-right"></i></div>
+                            <h5 class="empty-state-title">{% t "no_transactions" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

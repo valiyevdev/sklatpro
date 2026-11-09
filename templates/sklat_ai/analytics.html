@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}AI Usage Analytics - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.ai-stat-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:box-shadow var(--transition-fast)}
+.ai-stat-card:hover{box-shadow:var(--shadow-md)}
+.ai-stat-card .stat-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;margin-bottom:var(--sp-3);flex-shrink:0}
+.ai-stat-card .stat-value{font-size:var(--text-3xl);font-weight:700;line-height:1;margin-bottom:var(--sp-1)}
+.ai-stat-card .stat-label{font-size:var(--text-xs);color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.ai-section{margin-bottom:var(--sp-6)}
+.ai-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.ai-section-header h3{font-size:var(--text-xl);font-weight:600}
+
+.ai-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ai-table{width:100%;border-collapse:collapse}
+.ai-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page);white-space:nowrap}
+.ai-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.ai-table tr:last-child td{border-bottom:none}
+.ai-table tr:hover td{background:var(--bg-surface-hover)}
+.ai-table .num-col{font-variant-numeric:tabular-nums;text-align:right}
+
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6}
+.ai-badge-success{background:var(--success-50);color:var(--success-700)}
+.ai-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.ai-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.ai-badge-info{background:var(--info-50);color:var(--info-700)}
+.ai-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-bar-chart{display:flex;align-items:flex-end;gap:var(--sp-2);height:180px;padding:var(--sp-4);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl)}
+.ai-bar-col{display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);flex:1;min-width:0}
+.ai-bar{width:100%;max-width:48px;border-radius:var(--radius-md) var(--radius-md) 0 0;transition:height var(--transition-fast);cursor:pointer;position:relative}
+.ai-bar:hover{opacity:0.85}
+.ai-bar-label{font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ai-bar-value{font-size:var(--text-xs);font-weight:600;color:var(--text-primary);text-align:center}
+
+.ai-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.ai-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-empty p{font-size:var(--text-sm)}
+
+.ai-action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.ai-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.ai-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.ai-action-btn.btn-primary:hover{background:var(--primary-700)}
+</style>
+
+<div class="ai-page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3)">
+    <div>
+        <h2><i class="bi bi-bar-chart-line" style="color:var(--info-500)"></i> AI Usage Analytics</h2>
+        <p>Monitor AI resource consumption, costs, and usage patterns</p>
+    </div>
+    <a href="{% url 'sklat_ai:export_analytics' %}" class="ai-action-btn"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+</div>
+
+<div class="ai-stats-grid">
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-send"></i></div>
+        <div class="stat-value" style="color:var(--primary-600)">{{ usage_stats.total_requests|default:0 }}</div>
+        <div class="stat-label">Total Requests</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-text-paragraph"></i></div>
+        <div class="stat-value" style="color:var(--info-600)">{{ usage_stats.total_tokens_input|default:0|add:usage_stats.total_tokens_output|default:0 }}</div>
+        <div class="stat-label">Tokens Used</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-currency-dollar"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">${{ usage_stats.total_cost|default:0|floatformat:2 }}</div>
+        <div class="stat-label">Estimated Cost</div>
+    </div>
+    <div class="ai-stat-card">
+        <div class="stat-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-people"></i></div>
+        <div class="stat-value" style="color:var(--warning-600)">{{ usage_stats.by_user|length|default:0 }}</div>
+        <div class="stat-label">Active Users</div>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-puzzle" style="color:var(--text-muted)"></i> Usage by Feature</h3>
+    </div>
+    <div class="ai-table-wrap">
+        <table class="ai-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th class="num-col">Requests</th>
+                    <th class="num-col">Input Tokens</th>
+                    <th class="num-col">Output Tokens</th>
+                    <th class="num-col">Cost</th>
+                    <th>Last Used</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feature in usage_stats.by_feature %}
+                <tr>
+                    <td style="font-weight:500">{{ feature.name }}</td>
+                    <td class="num-col">{{ feature.requests }}</td>
+                    <td class="num-col">{{ feature.tokens_input|default:0 }}</td>
+                    <td class="num-col">{{ feature.tokens_output|default:0 }}</td>
+                    <td class="num-col" style="color:var(--success-600);font-weight:600">${{ feature.cost|default:0|floatformat:2 }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ feature.last_used|date:"d M Y H:i"|default:"Never" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="ai-empty">
+                            <i class="bi bi-puzzle"></i>
+                            <div>No feature usage data available.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-people" style="color:var(--text-muted)"></i> Usage by User</h3>
+    </div>
+    <div class="ai-table-wrap">
+        <table class="ai-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th class="num-col">Requests</th>
+                    <th class="num-col">Input Tokens</th>
+                    <th class="num-col">Output Tokens</th>
+                    <th class="num-col">Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in usage_stats.by_user %}
+                <tr>
+                    <td style="font-weight:500">{{ user.name|default:user.username }}</td>
+                    <td class="num-col">{{ user.requests }}</td>
+                    <td class="num-col">{{ user.tokens_input|default:0 }}</td>
+                    <td class="num-col">{{ user.tokens_output|default:0 }}</td>
+                    <td class="num-col" style="color:var(--success-600);font-weight:600">${{ user.cost|default:0|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="ai-empty">
+                            <i class="bi bi-people"></i>
+                            <div>No user usage data available.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-clock-history" style="color:var(--text-muted)"></i> Recent Usage</h3>
+    </div>
+    <div class="ai-table-wrap">
+        <table class="ai-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Feature</th>
+                    <th class="num-col">Tokens</th>
+                    <th>Status</th>
+                    <th class="num-col">Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in usage_stats.recent_usage %}
+                <tr>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:var(--text-xs)">{{ entry.created_at|date:"d M H:i:s" }}</td>
+                    <td style="font-weight:500">{{ entry.user_name|default:entry.user }}</td>
+                    <td><span class="ai-badge ai-badge-gray">{{ entry.feature }}</span></td>
+                    <td class="num-col" style="font-variant-numeric:tabular-nums">{{ entry.total_tokens|default:"-" }}</td>
+                    <td>
+                        {% if entry.status == 'success' %}
+                        <span class="ai-badge ai-badge-success"><i class="bi bi-check-circle-fill" style="font-size:0.625rem"></i> Success</span>
+                        {% elif entry.status == 'error' %}
+                        <span class="ai-badge ai-badge-danger"><i class="bi bi-x-circle-fill" style="font-size:0.625rem"></i> Failed</span>
+                        {% elif entry.status == 'timeout' %}
+                        <span class="ai-badge ai-badge-warning"><i class="bi bi-clock-fill" style="font-size:0.625rem"></i> Timeout</span>
+                        {% else %}
+                        <span class="ai-badge ai-badge-gray">{{ entry.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="num-col" style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">
+                        {% if entry.duration_ms %}{{ entry.duration_ms }}ms{% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="ai-empty">
+                            <i class="bi bi-clock-history"></i>
+                            <div>No recent usage recorded.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-graph-up" style="color:var(--text-muted)"></i> Requests by Day</h3>
+    </div>
+    <div class="ai-bar-chart" id="trendChart">
+        {% if usage_stats.by_day %}
+            {% for day in usage_stats.by_day %}
+            {% with max_count=usage_stats.max_daily_requests|default:1 %}
+            {% widthratio day.count max_count 100 as bar_height %}
+            {% endwith %}
+            <div class="ai-bar-col">
+                <div class="ai-bar-value">{{ day.count }}</div>
+                <div class="ai-bar" style="height:{{ bar_height }}%;background:var(--primary-500)" title="{{ day.date }}: {{ day.count }} requests"></div>
+                <div class="ai-bar-label">{{ day.date|date:"d M" }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ai-empty" style="width:100%;padding:var(--sp-6)">
+                <i class="bi bi-graph-up"></i>
+                <div>No daily usage data available for trend chart.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:flex;justify-content:flex-end;gap:var(--sp-3);margin-top:var(--sp-4)">
+    <a href="{% url 'sklat_ai:analytics' %}?format=csv" class="ai-action-btn"><i class="bi bi-download"></i> Export CSV</a>
+    <button class="ai-action-btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print Report</button>
+</div>
+{% endblock %}

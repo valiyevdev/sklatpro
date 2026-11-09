@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "integrations_dashboard" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.intg-page-header{margin-bottom:var(--sp-6)}
+.intg-page-header h2{font-size:var(--text-3xl);font-weight:700;margin-bottom:var(--sp-1)}
+.intg-page-header p{color:var(--text-secondary);font-size:var(--text-sm)}
+
+.intg-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.intg-stat-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);transition:box-shadow var(--transition-fast)}
+.intg-stat-card:hover{box-shadow:var(--shadow-md)}
+.intg-stat-card .stat-icon{width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;margin-bottom:var(--sp-3);flex-shrink:0}
+.intg-stat-card .stat-value{font-size:var(--text-3xl);font-weight:700;line-height:1;margin-bottom:var(--sp-1)}
+.intg-stat-card .stat-label{font-size:var(--text-xs);color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.intg-section{margin-bottom:var(--sp-6)}
+.intg-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.intg-section-header h3{font-size:var(--text-xl);font-weight:600}
+.intg-section-header .badge-count{font-size:var(--text-xs);background:var(--primary-50);color:var(--primary-600);padding:2px 8px;border-radius:var(--radius-full);font-weight:600}
+
+.intg-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--sp-4)}
+.intg-category-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);display:flex;align-items:flex-start;gap:var(--sp-4);transition:all var(--transition-fast)}
+.intg-category-card:hover{border-color:var(--primary-400);box-shadow:var(--shadow-md)}
+.intg-category-card .cat-icon{width:44px;height:44px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.125rem;flex-shrink:0}
+.intg-category-card .cat-info{flex:1;min-width:0}
+.intg-category-card .cat-name{font-weight:600;font-size:var(--text-sm);margin-bottom:var(--sp-1);color:var(--text-primary)}
+.intg-category-card .cat-count{font-size:var(--text-xs);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.intg-category-card .cat-health{display:flex;align-items:center;gap:var(--sp-2)}
+.intg-category-card .health-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.health-dot.healthy{background:var(--success-500)}
+.health-dot.degraded{background:var(--warning-500)}
+.health-dot.failing{background:var(--danger-500)}
+.health-dot.none{background:var(--text-muted)}
+.intg-category-card .health-label{font-size:var(--text-xs);font-weight:500}
+.health-label.healthy{color:var(--success-600)}
+.health-label.degraded{color:var(--warning-600)}
+.health-label.failing{color:var(--danger-600)}
+.health-label.none{color:var(--text-muted)}
+
+.intg-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.intg-table{width:100%;border-collapse:collapse}
+.intg-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page)}
+.intg-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.intg-table tr:last-child td{border-bottom:none}
+.intg-table tr:hover td{background:var(--bg-surface-hover)}
+
+.intg-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6}
+.intg-badge-success{background:var(--success-50);color:var(--success-700)}
+.intg-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.intg-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.intg-badge-info{background:var(--info-50);color:var(--info-700)}
+.intg-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.intg-badge-purple{background:var(--primary-50);color:var(--primary-700)}
+
+.intg-empty{text-align:center;padding:var(--sp-10) var(--sp-4);color:var(--text-muted)}
+.intg-empty i{font-size:2rem;margin-bottom:var(--sp-3);display:block}
+</style>
+
+<div class="intg-page-header">
+    <h2>{% t "integrations_dashboard" %}</h2>
+    <p>{% t "overview_of_all_integrations" %}</p>
+</div>
+
+<div class="intg-stats-grid">
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-hub"></i></div>
+        <div class="stat-value" style="color:var(--primary-600)">{{ total_connections }}</div>
+        <div class="stat-label">Total Integrations</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-value" style="color:var(--success-600)">{{ connected }}</div>
+        <div class="stat-label">Connected</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-x-circle"></i></div>
+        <div class="stat-value" style="color:var(--danger-600)">{{ disconnected }}</div>
+        <div class="stat-label">Disconnected</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-value" style="color:var(--danger-600)">{{ error_connections }}</div>
+        <div class="stat-label">Errors</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-value" style="color:var(--info-600)">{{ pending_syncs }}</div>
+        <div class="stat-label">Pending Syncs</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-x-octagon"></i></div>
+        <div class="stat-value" style="color:var(--warning-600)">{{ failed_jobs }}</div>
+        <div class="stat-label">Failed Jobs</div>
+    </div>
+    <div class="intg-stat-card">
+        <div class="stat-icon" style="background:var(--danger-50);color:var(--danger-600)"><i class="bi bi-arrow-left-right"></i></div>
+        <div class="stat-value" style="color:var(--danger-600)">{{ webhook_errors }}</div>
+        <div class="stat-label">Webhook Errors</div>
+    </div>
+</div>
+
+<div class="intg-section">
+    <div class="intg-section-header">
+        <h3>Health by Category</h3>
+        <span class="badge-count">{{ category_stats|length }} categories</span>
+    </div>
+    <div class="intg-category-grid">
+        {% for cat in category_stats %}
+        <div class="intg-category-card">
+            <div class="cat-icon" style="background:var(--primary-50);color:var(--primary-600)">
+                <i class="bi {{ cat.icon }}"></i>
+            </div>
+            <div class="cat-info">
+                <div class="cat-name">{{ cat.name }}</div>
+                <div class="cat-count">{{ cat.total }} connection{{ cat.total|pluralize }}</div>
+                <div class="cat-health">
+                    <span class="health-dot {{ cat.status }}"></span>
+                    <span class="health-label {{ cat.status }}">{{ cat.status|title }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="intg-empty" style="grid-column:1/-1">
+            <i class="bi bi-puzzle"></i>
+            <div>No categories with active connections.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="intg-section">
+    <div class="intg-section-header">
+        <h3>Recent Errors</h3>
+        <a href="{% url 'integrations:errors' %}" style="font-size:var(--text-sm);font-weight:500">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="intg-table-wrap">
+        <table class="intg-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Provider</th>
+                    <th>Error</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for err in recent_errors %}
+                <tr>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:var(--text-xs)">{{ err.last_occurrence|date:"d M H:i" }}</td>
+                    <td>
+                        {% if err.connection %}
+                        <span style="font-weight:500">{{ err.connection.provider.name }}</span>
+                        <span style="color:var(--text-muted);font-size:var(--text-xs);display:block">{{ err.connection.name }}</span>
+                        {% else %}
+                        <span style="color:var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-weight:500">{{ err.error_type }}</span>
+                        <span style="color:var(--text-secondary);font-size:var(--text-xs);display:block;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ err.message }}</span>
+                    </td>
+                    <td><span class="intg-badge intg-badge-gray">{{ err.get_category_display }}</span></td>
+                    <td>
+                        {% if err.severity == 'critical' %}
+                        <span class="intg-badge intg-badge-danger"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> Critical</span>
+                        {% elif err.severity == 'high' %}
+                        <span class="intg-badge intg-badge-warning"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> High</span>
+                        {% elif err.severity == 'medium' %}
+                        <span class="intg-badge intg-badge-info">Medium</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-gray">Low</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if err.status == 'open' %}
+                        <span class="intg-badge intg-badge-danger">Open</span>
+                        {% elif err.status == 'acknowledged' %}
+                        <span class="intg-badge intg-badge-warning">Acknowledged</span>
+                        {% elif err.status == 'resolved' %}
+                        <span class="intg-badge intg-badge-success">Resolved</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-gray">Ignored</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="intg-empty">
+                            <i class="bi bi-check-circle"></i>
+                            <div>No open errors. All systems operating normally.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="intg-section">
+    <div class="intg-section-header">
+        <h3>Recent Logs</h3>
+        <a href="{% url 'integrations:logs' %}" style="font-size:var(--text-sm);font-weight:500">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="intg-table-wrap">
+        <table class="intg-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Connection</th>
+                    <th>Action</th>
+                    <th>Direction</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:var(--text-xs)">{{ log.created_at|date:"d M H:i:s" }}</td>
+                    <td>
+                        {% if log.connection %}
+                        <span style="font-weight:500">{{ log.connection.name }}</span>
+                        <span style="color:var(--text-muted);font-size:var(--text-xs);display:block">{{ log.connection.provider.name }}</span>
+                        {% else %}
+                        <span style="color:var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:500">{{ log.action }}</td>
+                    <td>
+                        {% if log.direction == 'outbound' %}
+                        <span class="intg-badge intg-badge-purple"><i class="bi bi-arrow-up-right" style="font-size:0.625rem"></i> Outbound</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-info"><i class="bi bi-arrow-down-left" style="font-size:0.625rem"></i> Inbound</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.status == 'success' %}
+                        <span class="intg-badge intg-badge-success">Success</span>
+                        {% elif log.status == 'error' %}
+                        <span class="intg-badge intg-badge-danger">Error</span>
+                        {% elif log.status == 'timeout' %}
+                        <span class="intg-badge intg-badge-warning">Timeout</span>
+                        {% else %}
+                        <span class="intg-badge intg-badge-warning">Rate Limited</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">
+                        {% if log.duration_ms %}{{ log.duration_ms }}ms{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="intg-empty">
+                            <i class="bi bi-journal-text"></i>
+                            <div>No recent logs.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

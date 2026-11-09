@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "customers_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "customers_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ total_customers|floatformat:0 }}</div><div class="stat-card-label">{% t "total_customers" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ active_customers|floatformat:0 }}</div><div class="stat-card-label">{% t "active_customers" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-person-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ new_customers|floatformat:0 }}</div><div class="stat-card-label">{% t "new_customers" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-person-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ repeat_customers|floatformat:0 }}</div><div class="stat-card-label">{% t "repeat_customers" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-arrow-repeat"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ repeat_rate|floatformat:1 }}%</div><div class="stat-card-label">{% t "repeat_rate" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-percent"></i></div>
+    </div>
+</div>
+
+{% if top_customers %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "top_customers" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "customer" %}</th><th>{% t "revenue" %}</th><th>{% t "orders" %}</th><th>{% t "avg_order" %}</th></tr></thead>
+            <tbody>
+                {% for c in top_customers %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ c.customer__name }}</td>
+                    <td class="fw-600">{{ c.revenue|floatformat:0 }}</td>
+                    <td>{{ c.orders }}</td>
+                    <td>{{ c.avg_order|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

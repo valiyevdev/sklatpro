@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n_tags %}
+
+{% block title %}{% t "activity_log" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "activity_log" %}</h1>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-3 align-end flex-wrap">
+            <div class="input-pro-group" style="min-width:200px;margin-bottom:0">
+                <select class="input-pro" name="type">
+                    <option value="">{% t "all_activities" %}</option>
+                    <option value="product_added" {% if activity_type == 'product_added' %}selected{% endif %}>{% t "activity_product_added" %}</option>
+                    <option value="product_updated" {% if activity_type == 'product_updated' %}selected{% endif %}>{% t "activity_product_updated" %}</option>
+                    <option value="product_deleted" {% if activity_type == 'product_deleted' %}selected{% endif %}>{% t "activity_product_deleted" %}</option>
+                    <option value="stock_in" {% if activity_type == 'stock_in' %}selected{% endif %}>{% t "stock_in" %}</option>
+                    <option value="stock_out" {% if activity_type == 'stock_out' %}selected{% endif %}>{% t "stock_out" %}</option>
+                    <option value="customer_debt_created" {% if activity_type == 'customer_debt_created' %}selected{% endif %}>{% t "activity_debt_created" %}</option>
+                    <option value="customer_debt_paid" {% if activity_type == 'customer_debt_paid' %}selected{% endif %}>{% t "activity_debt_paid" %}</option>
+                    <option value="supplier_debt_created" {% if activity_type == 'supplier_debt_created' %}selected{% endif %}>{% t "activity_supplier_debt_created" %}</option>
+                    <option value="supplier_debt_paid" {% if activity_type == 'supplier_debt_paid' %}selected{% endif %}>{% t "activity_supplier_debt_paid" %}</option>
+                </select>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit">
+                <i class="bi bi-funnel"></i> {% t "filter" %}
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Activity Timeline -->
+<div class="card-pro">
+    <div class="card-pro-body">
+        {% if page_obj %}
+        <div class="timeline">
+            {% for activity in page_obj %}
+            <div class="timeline-item">
+                <div class="timeline-marker" style="background:{% if activity.activity_type == 'product_added' %}var(--success-500){% elif activity.activity_type == 'product_updated' %}var(--info-500){% elif activity.activity_type == 'product_deleted' %}var(--danger-500){% elif activity.activity_type == 'stock_in' %}var(--success-500){% elif activity.activity_type == 'stock_out' %}var(--warning-500){% elif 'debt_created' in activity.activity_type %}var(--primary-500){% elif 'debt_paid' in activity.activity_type %}var(--success-500){% else %}var(--gray-400){% endif %}">
+                    <i class="bi bi-{% if activity.activity_type == 'product_added' %}plus-circle{% elif activity.activity_type == 'product_updated' %}pencil{% elif activity.activity_type == 'product_deleted' %}trash{% elif activity.activity_type == 'stock_in' %}box-arrow-in-down{% elif activity.activity_type == 'stock_out' %}box-arrow-up{% elif 'debt_created' in activity.activity_type %}person-plus{% elif 'debt_paid' in activity.activity_type %}cash{% else %}activity{% endif %}"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="badge-pro badge-pro-{% if activity.activity_type == 'product_added' %}success{% elif activity.activity_type == 'product_updated' %}info{% elif activity.activity_type == 'product_deleted' %}danger{% elif activity.activity_type == 'stock_in' %}success{% elif activity.activity_type == 'stock_out' %}warning{% elif 'debt_created' in activity.activity_type %}primary{% elif 'debt_paid' in activity.activity_type %}success{% else %}neutral{% endif %}">
+                            {{ activity.get_activity_type_display }}
+                        </span>
+                        <span class="text-pro-xs text-pro-muted" style="margin-left:var(--sp-2)">
+                            <i class="bi bi-clock"></i> {{ activity.created_at|date:"Y-m-d H:i" }}
+                        </span>
+                        <span class="text-pro-xs text-pro-muted" style="margin-left:var(--sp-2)">
+                            <i class="bi bi-person"></i> {{ activity.user.username|default:"System" }}
+                        </span>
+                    </div>
+                    <p class="timeline-description">{{ activity.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-between align-center mt-6" style="border-top:1px solid var(--border-subtle);padding-top:var(--sp-4)">
+            <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            <div class="pagination-pro">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-left"></i></a>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}&type={{ activity_type }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+            <h5 class="empty-state-title">{% t "no_activity" %}</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: var(--sp-4) 0;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 20px;
+    width: 2px;
+    background: var(--border-default);
+}
+.timeline-item {
+    position: relative;
+    padding-left: 52px;
+    margin-bottom: var(--sp-6);
+}
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-marker {
+    position: absolute;
+    left: 0; top: 4px;
+    width: 42px; height: 42px;
+    border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 1rem;
+    z-index: 1;
+    box-shadow: var(--shadow-sm);
+}
+.timeline-content {
+    background: var(--bg-surface);
+    padding: var(--sp-4) var(--sp-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+}
+.timeline-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--sp-2);
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+}
+.timeline-description {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Stock Allocation - {{ channel.name }} - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_list' %}">{% t "Channels" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}">{{ channel.name }}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Stock Allocation" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Stock Allocation" %}</h1>
+        <p class="page-subtitle">{{ channel.name }} &middot; {{ allocations.count }} {% t "allocations" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:channel_detail' pk=channel.pk %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back to Channel" %}
+        </a>
+    </div>
+</div>
+
+<div class="form-section" style="margin-bottom:var(--sp-6)">
+    <h3 class="form-section-title"><i class="bi bi-plus-circle" style="margin-right:var(--sp-2)"></i>{% t "Add / Update Allocation" %}</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:var(--sp-4);align-items:end">
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Product" %} <span class="required">*</span></label>
+                <select name="product_id" class="input-pro" required>
+                    <option value="">{% t "Select product" %}</option>
+                    {% for product in all_products %}
+                    <option value="{{ product.pk }}">{{ product.name }} ({{ product.sku|default:"-" }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Allocated Quantity" %} <span class="required">*</span></label>
+                <input type="number" name="allocated_quantity" class="input-pro" min="0" value="0" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Safety Stock" %}</label>
+                <input type="number" name="safety_stock" class="input-pro" min="0" value="0">
+            </div>
+            <button type="submit" class="btn-pro btn-pro-primary" style="margin-bottom:0"><i class="bi bi-plus-lg"></i> {% t "Add" %}</button>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-stack" style="margin-right:var(--sp-2);color:var(--primary-500)"></i>{% t "Current Allocations" %}</h3>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "Product" %}</th>
+                        <th>{% t "SKU" %}</th>
+                        <th style="text-align:right">{% t "Allocated" %}</th>
+                        <th style="text-align:right">{% t "Safety Stock" %}</th>
+                        <th style="text-align:right">{% t "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alloc in allocations %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                                <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);color:var(--text-muted)"><i class="bi bi-box"></i></div>
+                                <div>
+                                    <div class="cell-primary">{{ alloc.product.name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="cell-muted">{{ alloc.product.sku|default:"-" }}</td>
+                        <td style="text-align:right;font-weight:600">{{ alloc.allocated_quantity }}</td>
+                        <td style="text-align:right">{{ alloc.safety_stock }}</td>
+                        <td style="text-align:right">
+                            <a href="{% url 'ecommerce:channel_stock' pk=channel.pk %}" class="btn-pro btn-pro-sm btn-pro-ghost" title="{% t "Edit" %}">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:var(--sp-10)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:56px;height:56px;margin:0 auto var(--sp-4)"><i class="bi bi-stack"></i></div>
+                                <div class="empty-state-title">{% t "No allocations yet" %}</div>
+                                <div class="empty-state-desc">{% t "Add stock allocations above to manage channel inventory." %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

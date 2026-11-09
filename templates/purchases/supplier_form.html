@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% if supplier %}{% t "edit_supplier" %}{% else %}{% t "create_supplier" %}{% endif %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:supplier_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if supplier %}{% t "edit_supplier" %}{% else %}{% t "create_supplier" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:560px">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-building"></i> {% if supplier %}{% t "edit_supplier" %}{% else %}{% t "create_supplier" %}{% endif %}</span>
+        </div>
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "name" %} *</label>
+                    <input class="input-pro" type="text" name="name" value="{% if supplier %}{{ supplier.name }}{% endif %}" required placeholder="{% t "supplier_name_placeholder" %}">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "person" %}</label>
+                    <input class="input-pro" type="text" name="contact_person" value="{% if supplier %}{{ supplier.contact_person|default:"" }}{% endif %}" placeholder="{% t "contact_person_placeholder" %}">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "phone" %}</label>
+                        <input class="input-pro" type="text" name="phone" value="{% if supplier %}{{ supplier.phone|default:"" }}{% endif %}" placeholder="+998 XX XXX XX XX">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "email_label" %}</label>
+                        <input class="input-pro" type="email" name="email" value="{% if supplier %}{{ supplier.email|default:"" }}{% endif %}" placeholder="email@example.com">
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">Telegram</label>
+                    <input class="input-pro" type="text" name="telegram" value="{% if supplier %}{{ supplier.telegram|default:"" }}{% endif %}" placeholder="@username">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "address" %}</label>
+                    <input class="input-pro" type="text" name="address" value="{% if supplier %}{{ supplier.address|default:"" }}{% endif %}" placeholder="{% t "address" %}">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="3" placeholder="{% t "notes_placeholder" %}">{% if supplier %}{{ supplier.notes|default:"" }}{% endif %}</textarea>
+                </div>
+                <div class="d-flex justify-between" style="margin-top:1.5rem">
+                    <a href="{% url 'purchases:supplier_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-x-lg"></i> {% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if supplier %}{% t "update_btn" %}{% else %}{% t "create_btn" %}{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

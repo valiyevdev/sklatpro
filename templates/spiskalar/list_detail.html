@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ list.name }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'spiskalar:list_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ list.name }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">
+            <span class="badge-pro badge-pro-neutral">{{ list.get_type_display }}</span>
+            {% if list.status == 'completed' %}<span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif list.status == 'in_progress' %}<span class="badge-pro badge-pro-info">{% t "in_progress_badge" %}</span>
+            {% else %}<span class="badge-pro badge-pro-warning">{% t "pending" %}</span>{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:list_update' pk=list.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'spiskalar:list_delete' pk=list.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div class="d-flex align-center gap-4 mb-4">
+    <div class="d-flex align-center gap-2">
+        <i class="bi bi-person text-pro-muted"></i>
+        <span class="text-pro-sm">{% if list.assigned_to %}{{ list.assigned_to.get_full_name }}{% else %}{% t "assigned_label" %}{% endif %}</span>
+    </div>
+    {% if list.due_date %}
+    <div class="d-flex align-center gap-2">
+        <i class="bi bi-calendar text-pro-muted"></i>
+        <span class="text-pro-sm">{{ list.due_date|date:"d.m.Y" }}</span>
+    </div>
+    {% endif %}
+    <div class="d-flex align-center gap-2">
+        <i class="bi bi-flag text-pro-muted"></i>
+        <span class="text-pro-sm">{{ list.get_priority_display }}</span>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title">{% t "progress_label" %}</span>
+        <span class="text-pro-sm text-pro-muted">{{ list.progress }}% - {{ list.progress_display }}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="progress-pro" style="height:12px">
+            <div class="progress-pro-bar {% if list.progress == 100 %}success{% else %}{% endif %}" style="width:{{ list.progress }}%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "products" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "product_name" %}</th><th>{% t "quantity" %}</th><th>{% t "completed" %}</th><th>{% t "status" %}</th><th>{% t "actions" %}</th></tr></thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.completed_quantity }}</td>
+                    <td>
+                        {% if item.completed %}<span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "completed_item" %}</span>
+                        {% elif item.completed_quantity > 0 %}<span class="badge-pro badge-pro-info">{% t "partially_completed" %}</span>
+                        {% else %}<span class="badge-pro badge-pro-neutral">{% t "pending" %}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if not item.completed %}
+                        <form method="post" action="{% url 'spiskalar:list_item_complete' pk=list.pk item_pk=item.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="complete_quantity" value="{{ item.quantity }}">
+                            <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check"></i> {% t "complete_btn" %}</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5"><div class="empty-state"><p class="text-pro-muted">{% t "no_products" %}</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if list.notes %}
+<div class="card-pro mt-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "notes" %}</span></div>
+    <div class="card-pro-body"><p class="text-pro-sm">{{ list.notes }}</p></div>
+</div>
+{% endif %}
+{% endblock %}

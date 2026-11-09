@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "automation_templates" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">{% t "automation" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "automation_templates" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-grid" style="color:var(--primary-500)"></i> {% t "automation_templates" %}</h1>
+        <p class="page-subtitle">{% t "prebuilt_automation_rules" %}</p>
+    </div>
+</div>
+
+{% if templates %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:var(--sp-5)">
+    {% for tmpl in templates %}
+    <div class="card-pro" style="overflow:hidden">
+        <div style="display:flex;min-height:100%">
+            <div style="width:4px;flex-shrink:0;border-radius:var(--radius-xl) 0 0 var(--radius-xl);{% if forloop.counter <= 3 %}background:var(--primary-500){% else %}background:var(--gray-300){% endif %}"></div>
+            <div style="flex:1;padding:var(--sp-5)">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--sp-3)">
+                    <h3 style="font-size:var(--text-lg);font-weight:700;color:var(--text-primary);margin:0">{{ tmpl.name }}</h3>
+                    {% if forloop.counter <= 3 %}
+                    <span class="badge-pro badge-pro-info"><i class="bi bi-star-fill" style="font-size:0.6rem"></i> {% t "popular" %}</span>
+                    {% endif %}
+                </div>
+                <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--sp-4);line-height:1.6">{{ tmpl.description }}</p>
+
+                <div style="margin-bottom:var(--sp-4)">
+                    <div class="d-flex align-center gap-2" style="margin-bottom:var(--sp-3)">
+                        <div style="width:28px;height:28px;border-radius:var(--radius-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">{% t "trigger" %}</div>
+                            <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ tmpl.trigger_label }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:var(--sp-4)">
+                    <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:var(--sp-2)">{% t "actions" %}</div>
+                    <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+                        {% for action in tmpl.actions %}
+                        <div class="d-flex align-center gap-2" style="padding:6px var(--sp-3);background:var(--bg-page);border-radius:var(--radius-lg);font-size:var(--text-sm)">
+                            <i class="bi bi-check-circle" style="color:var(--success-500);font-size:0.75rem;flex-shrink:0"></i>
+                            <span style="color:var(--text-primary);font-weight:500">{{ action.label }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <a href="{% url 'automation:templates' %}?use={{ tmpl.id }}" class="btn-pro btn-pro-primary btn-pro-sm" style="width:100%;justify-content:center">
+                    <i class="bi bi-plus-lg"></i> {% t "use_template" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-grid"></i></div>
+    <h5 class="empty-state-title">{% t "no_templates_available" %}</h5>
+    <p class="empty-state-desc">{% t "no_templates_desc" %}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,193 @@
+{% load i18n_tags %}{% comment %}
+Reusable onboarding walkthrough modal.
+
+FORCED open on every page load/refresh (F5). There is intentionally NO
+persistence / "completed" dismissal check anywhere in this partial: the
+DOMContentLoaded handler always removes the `hidden` class and adds `flex`.
+
+Light: bg-white/95 text-slate-900 border-slate-200
+Dark : bg-slate-900/95 text-white border-slate-800
+{% endcomment %}
+<div id="global-onboarding-modal" class="onb-overlay hidden" role="dialog" aria-modal="true" aria-label="{% t "welcome_s1_title" %}">
+    <div class="onb-backdrop" id="onboarding-backdrop"></div>
+    <div class="onb-card">
+        <button type="button" class="onb-close" id="onboarding-close" aria-label="{% t "close" %}" title="{% t "close" %}">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="onb-head">
+            <div class="onb-logo">S</div>
+            <span class="onb-brand">SKLAT PRO</span>
+            <button type="button" class="onb-skip" id="onboarding-skip">{% t "welcome_skip" %}</button>
+        </div>
+
+        <div class="onb-viewport">
+            <div class="onb-track" id="onboarding-track">
+                <!-- Slide 1: Platform Overview / Welcome -->
+                <section class="onb-slide">
+                    <div class="onb-visual" aria-hidden="true">
+                        <div class="onb-stockstack">
+                            <div class="onb-cube c1"></div>
+                            <div class="onb-cube c2"></div>
+                            <div class="onb-cube c3"></div>
+                            <div class="onb-cube c4"></div>
+                        </div>
+                    </div>
+                    <h2 class="onb-title">{% t "welcome_s1_title" %}</h2>
+                    <p class="onb-desc">{% t "welcome_s1_desc" %}</p>
+                </section>
+
+                <!-- Slide 2: Warehouse & Stock Management -->
+                <section class="onb-slide">
+                    <div class="onb-visual" aria-hidden="true">
+                        <div class="onb-scan">
+                            <div class="onb-barcode"></div>
+                            <div class="onb-laser"></div>
+                        </div>
+                    </div>
+                    <h2 class="onb-title">{% t "welcome_s2_title" %}</h2>
+                    <p class="onb-desc">{% t "welcome_s2_desc" %}</p>
+                </section>
+
+                <!-- Slide 3: Reports & Analytics -->
+                <section class="onb-slide">
+                    <div class="onb-visual" aria-hidden="true">
+                        <div class="onb-bars">
+                            <div class="onb-bar"></div>
+                            <div class="onb-bar"></div>
+                            <div class="onb-bar"></div>
+                            <div class="onb-bar"></div>
+                            <div class="onb-bar"></div>
+                        </div>
+                    </div>
+                    <h2 class="onb-title">{% t "welcome_s3_title" %}</h2>
+                    <p class="onb-desc">{% t "welcome_s3_desc" %}</p>
+                </section>
+
+                <!-- Slide 4: Multi-language & Customization -->
+                <section class="onb-slide">
+                    <div class="onb-visual" aria-hidden="true">
+                        <div class="onb-langs">
+                            <div class="onb-lang-row">
+                                <span class="onb-lang">UZ</span>
+                                <span class="onb-lang">ЎЗ</span>
+                                <span class="onb-lang">RU</span>
+                                <span class="onb-lang">EN</span>
+                            </div>
+                            <div class="onb-theme-row">
+                                <span class="onb-theme-chip"><i class="bi bi-brightness-high-fill"></i>Light</span>
+                                <span class="onb-theme-chip moon"><i class="bi bi-moon-stars-fill"></i>Dark</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h2 class="onb-title">{% t "welcome_s4_title" %}</h2>
+                    <p class="onb-desc">{% t "welcome_s4_desc" %}</p>
+                </section>
+            </div>
+        </div>
+
+        <div class="onb-foot">
+            <div class="onb-dots" id="onboarding-dots"></div>
+            <div class="onb-actions">
+                <button type="button" class="onb-btn onb-back" id="onboarding-back" hidden>{% t "back_step" %}</button>
+                <button type="button" class="onb-btn onb-next" id="onboarding-next"
+                        data-label-next="{% t "welcome_next" %}"
+                        data-label-done="{% t "got_it" %}">{% t "welcome_next" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var root = document.getElementById('global-onboarding-modal');
+    if (!root) return;
+    var track = document.getElementById('onboarding-track');
+    var slides = track ? Array.prototype.slice.call(track.children) : [];
+    var n = slides.length;
+    var dotsBox = document.getElementById('onboarding-dots');
+    var backBtn = document.getElementById('onboarding-back');
+    var nextBtn = document.getElementById('onboarding-next');
+    var labelNext = nextBtn ? (nextBtn.getAttribute('data-label-next') || 'Next') : 'Next';
+    var labelDone = nextBtn ? (nextBtn.getAttribute('data-label-done') || labelNext) : labelNext;
+    var idx = 0, startX = null, dots = [];
+
+    if (dotsBox) {
+        for (var i = 0; i < n; i++) { (function (k) {
+            var d = document.createElement('button');
+            d.type = 'button'; d.className = 'onb-dot'; d.setAttribute('aria-label', 'Slide ' + (k + 1));
+            d.addEventListener('click', function () { go(k); });
+            dotsBox.appendChild(d); dots.push(d);
+        })(i); }
+    }
+
+    function render() {
+        if (track) track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+        for (var j = 0; j < n; j++) { if (dots[j]) dots[j].classList.toggle('on', j === idx); }
+        if (backBtn) backBtn.hidden = (idx === 0);
+        if (nextBtn) nextBtn.textContent = (idx === n - 1) ? labelDone : labelNext;
+    }
+    function go(i) { idx = Math.max(0, Math.min(n - 1, i)); render(); }
+    function lockScroll(on) { document.body.style.overflow = on ? 'hidden' : ''; }
+
+    function openOnboarding() {
+        var onboardingModal = document.getElementById('global-onboarding-modal');
+        if (onboardingModal) {
+            onboardingModal.classList.remove('hidden');
+            onboardingModal.classList.add('flex');
+        }
+        lockScroll(true);
+        go(0);
+    }
+    function closeOnboarding() {
+        var onboardingModal = document.getElementById('global-onboarding-modal');
+        if (onboardingModal) {
+            onboardingModal.classList.remove('flex');
+            onboardingModal.classList.add('hidden');
+        }
+        lockScroll(false);
+    }
+
+    if (backBtn) backBtn.addEventListener('click', function () { go(idx - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () {
+        if (idx === n - 1) { closeOnboarding(); } else { go(idx + 1); }
+    });
+    var closeBtn = document.getElementById('onboarding-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeOnboarding);
+    var skipBtn = document.getElementById('onboarding-skip');
+    if (skipBtn) skipBtn.addEventListener('click', closeOnboarding);
+    var backdrop = document.getElementById('onboarding-backdrop');
+    if (backdrop) backdrop.addEventListener('click', closeOnboarding);
+
+    document.addEventListener('keydown', function (e) {
+        if (!root.classList.contains('flex')) return;
+        if (e.key === 'Escape') closeOnboarding();
+        else if (e.key === 'ArrowRight') go(idx + 1);
+        else if (e.key === 'ArrowLeft') go(idx - 1);
+    });
+
+    if (track) {
+        track.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+        track.addEventListener('touchend', function (e) {
+            if (startX === null) return;
+            var dx = e.changedTouches[0].clientX - startX;
+            if (Math.abs(dx) > 42) { if (dx < 0) go(idx + 1); else go(idx - 1); }
+            startX = null;
+        }, { passive: true });
+    }
+
+    window.sklatOnboarding = { open: openOnboarding, close: closeOnboarding, go: go };
+
+    /* ===== FORCE SHOW ON EVERY PAGE LOAD / REFRESH =====
+       No persistence or "completed" condition — always opens. */
+    document.addEventListener('DOMContentLoaded', function () {
+        var onboardingModal = document.getElementById('global-onboarding-modal');
+        if (onboardingModal) {
+            onboardingModal.classList.remove('hidden');
+            onboardingModal.classList.add('flex');
+        }
+        lockScroll(true);
+        go(0);
+    });
+    if (document.readyState !== 'loading') { openOnboarding(); }
+})();
+</script>

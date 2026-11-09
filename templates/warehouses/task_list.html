@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "warehouse_tasks" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "warehouse_tasks" %}</h1>
+        <p class="page-subtitle">{{ total_count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:task_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_task" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "task_type" %}</label>
+            <select name="task_type" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_types" %}</option>
+                {% for t_type in task_types %}
+                <option value="{{ t_type.0 }}" {% if selected_task_type == t_type.0 %}selected{% endif %}>{{ t_type.1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>{% t "pending" %}</option>
+                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>{% t "in_progress" %}</option>
+                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>{% t "completed" %}</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>{% t "cancelled" %}</option>
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "assigned_to" %}</label>
+            <select name="assigned_to" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_users" %}</option>
+                {% for user in users %}
+                <option value="{{ user.pk }}" {% if selected_assigned_to == user.pk|stringformat:"d" %}selected{% endif %}>{{ user.get_full_name|default:user.email }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "title" %}</th>
+                    <th>{% t "task_type" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "assigned_to" %}</th>
+                    <th>{% t "priority" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "created_at" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in page_obj %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:task_detail' pk=task.pk %}" style="color:var(--text-primary);text-decoration:none">{{ task.title }}</a>
+                    </td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ task.get_task_type_display }}</span></td>
+                    <td>{{ task.warehouse.name }}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if task.assigned_to %}{{ task.assigned_to.get_full_name|default:task.assigned_to.email }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if task.priority == 'high' %}
+                            <span class="badge-pro badge-pro-danger">{% t "high" %}</span>
+                        {% elif task.priority == 'medium' %}
+                            <span class="badge-pro badge-pro-warning">{% t "medium" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{% t "low" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if task.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif task.status == 'in_progress' %}
+                            <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+                        {% elif task.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ task.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if task.reference %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ task.reference }}</code>{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ task.created_at|date:"d.m.Y" }}</td>
+                    <td>
+                        <a href="{% url 'warehouses:task_detail' pk=task.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-clipboard-check"></i></div>
+                            <h5 class="empty-state-title">{% t "no_tasks" %}</h5>
+                            <p class="empty-state-desc">{% t "no_tasks_created" %}</p>
+                            <a href="{% url 'warehouses:task_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_task" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&task_type={{ selected_task_type }}&status={{ selected_status }}&assigned_to={{ selected_assigned_to }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&task_type={{ selected_task_type }}&status={{ selected_status }}&assigned_to={{ selected_assigned_to }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&task_type={{ selected_task_type }}&status={{ selected_status }}&assigned_to={{ selected_assigned_to }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

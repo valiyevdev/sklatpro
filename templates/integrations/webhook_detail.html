@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ webhook.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'integrations:webhook_list' %}">{% t "webhooks" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ webhook.name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ webhook.name }}</h1>
+            {% if webhook.direction == 'outgoing' %}
+                <span class="badge-pro badge-pro-info"><i class="bi bi-arrow-up-right" style="font-size:0.65rem"></i> {% t "outgoing" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-primary"><i class="bi bi-arrow-down-left" style="font-size:0.65rem"></i> {% t "incoming" %}</span>
+            {% endif %}
+            {% if webhook.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% elif webhook.status == 'inactive' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+            {% elif webhook.status == 'failed' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        <form method="post" action="{% url 'integrations:webhook_toggle' pk=webhook.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro {% if webhook.is_active %}btn-pro-warning{% else %}btn-pro-success{% endif %}">
+                {% if webhook.is_active %}
+                <i class="bi bi-pause"></i> {% t "deactivate" %}
+                {% else %}
+                <i class="bi bi-play"></i> {% t "activate" %}
+                {% endif %}
+            </button>
+        </form>
+        <a href="{% url 'integrations:webhook_events' %}?endpoint={{ webhook.pk }}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-clock-history"></i> {% t "view_events" %}
+        </a>
+        <a href="{% url 'integrations:webhook_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "back" %}
+        </a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ webhook.failure_count }}</div>
+            <div class="stat-card-label">{% t "failures" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ events.paginator.count }}</div>
+            <div class="stat-card-label">{% t "events" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-broadcast"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">
+                {% if webhook.last_success %}{{ webhook.last_success|date:"d M" }}{% else %}—{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "last_success" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">
+                {% if webhook.last_triggered %}{{ webhook.last_triggered|date:"d M" }}{% else %}—{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "last_triggered" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-clock"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--sp-5)">
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "url" %}</div>
+                <div class="text-pro-sm fw-500" style="word-break:break-all">
+                    <i class="bi bi-link-45deg text-pro-muted"></i> {{ webhook.url }}
+                </div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "secret" %}</div>
+                <div class="text-pro-sm fw-500">
+                    <i class="bi bi-shield-lock text-pro-muted"></i>
+                    {% if webhook.secret %}
+                    <span id="secretValue">••••••••••••</span>
+                    <button class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:2px 6px" onclick="var el=document.getElementById('secretValue');if(el.textContent==='••••••••••••'){el.textContent='{{ webhook.secret }}';}else{el.textContent='••••••••••••';}">
+                        <i class="bi bi-eye" style="font-size:0.75rem"></i>
+                    </button>
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "status" %}</div>
+                <div class="text-pro-sm fw-500">
+                    {% if webhook.status == 'active' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                    {% elif webhook.status == 'inactive' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+                    {% elif webhook.status == 'failed' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "direction" %}</div>
+                <div class="text-pro-sm fw-500">
+                    {% if webhook.direction == 'outgoing' %}
+                        <span class="badge-pro badge-pro-info"><i class="bi bi-arrow-up-right" style="font-size:0.65rem"></i> {% t "outgoing" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-primary"><i class="bi bi-arrow-down-left" style="font-size:0.65rem"></i> {% t "incoming" %}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "failure_count" %}</div>
+                <div class="text-pro-sm fw-500">
+                    {% if webhook.failure_count > 0 %}
+                        <span class="badge-pro badge-pro-danger">{{ webhook.failure_count }}</span>
+                    {% else %}
+                        <span class="text-pro-muted">0</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "created" %}</div>
+                <div class="text-pro-sm fw-500">{{ webhook.created_at|date:"d M Y H:i" }}</div>
+            </div>
+        </div>
+        {% if webhook.event_types %}
+        <div style="margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--border-subtle)">
+            <div class="text-pro-xs text-pro-muted mb-2">{% t "subscribed_events" %}</div>
+            <div class="d-flex gap-2 flex-wrap">
+                {% for evt in webhook.event_types %}
+                <span class="badge-pro badge-pro-neutral">{{ evt }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if webhook.last_error %}
+        <div style="margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--border-subtle)">
+            <div class="text-pro-xs text-pro-muted mb-2">{% t "last_error" %}</div>
+            <div style="background:var(--danger-50);border:1px solid var(--danger-200);border-radius:var(--radius-lg);padding:var(--sp-3);font-size:var(--text-sm);color:var(--danger-700)">{{ webhook.last_error }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if events %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-broadcast" style="color:var(--primary-600)"></i> {% t "recent_events" %}</span>
+        <a href="{% url 'integrations:webhook_events' %}?endpoint={{ webhook.pk }}" class="btn-pro btn-pro-ghost btn-pro-sm">{% t "view_all" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "duration" %}</th>
+                    <th>{% t "created" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td class="cell-primary">
+                        <span class="badge-pro badge-pro-neutral">{{ event.event_type }}</span>
+                    </td>
+                    <td>
+                        {% if event.status == 'processed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "processed" %}</span>
+                        {% elif event.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif event.status == 'processing' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "processing" %}</span>
+                        {% elif event.status == 'retrying' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "retrying" %}</span>
+                        {% elif event.status == 'received' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "received" %}</span>
+                        {% elif event.status == 'dropped' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "dropped" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ event.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if event.duration_ms %}{{ event.duration_ms }}ms{% else %}—{% endif %}</td>
+                    <td class="cell-muted">{{ event.created_at|date:"d M Y H:i:s" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not events and not webhook.failure_count %}
+<div class="empty-state" style="padding:var(--sp-8)">
+    <div class="empty-state-icon"><i class="bi bi-broadcast"></i></div>
+    <h5 class="empty-state-title">{% t "no_events_yet" %}</h5>
+    <p class="empty-state-desc">{% t "no_events_yet_desc" %}</p>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:1024px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:768px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}}
+</style>
+{% endblock %}

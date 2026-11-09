@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "customer_prices" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "customer_prices" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "customer_prices" %}</h1>
+        <p class="page-subtitle">{{ page.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'pricing:customer_price_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_customer_price" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:200px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="search" value="{{ search }}" class="input-pro" placeholder="{% t "search_customer_prices" %}">
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-search"></i></button>
+        {% if search %}
+            <a href="{% url 'pricing:customer_price_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm" style="height:38px"><i class="bi bi-x-circle"></i></a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "customer" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "price" %}</th>
+                    <th>{% t "currency" %}</th>
+                    <th>{% t "min_qty" %}</th>
+                    <th>{% t "max_qty" %}</th>
+                    <th>{% t "priority" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "start_date" %}</th>
+                    <th>{% t "end_date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cp in page %}
+                <tr>
+                    <td class="cell-primary">{{ cp.customer }}</td>
+                    <td>{{ cp.product }}</td>
+                    <td class="fw-600">{{ cp.price|floatformat:2 }}</td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ cp.currency }}</span></td>
+                    <td>{{ cp.min_quantity }}</td>
+                    <td>{{ cp.max_quantity|default:"—" }}</td>
+                    <td class="fw-600">{{ cp.priority }}</td>
+                    <td>
+                        {% if cp.is_active %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted text-pro-sm">
+                        {% if cp.start_date %}{{ cp.start_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td class="cell-muted text-pro-sm">
+                        {% if cp.end_date %}{{ cp.end_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <div class="actions" style="justify-content:flex-end">
+                            <a href="{% url 'pricing:customer_price_edit' pk=cp.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'pricing:customer_price_delete' pk=cp.pk %}" style="display:inline" onsubmit="return confirm('{% t "confirm_delete" %}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "delete" %}" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-person-badge"></i></div>
+                            <h5 class="empty-state-title">{% t "no_customer_prices" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_customer_price" %}</p>
+                            <a href="{% url 'pricing:customer_price_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_customer_price" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "showing" %} {{ page.start_index }}-{% t "of" %} {{ page.paginator.count }}</span>
+    <div class="d-flex gap-1">
+        {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}&search={{ search }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        {% for num in page.paginator.page_range %}
+            {% if page.number == num %}
+                <span class="btn-pro btn-pro-primary btn-pro-sm">{{ num }}</span>
+            {% elif num > page.number|add:'-3' and num < page.number|add:'3' %}
+                <a href="?page={{ num }}&search={{ search }}" class="btn-pro btn-pro-ghost btn-pro-sm">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page.has_next %}
+            <a href="?page={{ page.next_page_number }}&search={{ search }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

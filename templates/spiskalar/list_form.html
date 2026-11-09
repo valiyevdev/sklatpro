@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Spiska {% if list %}{% t "edit" %}{% else %}{% t "add" %}{% endif %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'spiskalar:list_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if list %}{% t "edit_list" %}{% else %}{% t "add_list" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:720px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "name" %} *</label>
+                    <input class="input-pro" type="text" name="name" value="{% if list %}{{ list.name }}{% endif %}" required placeholder="Spiska nomi">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "type_th" %}</label>
+                        <select class="input-pro" name="type">
+                            <option value="picking" {% if list and list.type == 'picking' %}selected{% endif %}>{% t "picking_list" %}</option>
+                            <option value="shipping" {% if list and list.type == 'shipping' %}selected{% endif %}>{% t "shipping_list" %}</option>
+                            <option value="restock" {% if list and list.type == 'restock' %}selected{% endif %}>{% t "restock_list" %}</option>
+                            <option value="inventory_count" {% if list and list.type == 'inventory_count' %}selected{% endif %}>{% t "inventory_count_list" %}</option>
+                            <option value="purchase" {% if list and list.type == 'purchase' %}selected{% endif %}>Purchase List</option>
+                            <option value="custom" {% if list and list.type == 'custom' %}selected{% endif %}>Custom List</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <select class="input-pro" name="priority">
+                            <option value="low" {% if list and list.priority == 'low' %}selected{% endif %}>{% t "low" %}</option>
+                            <option value="medium" {% if list and list.priority == 'medium' %}selected{% endif %}>{% t "medium" %}</option>
+                            <option value="high" {% if list and list.priority == 'high' %}selected{% endif %}>{% t "high" %}</option>
+                            <option value="urgent" {% if list and list.priority == 'urgent' %}selected{% endif %}>{% t "urgent_priority" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "employee" %}</label>
+                    <select class="input-pro" name="assigned_to">
+                        <option value="">{% t "assigned_label" %}</option>
+                        {% for e in employees %}<option value="{{ e.pk }}" {% if list and list.assigned_to_id == e.pk %}selected{% endif %}>{{ e.get_full_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "due_date" %}</label>
+                    <input class="input-pro" type="date" name="due_date" value="{% if list and list.due_date %}{{ list.due_date|date:'Y-m-d' }}{% endif %}">
+                </div>
+                {% if list %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "status" %}</label>
+                    <select class="input-pro" name="status">
+                        <option value="pending" {% if list.status == 'pending' %}selected{% endif %}>{% t "pending" %}</option>
+                        <option value="in_progress" {% if list.status == 'in_progress' %}selected{% endif %}>{% t "in_progress_badge" %}</option>
+                        <option value="completed" {% if list.status == 'completed' %}selected{% endif %}>{% t "completed" %}</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                <h4 class="fw-600 mb-3 mt-4" style="font-size:0.9rem;color:var(--gray-700)">{% t "products" %}</h4>
+                <div id="items-container">
+                    <div class="d-flex gap-2 mb-2 align-center" style="flex-wrap:wrap">
+                        <select class="input-pro" name="products" style="flex:2"><option value="">{% t "select_placeholder" %}</option>{% for p in products %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}</select>
+                        <input class="input-pro" type="number" name="quantities" placeholder="{% t "quantity" %}" min="1" style="flex:1">
+                        <button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+                <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm mb-3" onclick="addItem()"><i class="bi bi-plus"></i> {% t "add_product" %}</button>
+
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="3">{% if list %}{{ list.notes }}{% endif %}</textarea>
+                </div>
+
+                <div class="d-flex justify-between">
+                    <a href="{% url 'spiskalar:list_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if list %}{% t "update_btn" %}{% else %}{% t "create_btn" %}{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addItem() {
+    var c = document.getElementById('items-container');
+    var f = c.children[0].cloneNode(true);
+    f.querySelectorAll('select,input').forEach(function(el){el.value=''});
+    c.appendChild(f);
+}
+</script>
+{% endblock %}

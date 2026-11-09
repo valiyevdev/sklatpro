@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "add_payment" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="javascript:history.back()" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "add_payment" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">
+            {% if debt_type == 'customer' %}{{ debt.customer_name }}{% else %}{{ debt.supplier_name }}{% endif %} ga {% t "payments" %}
+        </p>
+    </div>
+</div>
+
+<div style="max-width:480px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div class="stat-card mb-4">
+                <div>
+                    <div class="stat-card-value">{% if debt_type == 'customer' %}${{ debt.debt_amount|floatformat:0 }}{% else %}${{ debt.amount_owed|floatformat:0 }}{% endif %}</div>
+                    <div class="stat-card-label">{% t "total_debt_label" %}</div>
+                </div>
+                <div>
+                    <div style="font-size:1.25rem;font-weight:700;color:var(--success-600)">${{ debt.paid_amount|floatformat:0 }}</div>
+                    <div class="stat-card-label">{% t "paid_amount_label" %}</div>
+                </div>
+                <div>
+                    <div style="font-size:1.25rem;font-weight:700;color:var(--danger-500)">${{ debt.remaining_balance|floatformat:0 }}</div>
+                    <div class="stat-card-label">{% t "remaining_balance" %}</div>
+                </div>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "payment_amount_label" %} *</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}<div class="input-pro-error">{{ form.amount.errors }}</div>{% endif %}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "payment_date_label" %} *</label>
+                    {{ form.payment_date }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    {{ form.notes }}
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="javascript:history.back()" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "make_payment_btn" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

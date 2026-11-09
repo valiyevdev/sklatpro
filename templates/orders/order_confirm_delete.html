@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_order_confirm" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'orders:order_list' %}">{% t "orders" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'orders:order_detail' pk=order.pk %}">{{ order.reference }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "delete" %}</span>
+</div>
+
+<div class="page-head">
+    <a href="{% url 'orders:order_detail' pk=order.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "delete_order_confirm" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:480px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:var(--sp-8) var(--sp-6)">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto var(--sp-4)"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3 class="fw-600 mb-2" style="color:var(--text-primary)">{% t "confirm_delete" %}</h3>
+            <p class="text-pro-muted mb-4" style="font-size:var(--text-sm)">
+                <strong>{{ order.reference }}</strong> &mdash; {{ order.customer.name }}<br>
+                {% t "total" %}: ${{ order.total|floatformat:0 }} &middot; {{ order.items.count }} {% t "products" %}
+            </p>
+            <p class="text-pro-muted mb-4" style="font-size:var(--text-sm);color:var(--danger-600)">{% t "will_be_deleted_irreversible" %}</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2" style="justify-content:center">
+                    <a href="{% url 'orders:order_detail' pk=order.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

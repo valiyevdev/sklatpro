@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if shipment %}{% t "edit_shipment" %}{% else %}{% t "new_shipment" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'logistics:shipment_list' %}">{% t "shipments" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% if shipment %}{% t "edit" %}{% else %}{% t "new" %}{% endif %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if shipment %}{% t "edit_shipment" %} {{ shipment.reference }}{% else %}{% t "new_shipment" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="mb-4" style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2)">
+                <strong style="color:var(--color-danger,#ef4444)">{% t "fix_errors" %}</strong>
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "reference" %}</label>
+                    {{ form.reference }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "status" %}</label>
+                    {{ form.status }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "priority" %}</label>
+                    {{ form.priority }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "delivery_method" %}</label>
+                    {{ form.delivery_method }}
+                </div>
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "order_link" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "order" %}</label>
+                    {{ form.order }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "sale" %}</label>
+                    {{ form.sale }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "customer" %}</label>
+                    {{ form.customer }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "warehouse" %}</label>
+                    {{ form.warehouse }}
+                </div>
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "delivery_address" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:3;min-width:300px">
+                    <label class="form-label">{% t "address" %}</label>
+                    {{ form.delivery_address }}
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "city" %}</label>
+                    {{ form.delivery_city }}
+                </div>
+            </div>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "contact_name" %}</label>
+                    {{ form.delivery_contact_name }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "contact_phone" %}</label>
+                    {{ form.delivery_contact_phone }}
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">{% t "delivery_instructions" %}</label>
+                {{ form.delivery_instructions }}
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "packages" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "total_packages" %}</label>
+                    {{ form.total_packages }}
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "weight_kg" %}</label>
+                    {{ form.total_weight_kg }}
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "volume_m3" %}</label>
+                    {{ form.total_volume_m3 }}
+                </div>
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "assignment" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "driver" %}</label>
+                    {{ form.driver }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "vehicle" %}</label>
+                    {{ form.vehicle }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "route" %}</label>
+                    {{ form.route }}
+                </div>
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "tracking" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "tracking_number" %}</label>
+                    {{ form.tracking_number }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "carrier" %}</label>
+                    {{ form.carrier }}
+                </div>
+            </div>
+
+            <h5 class="mb-3" style="font-weight:600">{% t "schedule" %}</h5>
+            <div class="d-flex gap-4 flex-wrap mb-4">
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "planned_dispatch" %}</label>
+                    {{ form.planned_dispatch_at }}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <label class="form-label">{% t "expected_delivery" %}</label>
+                    {{ form.expected_delivery_at }}
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "time_window_start" %}</label>
+                    {{ form.delivery_time_window_start }}
+                </div>
+                <div style="flex:1;min-width:150px">
+                    <label class="form-label">{% t "time_window_end" %}</label>
+                    {{ form.delivery_time_window_end }}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">{% t "notes" %}</label>
+                {{ form.notes }}
+            </div>
+
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button>
+                {% if shipment %}
+                    <a href="{% url 'logistics:shipment_detail' pk=shipment.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+                {% else %}
+                    <a href="{% url 'logistics:shipment_list' %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

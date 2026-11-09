@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Feature Flags — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-toggle2-on" style="color:var(--primary-500)"></i> Feature Flags</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Control feature rollouts across the platform</p>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Flags</div>
+            <div class="stat-card-value">{{ total_flags }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-toggle2-on"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Enabled Globally</div>
+            <div class="stat-card-value">{{ enabled_globally }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Company-Specific</div>
+            <div class="stat-card-value">{{ company_specific }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Plan-Specific</div>
+            <div class="stat-card-value">{{ plan_specific }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-credit-card"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-plus-circle" style="color:var(--success-500)"></i> Create Feature Flag</h3>
+    </div>
+    <div class="card-pro-body">
+        <form method="post" action="{% url 'saas_platform:flag_create' %}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-3);align-items:end">
+            {% csrf_token %}
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Key</label>
+                <input class="input-pro" type="text" name="key" placeholder="Masalan, new_dashboard" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Display Name</label>
+                <input class="input-pro" type="text" name="name" placeholder="Masalan, yangi boshqaruv paneli" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Scope</label>
+                <select class="input-pro" name="scope">
+                    <option value="global">Global</option>
+                    <option value="company">Company</option>
+                    <option value="plan">Plan</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Description</label>
+                <input class="input-pro" type="text" name="description" placeholder="{% t "brief_description" %}">
+            </div>
+            <div style="margin-bottom:0">
+                <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-plus-lg"></i> Create Flag</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-list-check" style="color:var(--primary-500)"></i> All Feature Flags</h3>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Name</th>
+                    <th>Scope</th>
+                    <th>Enabled</th>
+                    <th>Target</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flag in feature_flags %}
+                <tr>
+                    <td>
+                        <code style="background:var(--bg-page);padding:2px 8px;border-radius:var(--radius-sm);font-size:var(--text-xs);color:var(--primary-600)">{{ flag.key }}</code>
+                    </td>
+                    <td class="cell-primary fw-500" style="font-size:var(--text-sm)">{{ flag.name }}</td>
+                    <td>
+                        <span class="badge-pro {% if flag.scope == 'global' %}badge-pro-primary{% elif flag.scope == 'company' %}badge-pro-info{% else %}badge-pro-warning{% endif %}">
+                            {% if flag.scope == 'global' %}<i class="bi bi-globe" style="font-size:0.625rem"></i>
+                            {% elif flag.scope == 'company' %}<i class="bi bi-building" style="font-size:0.625rem"></i>
+                            {% else %}<i class="bi bi-credit-card" style="font-size:0.625rem"></i>{% endif %}
+                            {{ flag.scope|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'saas_platform:flag_toggle' flag_id=flag.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <button type="submit" class="toggle-btn {% if flag.is_enabled %}toggle-btn-on{% else %}toggle-btn-off{% endif %}" title="Click to toggle">
+                                <span class="toggle-track">
+                                    <span class="toggle-thumb"></span>
+                                </span>
+                                <span class="toggle-label">{% if flag.is_enabled %}ON{% else %}OFF{% endif %}</span>
+                            </button>
+                        </form>
+                    </td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if flag.company %}
+                            <span class="badge-pro badge-pro-info">{{ flag.company.company_name }}</span>
+                        {% elif flag.plan %}
+                            <span class="badge-pro badge-pro-warning">{{ flag.plan.name }}</span>
+                        {% else %}
+                            <span style="color:var(--text-muted)">All</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ flag.created_at|date:"M d, Y" }}</td>
+                    <td>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-toggle2-on"></i></div>
+                            <div class="empty-state-title">No feature flags</div>
+                            <div class="empty-state-desc">Create your first feature flag to control feature rollouts.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 4px 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    transition: background var(--transition-fast);
+    font-family: var(--font-sans);
+}
+.toggle-btn:hover { background: var(--bg-surface-hover); }
+.toggle-track {
+    width: 36px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    transition: background var(--transition-fast);
+}
+.toggle-btn-on .toggle-track { background: var(--success-500); }
+.toggle-btn-off .toggle-track { background: var(--gray-300); }
+.toggle-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform var(--transition-fast);
+    box-shadow: var(--shadow-xs);
+}
+.toggle-btn-on .toggle-thumb { transform: translateX(16px); }
+.toggle-label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.toggle-btn-on .toggle-label { color: var(--success-600); }
+.toggle-btn-off .toggle-label { color: var(--text-muted); }
+</style>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "put_away" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "put_away" %}</h1>
+        <p class="page-subtitle">{{ putaways.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:putaway_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_putaway" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "receiving_ref" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "assigned_to" %}</th>
+                    <th>{% t "items" %}</th>
+                    <th>{% t "completed" %}</th>
+                    <th>{% t "created_at" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pa in putaways %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:putaway_detail' pk=pa.pk %}" style="color:var(--text-primary);text-decoration:none">{{ pa.reference }}</a>
+                    </td>
+                    <td>{% if pa.receiving %}{{ pa.receiving.reference }}{% else %}—{% endif %}</td>
+                    <td>{{ pa.warehouse.name }}</td>
+                    <td>
+                        {% if pa.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif pa.status == 'in_progress' %}
+                            <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+                        {% elif pa.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ pa.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{% if pa.assigned_to %}{{ pa.assigned_to.get_full_name|default:pa.assigned_to.email }}{% else %}—{% endif %}</td>
+                    <td>{{ pa.total_items }}</td>
+                    <td>{{ pa.completed_items }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ pa.created_at|date:"d.m.Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-arrow-in-right"></i></div>
+                            <h5 class="empty-state-title">{% t "no_putaway_tasks" %}</h5>
+                            <p class="empty-state-desc">{% t "no_putaway_created" %}</p>
+                            <a href="{% url 'warehouses:putaway_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_putaway" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if putaways.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if putaways.has_previous %}
+    <a href="?page={{ putaways.previous_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in putaways.paginator.page_range %}
+        {% if putaways.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > putaways.number|add:'-3' and num < putaways.number|add:'3' %}
+        <a href="?page={{ num }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if putaways.has_next %}
+    <a href="?page={{ putaways.next_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

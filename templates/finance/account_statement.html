@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ account.name }} — {% t "fin_account_statement" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'finance:account_detail' pk=account.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ account.name }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{% t "fin_account_statement" %} &middot; {{ account.get_account_type_display }}</p>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_opening_balance" %}</div>
+            <div class="stat-card-value">${{ account.opening_balance|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-door-open"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_current_balance" %}</div>
+            <div class="stat-card-value" style="color:{% if current_balance >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ current_balance|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cash-stack"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_statement_lines" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "fin_type" %}</th>
+                    <th>{% t "description" %}</th>
+                    <th>{% t "fin_income" %}</th>
+                    <th>{% t "fin_expense" %}</th>
+                    <th>{% t "fin_running_balance" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in page_obj %}
+                <tr>
+                    <td>{{ line.transaction.date|date:"d.m.Y" }}</td>
+                    <td>{{ line.transaction.get_txn_type_display }}</td>
+                    <td class="text-pro-sm">{{ line.transaction.description|truncatechars:40|default:"-" }}</td>
+                    <td>
+                        {% if line.transaction.direction == 'income' %}
+                            <span class="fw-600" style="color:var(--success-600)">${{ line.transaction.amount|floatformat:2 }}</span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if line.transaction.direction == 'expense' %}
+                            <span class="fw-600" style="color:var(--danger-500)">${{ line.transaction.amount|floatformat:2 }}</span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="fw-600" style="color:{% if line.running_balance >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ line.running_balance|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_transactions" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

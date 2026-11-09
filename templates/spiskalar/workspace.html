@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "my_workspace" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "my_workspace" %}</h1>
+        <p class="page-subtitle">{% t "workspace_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:task_kanban' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-kanban"></i> {% t "kanban_view" %}</a>
+        <a href="{% url 'spiskalar:task_calendar' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-calendar3"></i></a>
+        <a href="{% url 'spiskalar:task_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "task_create" %}</a>
+    </div>
+</div>
+
+{% if overdue_tasks %}
+<div class="card-pro mb-4" style="border-left:3px solid var(--danger-500)">
+    <div class="card-pro-header"><span class="card-pro-title" style="color:var(--danger-600)"><i class="bi bi-exclamation-triangle"></i> {% t "overdue_tasks" %} ({{ overdue_tasks|length }})</span></div>
+    <div style="padding:0">
+        {% for task in overdue_tasks %}
+        <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+            <input type="checkbox" class="task-checkbox" style="width:20px;height:20px" data-task-id="{{ task.pk }}">
+            <div style="flex:1">
+                <div class="fw-500" style="color:var(--text-primary)">{{ task.title }}</div>
+                <div class="text-pro-xs text-pro-danger">{% t "days_overdue" %}: {{ task.due_date|date:"d.m.Y" }}</div>
+            </div>
+            <span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if today_tasks %}
+<div class="card-pro mb-4" style="border-left:3px solid var(--primary-500)">
+    <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-calendar-check"></i> {% t "today_tasks" %} ({{ today_tasks|length }})</span></div>
+    <div style="padding:0">
+        {% for task in today_tasks %}
+        <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+            <input type="checkbox" class="task-checkbox" style="width:20px;height:20px" data-task-id="{{ task.pk }}">
+            <div style="flex:1">
+                <div class="fw-500" style="color:var(--text-primary)">{{ task.title }}</div>
+                <div class="text-pro-xs text-pro-muted">{{ task.get_task_type_display }}</div>
+            </div>
+            {% if task.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+            {% elif task.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "priority_high" %}</span>{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+    {% if in_progress_tasks %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-arrow-repeat"></i> {% t "task_in_progress" %}</span></div>
+        <div style="padding:0">
+            {% for task in in_progress_tasks %}
+            <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+                <div style="flex:1">
+                    <div class="fw-500 text-pro-sm" style="color:var(--text-primary)">{{ task.title|truncatechars:40 }}</div>
+                    {% if task.due_date %}<div class="text-pro-xs {% if task.is_overdue %}text-pro-danger{% else %}text-pro-muted{% endif %}">{{ task.due_date|date:"d.m.Y" }}</div>{% endif %}
+                </div>
+                <span class="badge-pro badge-pro-info">{% t "task_in_progress" %}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if high_priority %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-flag"></i> {% t "high_priority_tasks" %}</span></div>
+        <div style="padding:0">
+            {% for task in high_priority %}
+            <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+                <div style="flex:1">
+                    <div class="fw-500 text-pro-sm" style="color:var(--text-primary)">{{ task.title|truncatechars:40 }}</div>
+                    <div class="text-pro-xs text-pro-muted">{{ task.get_task_type_display }}</div>
+                </div>
+                {% if task.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+                {% else %}<span class="badge-pro badge-pro-warning">{% t "priority_high" %}</span>{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_tasks %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-calendar-week"></i> {% t "upcoming_tasks" %}</span></div>
+        <div style="padding:0">
+            {% for task in upcoming_tasks %}
+            <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+                <div style="flex:1">
+                    <div class="fw-500 text-pro-sm" style="color:var(--text-primary)">{{ task.title|truncatechars:40 }}</div>
+                    <div class="text-pro-xs text-pro-muted">{{ task.due_date|date:"d.m.Y" }}</div>
+                </div>
+                <span class="badge-pro badge-pro-neutral">{{ task.get_priority_display }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recently_completed %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-check-circle"></i> {% t "recently_completed" %}</span></div>
+        <div style="padding:0">
+            {% for task in recently_completed %}
+            <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+                <i class="bi bi-check-circle-fill" style="color:var(--success-500)"></i>
+                <div style="flex:1">
+                    <div class="fw-500 text-pro-sm" style="color:var(--text-primary);text-decoration:line-through;opacity:0.7">{{ task.title|truncatechars:40 }}</div>
+                    <div class="text-pro-xs text-pro-muted">{{ task.completed_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if no_due_date %}
+<div class="card-pro mt-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "no_due_date_tasks" %}</span></div>
+    <div style="padding:0">
+        {% for task in no_due_date %}
+        <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem 1rem;border-bottom:1px solid var(--border-primary)">
+            <div style="flex:1">
+                <div class="fw-500 text-pro-sm" style="color:var(--text-primary)">{{ task.title|truncatechars:50 }}</div>
+                <div class="text-pro-xs text-pro-muted">{{ task.get_task_type_display }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if not overdue_tasks and not today_tasks and not in_progress_tasks and not high_priority and not upcoming_tasks and not recently_completed and not no_due_date %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-check-circle"></i></div>
+    <h5 class="empty-state-title">{% t "task_completed_status" %}!</h5>
+    <p class="empty-state-desc">{% t "no_tasks" %}</p>
+    <a href="{% url 'spiskalar:task_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "task_create" %}</a>
+</div>
+{% endif %}
+
+{% endblock %}

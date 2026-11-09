@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_profit_loss" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_profit_loss" %}</h1>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="min-width:180px;margin-bottom:0">
+                <label class="input-pro-label">{% t "fin_date_from" %}</label>
+                <input class="form-control" type="date" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="input-pro-group" style="min-width:180px;margin-bottom:0">
+                <label class="input-pro-label">{% t "fin_date_to" %}</label>
+                <input class="form-control" type="date" name="date_to" value="{{ date_to }}">
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-funnel"></i> {% t "fin_apply_filter" %}</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_income" %}</div>
+            <div class="stat-card-value" style="color:var(--success-600)">${{ total_income|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_expense" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-500)">${{ total_expense|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_net_profit" %}</div>
+            <div class="stat-card-value" style="color:{% if net_profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ net_profit|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon {% if net_profit >= 0 %}success{% else %}danger{% endif %}"><i class="bi bi-{% if net_profit >= 0 %}trophy{% else %}exclamation-triangle{% endif %}"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_breakdown_by_category" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "fin_category" %}</th>
+                    <th>{% t "fin_direction" %}</th>
+                    <th>{% t "amount" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in breakdown %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ row.category|default:"{% t 'fin_uncategorized' %}" }}</td>
+                    <td>
+                        {% if row.direction == 'income' %}
+                            <span class="badge-pro badge-pro-success">{% t "fin_direction_income" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "fin_direction_expense" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">${{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_data_for_period" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

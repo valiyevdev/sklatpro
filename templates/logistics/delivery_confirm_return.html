@@ -1,0 +1,27 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "return_to_warehouse" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}">{{ delivery.reference }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "return_to_warehouse" %}</span>
+</div>
+
+<div class="card-pro" style="max-width:500px">
+    <div class="card-pro-body text-center">
+        <div class="empty-state-icon" style="color:var(--color-warning,#f59e0b)"><i class="bi bi-arrow-return-left" style="font-size:2.5rem"></i></div>
+        <h5 class="empty-state-title">{% t "return_to_warehouse" %}?</h5>
+        <p class="empty-state-desc">{{ delivery.reference }}</p>
+        <form method="post" class="d-flex gap-3 justify-center mt-4">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-warning"><i class="bi bi-arrow-return-left"></i> {% t "confirm_return" %}</button>
+            <a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

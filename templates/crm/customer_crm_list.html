@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <nav class="breadcrumb-pro">
+        <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+        <span class="breadcrumb-pro-separator">/</span>
+        <a href="{% url 'crm:crm_dashboard' %}">{% t "CRM" %}</a>
+        <span class="breadcrumb-pro-separator">/</span>
+        <span>{% t "Customers" %}</span>
+      </nav>
+      <h1 class="page-title">{% t "Customer Directory" %}</h1>
+      <p class="page-subtitle">{{ total_count }} {% t "customers total" %}</p>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'crm:customer_export' %}" class="btn-pro btn-pro-outline">
+        <i class="fas fa-download"></i> {% t "Export CSV" %}
+      </a>
+      <a href="{% url 'crm:segment_list' %}" class="btn-pro btn-pro-outline">
+        <i class="fas fa-layer-group"></i> {% t "Segments" %}
+      </a>
+      <a href="{% url 'crm:tag_list' %}" class="btn-pro btn-pro-outline">
+        <i class="fas fa-tags"></i> {% t "Tags" %}
+      </a>
+      <a href="{% url 'sales:customer_create' %}" class="btn-pro btn-pro-primary">
+        <i class="fas fa-plus"></i> {% t "New Customer" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="card-pro" style="margin-bottom: var(--spacing-lg);">
+  <div class="card-pro-header">
+    <h3 class="card-pro-title">{% t "Filters" %}</h3>
+  </div>
+  <div class="card-pro-body">
+    <form method="get" action="{% url 'crm:customer_crm_list' %}">
+      <div class="grid grid-4" style="margin-bottom: var(--spacing-md);">
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Search" %}</label>
+          <input type="text" name="search" class="input-pro" placeholder="{% t "search_by_name_or_email" %}" value="{{ request.GET.search|default:'' }}">
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Status" %}</label>
+          <select name="status" class="input-pro">
+            <option value="">{% t "All Statuses" %}</option>
+            <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>{% t "Active" %}</option>
+            <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>{% t "Inactive" %}</option>
+            <option value="blocked" {% if request.GET.status == "blocked" %}selected{% endif %}>{% t "Blocked" %}</option>
+            <option value="prospect" {% if request.GET.status == "prospect" %}selected{% endif %}>{% t "Prospect" %}</option>
+            <option value="lead" {% if request.GET.status == "lead" %}selected{% endif %}>{% t "Lead" %}</option>
+          </select>
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Type" %}</label>
+          <select name="type" class="input-pro">
+            <option value="">{% t "All Types" %}</option>
+            <option value="individual" {% if request.GET.type == "individual" %}selected{% endif %}>{% t "Individual" %}</option>
+            <option value="business" {% if request.GET.type == "business" %}selected{% endif %}>{% t "Business" %}</option>
+          </select>
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Segment" %}</label>
+          <select name="segment" class="input-pro">
+            <option value="">{% t "All Segments" %}</option>
+            {% for segment in segments %}
+            <option value="{{ segment.pk }}" {% if request.GET.segment == segment.pk|stringformat:"s" %}selected{% endif %}>{{ segment.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-4" style="margin-bottom: var(--spacing-md);">
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Tag" %}</label>
+          <select name="tag" class="input-pro">
+            <option value="">{% t "All Tags" %}</option>
+            {% for tag in tags %}
+            <option value="{{ tag.pk }}" {% if request.GET.tag == tag.pk|stringformat:"s" %}selected{% endif %}>{{ tag.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "City" %}</label>
+          <select name="city" class="input-pro">
+            <option value="">{% t "All Cities" %}</option>
+            {% for city in cities %}
+            <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Sort" %}</label>
+          <select name="sort" class="input-pro">
+            <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>{% t "Name" %}</option>
+            <option value="-created_at" {% if request.GET.sort == "-created_at" %}selected{% endif %}>{% t "Newest First" %}</option>
+            <option value="created_at" {% if request.GET.sort == "created_at" %}selected{% endif %}>{% t "Oldest First" %}</option>
+            <option value="-total_revenue" {% if request.GET.sort == "-total_revenue" %}selected{% endif %}>{% t "Revenue (High to Low)" %}</option>
+            <option value="total_revenue" {% if request.GET.sort == "total_revenue" %}selected{% endif %}>{% t "Revenue (Low to High)" %}</option>
+            <option value="-total_outstanding" {% if request.GET.sort == "-total_outstanding" %}selected{% endif %}>{% t "Outstanding (High to Low)" %}</option>
+          </select>
+        </div>
+        <div class="input-pro-group" style="display: flex; align-items: flex-end; gap: var(--spacing-sm);">
+          <button type="submit" class="btn-pro btn-pro-primary">
+            <i class="fas fa-filter"></i> {% t "Filter" %}
+          </button>
+          <a href="{% url 'crm:customer_crm_list' %}" class="btn-pro btn-pro-outline">
+            <i class="fas fa-times"></i> {% t "Clear" %}
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card-pro">
+  <div class="card-pro-body">
+    {% if customers %}
+    <div class="table-responsive">
+      <table class="table-pro">
+        <thead>
+          <tr>
+            <th>{% t "Name" %}</th>
+            <th>{% t "Contact Person" %}</th>
+            <th>{% t "Phone" %}</th>
+            <th>{% t "Type" %}</th>
+            <th>{% t "Status" %}</th>
+            <th>{% t "Sales" %}</th>
+            <th>{% t "Revenue" %}</th>
+            <th>{% t "Outstanding" %}</th>
+            <th>{% t "Last Purchase" %}</th>
+            <th>{% t "Tags" %}</th>
+            <th>{% t "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: var(--text-sm);">
+                  {{ customer.name|truncatechars:1|upper }}
+                </div>
+                <a href="{% url 'crm:customer_360' customer.pk %}" class="fw-600">{{ customer.name }}</a>
+              </div>
+            </td>
+            <td class="text-pro-sm">{{ customer.contact_person|default:"-" }}</td>
+            <td class="text-pro-sm">{{ customer.phone|default:"-" }}</td>
+            <td>
+              <span class="badge-pro badge-pro-{% if customer.customer_type == 'business' %}primary{% else %}neutral{% endif %}">
+                {{ customer.get_customer_type_display }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-pro badge-pro-{% if customer.status == 'active' %}success{% elif customer.status == 'inactive' %}neutral{% elif customer.status == 'blocked' %}danger{% elif customer.status == 'prospect' %}info{% elif customer.status == 'lead' %}warning{% endif %} badge-pro-dot">
+                {{ customer.get_status_display }}
+              </span>
+            </td>
+            <td>{{ customer.sales_count|default:0 }}</td>
+            <td class="text-pro-success fw-600">${{ customer.total_revenue|floatformat:2 }}</td>
+            <td class="{% if customer.total_outstanding > 0 %}text-pro-danger fw-600{% endif %}">
+              ${{ customer.total_outstanding|floatformat:2 }}
+            </td>
+            <td class="text-pro-sm text-pro-muted">
+              {% if customer.last_purchase_date %}
+                {{ customer.last_purchase_date|date:"M d, Y" }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              {% for tag in customer.tags.all|slice:":3" %}
+                <span class="badge-pro badge-pro-neutral" style="font-size: var(--text-xs);">{{ tag.name }}</span>
+              {% endfor %}
+              {% if customer.tags.count > 3 %}
+                <span class="badge-pro badge-pro-neutral" style="font-size: var(--text-xs);">+{{ customer.tags.count|add:"-3" }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display: flex; gap: var(--spacing-xs);">
+                <a href="{% url 'crm:customer_360' customer.pk %}" class="btn-pro btn-pro-outline" style="padding: var(--spacing-xs) var(--spacing-sm); font-size: var(--text-xs);">
+                  <i class="fas fa-eye"></i> {% t "View" %}
+                </a>
+                <a href="{% url 'sales:customer_update' customer.pk %}" class="btn-pro btn-pro-outline" style="padding: var(--spacing-xs) var(--spacing-sm); font-size: var(--text-xs);">
+                  <i class="fas fa-edit"></i> {% t "Edit" %}
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav style="display: flex; justify-content: center; margin-top: var(--spacing-lg);">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li>
+          <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}{% if request.GET.segment %}segment={{ request.GET.segment }}&{% endif %}{% if request.GET.tag %}tag={{ request.GET.tag }}&{% endif %}{% if request.GET.city %}city={{ request.GET.city }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn-pro btn-pro-outline">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        <li>
+          {% if page_obj.number == num %}
+          <span class="btn-pro btn-pro-primary">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}{% if request.GET.segment %}segment={{ request.GET.segment }}&{% endif %}{% if request.GET.tag %}tag={{ request.GET.tag }}&{% endif %}{% if request.GET.city %}city={{ request.GET.city }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ num }}" class="btn-pro btn-pro-outline">{{ num }}</a>
+          {% endif %}
+        </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li>
+          <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}{% if request.GET.segment %}segment={{ request.GET.segment }}&{% endif %}{% if request.GET.tag %}tag={{ request.GET.tag }}&{% endif %}{% if request.GET.city %}city={{ request.GET.city }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn-pro btn-pro-outline">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-users"></i>
+      <h3>{% t "No customers found" %}</h3>
+      <p>{% t "No customers match your current filters. Try adjusting your search criteria." %}</p>
+      <a href="{% url 'sales:customer_create' %}" class="btn-pro btn-pro-primary">
+        <i class="fas fa-plus"></i> {% t "Add First Customer" %}
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

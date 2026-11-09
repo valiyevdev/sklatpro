@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "customers" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex align-center justify-between mb-4">
+    <div>
+        <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)"><i class="bi bi-people" style="color:var(--primary-500)"></i> {% t "customers" %}</h2>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-2">
+            <div class="topbar-search" style="max-width:300px">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="{% t "search_customers" %}..." style="width:100%">
+            </div>
+            <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-search"></i></button>
+        </form>
+        <a href="{% url 'sales:customer_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_customer" %}</a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "contact_person" %}</th>
+                    <th>{% t "phone" %}</th>
+                    <th>{% t "email_label" %}</th>
+                    <th>{% t "total_sales" %}</th>
+                    <th>{% t "total_unpaid" %}</th>
+                    <th>{% t "sale_count" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in page_obj %}
+                <tr>
+                    <td class="fw-500">{{ c.name }}</td>
+                    <td>{{ c.contact_person|default:"-" }}</td>
+                    <td>{{ c.phone|default:"-" }}</td>
+                    <td>{{ c.email|default:"-" }}</td>
+                    <td class="fw-600">${{ c.total_sales|default:0|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:var(--danger-600)">${{ c.total_unpaid|default:0|floatformat:0 }}</td>
+                    <td>{{ c.sales_cnt|default:0 }}</td>
+                    <td>
+                        {% if c.is_active != False %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1" style="justify-content:flex-end">
+                            <a href="{% url 'sales:customer_detail' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'sales:customer_update' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'sales:customer_delete' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-500)"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                            <h5 class="empty-state-title">{% t "no_customers" %}</h5>
+                            <p class="empty-state-desc">{% t "add_first_customer" %}</p>
+                            <a href="{% url 'sales:customer_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_customer" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "showing" %} {{ page_obj.start_index }}-{{ page_obj.end_index }} {% t "of" %} {{ page_obj.paginator.count }}</span>
+    <div class="d-flex gap-1">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}Create Automation Rule - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">Automation</a>
+    <span class="separator">/</span>
+    <a href="{% url 'automation:rule_list' %}">Rules</a>
+    <span class="separator">/</span>
+    <span class="current">Create Rule</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-magic" style="color:var(--primary-500)"></i> Create Automation Rule</h1>
+        <p class="page-subtitle">Define triggers, conditions, and actions for your automation</p>
+    </div>
+</div>
+
+<form method="post" id="ruleForm">
+    {% csrf_token %}
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> Rule Details</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Rule Name <span style="color:var(--danger-500)">*</span></label>
+                        <input class="input-pro" type="text" name="name" required placeholder="Masalan, kam zaxira tovarlarni avtomatik qayta buyurtma qilish">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Description</label>
+                        <textarea class="input-pro" name="description" rows="3" placeholder="Qoida nima qilishini tavsiflang..."></textarea>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Priority</label>
+                            <select class="input-pro" name="priority">
+                                <option value="low">Low</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-lightning" style="color:var(--primary-600)"></i> Trigger</span>
+                </div>
+                <div class="card-pro-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Trigger Category <span style="color:var(--danger-500)">*</span></label>
+                            <select class="input-pro" id="triggerCategory" required onchange="onCategoryChange(this)">
+                                <option value="">Select category...</option>
+                                {% for key, cat in categories.items %}
+                                <option value="{{ key }}">{{ cat.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Trigger Type <span style="color:var(--danger-500)">*</span></label>
+                            <select class="input-pro" name="trigger_type" id="triggerType" required>
+                                <option value="">Select trigger type...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="trigger_category" id="triggerCategoryHidden">
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-funnel" style="color:var(--primary-600)"></i> Conditions</span>
+                    <span style="font-size:var(--text-xs);color:var(--text-muted)">Optional</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Match Logic</label>
+                        <div style="display:flex;gap:var(--sp-4);padding:var(--sp-3);background:var(--bg-page);border-radius:var(--radius-md);border:1px solid var(--border-default)">
+                            <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                                <input type="radio" name="conditions_logic" value="all" checked style="accent-color:var(--primary-500)"> ALL (AND)
+                            </label>
+                            <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                                <input type="radio" name="conditions_logic" value="any" style="accent-color:var(--primary-500)"> ANY (OR)
+                            </label>
+                        </div>
+                    </div>
+                    <div id="conditionsContainer">
+                    </div>
+                    <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="addCondition()" style="margin-top:var(--sp-3)">
+                        <i class="bi bi-plus-lg"></i> Add Condition
+                    </button>
+                    <textarea name="conditions" id="conditionsJson" style="display:none"></textarea>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-play-circle" style="color:var(--primary-600)"></i> Actions</span>
+                    <span style="font-size:var(--text-xs);color:var(--text-muted)">At least one required</span>
+                </div>
+                <div class="card-pro-body">
+                    <div id="actionsContainer">
+                    </div>
+                    <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="addAction()" style="margin-top:var(--sp-3)">
+                        <i class="bi bi-plus-lg"></i> Add Action
+                    </button>
+                    <textarea name="actions" id="actionsJson" style="display:none"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> Help</span>
+                </div>
+                <div class="card-pro-body" style="font-size:var(--text-xs);color:var(--text-secondary)">
+                    <div style="margin-bottom:var(--sp-3)">
+                        <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Variables</div>
+                        <div style="color:var(--text-muted)">Use <code style="background:var(--bg-page);padding:1px 6px;border-radius:var(--radius-sm)">{% templatetag openvariable %}variable{% templatetag closevariable %}</code> in fields to reference dynamic values from the trigger event.</div>
+                    </div>
+                    <div style="margin-bottom:var(--sp-3)">
+                        <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Conditions</div>
+                        <div style="color:var(--text-muted)">Conditions filter when the rule actions execute. Leave empty to trigger on every event.</div>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Actions</div>
+                        <div style="color:var(--text-muted)">Actions execute in order when conditions match. You can add multiple actions.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+                        <button type="submit" class="btn-pro btn-pro-primary" onclick="setFormStatus('draft')" style="width:100%">
+                            <i class="bi bi-file-earmark"></i> Save Draft
+                        </button>
+                        <button type="submit" class="btn-pro btn-pro-primary" onclick="setFormStatus('active')" style="width:100%;background:var(--success-600);border-color:var(--success-600)">
+                            <i class="bi bi-play-fill"></i> Save &amp; Activate
+                        </button>
+                        <a href="{% url 'automation:rule_list' %}" class="btn-pro btn-pro-secondary" style="width:100%">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="status" id="statusField" value="draft">
+</form>
+
+<style>
+@media(max-width:1024px){
+    div[style*="grid-template-columns:2fr 1fr"]{grid-template-columns:1fr!important}
+}
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+.condition-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:var(--sp-3);padding:var(--sp-3);background:var(--bg-page);border-radius:var(--radius-md);border:1px solid var(--border-default);align-items:end;margin-bottom:var(--sp-3)}
+@media(max-width:768px){.condition-row{grid-template-columns:1fr auto}}
+.action-block{padding:var(--sp-4);background:var(--bg-page);border-radius:var(--radius-md);border:1px solid var(--border-default);margin-bottom:var(--sp-4);position:relative}
+.action-block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3)}
+.action-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+@media(max-width:768px){.action-config-grid{grid-template-columns:1fr}}
+</style>
+
+<script>
+var CATEGORIES = {
+    {% for key, cat in categories.items %}
+    '{{ key }}': {
+        label: '{{ cat.label }}',
+        icon: '{{ cat.icon }}',
+        triggers: [
+            {% for code, label in cat.triggers %}
+            ['{{ code }}', '{{ label }}']{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+var ACTION_TYPES = {
+    {% for key, at in action_types.items %}
+    '{{ key }}': {
+        label: '{{ at.label }}',
+        icon: '{{ at.icon }}',
+        config_fields: [
+            {% for f in at.config_fields %}
+            {
+                name: '{{ f.name }}',
+                label: '{{ f.label }}',
+                type: '{{ f.type }}',
+                required: {{ f.required|yesno:"true,false" }},
+                placeholder: '{{ f.placeholder|default:"" }}'{% if f.options %},
+                options: [{% for opt in f.options %}'{{ opt }}'{% if not forloop.last %},{% endif %}{% endfor %}]{% endif %}{% if f.default is not None %},
+                default: '{{ f.default }}'{% endif %}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+var OPERATORS = [
+    {% for val, label in operators %}
+    ['{{ val }}', '{{ label }}']{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+var conditionIndex = 0;
+var actionIndex = 0;
+
+function onCategoryChange(sel) {
+    var triggerSel = document.getElementById('triggerType');
+    var catKey = sel.value;
+    document.getElementById('triggerCategoryHidden').value = catKey;
+    triggerSel.innerHTML = '<option value="">Select trigger type...</option>';
+    if (catKey && CATEGORIES[catKey]) {
+        var triggers = CATEGORIES[catKey].triggers;
+        for (var i = 0; i < triggers.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = triggers[i][0];
+            opt.textContent = triggers[i][1];
+            triggerSel.appendChild(opt);
+        }
+    }
+}
+
+function addCondition(fieldPath, operator, value) {
+    fieldPath = fieldPath || '';
+    operator = operator || 'equals';
+    value = value || '';
+    var id = conditionIndex++;
+    var html = '<div class="condition-row" id="cond_' + id + '">' +
+        '<div class="input-pro-group">' +
+            '<label class="input-pro-label">Field Path</label>' +
+            '<input class="input-pro" type="text" data-cond-field="field_path" value="' + escHtml(fieldPath) + '" placeholder="Masalan, inventory.quantity">' +
+        '</div>' +
+        '<div class="input-pro-group">' +
+            '<label class="input-pro-label">Operator</label>' +
+            '<select class="input-pro" data-cond-field="operator">';
+    for (var i = 0; i < OPERATORS.length; i++) {
+        html += '<option value="' + OPERATORS[i][0] + '"' + (OPERATORS[i][0] === operator ? ' selected' : '') + '>' + OPERATORS[i][1] + '</option>';
+    }
+    html += '</select></div>' +
+        '<div class="input-pro-group">' +
+            '<label class="input-pro-label">Value</label>' +
+            '<input class="input-pro" type="text" data-cond-field="value" value="' + escHtml(value) + '" placeholder="Qiymat">' +
+        '</div>' +
+        '<div class="input-pro-group">' +
+            '<button type="button" class="btn-pro btn-pro-outline-danger btn-pro-sm" onclick="removeCondition(' + id + ')" style="padding:6px 10px;height:38px" title="Remove">' +
+                '<i class="bi bi-trash"></i>' +
+            '</button>' +
+        '</div>' +
+    '</div>';
+    document.getElementById('conditionsContainer').insertAdjacentHTML('beforeend', html);
+}
+
+function removeCondition(id) {
+    var el = document.getElementById('cond_' + id);
+    if (el) el.remove();
+}
+
+function addAction(type, config) {
+    type = type || '';
+    config = config || {};
+    var id = actionIndex++;
+    var typeOptions = '<option value="">Select action type...</option>';
+    var typeKeys = Object.keys(ACTION_TYPES);
+    for (var i = 0; i < typeKeys.length; i++) {
+        var at = ACTION_TYPES[typeKeys[i]];
+        typeOptions += '<option value="' + typeKeys[i] + '"' + (typeKeys[i] === type ? ' selected' : '') + '>' + at.label + '</option>';
+    }
+
+    var html = '<div class="action-block" id="action_' + id + '">' +
+        '<div class="action-block-header">' +
+            '<div style="display:flex;align-items:center;gap:var(--sp-2)">' +
+                '<i class="bi bi-play-circle" style="color:var(--primary-600)"></i>' +
+                '<span style="font-weight:600;font-size:var(--text-sm);color:var(--text-primary)">Action</span>' +
+            '</div>' +
+            '<button type="button" class="btn-pro btn-pro-outline-danger btn-pro-sm" onclick="removeAction(' + id + ')" style="padding:4px 8px" title="Remove">' +
+                '<i class="bi bi-trash"></i>' +
+            '</button>' +
+        '</div>' +
+        '<div class="input-pro-group">' +
+            '<label class="input-pro-label">Type <span style="color:var(--danger-500)">*</span></label>' +
+            '<select class="input-pro" id="actionType_' + id + '" required onchange="onActionTypeChange(' + id + ')">' +
+            typeOptions +
+            '</select>' +
+        '</div>' +
+        '<div class="action-config-grid" id="actionConfig_' + id + '"></div>' +
+    '</div>';
+    document.getElementById('actionsContainer').insertAdjacentHTML('beforeend', html);
+    if (type) onActionTypeChange(id);
+}
+
+function onActionTypeChange(id) {
+    var typeSel = document.getElementById('actionType_' + id);
+    var configDiv = document.getElementById('actionConfig_' + id);
+    var typeKey = typeSel.value;
+    if (!typeKey || !ACTION_TYPES[typeKey]) {
+        configDiv.innerHTML = '';
+        return;
+    }
+    var fields = ACTION_TYPES[typeKey].config_fields;
+    var html = '';
+    for (var i = 0; i < fields.length; i++) {
+        var f = fields[i];
+        var val = '';
+        html += '<div class="input-pro-group">' +
+            '<label class="input-pro-label">' + escHtml(f.label) + (f.required ? ' <span style="color:var(--danger-500)">*</span>' : '') + '</label>';
+        if (f.type === 'select' && f.options) {
+            html += '<select class="input-pro" data-action-config="' + f.name + '"' + (f.required ? ' required' : '') + '>';
+            for (var j = 0; j < f.options.length; j++) {
+                html += '<option value="' + f.options[j] + '">' + f.options[j] + '</option>';
+            }
+            html += '</select>';
+        } else if (f.type === 'textarea') {
+            html += '<textarea class="input-pro" data-action-config="' + f.name + '"' + (f.required ? ' required' : '') +
+                ' rows="3" placeholder="' + escHtml(f.placeholder || '') + '"></textarea>';
+        } else {
+            html += '<input class="input-pro" type="' + f.type + '" data-action-config="' + f.name + '"' +
+                (f.required ? ' required' : '') +
+                ' placeholder="' + escHtml(f.placeholder || '') + '"' +
+                (f.default ? ' value="' + escHtml(f.default) + '"' : '') + '>';
+        }
+        html += '</div>';
+    }
+    configDiv.innerHTML = html;
+}
+
+function removeAction(id) {
+    var el = document.getElementById('action_' + id);
+    if (el) el.remove();
+}
+
+function setFormStatus(val) {
+    document.getElementById('statusField').value = val;
+}
+
+function gatherConditions() {
+    var rows = document.querySelectorAll('.condition-row');
+    var items = [];
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var fp = row.querySelector('[data-cond-field="field_path"]').value.trim();
+        var op = row.querySelector('[data-cond-field="operator"]').value;
+        var vl = row.querySelector('[data-cond-field="value"]').value.trim();
+        if (fp) {
+            items.push({field_path: fp, operator: op, value: vl});
+        }
+    }
+    var logic = 'all';
+    var radios = document.getElementsByName('conditions_logic');
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) { logic = radios[i].value; break; }
+    }
+    return {logic: logic, items: items};
+}
+
+function gatherActions() {
+    var blocks = document.querySelectorAll('.action-block');
+    var actions = [];
+    for (var i = 0; i < blocks.length; i++) {
+        var block = blocks[i];
+        var typeSel = block.querySelector('[id^="actionType_"]');
+        var typeKey = typeSel ? typeSel.value : '';
+        if (!typeKey) continue;
+        var config = {};
+        var configInputs = block.querySelectorAll('[data-action-config]');
+        for (var j = 0; j < configInputs.length; j++) {
+            var inp = configInputs[j];
+            config[inp.getAttribute('data-action-config')] = inp.value;
+        }
+        actions.push({type: typeKey, config: config});
+    }
+    return actions;
+}
+
+function escHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+document.getElementById('ruleForm').addEventListener('submit', function(e) {
+    var conditions = gatherConditions();
+    var actions = gatherActions();
+    document.getElementById('conditionsJson').value = JSON.stringify(conditions);
+    document.getElementById('actionsJson').value = JSON.stringify(actions);
+});
+</script>
+{% endblock %}

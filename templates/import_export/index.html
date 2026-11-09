@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "import" %} / {% t "export" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:var(--sp-6)">
+    <h1 style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary);margin-bottom:var(--sp-1)">{% t "import" %} / {% t "export" %}</h1>
+    <p style="font-size:var(--text-sm);color:var(--text-muted)">{% t "import_export_desc" %}</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6)">
+    <div class="card-pro" style="padding:var(--sp-6)">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--primary-50);display:flex;align-items:center;justify-content:center;margin-bottom:var(--sp-4)">
+            <i class="bi bi-upload" style="font-size:1.25rem;color:var(--primary-600)"></i>
+        </div>
+        <h3 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-2)">{% t "import" %}</h3>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--sp-4)">CSV fayldan mahsulotlarni import qiling. Yangi kategoriyalar va brendlar avtomatik yaratiladi.</p>
+        <a href="{% url 'import_export:import_products' %}" class="btn-pro btn-pro-primary" style="width:100%;justify-content:center"><i class="bi bi-upload"></i> {% t "import" %}</a>
+    </div>
+    <div class="card-pro" style="padding:var(--sp-6)">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--success-50);display:flex;align-items:center;justify-content:center;margin-bottom:var(--sp-4)">
+            <i class="bi bi-download" style="font-size:1.25rem;color:var(--success-600)"></i>
+        </div>
+        <h3 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-2)">{% t "export" %}</h3>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--sp-4)">{% t "export_products_desc" %}</p>
+        <a href="{% url 'import_export:export_products' %}" class="btn-pro btn-pro-secondary" style="width:100%;justify-content:center"><i class="bi bi-download"></i> {% t "export" %}</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+Django>=4.2,<5.0
+djangorestframework>=3.14
+django-filter>=23.0
+django-axes>=6.0
+python-barcode>=0.15
+qrcode>=7.4
+Pillow>=10.0
+playwright>=1.40

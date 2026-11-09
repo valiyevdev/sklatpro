@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_new_expense" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_new_expense" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:600px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "date" %} *</label>
+                        <input class="form-control" type="date" name="date" required value="{{ today|date:'Y-m-d' }}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "amount" %} *</label>
+                        <input class="form-control" type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid grid-2 gap-4">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_account" %}</label>
+                        <select class="form-control" name="account">
+                            <option value="">{% t "fin_select_account" %}</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.pk }}">{{ acc.name }} ({{ acc.get_account_type_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "fin_category" %}</label>
+                        <select class="form-control" name="category">
+                            <option value="">{% t "fin_select_category" %}</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.pk }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "fin_method" %}</label>
+                    <select class="form-control" name="payment_method">
+                        <option value="">{% t "fin_select_method" %}</option>
+                        <option value="cash">{% t "fin_method_cash" %}</option>
+                        <option value="card">{% t "fin_method_card" %}</option>
+                        <option value="transfer">{% t "fin_method_transfer" %}</option>
+                        <option value="terminal">{% t "fin_method_terminal" %}</option>
+                        <option value="other">{% t "fin_method_other" %}</option>
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "description" %}</label>
+                    <textarea class="form-control" name="description" rows="3"></textarea>
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="{% url 'finance:expense_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> {% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "fin_create_expense" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

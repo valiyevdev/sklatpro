@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "calendar_view" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "calendar_view" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:task_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-list"></i></a>
+        <a href="{% url 'spiskalar:task_kanban' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-kanban"></i></a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title">{% t "task_due_date" %}</span>
+        <div class="d-flex gap-2">
+            <select name="assigned" class="input-pro" style="max-width:180px" onchange="filterTasks(this.value)">
+                <option value="">{% t "task_assigned_to" %}</option>
+                {% for e in employees %}<option value="{{ e.pk }}" {% if filters.assigned == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.get_full_name }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="card-pro-body" id="calendar-container">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<script>
+const tasks = [
+    {% for task in tasks %}
+    {
+        id: {{ task.pk }},
+        title: '{{ task.title|escapejs|truncatechars:40 }}',
+        date: '{{ task.due_date|date:"Y-m-d" }}',
+        status: '{{ task.status }}',
+        priority: '{{ task.priority }}',
+        url: '{% url "spiskalar:task_detail" pk=task.pk %}',
+        assignee: '{% if task.assigned_to %}{{ task.assigned_to.get_full_name|escapejs }}{% endif %}'
+    },
+    {% endfor %}
+];
+function renderCalendar() {
+    const container = document.getElementById('calendar');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let html = '<div style="text-align:center;font-weight:600;font-size:1.1rem;margin-bottom:1rem;color:var(--text-primary)">' + monthNames[month] + ' ' + year + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border-primary);border-radius:var(--radius-md);overflow:hidden">';
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    dayNames.forEach(d => { html += '<div style="background:var(--bg-secondary);padding:0.5rem;text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted)">' + d + '</div>'; });
+    for (let i = 0; i < startOffset; i++) { html += '<div style="background:var(--bg-primary);padding:0.5rem;min-height:80px;opacity:0.3"></div>'; }
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+        const today = new Date(); const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        const dayTasks = tasks.filter(t => t.date === dateStr);
+        html += '<div style="background:var(--bg-primary);padding:0.5rem;min-height:80px;' + (isToday ? 'background:var(--primary-50);border:2px solid var(--primary-400)' : '') + '">';
+        html += '<div style="font-size:0.75rem;font-weight:500;color:var(--text-muted);margin-bottom:4px">' + day + '</div>';
+        dayTasks.forEach(t => {
+            const borderColor = t.priority === 'urgent' ? 'var(--danger-500)' : t.priority === 'high' ? 'var(--warning-500)' : 'var(--primary-400)';
+            html += '<a href="' + t.url + '" style="display:block;padding:2px 4px;margin-bottom:2px;border-radius:4px;font-size:0.65rem;text-decoration:none;color:var(--text-primary);border-left:2px solid ' + borderColor + ';background:var(--bg-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + t.title + ' ' + t.assignee + '">' + t.title + '</a>';
+        });
+        html += '</div>';
+    }
+    const remaining = 7 - ((startOffset + daysInMonth) % 7);
+    if (remaining < 7) { for (let i = 0; i < remaining; i++) { html += '<div style="background:var(--bg-primary);padding:0.5rem;min-height:80px;opacity:0.3"></div>'; } }
+    html += '</div>';
+    container.innerHTML = html;
+}
+function filterTasks(val) { window.location.href = '?assigned=' + val; }
+renderCalendar();
+</script>
+{% endblock %}

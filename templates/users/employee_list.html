@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "employees" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex align-center justify-between mb-4">
+    <div>
+        <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "employees" %}</h2>
+        <p class="text-pro-sm text-pro-muted mb-0">{% t "employees_subtitle" %}</p>
+    </div>
+    <a href="{% url 'users:employee_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_employee" %}</a>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <input class="input-pro" type="search" name="search" placeholder="{% t "search_placeholder" %}..." value="{{ search_query }}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="input-pro" name="role">
+                    <option value="">{% t "all_roles" %}</option>
+                    <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="manager" {% if role_filter == 'manager' %}selected{% endif %}>{% t "manager" %}</option>
+                    <option value="warehouse" {% if role_filter == 'warehouse' %}selected{% endif %}>{% t "warehouse_role" %}</option>
+                    <option value="cashier" {% if role_filter == 'cashier' %}selected{% endif %}>{% t "cashier" %}</option>
+                </select>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+    {% for emp in employees %}
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div class="d-flex align-center gap-3 mb-3">
+                <div style="width:48px;height:48px;border-radius:12px;background:var(--primary-50);display:flex;align-items:center;justify-content:center;color:var(--primary-600);font-size:1.125rem;font-weight:700;flex-shrink:0">
+                    {% if emp.profile_picture %}<img src="{{ emp.profile_picture.url }}" style="width:48px;height:48px;border-radius:12px;object-fit:cover" alt="">
+                    {% else %}{{ emp.get_full_name|default:emp.username|first|upper }}{% endif %}
+                </div>
+                <div style="flex:1;min-width:0">
+                    <h5 class="fw-600 mb-0" style="color:var(--gray-900)">{{ emp.get_full_name|default:emp.username }}</h5>
+                    <span class="badge-pro badge-pro-{% if emp.role == 'admin' %}danger{% elif emp.role == 'manager' %}warning{% elif emp.role == 'warehouse' %}info{% else %}primary{% endif %}">{{ emp.get_role_display }}</span>
+                </div>
+            </div>
+            <div class="mb-2">
+                {% if emp.position %}<div class="text-pro-sm text-pro-muted mb-1"><i class="bi bi-briefcase"></i> {{ emp.position }}</div>{% endif %}
+                {% if emp.phone %}<div class="text-pro-sm text-pro-muted mb-1"><i class="bi bi-telephone"></i> {{ emp.phone }}</div>{% endif %}
+                {% if emp.email %}<div class="text-pro-sm text-pro-muted"><i class="bi bi-envelope"></i> {{ emp.email }}</div>{% endif %}
+            </div>
+            <div class="d-flex gap-1" style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--gray-100)">
+                <a href="{% url 'users:employee_update' pk=emp.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm" style="flex:1;justify-content:center"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+                <a href="{% url 'users:employee_delete' pk=emp.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-trash" style="color:var(--danger-500)"></i></a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card-pro" style="grid-column:1/-1">
+        <div class="card-pro-body">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                <h5 class="empty-state-title">{% t "no_employees" %}</h5>
+                <p class="empty-state-desc">{% t "add_first_product" %}</p>
+                <a href="{% url 'users:employee_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_employee" %}</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

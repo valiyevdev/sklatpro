@@ -1,0 +1,947 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ customer.name }} — CRM — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'crm:customer_crm_list' %}">CRM</a>
+    <span class="separator">/</span>
+    <span class="current">{{ customer.name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title"><i class="bi bi-person-circle" style="color:var(--primary-500)"></i> {{ customer.name }}</h1>
+            {% if customer.status == 'active' or customer.is_active != False %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "inactive" %}</span>
+            {% endif %}
+            {% if customer.customer_type %}
+                <span class="badge-pro badge-pro-neutral">{{ customer.get_customer_type_display|default:customer.customer_type }}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {{ customer.contact_person|default:"" }}
+            {% if customer.phone %} &middot; <i class="bi bi-telephone" style="font-size:0.75rem"></i> {{ customer.phone }}{% endif %}
+            {% if customer.email %} &middot; <i class="bi bi-envelope" style="font-size:0.75rem"></i> {{ customer.email }}{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'sales:customer_update' pk=customer.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'sales:customer_delete' pk=customer.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="d-flex gap-2 mb-6" style="flex-wrap:wrap">
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_sale">
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-cart-check"></i> {% t "new_sale" %}</button>
+    </form>
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_order">
+        <button type="submit" class="btn-pro btn-pro-info btn-pro-sm"><i class="bi bi-receipt"></i> {% t "new_order" %}</button>
+    </form>
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="log_call">
+        <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-telephone"></i> {% t "log_call" %}</button>
+    </form>
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="send_email">
+        <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-envelope"></i> {% t "send_email" %}</button>
+    </form>
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_task">
+        <button type="submit" class="btn-pro btn-pro-warning btn-pro-sm"><i class="bi bi-list-task"></i> {% t "create_task" %}</button>
+    </form>
+    <form method="post" action="{% url 'crm:customer_quick_action' pk=customer.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_note">
+        <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-sticky"></i> {% t "add_note" %}</button>
+    </form>
+</div>
+
+<!-- Stats Row 1 -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-4)">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_revenue" %}</div>
+            <div class="stat-card-value">${{ total_revenue|default:0|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_paid" %}</div>
+            <div class="stat-card-value">${{ total_paid|default:0|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-wallet2"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "outstanding" %}</div>
+            <div class="stat-card-value">${{ outstanding|default:0|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon {% if outstanding > 0 %}danger{% else %}success{% endif %}"><i class="bi bi-exclamation-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "avg_order_value" %}</div>
+            <div class="stat-card-value">${{ avg_order_value|default:0|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-receipt"></i></div>
+    </div>
+</div>
+
+<!-- Stats Row 2 -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_orders" %}</div>
+            <div class="stat-card-value">{{ total_orders|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_sales" %}</div>
+            <div class="stat-card-value">{{ total_sales_count|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cart-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "returns" %}</div>
+            <div class="stat-card-value">{{ total_returns|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-arrow-return-left"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "active_tasks" %}</div>
+            <div class="stat-card-value">{{ active_tasks|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clipboard-check"></i></div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="card-pro mb-6">
+    <div class="card-pro-header" style="border-bottom:1px solid var(--border-default)">
+        <div class="d-flex gap-1" style="overflow-x:auto">
+            <button class="tab-btn active" onclick="switchTab('overview')" id="tab-overview"><i class="bi bi-info-circle"></i> {% t "overview" %}</button>
+            <button class="tab-btn" onclick="switchTab('orders')" id="tab-orders"><i class="bi bi-receipt"></i> {% t "orders" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ orders|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('sales')" id="tab-sales"><i class="bi bi-cart-check"></i> {% t "sales" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ sales_list|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('payments')" id="tab-payments"><i class="bi bi-wallet2"></i> {% t "payments" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ payments|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('returns')" id="tab-returns"><i class="bi bi-arrow-return-left"></i> {% t "returns" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ returns|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('products')" id="tab-products"><i class="bi bi-box-seam"></i> {% t "products" %}</button>
+            <button class="tab-btn" onclick="switchTab('communication')" id="tab-communication"><i class="bi bi-chat-dots"></i> {% t "communication" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ communications|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('tasks')" id="tab-tasks"><i class="bi bi-list-task"></i> {% t "tasks" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ tasks|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('notes')" id="tab-notes"><i class="bi bi-sticky"></i> {% t "notes" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ notes|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('documents')" id="tab-documents"><i class="bi bi-file-earmark"></i> {% t "documents" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ documents|length }}</span></button>
+        </div>
+    </div>
+
+    <!-- ==================== OVERVIEW TAB ==================== -->
+    {% if tab == "overview" or not tab %}
+    <div class="tab-content active" id="panel-overview">
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6)">
+                <!-- Customer Info Card -->
+                <div class="card-pro" style="margin:0">
+                    <div class="card-pro-header">
+                        <span class="card-pro-title"><i class="bi bi-person-lines-fill" style="color:var(--primary-600)"></i> {% t "customer_info" %}</span>
+                    </div>
+                    <div class="card-pro-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "phone" %}</div>
+                                <div class="fw-500">{% if customer.phone %}<i class="bi bi-telephone" style="color:var(--text-muted);margin-right:4px"></i>{{ customer.phone }}{% else %}-{% endif %}</div>
+                            </div>
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "email_label" %}</div>
+                                <div class="fw-500">{% if customer.email %}<i class="bi bi-envelope" style="color:var(--text-muted);margin-right:4px"></i>{{ customer.email }}{% else %}-{% endif %}</div>
+                            </div>
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "telegram" %}</div>
+                                <div class="fw-500">{% if customer.telegram %}<i class="bi bi-telegram" style="color:var(--text-muted);margin-right:4px"></i>{{ customer.telegram }}{% else %}-{% endif %}</div>
+                            </div>
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "address" %}</div>
+                                <div class="fw-500">{% if customer.address %}<i class="bi bi-geo-alt" style="color:var(--text-muted);margin-right:4px"></i>{{ customer.address }}{% else %}-{% endif %}</div>
+                            </div>
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "contact_person" %}</div>
+                                <div class="fw-500">{{ customer.contact_person|default:"-" }}</div>
+                            </div>
+                            <div>
+                                <div class="text-pro-sm text-pro-muted mb-1">{% t "created" %}</div>
+                                <div class="fw-500">{{ customer.created_at|date:"d.m.Y" }}</div>
+                            </div>
+                        </div>
+                        {% if customer.notes %}
+                        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-subtle)">
+                            <div class="text-pro-sm text-pro-muted mb-1">{% t "notes" %}</div>
+                            <div>{{ customer.notes }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Segments & Tags -->
+                <div class="card-pro" style="margin:0">
+                    <div class="card-pro-header">
+                        <span class="card-pro-title"><i class="bi bi-bookmark-star" style="color:var(--primary-600)"></i> {% t "segments_and_tags" %}</span>
+                    </div>
+                    <div class="card-pro-body">
+                        <!-- Segments -->
+                        <div class="mb-4">
+                            <div class="text-pro-sm fw-600 mb-2">{% t "segments" %}</div>
+                            <div class="d-flex gap-2" style="flex-wrap:wrap">
+                                {% for assignment in customer_segments %}
+                                    <span class="badge-pro badge-pro-primary">
+                                        {{ assignment.segment.name }}
+                                        <form method="post" action="{% url 'crm:segment_remove' customer_id=customer.pk assignment_id=assignment.id %}" style="display:inline">
+                                            {% csrf_token %}
+                                            <button type="submit" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 0 0 4px;font-size:0.75rem" title="{% t "remove" %}"><i class="bi bi-x"></i></button>
+                                        </form>
+                                    </span>
+                                {% empty %}
+                                    <span class="text-pro-sm text-pro-muted">{% t "no_segments_assigned" %}</span>
+                                {% endfor %}
+                            </div>
+                            <form method="post" action="{% url 'crm:segment_assign' customer_id=customer.pk %}" class="d-flex gap-2 mt-2">
+                                {% csrf_token %}
+                                <select class="input-pro" name="segment_id" style="width:auto">
+                                    <option value="">{% t "add_segment" %}...</option>
+                                    {% for seg in available_segments %}
+                                        <option value="{{ seg.pk }}">{{ seg.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus"></i></button>
+                            </form>
+                        </div>
+
+                        <!-- Tags -->
+                        <div>
+                            <div class="text-pro-sm fw-600 mb-2">{% t "tags" %}</div>
+                            <div class="d-flex gap-2" style="flex-wrap:wrap">
+                                {% for assignment in customer_tags %}
+                                    <span class="badge-pro badge-pro-neutral">
+                                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ assignment.tag.color|default:'#6366f1' }};margin-right:4px"></span>
+                                        {{ assignment.tag.name }}
+                                        <form method="post" action="{% url 'crm:tag_remove' customer_id=customer.pk assignment_id=assignment.id %}" style="display:inline">
+                                            {% csrf_token %}
+                                            <button type="submit" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 0 0 4px;font-size:0.75rem" title="{% t "remove" %}"><i class="bi bi-x"></i></button>
+                                        </form>
+                                    </span>
+                                {% empty %}
+                                    <span class="text-pro-sm text-pro-muted">{% t "no_tags_assigned" %}</span>
+                                {% endfor %}
+                            </div>
+                            <form method="post" action="{% url 'crm:tag_assign' customer_id=customer.pk %}" class="d-flex gap-2 mt-2">
+                                {% csrf_token %}
+                                <select class="input-pro" name="tag_id" style="width:auto">
+                                    <option value="">{% t "add_tag" %}...</option>
+                                    {% for t in available_tags %}
+                                        <option value="{{ t.pk }}">{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-plus"></i></button>
+                            </form>
+                        </div>
+
+                        <!-- RFM Score -->
+                        {% if rfm %}
+                        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border-subtle)">
+                            <div class="text-pro-sm fw-600 mb-2"><i class="bi bi-graph-up-arrow" style="color:var(--primary-600)"></i> {% t "rfm_score" %}</div>
+                            <div class="d-flex gap-3">
+                                <div class="text-center">
+                                    <div class="text-pro-xs text-pro-muted">{% t "recency" %}</div>
+                                    <div class="fw-700" style="font-size:1.25rem;color:var(--primary-600)">{{ rfm.recency_score }}</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-pro-xs text-pro-muted">{% t "frequency" %}</div>
+                                    <div class="fw-700" style="font-size:1.25rem;color:var(--primary-600)">{{ rfm.frequency_score }}</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-pro-xs text-pro-muted">{% t "monetary" %}</div>
+                                    <div class="fw-700" style="font-size:1.25rem;color:var(--primary-600)">{{ rfm.monetary_score }}</div>
+                                </div>
+                                <div style="border-left:1px solid var(--border-default);padding-left:var(--sp-3)">
+                                    <div class="text-pro-xs text-pro-muted">{% t "segment" %}</div>
+                                    <div class="fw-600">{{ rfm.segment }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ==================== ORDERS TAB ==================== -->
+    {% if tab == "orders" %}
+    <div class="tab-content active" id="panel-orders">
+    {% else %}
+    <div class="tab-content" id="panel-orders">
+    {% endif %}
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "date" %}</th>
+                        <th>{% t "warehouse" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "payment" %}</th>
+                        <th style="text-align:right">{% t "actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td class="cell-primary fw-500">
+                            <a href="{% url 'orders:order_detail' pk=o.pk %}" style="text-decoration:none;color:var(--primary-600)">{{ o.reference }}</a>
+                        </td>
+                        <td class="cell-muted">{{ o.created_at|date:"d.m.Y" }}</td>
+                        <td>{{ o.warehouse.name|default:"-" }}</td>
+                        <td class="fw-600">${{ o.total|default:0|floatformat:0 }}</td>
+                        <td>
+                            {% if o.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                            {% elif o.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                            {% elif o.status == 'shipped' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "shipped" %}</span>
+                            {% elif o.status == 'confirmed' %}
+                                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "confirmed" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ o.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if o.payment_status == 'paid' %}
+                                <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+                            {% elif o.payment_status == 'partial' %}
+                                <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1" style="justify-content:flex-end">
+                                <a href="{% url 'orders:order_detail' pk=o.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-receipt"></i></div>
+                                <h5 class="empty-state-title">{% t "no_orders" %}</h5>
+                                <p class="empty-state-desc">{% t "no_orders_for_customer" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== SALES TAB ==================== -->
+    {% if tab == "sales" %}
+    <div class="tab-content active" id="panel-sales">
+    {% else %}
+    <div class="tab-content" id="panel-sales">
+    {% endif %}
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "date" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "payment_status" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th style="text-align:right">{% t "actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sales_list %}
+                    <tr>
+                        <td class="cell-primary fw-500">
+                            <a href="{% url 'sales:sale_detail' pk=s.pk %}" style="text-decoration:none;color:var(--primary-600)">{{ s.reference }}</a>
+                        </td>
+                        <td class="cell-muted">{{ s.created_at|date:"d.m.Y" }}</td>
+                        <td class="fw-600">${{ s.total|floatformat:0 }}</td>
+                        <td>
+                            {% if s.payment_status == 'paid' %}
+                                <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+                            {% elif s.payment_status == 'partial' %}
+                                <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                            {% elif s.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                            {% elif s.status == 'shipped' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "shipped" %}</span>
+                            {% elif s.status == 'confirmed' %}
+                                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "confirmed" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ s.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1" style="justify-content:flex-end">
+                                <a href="{% url 'sales:sale_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-cart-check"></i></div>
+                                <h5 class="empty-state-title">{% t "no_sales_yet" %}</h5>
+                                <p class="empty-state-desc">{% t "no_sales_for_customer" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== PAYMENTS TAB ==================== -->
+    {% if tab == "payments" %}
+    <div class="tab-content active" id="panel-payments">
+    {% else %}
+    <div class="tab-content" id="panel-payments">
+    {% endif %}
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "sale_reference" %}</th>
+                        <th>{% t "amount" %}</th>
+                        <th>{% t "payment_method" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                    <tr>
+                        <td class="cell-primary">{{ p.sale.reference|default:"-" }}</td>
+                        <td class="fw-600">${{ p.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if p.payment_method == 'cash' %}
+                                <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "cash" %}</span>
+                            {% elif p.payment_method == 'card' %}
+                                <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "card" %}</span>
+                            {% elif p.payment_method == 'transfer' %}
+                                <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "transfer" %}</span>
+                            {% elif p.payment_method == 'online' %}
+                                <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "online" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral">{{ p.get_payment_method_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-muted">{{ p.payment_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-wallet2"></i></div>
+                                <h5 class="empty-state-title">{% t "no_payments" %}</h5>
+                                <p class="empty-state-desc">{% t "no_payments_recorded" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== RETURNS TAB ==================== -->
+    {% if tab == "returns" %}
+    <div class="tab-content active" id="panel-returns">
+    {% else %}
+    <div class="tab-content" id="panel-returns">
+    {% endif %}
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "sale_reference" %}</th>
+                        <th>{% t "reason" %}</th>
+                        <th>{% t "condition" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in returns %}
+                    <tr>
+                        <td class="cell-primary fw-500">{{ r.reference }}</td>
+                        <td>{{ r.sale.reference|default:"-" }}</td>
+                        <td>{{ r.get_reason_display|default:r.reason|default:"-" }}</td>
+                        <td>{{ r.get_condition_display|default:r.condition|default:"-" }}</td>
+                        <td class="fw-600">${{ r.total|default:0|floatformat:0 }}</td>
+                        <td>
+                            {% if r.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                            {% elif r.status == 'approved' %}
+                                <span class="badge-pro badge-pro-info">{% t "approved" %}</span>
+                            {% elif r.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning">{{ r.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-arrow-return-left"></i></div>
+                                <h5 class="empty-state-title">{% t "no_returns" %}</h5>
+                                <p class="empty-state-desc">{% t "no_returns_for_customer" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== PRODUCTS TAB ==================== -->
+    {% if tab == "products" %}
+    <div class="tab-content active" id="panel-products">
+    {% else %}
+    <div class="tab-content" id="panel-products">
+    {% endif %}
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "product" %}</th>
+                        <th>{% t "quantity" %}</th>
+                        <th>{% t "total_spent" %}</th>
+                        <th>{% t "avg_price" %}</th>
+                        <th>{% t "last_purchase" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in product_summary %}
+                    <tr>
+                        <td class="cell-primary fw-500">{{ item.product__name }}</td>
+                        <td>{{ item.total_qty }}</td>
+                        <td class="fw-600">${{ item.total_spent|floatformat:0 }}</td>
+                        <td>${{ item.avg_price|floatformat:2 }}</td>
+                        <td class="cell-muted">{{ item.last_purchase|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                                <h5 class="empty-state-title">{% t "no_product_history" %}</h5>
+                                <p class="empty-state-desc">{% t "products_will_appear_after_sales" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== COMMUNICATION TAB ==================== -->
+    {% if tab == "communication" %}
+    <div class="tab-content active" id="panel-communication">
+    {% else %}
+    <div class="tab-content" id="panel-communication">
+    {% endif %}
+        <div class="card-pro-body">
+            <!-- Log Communication Form -->
+            <div class="card-pro mb-4" style="border:1px dashed var(--border-default)">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-plus-circle" style="color:var(--primary-600)"></i> {% t "log_communication" %}</span>
+                </div>
+                <form method="post" action="{% url 'crm:communication_create' customer_id=customer.pk %}">
+                    {% csrf_token %}
+                    <div class="card-pro-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "type" %} <span class="required">*</span></label>
+                                <select class="input-pro" name="comm_type" required>
+                                    <option value="call">{% t "call" %}</option>
+                                    <option value="email">{% t "email" %}</option>
+                                    <option value="meeting">{% t "meeting" %}</option>
+                                    <option value="whatsapp">{% t "whatsapp" %}</option>
+                                    <option value="telegram">{% t "telegram" %}</option>
+                                    <option value="other">{% t "other" %}</option>
+                                </select>
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "date" %}</label>
+                                <input class="input-pro" type="datetime-local" name="comm_date">
+                            </div>
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "subject" %}</label>
+                            <input class="input-pro" type="text" name="subject" placeholder="{% t "subject" %}...">
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "notes" %}</label>
+                            <textarea class="input-pro" name="content" rows="3" placeholder="{% t "communication_notes" %}..."></textarea>
+                        </div>
+                        <div class="d-flex justify-end">
+                            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "save_communication" %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Communication History -->
+            {% for comm in communications %}
+            <div class="d-flex gap-3 mb-3" style="align-items:flex-start">
+                <div class="stat-card-icon {% if comm.comm_type == 'call' %}success{% elif comm.comm_type == 'email' %}info{% elif comm.comm_type == 'meeting' %}primary{% elif comm.comm_type == 'whatsapp' or comm.comm_type == 'telegram' %}warning{% else %}neutral{% endif %}" style="width:36px;height:36px;font-size:0.875rem;flex-shrink:0">
+                    <i class="bi {% if comm.comm_type == 'call' %}bi-telephone{% elif comm.comm_type == 'email' %}bi-envelope{% elif comm.comm_type == 'meeting' %}bi-people{% elif comm.comm_type == 'whatsapp' %}bi-whatsapp{% elif comm.comm_type == 'telegram' %}bi-telegram{% else %}bi-chat-dots{% endif %}"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div class="d-flex align-center gap-2 mb-1">
+                        <span class="fw-600 text-pro-sm">{{ comm.get_comm_type_display|default:comm.comm_type }}</span>
+                        {% if comm.subject %}<span class="text-pro-sm text-pro-muted">&mdash; {{ comm.subject }}</span>{% endif %}
+                    </div>
+                    {% if comm.content %}<div class="text-pro-sm">{{ comm.content }}</div>{% endif %}
+                    <div class="text-pro-xs text-pro-muted mt-1">{{ comm.created_at|date:"d.m.Y H:i" }} &middot; {{ comm.created_by.get_full_name|default:comm.created_by.email|default:"" }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:var(--sp-6)">
+                <div class="empty-state-icon"><i class="bi bi-chat-dots"></i></div>
+                <h5 class="empty-state-title">{% t "no_communications" %}</h5>
+                <p class="empty-state-desc">{% t "log_first_communication" %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ==================== TASKS TAB ==================== -->
+    {% if tab == "tasks" %}
+    <div class="tab-content active" id="panel-tasks">
+    {% else %}
+    <div class="tab-content" id="panel-tasks">
+    {% endif %}
+        <div class="card-pro-body">
+            <!-- New Task Form -->
+            <div class="card-pro mb-4" style="border:1px dashed var(--border-default)">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-plus-circle" style="color:var(--primary-600)"></i> {% t "new_task" %}</span>
+                </div>
+                <form method="post" action="{% url 'crm:task_create' customer_id=customer.pk %}">
+                    {% csrf_token %}
+                    <div class="card-pro-body">
+                        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:var(--sp-3)">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "title" %} <span class="required">*</span></label>
+                                <input class="input-pro" type="text" name="title" required placeholder="{% t "task_title" %}...">
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "due_date" %}</label>
+                                <input class="input-pro" type="date" name="due_date">
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "priority" %}</label>
+                                <select class="input-pro" name="priority">
+                                    <option value="low">{% t "low" %}</option>
+                                    <option value="medium" selected>{% t "medium" %}</option>
+                                    <option value="high">{% t "high" %}</option>
+                                    <option value="urgent">{% t "urgent" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "description" %}</label>
+                            <textarea class="input-pro" name="description" rows="2" placeholder="{% t "task_description" %}..."></textarea>
+                        </div>
+                        <div class="d-flex justify-end">
+                            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "create_task" %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tasks List -->
+            <div style="overflow-x:auto">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "status" %}</th>
+                            <th>{% t "title" %}</th>
+                            <th>{% t "priority" %}</th>
+                            <th>{% t "due_date" %}</th>
+                            <th>{% t "assigned_to" %}</th>
+                            <th style="text-align:right">{% t "actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tasks %}
+                        <tr>
+                            <td>
+                                <form method="post" action="{% url 'crm:task_update_status' pk=t.pk %}" style="display:inline">
+                                    {% csrf_token %}
+                                    {% if t.status == 'completed' %}
+                                        <input type="hidden" name="status" value="pending">
+                                        <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "mark_pending" %}" style="color:var(--success-500)"><i class="bi bi-check-circle-fill"></i></button>
+                                    {% else %}
+                                        <input type="hidden" name="status" value="completed">
+                                        <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "mark_complete" %}"><i class="bi bi-circle"></i></button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                            <td class="fw-500 {% if t.status == 'completed' %}" style="text-decoration:line-through;color:var(--text-muted){% endif %}">{{ t.title }}</td>
+                            <td>
+                                {% if t.priority == 'urgent' %}
+                                    <span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>
+                                {% elif t.priority == 'high' %}
+                                    <span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+                                {% elif t.priority == 'medium' %}
+                                    <span class="badge-pro badge-pro-info">{% t "medium" %}</span>
+                                {% else %}
+                                    <span class="badge-pro badge-pro-neutral">{% t "low" %}</span>
+                                {% endif %}
+                            </td>
+                            <td class="cell-muted">{% if t.due_date %}{{ t.due_date|date:"d.m.Y" }}{% else %}-{% endif %}</td>
+                            <td>{{ t.assigned_to.get_full_name|default:t.assigned_to.email|default:"-" }}</td>
+                            <td>
+                                <div class="d-flex gap-1" style="justify-content:flex-end">
+                                    <form method="post" action="{% url 'crm:task_update_status' pk=t.pk %}" style="display:inline">
+                                        {% csrf_token %}
+                                        {% if t.status != 'completed' %}
+                                            <input type="hidden" name="status" value="completed">
+                                            <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--success-500)" title="{% t "mark_complete" %}"><i class="bi bi-check-lg"></i></button>
+                                        {% endif %}
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state" style="padding:var(--sp-6)">
+                                    <div class="empty-state-icon"><i class="bi bi-list-task"></i></div>
+                                    <h5 class="empty-state-title">{% t "no_tasks" %}</h5>
+                                    <p class="empty-state-desc">{% t "create_first_task" %}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== NOTES TAB ==================== -->
+    {% if tab == "notes" %}
+    <div class="tab-content active" id="panel-notes">
+    {% else %}
+    <div class="tab-content" id="panel-notes">
+    {% endif %}
+        <div class="card-pro-body">
+            <!-- Add Note Form -->
+            <div class="card-pro mb-4" style="border:1px dashed var(--border-default)">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-plus-circle" style="color:var(--primary-600)"></i> {% t "add_note" %}</span>
+                </div>
+                <form method="post" action="{% url 'crm:note_create' customer_id=customer.pk %}">
+                    {% csrf_token %}
+                    <div class="card-pro-body">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "title" %}</label>
+                            <input class="input-pro" type="text" name="title" placeholder="{% t "note_title" %}...">
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "note" %} <span class="required">*</span></label>
+                            <textarea class="input-pro" name="content" rows="4" required placeholder="{% t "write_your_note" %}..."></textarea>
+                        </div>
+                        <div class="d-flex justify-end">
+                            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "save_note" %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Notes List -->
+            {% for n in notes %}
+            <div class="card-pro mb-3">
+                <div class="card-pro-header">
+                    <div>
+                        <span class="fw-600">{% if n.title %}{{ n.title }}{% else %}{% t "note" %} #{{ forloop.counter }}{% endif %}</span>
+                        <span class="text-pro-xs text-pro-muted" style="margin-left:var(--sp-2)">{{ n.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <form method="post" action="{% url 'crm:note_delete' pk=n.pk %}" onsubmit="return confirm('{% t "are_you_sure" %}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-500)" title="{% t "delete" %}"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+                <div class="card-pro-body">
+                    <div class="text-pro-sm" style="white-space:pre-wrap">{{ n.content }}</div>
+                    <div class="text-pro-xs text-pro-muted mt-2">- {{ n.created_by.get_full_name|default:n.created_by.email|default:"" }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:var(--sp-6)">
+                <div class="empty-state-icon"><i class="bi bi-sticky"></i></div>
+                <h5 class="empty-state-title">{% t "no_notes" %}</h5>
+                <p class="empty-state-desc">{% t "add_first_note" %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ==================== DOCUMENTS TAB ==================== -->
+    {% if tab == "documents" %}
+    <div class="tab-content active" id="panel-documents">
+    {% else %}
+    <div class="tab-content" id="panel-documents">
+    {% endif %}
+        <div class="card-pro-body">
+            <!-- Upload Document Form -->
+            <div class="card-pro mb-4" style="border:1px dashed var(--border-default)">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-upload" style="color:var(--primary-600)"></i> {% t "upload_document" %}</span>
+                </div>
+                <form method="post" action="{% url 'crm:document_upload' customer_id=customer.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-pro-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "file" %} <span class="required">*</span></label>
+                                <input class="input-pro" type="file" name="file" required>
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "document_type" %}</label>
+                                <select class="input-pro" name="category">
+                                    <option value="invoice">{% t "invoice" %}</option>
+                                    <option value="contract">{% t "contract" %}</option>
+                                    <option value="id">{% t "id_document" %}</option>
+                                    <option value="certificate">{% t "certificate" %}</option>
+                                    <option value="other">{% t "other" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "description" %}</label>
+                            <input class="input-pro" type="text" name="description" placeholder="{% t "optional_description" %}...">
+                        </div>
+                        <div class="d-flex justify-end">
+                            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-upload"></i> {% t "upload" %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Documents List -->
+            <div style="overflow-x:auto">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "name" %}</th>
+                            <th>{% t "type" %}</th>
+                            <th>{% t "size" %}</th>
+                            <th>{% t "uploaded" %}</th>
+                            <th>{% t "by" %}</th>
+                            <th style="text-align:right">{% t "actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td class="cell-primary fw-500">
+                                <i class="bi bi-file-earmark" style="color:var(--primary-500);margin-right:4px"></i>
+                                {{ doc.title|default:"-" }}
+                            </td>
+                            <td>
+                                <span class="badge-pro badge-pro-neutral">{{ doc.get_category_display|default:doc.category|default:"-" }}</span>
+                            </td>
+                            <td class="cell-muted">{{ doc.file_size|default:"-" }}</td>
+                            <td class="cell-muted">{{ doc.created_at|date:"d.m.Y" }}</td>
+                            <td>                                {{ doc.created_by.get_full_name|default:doc.created_by.email|default:"-" }}</td>
+                            <td>
+                                <div class="d-flex gap-1" style="justify-content:flex-end">
+                                    {% if doc.file %}
+                                    <a href="{{ doc.file.url }}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" target="_blank" title="{% t "download" %}"><i class="bi bi-download"></i></a>
+                                    {% endif %}
+                                    <a href="{% url 'crm:document_delete' pk=doc.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-500)" title="{% t "delete" %}"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state" style="padding:var(--sp-6)">
+                                    <div class="empty-state-icon"><i class="bi bi-file-earmark"></i></div>
+                                    <h5 class="empty-state-title">{% t "no_documents" %}</h5>
+                                    <p class="empty-state-desc">{% t "upload_first_document" %}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-btn{padding:var(--sp-3) var(--sp-4);border:none;background:none;color:var(--text-secondary);font-size:var(--text-sm);font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--transition-fast);white-space:nowrap;display:flex;align-items:center;gap:var(--sp-2);font-family:var(--font-sans)}
+    .tab-btn:hover{color:var(--text-primary);background:var(--bg-surface-hover)}
+    .tab-btn.active{color:var(--primary-600);border-bottom-color:var(--primary-600);font-weight:600}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+    var panel = document.getElementById('panel-' + tab);
+    var btn = document.getElementById('tab-' + tab);
+    if (panel) panel.classList.add('active');
+    if (btn) btn.classList.add('active');
+}
+</script>
+{% endblock %}

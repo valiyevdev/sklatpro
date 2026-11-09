@@ -1,0 +1,2610 @@
+{% load i18n_tags %}
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <!-- BUILD-2026-10-26-A -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS — Ish rejimi | SKLAT PRO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.13/dist/index.global.min.js"></script>
+    <style>
+        /* BUILD-2026-10-26-A */
+        :root {
+            --grid: 8px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --shadow-sm: 0 8px 24px rgba(2, 6, 23, .18);
+            --shadow-lg: 0 24px 70px rgba(2, 6, 23, .32);
+            --ease: 180ms ease;
+            --bg-primary: #0f172a;
+            --bg-secondary: rgba(30, 41, 59, 0.8);
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --border-glass: rgba(148, 163, 184, 0.18);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --success-glow: #10b981;
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.45);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        button, input, select, textarea, a { transition: border-color var(--ease), background-color var(--ease), color var(--ease), box-shadow var(--ease), transform var(--ease); }
+        :focus-visible { outline: 3px solid rgba(45, 212, 191, .9); outline-offset: 3px; }
+        button, .pos-pill, .pos-secondary-btn, .pos-action-btn, .pos-credit-btn, .pos-pay-btn { min-height: 44px; }
+
+        body {
+            background: radial-gradient(circle at top, #1e293b, var(--bg-primary));
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .pos-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 18px;
+            height: 64px;
+            flex-shrink: 0;
+            background: linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(18px) saturate(120%);
+            -webkit-backdrop-filter: blur(18px) saturate(120%);
+            border-bottom: 1px solid var(--border-glass);
+            box-shadow: 0 10px 40px rgba(2, 6, 23, 0.45);
+            z-index: 10;
+        }
+
+        .pos-topbar-left,
+        .pos-topbar-center,
+        .pos-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .pos-topbar-right {
+            flex: 1 1 auto;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .pos-topbar { min-height: 72px; height: auto; }
+        .pos-pill, .pos-back-btn, .pos-status-badge { white-space: nowrap; flex-shrink: 0; }
+        .pos-topbar-right::-webkit-scrollbar { height: 5px; }
+        .pos-topbar-right::-webkit-scrollbar-thumb { background: rgba(96, 165, 250, 0.45); border-radius: 999px; }
+        .pos-topbar-right { scrollbar-width: thin; scrollbar-color: rgba(96, 165, 250, 0.5) transparent; }
+        .pos-more-btn { display:none; }
+
+        .pos-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-right: 16px;
+            border-right: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .pos-brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(59, 130, 246, 0.18) 100%);
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+        }
+
+        .pos-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pos-brand-title {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .pos-brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .pos-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.16);
+            border: 1px solid rgba(52, 211, 153, 0.45);
+            font-size: 13px;
+            font-weight: 600;
+            color: #a7f3d0;
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+        }
+
+        .pos-status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #34d399 0%, #10b981 100%);
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.14), 0 0 18px rgba(16, 185, 129, 0.55);
+            animation: pulse-glow 2.4s ease-in-out infinite;
+        }
+
+        .pos-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(14px);
+            color: var(--text-secondary);
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .pos-pill:hover {
+            border-color: rgba(129, 140, 248, 0.6);
+            color: var(--text-primary);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.16);
+        }
+
+        .pos-back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--border-glass);
+            transition: all 0.2s ease;
+        }
+
+        .pos-back-btn:hover {
+            color: var(--text-primary);
+            border-color: rgba(148, 163, 184, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .pos-shift-open-btn {
+            color: #a7f3d0;
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        .pos-shift-open-btn:hover {
+            color: #d1fae5;
+            border-color: rgba(52, 211, 153, 0.7);
+            background: rgba(16, 185, 129, 0.16);
+        }
+
+        /* Layout */
+        .pos-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 18px;
+            flex: 1;
+            overflow: hidden;
+            padding: 18px;
+            min-height: 0;
+        }
+
+        @media (max-width: 1200px) {
+            .pos-workspace {
+                grid-template-columns: minmax(0, 1fr) 340px;
+            }
+        }
+
+        /* Left Panel */
+        .pos-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+            border-radius: 20px;
+            background: radial-gradient(circle at top, rgba(51, 65, 85, 0.4), rgba(15, 23, 42, 0.9));
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 40px 60px -40px rgba(59, 130, 246, 0.25);
+        }
+
+        .pos-search-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .pos-search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .pos-search-clear {
+            position: absolute;
+            right: 118px;
+            display: none;
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(148, 163, 184, 0.14);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .pos-search-clear.visible { display: inline-flex; align-items: center; justify-content: center; }
+
+        .pos-search-hint {
+            position: absolute;
+            right: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+            font-size: 11px;
+            pointer-events: none;
+        }
+
+        .pos-search-hint kbd {
+            padding: 3px 6px;
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.7);
+            color: var(--text-secondary);
+            font-family: inherit;
+        }
+
+        .pos-search-icon {
+            position: absolute;
+            left: 18px;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        .pos-search-input {
+            width: 100%;
+            height: 58px;
+            padding: 0 20px 0 52px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: radial-gradient(circle, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.8) 100%);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        .pos-search-input::placeholder {
+            color: rgba(148, 163, 184, 0.8);
+        }
+
+        .pos-search-input:focus {
+            outline: none;
+            border-color: rgba(96, 165, 250, 0.9);
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.16);
+        }
+
+        .pos-category-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 2px 2px 6px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(96, 165, 250, 0.5) transparent;
+        }
+
+        .pos-catalog-count {
+            flex: 0 0 auto;
+            margin-left: auto;
+            padding: 7px 10px;
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            border-radius: 9px;
+            background: rgba(30, 41, 59, 0.45);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .pos-catalog-count strong { color: var(--text-primary); }
+
+        .pos-filter-tabs { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; scrollbar-color: rgba(96,165,250,.45) transparent; }
+        .pos-filter-tabs::-webkit-scrollbar { height: 4px; }
+        .pos-filter-tabs::-webkit-scrollbar-thumb { background: rgba(96,165,250,.45); border-radius: 999px; }
+        .pos-filter-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+        .pos-category-row::-webkit-scrollbar { height: 5px; }
+        .pos-category-row::-webkit-scrollbar-thumb { background: rgba(96, 165, 250, 0.45); border-radius: 999px; }
+
+        .pos-category-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--border-glass);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+
+        .pos-category-pill.active,
+        .pos-category-pill:hover {
+            color: var(--text-primary);
+            border-color: rgba(96, 165, 250, 0.8);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.18);
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+        }
+
+        .pos-catalog-area {
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pos-catalog-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .pos-catalog-status {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .pos-secondary-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 8px 14px;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pos-secondary-btn:hover,
+        .pos-secondary-btn:focus-visible {
+            color: var(--text-primary);
+            border-color: rgba(96, 165, 250, 0.7);
+        }
+
+        .pos-product-image {
+            width: 100%;
+            height: 112px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #93c5fd;
+            font-size: 28px;
+        }
+
+        .pos-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pos-stock-badge {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            max-width: none;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        .pos-stock-inline { display: inline; }
+
+        .pos-shift-dropdown { position: relative; }
+        .pos-shift-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 20;
+            display: none;
+            min-width: 170px;
+            padding: 6px;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, .98);
+            box-shadow: var(--shadow-lg);
+        }
+        .pos-shift-dropdown.is-open .pos-shift-dropdown-menu { display: block; }
+        .pos-shift-dropdown-menu button {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            text-align: left;
+            cursor: pointer;
+        }
+        .pos-shift-dropdown-menu button:hover { background: rgba(148, 163, 184, .12); color: var(--text-primary); }
+
+        .pos-stock-badge.in-stock { color: #bbf7d0; background: rgba(34, 197, 94, 0.14); }
+        .pos-stock-badge.low-stock { color: #fde68a; background: rgba(234, 179, 8, 0.14); }
+        .pos-stock-badge.out-of-stock { color: #fecaca; background: rgba(239, 68, 68, 0.14); }
+
+        .pos-product-card:focus-visible {
+            outline: 3px solid rgba(96, 165, 250, 0.65);
+            outline-offset: 2px;
+        }
+
+        .pos-product-card.is-disabled {
+            opacity: 0.58;
+            cursor: not-allowed;
+        }
+
+        .pos-cart-item input {
+            width: 58px;
+            padding: 5px 4px;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        .pos-cart-thumb { width: 42px; height: 42px; border-radius: 10px; display:grid; place-items:center; overflow:hidden; background: rgba(52,211,153,.12); color:#a7f3d0; font-weight:800; }
+        .pos-cart-thumb img { width:100%; height:100%; object-fit:cover; }
+        .pos-item-discount, .pos-price-switch { grid-column: 2 / -1; display:flex; gap:4px; }
+        .pos-item-discount button, .pos-price-switch button { border:1px solid var(--border-glass); background:transparent; color:var(--text-muted); border-radius:6px; padding:3px 6px; font-size:11px; cursor:pointer; }
+        .pos-price-switch button.active { color:#a7f3d0; border-color:rgba(52,211,153,.55); }
+
+        .pos-notice {
+            margin: auto;
+            max-width: 420px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .pos-modal-overlay .pos-shift-modal.is-wide {
+            width: min(560px, 94vw);
+        }
+
+        .pos-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .pos-form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .pos-form-field.full { grid-column: 1 / -1; }
+        .pos-form-field input,
+        .pos-form-field select {
+            width: 100%;
+            height: 48px;
+            padding: 0 13px;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.75);
+            color: var(--text-primary);
+        }
+
+        .pos-modal-results {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .pos-result-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.55);
+            cursor: pointer;
+        }
+
+        .pos-result-row:hover,
+        .pos-result-row:focus-visible { border-color: rgba(96, 165, 250, 0.7); }
+
+        .pos-empty-state {
+            margin: auto;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .pos-empty-orbit {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pos-empty-glow {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+            filter: blur(18px);
+            animation: orbit-pulse 3.6s ease-in-out infinite;
+        }
+
+        .pos-empty-circle {
+            position: relative;
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(14, 165, 233, 0.12) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.6);
+            box-shadow: 0 30px 60px -30px rgba(59, 130, 246, 0.9);
+            animation: float 3.2s ease-in-out infinite;
+        }
+
+        .pos-empty-icon {
+            font-size: 38px;
+            color: #bfdbfe;
+        }
+
+        .pos-empty-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .pos-empty-subtitle {
+            max-width: 420px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .pos-product-grid {
+            display: none;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            align-items: start;
+            align-content: start;
+        }
+
+        .pos-product-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: auto;
+            min-height: 0;
+            padding: 14px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(51, 65, 85, 0.62), rgba(15, 23, 42, 0.76));
+            border: 1px solid var(--border-glass);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .pos-product-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(96, 165, 250, 0.72);
+            box-shadow: 0 20px 42px -28px rgba(59, 130, 246, 0.9);
+        }
+
+        .pos-product-card.keyboard-highlight { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
+
+        .pos-product-name {
+            min-width: 0;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.25;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .pos-product-price {
+            align-self: flex-start;
+            flex-shrink: 0;
+            max-width: 100%;
+            font-size: 16px;
+            font-weight: 800;
+            color: #bfdbfe;
+            line-height: 1.2;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .pos-product-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            gap: 4px;
+            min-width: 0;
+            margin-top: auto;
+            padding-right: 30px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .pos-product-list-stock { display: none; }
+
+        .pos-product-meta > span:first-child {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Right Cart */
+        .pos-cart-panel {
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            backdrop-filter: blur(22px);
+            box-shadow: 0 50px 70px -40px rgba(14, 165, 233, 0.25);
+            overflow: hidden;
+        }
+
+        .pos-cart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 16px 18px 12px 18px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .pos-cart-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .pos-cart-clear {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 34px;
+            padding: 0 10px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 10px;
+            background: rgba(30, 41, 59, 0.6);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .pos-cart-clear:hover { color: #f8fafc; border-color: rgba(148, 163, 184, 0.4); background: rgba(51, 65, 85, 0.8); }
+
+        .pos-cart-badge {
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.18);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .pos-cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: calc(100vh - 420px);
+        }
+        .pos-cart-items::-webkit-scrollbar { width: 6px; }
+        .pos-cart-items::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.7); border-radius: 999px; }
+        .pos-cart-items::-webkit-scrollbar-track { background: transparent; }
+
+        .pos-cart-empty {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .pos-cart-empty-icon {
+            font-size: 40px;
+            opacity: 0.5;
+        }
+
+        .pos-cart-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+        }
+
+        .pos-cart-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .pos-cart-item-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pos-cart-item-price {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .pos-qty-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border-glass);
+            padding: 4px 10px;
+        }
+
+        .pos-qty-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .pos-qty-value {
+            min-width: 28px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pos-cart-item-total {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pos-cart-remove {
+            border: none;
+            background: transparent;
+            color: rgba(248, 113, 113, 0.9);
+            cursor: pointer;
+        }
+
+        .pos-cart-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 14px 18px;
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .pos-summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 4px 0;
+        }
+        .pos-summary-row span:last-child {
+            color: #e2e8f0;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pos-summary-discount {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+            min-width: 0;
+        }
+
+        .pos-discount-toggle {
+            display: inline-flex;
+            flex: 0 0 auto;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 9px;
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .pos-discount-toggle button {
+            min-width: 44px;
+            min-height: 32px;
+            padding: 4px 8px;
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .pos-discount-toggle button.active { background: rgba(45, 212, 191, 0.18); color: #a7f3d0; }
+
+        .pos-summary-discount input {
+            width: 78px;
+            padding: 6px 8px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 9px;
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pos-summary-discount .pos-secondary-btn {
+            min-height: 32px;
+            padding: 4px 10px;
+            border-radius: 9px;
+            font-size: 12px;
+        }
+
+        .pos-summary-row.total {
+            padding-top: 10px;
+            margin-top: 4px;
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            font-size: 16px;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+        .pos-summary-row.total span:last-child {
+            color: #34d399;
+            font-size: 20px;
+        }
+
+        .pos-cart-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            padding: 14px 18px;
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            min-width: 0;
+        }
+
+        .pos-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(30, 41, 59, 0.6);
+            color: #cbd5e1;
+            font-weight: 500;
+            min-width: 0;
+            line-height: 1.2;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            transition: all 0.2s ease;
+        }
+        .pos-action-btn:hover { background: rgba(30, 41, 59, 0.9); color: #f1f5f9; }
+
+        .pos-action-btn.danger {
+            color: rgba(248, 113, 113, 0.95);
+        }
+
+        .pos-pay-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 56px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #34d399 0%, #10b981 52%, #059669 100%);
+            color: #022c22;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 18px 38px -18px rgba(16, 185, 129, 0.95), inset 0 1px 0 rgba(255,255,255,0.28);
+            transition: all 0.25s ease;
+            grid-column: 1 / -1;
+        }
+
+        .pos-pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 30px 60px -18px rgba(16, 185, 129, 0.6);
+        }
+
+        .pos-pay-btn:focus-visible,
+        .pos-action-btn:focus-visible,
+        .pos-pill:focus-visible,
+        .pos-back-btn:focus-visible {
+            outline: 3px solid rgba(96, 165, 250, 0.65);
+            outline-offset: 2px;
+        }
+
+        .pos-header-add {
+            color: #d1fae5;
+            border-color: rgba(52, 211, 153, 0.45);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .pos-header-add:hover { background: rgba(16, 185, 129, 0.22); border-color: rgba(52, 211, 153, 0.8); }
+
+        /* Modal */
+        .pos-modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 0.98) 100%);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+        }
+
+        .pos-modal-overlay.active {
+            display: flex;
+        }
+
+        .pos-shift-modal {
+            width: min(440px, 92vw);
+            border-radius: 24px;
+            overflow: hidden;
+            background: radial-gradient(circle at top, rgba(51, 65, 85, 0.5), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 80px 120px -60px rgba(16, 185, 129, 0.4);
+        }
+
+        .pos-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 28px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        .pos-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        .pos-modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 26px 28px;
+        }
+
+        .pos-field-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pos-select,
+        .pos-input {
+            width: 100%;
+            height: 56px;
+            border-radius: 14px;
+            border: 1px solid var(--border-glass);
+            background: rgba(15, 23, 42, 0.7);
+            color: var(--text-primary);
+            padding: 0 18px;
+            font-size: 16px;
+        }
+
+        .pos-input {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+        }
+
+        .pos-modal-submit {
+            height: 58px;
+            border-radius: 999px;
+            border: none;
+            background: radial-gradient(circle, #34d399 0%, #10b981 60%, #059669 100%);
+            color: #022c22;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 30px 60px -25px var(--emerald-glow);
+        }
+
+        .pos-modal-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .pos-modal-close:hover {
+            color: var(--text-primary);
+            border-color: rgba(148, 163, 184, 0.45);
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes orbit-pulse {
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(0.98);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.12), 0 0 14px rgba(16, 185, 129, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.1), 0 0 22px rgba(16, 185, 129, 0.6);
+            }
+        }
+
+        @media (max-width: 1080px) {
+            .pos-topbar { height:auto; min-height:72px; flex-wrap:wrap; overflow:visible; row-gap:6px; }
+            .pos-header-add { display:flex; }
+            .header-low, .header-saved, .header-theme, .header-help, .header-warehouse { display:none; }
+            .pos-more-btn { display:flex; width:44px; padding:0; justify-content:center; }
+            .pos-topbar-center { order:3; flex:1 1 100%; width:auto; overflow-x:auto; padding-bottom:2px; }
+            .pos-topbar-right { flex:1 1 auto; margin-left:auto; max-width:none; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; }
+            .pos-workspace {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+
+            .pos-cart-panel {
+                max-height: 70vh;
+            }
+        }
+
+        @media (max-width: 1600px) and (min-width: 1081px) {
+            .header-theme, .header-help, .header-saved, .header-warehouse, .header-low { display: none; }
+            .pos-topbar-right { max-width:none; overflow-x:auto; flex-wrap:nowrap; }
+        }
+        @media (max-width: 1920px) and (min-width: 1601px) {
+            .header-help { display: none; }
+            .pos-topbar-right { max-width:none; overflow-x:auto; flex-wrap:nowrap; }
+        }
+
+         @media (max-width: 640px) {
+             .pos-topbar { height: auto; min-height: 72px; flex-wrap: nowrap; padding: 10px; overflow-x: auto; }
+            .pos-topbar-center { order: 3; width: 100%; overflow-x: auto; }
+            .pos-topbar-right { margin-left: auto; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+            .pos-workspace { padding: 10px; gap: 10px; }
+            .pos-search-section, .pos-catalog-area, .pos-cart-items, .pos-cart-summary, .pos-cart-actions { padding-left: 14px; padding-right: 14px; }
+            .pos-cart-item { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; padding: 11px; }
+            .pos-cart-item .pos-cart-item-total { grid-column: 2; }
+            .pos-cart-item .pos-cart-remove { grid-column: 3; grid-row: 1; }
+            .pos-form-grid { grid-template-columns: 1fr; }
+            .pos-form-field.full { grid-column: auto; }
+            .pos-catalog-toolbar { align-items: flex-start; flex-direction: column; }
+            .pos-search-hint { display: none; }
+            .pos-search-clear { right: 18px; }
+            .pos-cart-panel { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; max-height: 78vh; border-radius: 22px 22px 0 0; box-shadow: var(--shadow-lg); }
+            .pos-cart-panel.mobile-collapsed { max-height: 64px; overflow: hidden; }
+            .pos-cart-panel.mobile-collapsed .pos-cart-items, .pos-cart-panel.mobile-collapsed .pos-cart-summary, .pos-cart-panel.mobile-collapsed .pos-cart-actions { display: none; }
+            .pos-cart-item { grid-template-columns: 42px minmax(0, 1fr) auto; }
+            .pos-cart-item .pos-qty-control, .pos-cart-item .pos-cart-item-total, .pos-cart-item .pos-item-discount, .pos-cart-item .pos-price-switch, .pos-cart-item .pos-cart-remove { grid-column: 2 / -1; }
+            .pos-cart-item .pos-cart-remove { grid-row: auto; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* Fintech catalog refinements */
+        .pos-panel {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.94), rgba(7, 15, 32, 0.96));
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+
+         .pos-search-section { flex:0 0 auto; position:sticky; top:0; z-index:3; gap:10px; padding:18px 24px 0; background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.94)); }
+        .pos-search-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            z-index: -1;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(45, 212, 191, 0.65), rgba(96, 165, 250, 0.4), transparent 72%);
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+        .pos-search-wrapper:focus-within::after { opacity: 1; }
+        .pos-search-input { background: rgba(15, 23, 42, 0.9); border-color: rgba(148, 163, 184, 0.16); }
+        .pos-search-input:focus { border-color: rgba(45, 212, 191, 0.7); box-shadow: 0 0 0 5px rgba(20, 184, 166, 0.13), 0 12px 35px rgba(2, 6, 23, .25); }
+        .pos-category-pill.active {
+            background: linear-gradient(135deg, rgba(20, 184, 166, .28), rgba(59, 130, 246, .2));
+            border-color: rgba(45, 212, 191, .8);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, .08), 0 10px 28px rgba(20, 184, 166, .18);
+        }
+         .pos-catalog-area { flex:1 1 auto; padding:8px; }
+        .pos-catalog-toolbar { margin-bottom: 18px; }
+        .pos-catalog-status { font-size: 12px; letter-spacing: .02em; text-transform: uppercase; }
+        .pos-catalog-status strong { color: #e2e8f0; font-size: 14px; text-transform: none; }
+           .pos-product-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; align-items:start; align-content:start; grid-auto-rows:max-content; }
+         .pos-product-identity, .pos-product-actions, .pos-product-copy { display:contents; }
+         .pos-product-card {
+              min-height: 0;
+              height: auto;
+              padding: 14px;
+              gap: 8px;
+              border-radius: 14px;
+              justify-content: flex-start;
+              overflow:hidden;
+            background: linear-gradient(155deg, rgba(51, 65, 85, .72), rgba(15, 23, 42, .88));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+        }
+        .pos-product-card::after {
+            content: '+';
+            position: absolute;
+            right: 14px;
+            bottom: 14px;
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, .14);
+            color: #6ee7b7;
+            font-size: 20px;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: .2s ease;
+        }
+        .pos-product-card:hover::after, .pos-product-card:focus-visible::after { opacity: 1; transform: translateY(0); }
+        .pos-product-image {
+            height: 112px;
+            border-radius: 11px;
+            background: radial-gradient(circle at 30% 20%, rgba(45, 212, 191, .18), transparent 45%), rgba(15, 23, 42, .82);
+        }
+        .pos-product-image i { font-size: 36px; color: #5eead4; }
+        .pos-product-initials { display:grid; place-items:center; width:64px; height:64px; border-radius:20px; background:linear-gradient(135deg,rgba(45,212,191,.3),rgba(59,130,246,.28)); color:#ccfbf1; font-size:22px; font-weight:800; letter-spacing:.04em; }
+        .pos-product-favorite { position:absolute; top:10px; right:10px; z-index:2; width:34px; height:34px; border:0; border-radius:9px; background:rgba(15,23,42,.62); color:#94a3b8; cursor:pointer; }
+        .pos-product-favorite.active, .pos-product-favorite:hover { color:#fbbf24; }
+        .pos-product-quantity { position:absolute; top:12px; left:12px; z-index:2; min-width:28px; height:28px; display:grid; place-items:center; padding:0 6px; border-radius:9px; background:#10b981; color:#022c22; font-size:12px; font-weight:800; }
+        .pos-product-name { padding-right:24px; font-size:13px; font-weight:600; line-height:1.25; }
+        .pos-product-price { color:#6ee7b7; font-size:14px; font-weight:800; line-height:1.2; }
+         .pos-product-meta { align-items:flex-start; gap:3px; padding-right:30px; font-size:10px; }
+           @media (min-width:640px) { .pos-product-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; } }
+          @media (min-width:768px) { .pos-product-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; } }
+          @media (min-width:1024px) { .pos-product-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; } }
+          .pos-product-card::after { display:none; }
+         .pos-cart-panel { box-shadow: 0 24px 70px rgba(2, 6, 23, .32), inset 0 1px 0 rgba(255,255,255,.04); }
+         .pos-cart-header { min-height:56px; padding:14px 16px; background:rgba(15,23,42,.28); border-bottom:1px solid rgba(30,41,59,.8); }
+         .pos-cart-title { flex:1 1 auto; min-width:0; gap:8px; }
+         .pos-cart-items { padding:12px 16px; gap:8px; }
+         .pos-cart-empty { min-height:0; padding:16px 12px; color:#94a3b8; }
+         .pos-cart-empty-icon { color:#64748b; font-size:40px; }
+         .pos-cart-item { gap:10px; padding:10px 12px; border-radius:12px; background:rgba(15,23,42,.66); border-color:rgba(30,41,59,.9); }
+         .pos-qty-control { gap:6px; padding:3px 8px; }
+         .pos-cart-item { background: rgba(15, 23, 42, .52); border-color: rgba(148, 163, 184, .12); }
+        .pos-summary-row { font-size: 13px; }
+        .pos-summary-row > span:last-child { color: #e2e8f0; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .pos-summary-row.total { color: #f8fafc; font-size: 24px; letter-spacing: -.03em; }
+        .pos-summary-row.total > span:last-child { color: #6ee7b7; }
+        .pos-pay-btn { background: linear-gradient(110deg, #6ee7b7, #10b981 48%, #059669); }
+        .pos-pay-btn:active { transform: translateY(0) scale(.98); }
+         .pos-cart-summary { gap:8px; padding:14px 16px; border-top:1px solid rgba(51,65,85,.8); }
+         .pos-summary-row { min-height:28px; color:#94a3b8; font-size:13px; }
+         .pos-summary-row > span:last-child { color:#e2e8f0; font-weight:600; }
+         .pos-summary-discount { display:grid; grid-template-columns:auto minmax(42px,1fr) auto auto; align-items:center; gap:6px; width:min(100%, 300px); }
+         .pos-summary-discount .pos-secondary-btn { min-height:32px; padding:5px 8px; font-size:11px; }
+         .pos-summary-discount input { min-width:0; width:100%; height:32px; padding:5px 7px; }
+         .pos-summary-row.total { margin-top:4px; padding-top:12px; border-top:1px solid rgba(51,65,85,.8); color:#f8fafc; font-size:20px; }
+         .pos-summary-row.total > span:last-child { color:#6ee7b7; font-size:21px; font-weight:800; }
+         .pos-cart-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px 16px 16px; }
+         .pos-cart-actions > button { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+         .pos-cart-actions .pos-action-btn, .pos-cart-actions .pos-credit-btn { min-height:46px; border-radius:12px; }
+         .pos-cart-actions .pos-pay-btn { grid-column:1 / -1; min-height:54px; border-radius:12px; font-size:16px; box-shadow:0 16px 28px -18px rgba(16,185,129,.9); }
+         /* Checkout sidebar: keep the payment surface compact and predictable. */
+         .pos-cart-panel { min-height:0; }
+         .pos-cart-header { flex:0 0 auto; padding:14px 16px; border-bottom:1px solid rgba(30,41,59,.8); }
+         .pos-cart-items { flex:1 1 auto; min-height:0; max-height:calc(100vh - 450px); overflow-y:auto; }
+         .pos-cart-item { grid-template-columns:42px minmax(0,1fr) auto auto; align-items:center; gap:8px; padding:10px 12px; }
+         .pos-cart-item-info { min-width:0; }
+         .pos-cart-item-name { font-size:13px; }
+         .pos-cart-item-total { white-space:nowrap; font-size:13px; }
+         .pos-cart-summary { flex:0 0 auto; gap:6px; padding:12px 16px; }
+         .pos-summary-row { min-height:28px; padding:6px 0; color:#94a3b8; font-size:13px; }
+         .pos-summary-row > span:last-child { color:#e2e8f0; font-weight:600; white-space:nowrap; }
+         .pos-summary-discount { display:grid; grid-template-columns:auto minmax(42px,1fr) auto auto; align-items:center; gap:6px; width:100%; }
+         .pos-summary-discount input { min-width:0; width:100%; height:32px; }
+         .pos-summary-discount .pos-secondary-btn { min-height:32px; padding:5px 8px; font-size:11px; white-space:nowrap; }
+         .pos-summary-row.total { margin-top:4px; padding-top:12px; border-top:1px solid rgba(51,65,85,.8); color:#f1f5f9; font-size:18px; }
+         .pos-summary-row.total > span:last-child { color:#34d399; font-size:21px; font-weight:800; }
+         .pos-cart-actions { flex:0 0 auto; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px 16px 16px; border-top:1px solid rgba(30,41,59,.8); }
+         .pos-cart-actions .pos-action-btn, .pos-cart-actions .pos-credit-btn { min-height:46px; height:auto; padding:12px 10px; border-radius:12px; }
+         .pos-cart-actions .pos-pay-btn { grid-column:1 / -1; min-height:54px; height:auto; padding:14px; border-radius:12px; font-size:16px; }
+        .pos-cart-item { grid-template-columns: minmax(0, 1fr) auto auto auto auto; }
+        .pos-credit-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px;
+            padding: 0 14px; border: 1px solid rgba(251, 191, 36, .45); border-radius: 999px;
+            background: linear-gradient(110deg, #fbbf24, #f97316); color: #431407; font-weight: 800;
+            box-shadow: 0 16px 34px -18px rgba(245, 158, 11, .9); transition: .2s ease;
+        }
+        .pos-credit-btn:hover { transform: translateY(-2px); box-shadow: 0 24px 44px -18px rgba(245, 158, 11, .95); }
+        .pos-summary-discount select { width: 52px; padding: 5px 2px; border: 1px solid var(--border-glass); border-radius: 7px; background: rgba(15,23,42,.7); color: var(--text-primary); }
+         .pos-summary-discount { display:grid; grid-template-columns:auto minmax(70px,1fr) auto minmax(70px,auto); align-items:center; gap:6px; min-width:0; }
+        .pos-summary-discount input { min-width:0; width:100%; }
+        .pos-custom-price-btn { border: 0; background: transparent; color: #fbbf24; cursor: pointer; font-size: 14px; }
+        .pos-credit-modal { border-color: rgba(251, 191, 36, .35); }
+        .pos-credit-modal .pos-modal-title i { color: #fbbf24; }
+        .pos-credit-summary { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border:1px solid rgba(251,191,36,.25); border-radius:14px; background:rgba(120,53,15,.18); color:#fde68a; }
+        .pos-credit-summary strong { color:#fef3c7; font-size:22px; }
+        .pos-inline-create { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--text-muted); font-size:13px; }
+        .pos-credit-submit { height:58px; border:0; border-radius:999px; background:linear-gradient(110deg,#fbbf24,#f97316); color:#431407; font-size:16px; font-weight:800; box-shadow:0 24px 45px -22px rgba(245,158,11,.95); }
+        .pos-payment-methods { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; }
+        .pos-payment-method { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:74px; border:1px solid var(--border-glass); border-radius:12px; background:rgba(15,23,42,.6); color:var(--text-secondary); font-weight:700; cursor:pointer; }
+        .pos-payment-method small { font-size:10px; color:var(--text-muted); font-weight:500; }
+        .pos-payment-method.active { border-color:rgba(45,212,191,.7); background:rgba(20,184,166,.14); color:#a7f3d0; box-shadow:0 0 0 3px rgba(20,184,166,.08); }
+        .pos-cash-keypad { display:grid; grid-template-columns:repeat(3, minmax(54px, 1fr)); gap:6px; align-self:end; }
+        .pos-cash-keypad button { min-height:38px; border:1px solid var(--border-glass); border-radius:8px; background:rgba(15,23,42,.6); color:var(--text-primary); font-weight:700; cursor:pointer; }
+        .pos-split-row { display:flex; gap:8px; margin:8px 0; }
+        .pos-split-row select, .pos-split-row input { flex:1; min-height:40px; }
+        .pos-payment-success { text-align:center; animation:pos-success-in .35s ease-out; }
+        .pos-success-mark { width:60px; height:60px; margin:4px auto 8px; border-radius:50%; display:grid; place-items:center; background:#10b981; color:white; font-size:32px; }
+        .pos-receipt-preview { margin:12px auto; max-width:340px; padding:12px; text-align:left; background:#fff; color:#111827; font:12px/1.45 monospace; white-space:pre-wrap; border-radius:6px; }
+        .pos-success-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+        @keyframes pos-success-in { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
+        @media print { body * { visibility:hidden !important; } #receipt-preview, #receipt-preview * { visibility:visible !important; } #receipt-preview { position:absolute; left:0; top:0; width:58mm; max-width:58mm; border:0; } }
+        @media (max-width: 900px) { .pos-payment-methods { grid-template-columns:repeat(3, 1fr); } }
+        @media (max-width: 700px) { .pos-payment-methods { grid-template-columns:repeat(2, 1fr); } .pos-cash-keypad { grid-template-columns:repeat(3, 1fr); } }
+        .pos-cash-shortcuts { display:flex; gap:8px; flex-wrap:wrap; }
+        .pos-cash-shortcut { flex:1 1 70px; min-height:36px; padding:0 10px; border:1px solid rgba(96,165,250,.24); border-radius:10px; background:rgba(59,130,246,.1); color:#bfdbfe; font-size:12px; font-weight:700; cursor:pointer; }
+        .pos-cash-shortcut:hover { border-color:rgba(96,165,250,.7); background:rgba(59,130,246,.18); }
+        .pos-empty-state { min-height: 320px; }
+        .pos-empty-title { letter-spacing: -.02em; }
+        .pos-empty-subtitle { max-width: 460px; }
+        .pos-empty-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+        .pos-check-label { display:flex; align-items:center; gap:8px; color:var(--text-secondary); font-size:13px; }
+        .pos-input-with-button { display:flex; gap:6px; } .pos-input-with-button input { min-width:0; flex:1; }
+        .pos-import-box { display:grid; grid-template-columns:1fr auto; gap:8px; padding:12px; border:1px dashed var(--border-glass); border-radius:12px; color:var(--text-muted); font-size:12px; } .pos-import-box strong,.pos-import-box span { grid-column:1/-1; }
+         .pos-catalog-tools { display:flex; gap:6px; }
+           .pos-product-grid { flex:1 1 auto; min-height:0; max-height:calc(100vh - 260px); overflow-y:auto; overflow-x:hidden; padding:6px 8px 8px 8px; justify-content:start; scrollbar-width:thin; scrollbar-color:rgba(71,85,105,.75) transparent; gap:10px; }
+          .pos-product-grid::-webkit-scrollbar { width:6px; }
+          .pos-product-grid::-webkit-scrollbar-track { background:transparent; }
+          .pos-product-grid::-webkit-scrollbar-thumb { background:rgba(71,85,105,.75); border-radius:999px; }
+          .pos-product-grid::-webkit-scrollbar-thumb:hover { background:rgba(71,85,105,.95); }
+         .pos-day-strip { display:flex; align-items:stretch; flex-wrap:wrap; gap:8px; min-height:62px; padding:8px 18px; border-bottom:1px solid rgba(148,163,184,.12); background:rgba(15,23,42,.52); color:var(--text-muted); font-size:12px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:rgba(96,165,250,.45) transparent; }
+         .pos-day-strip::-webkit-scrollbar { height:5px; }
+         .pos-day-strip::-webkit-scrollbar-thumb { background:rgba(96,165,250,.45); border-radius:999px; }
+         .pos-metric-card { display:flex; align-items:center; gap:10px; min-width:142px; padding:8px 12px; border:1px solid rgba(71,85,105,.5); border-radius:12px; background:rgba(30,41,59,.4); box-shadow:inset 0 1px 0 rgba(255,255,255,.025); }
+         .pos-metric-card > i { display:grid; place-items:center; width:28px; height:28px; flex:0 0 28px; border-radius:9px; color:#93c5fd; background:rgba(59,130,246,.12); font-size:14px; }
+         .pos-metric-card > div { display:flex; flex-direction:column; gap:2px; min-width:0; }
+         .pos-metric-label { color:#94a3b8; font-size:10px; font-weight:600; letter-spacing:.08em; line-height:1.2; text-transform:uppercase; white-space:nowrap; }
+         .pos-metric-value { color:#f1f5f9; font-size:13px; font-weight:700; line-height:1.25; font-variant-numeric:tabular-nums; white-space:nowrap; }
+         .pos-metric-primary { border-color:rgba(45,212,191,.28); }
+         .pos-metric-primary > i { color:#6ee7b7; background:rgba(16,185,129,.14); }
+         .pos-metric-primary .pos-metric-value { color:#a7f3d0; }
+         .pos-metric-profit > i { color:#c4b5fd; background:rgba(139,92,246,.16); }
+         .pos-metric-profit .pos-metric-value { color:#ddd6fe; }
+         .pos-debt-link { display:flex; align-items:center; gap:8px; min-height:44px; margin-left:auto; padding:8px 14px; border:1px solid rgba(251,191,36,.35); border-radius:12px; background:rgba(245,158,11,.1); color:#fbbf24; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; box-shadow:0 8px 24px -16px rgba(245,158,11,.9); }
+          .pos-debt-link:hover { border-color:rgba(251,191,36,.7); background:rgba(245,158,11,.16); color:#fde68a; }
+           .pos-catalog-area:not(.is-list) .pos-product-card { padding:14px; gap:8px; }
+           .pos-catalog-area:not(.is-list) .pos-product-image { height:112px; }
+          .pos-catalog-area:not(.is-list) .pos-product-name { -webkit-line-clamp:2; line-height:1.25; font-size:14px; }
+          .pos-catalog-area:not(.is-list) .pos-product-price { font-size:16px; }
+          .pos-catalog-area:not(.is-list) .pos-product-meta { gap:4px; font-size:11px; }
+        body.light { background:#eef4f8; color:#102033; --bg-primary:#eef4f8; --text-primary:#102033; --text-secondary:#334155; --text-muted:#64748b; --border-glass:rgba(15,23,42,.14); }
+        body.light .pos-topbar, body.light .pos-panel, body.light .pos-cart-panel, body.light .pos-pill, body.light .pos-back-btn, body.light .pos-product-card { background:rgba(255,255,255,.86); color:#102033; }
+        body.light .pos-catalog-area, body.light .pos-cart-items, body.light .pos-cart-summary { color:#102033; }
+        body.light .pos-search-input, body.light .pos-cart-item, body.light .pos-summary-discount input, body.light .pos-summary-discount select { background:#f8fafc; color:#102033; }
+        body.light .pos-product-name, body.light .pos-catalog-status strong, body.light .pos-summary-row.total { color:#102033; }
+         body.light .pos-day-strip, body.light .pos-cart-header, body.light .pos-cart-summary { background:rgba(255,255,255,.75); color:#334155; }
+         body.light .pos-metric-card { background:rgba(248,250,252,.86); border-color:rgba(100,116,139,.25); }
+         body.light .pos-metric-label { color:#64748b; }
+         body.light .pos-metric-value { color:#1e293b; }
+         body.light .pos-catalog-count { background:rgba(241,245,249,.9); border-color:rgba(100,116,139,.25); }
+         body.light .pos-catalog-count strong { color:#1e293b; }
+        body.light .pos-payment-method, body.light .pos-cash-keypad button, body.light .pos-cash-shortcut, body.light .pos-modal-body { color:#102033; background:#fff; }
+        .pos-view-toggle { width:40px; height:40px; border:1px solid var(--border-glass); border-radius:10px; background:rgba(30,41,59,.6); color:var(--text-muted); cursor:pointer; }
+        .pos-view-toggle.active, .pos-view-toggle:hover { color:#a7f3d0; border-color:rgba(45,212,191,.65); background:rgba(20,184,166,.12); }
+        .pos-skeleton-grid { display:none; grid-template-columns:repeat(auto-fill,minmax(208px,1fr)); gap:14px; }
+        .pos-skeleton-card { height:260px; border-radius:18px; background:linear-gradient(110deg,rgba(51,65,85,.42) 8%,rgba(71,85,105,.62) 18%,rgba(51,65,85,.42) 33%); background-size:200% 100%; animation:pos-shimmer 1.3s linear infinite; border:1px solid rgba(148,163,184,.12); }
+          .pos-catalog-area.is-list .pos-product-grid { grid-template-columns:1fr; gap:12px; }
+         .pos-catalog-area.is-list .pos-product-card { min-height:88px; display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:16px; padding:12px 16px; border:1px solid rgba(30,41,59,.8); border-radius:12px; background:rgba(15,23,42,.6); transition:background .2s ease, border-color .2s ease, transform .2s ease; }
+         .pos-catalog-area.is-list .pos-product-card:hover { background:rgba(30,41,59,.8); border-color:rgba(71,85,105,.8); transform:translateY(-1px); }
+        .pos-catalog-area.is-list .pos-product-card::after { display:none; }
+         .pos-catalog-area.is-list .pos-product-identity { display:flex; align-items:center; gap:12px; min-width:0; flex:1 1 auto; }
+         .pos-catalog-area.is-list .pos-product-copy { display:flex; flex-direction:column; justify-content:center; gap:3px; min-width:0; }
+         .pos-catalog-area.is-list .pos-product-image { flex:0 0 56px; width:56px; height:56px; }
+         .pos-catalog-area.is-list .pos-product-name { min-width:0; color:#f1f5f9; font-size:14px; font-weight:600; }
+         .pos-catalog-area.is-list .pos-product-meta { display:block; margin:0; padding:0; min-width:0; overflow:hidden; color:var(--text-muted); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+         .pos-catalog-area.is-list .pos-product-actions { display:flex; align-items:center; justify-content:flex-end; gap:16px; flex:0 0 auto; white-space:nowrap; }
+         .pos-catalog-area.is-list .pos-product-price { align-self:center; color:#a7f3d0; font-size:14px; font-weight:800; white-space:nowrap; }
+         .pos-catalog-area.is-list .pos-stock-badge { max-width:100%; overflow:visible; text-overflow:clip; }
+        .pos-catalog-area.is-list .pos-stock-inline { display:none; }
+          .pos-catalog-area.is-list .pos-product-list-stock { display:block; color:var(--text-muted); font-size:12px; white-space:nowrap; }
+         .pos-catalog-area.is-list .pos-product-quantity { position:static; }
+         .pos-catalog-area.is-list .pos-product-favorite { position:static; width:34px; height:34px; }
+         @media (max-width:639px) { .pos-catalog-area.is-list .pos-product-card { align-items:flex-start; } .pos-catalog-area.is-list .pos-product-actions { flex-wrap:wrap; gap:8px; } }
+        @keyframes pos-shimmer { to { background-position:-200% 0; } }
+
+         @media (max-width: 639px) {
+             .pos-day-strip { flex-wrap:nowrap; gap:8px; padding:8px 12px; overflow-x:auto; }
+             .pos-metric-card { flex:0 0 auto; }
+             .pos-debt-link { flex:0 0 auto; margin-left:0; }
+            .pos-cart-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding-left: 12px; padding-right: 12px; }
+            .pos-action-btn, .pos-credit-btn, .pos-pay-btn { min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 12px; }
+               .pos-product-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+              .pos-product-card { min-height:0; height:auto; padding:12px; gap:6px; }
+             .pos-product-image { height: 96px; }
+             .pos-catalog-area { padding:6px; }
+             .pos-product-grid { max-height:calc(100vh - 230px); overflow-y:auto; padding:4px 6px 6px 6px; gap:8px; }
+             .pos-catalog-count { margin-left:0; }
+            .pos-topbar-left { flex: 0 0 auto; max-width: 126px; }
+            .pos-topbar-left .pos-status-badge { display:none; }
+            .pos-topbar-center { flex: 0 0 auto; width:auto; order:initial; }
+            .pos-topbar-center .pos-pill:not(:first-child) { display:none; }
+            .pos-topbar-right { flex: 0 0 auto; max-width:none; margin-left:auto; }
+            .pos-topbar-right > .pos-pill:not(.pos-more-btn), .pos-topbar-right > .pos-back-btn { display:none; }
+            .pos-more-btn { display:flex; width:44px; padding:0; justify-content:center; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <header class="pos-topbar">
+        <div class="pos-topbar-left">
+            <div class="pos-brand">
+                <div class="pos-brand-mark">
+                    <i class="bi bi-bag-check" style="font-size: 20px; color: #a7f3d0;"></i>
+                </div>
+                <div class="pos-brand-text">
+                    <span class="pos-brand-title">SKLAT PRO</span>
+                    <span class="pos-brand-subtitle">POS Workspace</span>
+                </div>
+            </div>
+            <div class="pos-status-badge">
+                <span class="pos-status-dot"></span>
+                <span id="connection-status">Onlayn</span>
+            </div>
+        </div>
+        <div class="pos-topbar-center">
+            <button type="button" class="pos-pill" onclick="openCustomerModal()" title="Mijozni tanlash">
+                <i class="bi bi-person"></i>
+                <span id="customer-display">Mijoz</span>
+            </button>
+            {% if terminal %}
+            <div class="pos-pill">
+                <i class="bi bi-pc-display"></i>
+                <span>{{ terminal.name }}</span>
+            </div>
+            {% endif %}
+            <span class="pos-pill">
+                <i class="bi bi-calendar-event"></i>
+                <span id="clock"></span>
+            </span>
+        </div>
+         <div class="pos-topbar-right">
+             <button type="button" class="pos-pill pos-more-btn" onclick="openModal('header-menu-modal')" aria-label="Qo'shimcha menyu">...</button>
+             <button type="button" class="pos-pill header-low" onclick="openLowStockModal()" title="Kam qolgan mahsulotlar"><i class="bi bi-bell"></i><span>Tugagan ({{ low_stock_out_count }}) · Kam qoldi ({{ low_stock_count }})</span></button>
+             <button type="button" class="pos-pill header-saved" onclick="openHeldModal()" title="Saqlangan sotuvlar">
+                <i class="bi bi-inbox"></i><span>Saqlangan ({{ held_sales|length }})</span>
+            </button>
+            {% if can_create_product %}
+            <button type="button" class="pos-pill pos-header-add" onclick="openProductCreateModal()" title="Yangi mahsulot qo'shish">
+                <i class="bi bi-plus-lg"></i><span>Mahsulot qo'shish</span>
+            </button>
+            {% endif %}
+            <button type="button" class="pos-pill header-theme" id="theme-toggle" aria-pressed="false" onclick="toggleTheme()" title="Mavzuni almashtirish"><i class="bi bi-sun"></i><span>Yorug' mavzu</span></button>
+            <button type="button" class="pos-pill header-help" onclick="openModal('shortcut-modal')" aria-label="Klaviatura yorliqlari" title="Klaviatura yorliqlari"><i class="bi bi-keyboard"></i><span>Yordam</span></button>
+              {% if open_shift %}<button type="button" class="pos-pill" onclick="openModal('expense-modal')"><i class="bi bi-wallet2"></i><span>Xarajat</span></button><div class="pos-shift-dropdown" id="shift-dropdown"><button type="button" class="pos-pill" onclick="toggleShiftMenu(event)" aria-expanded="false"><i class="bi bi-door-open"></i><span>Smena ochiq</span><i class="bi bi-chevron-down"></i></button><div class="pos-shift-dropdown-menu"><button type="button" onclick="openCloseShiftModal(); toggleShiftMenu(event)">Smenani yopish</button></div></div>{% else %}
+            <button type="button" class="pos-pill pos-shift-open-btn" onclick="openShiftModal()" aria-controls="shift-modal">
+                <i class="bi bi-door-open"></i>
+                <span>Smenani ochish</span>
+            </button>
+             {% endif %}
+              <a href="{% url 'inventory_overview' %}" class="pos-pill header-warehouse" title="Ombor"><i class="bi bi-boxes"></i><span>Ombor</span></a>
+             <a href="{% url 'pos:pos_dashboard' %}" class="pos-back-btn">
+                <i class="bi bi-arrow-left"></i>
+                <span>Boshqaruv</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="pos-day-strip" aria-label="Bugungi savdo ko'rsatkichlari">
+        <div class="pos-metric-card pos-metric-primary"><i class="bi bi-sunrise"></i><div><span class="pos-metric-label">Bugungi savdo</span><strong class="pos-metric-value">{{ today_summary.total|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card"><i class="bi bi-receipt"></i><div><span class="pos-metric-label">Cheklar</span><strong class="pos-metric-value">{{ today_summary.count }} ta</strong></div></div>
+        <div class="pos-metric-card"><i class="bi bi-wallet2"></i><div><span class="pos-metric-label">Naqd</span><strong class="pos-metric-value">{{ today_summary.cash|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card"><i class="bi bi-credit-card"></i><div><span class="pos-metric-label">Karta</span><strong class="pos-metric-value">{{ today_summary.card|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card"><i class="bi bi-arrow-left-right"></i><div><span class="pos-metric-label">O'tkazma</span><strong class="pos-metric-value">{{ today_summary.transfer|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card"><i class="bi bi-person-lines-fill"></i><div><span class="pos-metric-label">Nasiya</span><strong class="pos-metric-value">{{ today_summary.credit|floatformat:0 }} so'm</strong></div></div>
+        {% if is_owner %}<div class="pos-metric-card pos-metric-profit" title="Taxminiy foyda"><i class="bi bi-graph-up-arrow"></i><div><span class="pos-metric-label">Foyda</span><strong class="pos-metric-value">{{ today_summary.profit|floatformat:0 }} so'm</strong></div></div>{% endif %}
+        <a class="pos-debt-link" href="{% url 'pos:debt_ledger' %}"><i class="bi bi-journal-text"></i><span>Nasiya daftari</span></a>
+    </div>
+
+    <!-- Workspace -->
+    <main class="pos-workspace">
+        <!-- Left: Catalog -->
+        <section class="pos-panel">
+            <div class="pos-search-section">
+                <div class="pos-search-wrapper">
+                    <i class="bi bi-search pos-search-icon"></i>
+                    <input type="text" id="barcode-input" class="pos-search-input" placeholder="Mahsulot nomi, SKU yoki barcode..." autofocus autocomplete="off" aria-label="Mahsulot qidirish">
+                    <button type="button" id="search-clear" class="pos-search-clear" onclick="clearProductSearch()" aria-label="Qidiruvni tozalash"><i class="bi bi-x-lg"></i></button>
+                    <span class="pos-search-hint"><kbd>/</kbd> qidirish</span>
+                </div>
+                <div class="pos-category-row">
+                    <div class="pos-filter-tabs">
+                        <button class="pos-category-pill active" onclick="filterCategory(this, '')">
+                            <i class="bi bi-grid"></i>
+                            <span>Hammasi</span>
+                        </button>
+                        {% for cat in categories %}
+                        <button class="pos-category-pill" onclick="filterCategory(this, '{{ cat.pk }}')">{{ cat.name }}</button>
+                        {% endfor %}
+                        <button class="pos-category-pill pos-smart-filter" data-filter="favorites" onclick="toggleSmartFilter(this, 'favorites')"><i class="bi bi-star"></i> Sevimlilar</button>
+                        <button class="pos-category-pill pos-smart-filter" data-filter="popular" onclick="toggleSmartFilter(this, 'popular')"><i class="bi bi-fire"></i> Ko'p sotilganlar</button>
+                    </div>
+                    <div class="pos-filter-actions">
+                        <span class="pos-catalog-count" id="catalog-status"><strong>0 ta</strong> mahsulot</span>
+                        <div class="pos-catalog-tools"><button type="button" class="pos-secondary-btn" onclick="openQuickItemModal()"><i class="bi bi-lightning-charge"></i> Tezkor mahsulot</button><button type="button" class="pos-view-toggle active" data-view="grid" onclick="setCatalogView('grid')" aria-label="Karta ko'rinishi" title="Karta ko'rinishi"><i class="bi bi-grid-3x3-gap"></i></button><button type="button" class="pos-view-toggle" data-view="list" onclick="setCatalogView('list')" aria-label="Ro'yxat ko'rinishi" title="Ro'yxat ko'rinishi"><i class="bi bi-list-ul"></i></button></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pos-catalog-area" id="pos-catalog-area">
+                <div class="pos-skeleton-grid" id="catalog-skeleton" aria-label="Mahsulotlar yuklanmoqda">
+                    <div class="pos-skeleton-card"></div><div class="pos-skeleton-card"></div><div class="pos-skeleton-card"></div><div class="pos-skeleton-card"></div><div class="pos-skeleton-card"></div><div class="pos-skeleton-card"></div>
+                </div>
+                <div class="pos-empty-state" id="catalog-empty">
+                    <div class="pos-empty-orbit">
+                        <div class="pos-empty-glow"></div>
+                        <div class="pos-empty-circle">
+                            <i class="bi bi-upc-scan pos-empty-icon"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="pos-empty-title">Mahsulot topilmadi</div>
+                        <div class="pos-empty-subtitle">Mahsulot topilmadi. Nom, SKU bo'yicha qidiring yoki pastdan tanlang.</div>
+                    </div>
+                    <div class="pos-empty-actions"><button type="button" class="pos-secondary-btn" id="catalog-retry" onclick="loadProducts()"><i class="bi bi-arrow-clockwise"></i> Qayta urinish</button></div>
+                </div>
+                <div class="pos-product-grid" id="product-grid"></div>
+            </div>
+        </section>
+
+        <!-- Right: Cart -->
+        <aside class="pos-cart-panel" id="cart-panel">
+            <header class="pos-cart-header" onclick="toggleMobileCart()">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="pos-cart-title">
+                        <i class="bi bi-cart3"></i>
+                        <span>Savat</span>
+                        <span class="pos-cart-badge" style="background:rgba(16,185,129,0.18);color:#6ee7b7;">(<span id="cart-count">0</span>)</span>
+                    </div>
+                </div>
+                <button type="button" class="pos-cart-clear" onclick="clearCart()" title="Tozalash" aria-label="Tozalash"><span style="margin-right:6px;font-size:12px;">Tozalash</span><i class="bi bi-trash3"></i></button>
+            </header>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(148,163,184,0.12);">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                    <div style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(59,130,246,0.16);color:#93c5fd;"><i class="bi bi-person"></i></div>
+                    <div style="display:flex;flex-direction:column;min-width:0;">
+                        <div id="cart-customer" style="font-size:13px;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mijoz tanlanmagan</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Mijoz ma'lumotlari</div>
+                    </div>
+                </div>
+                <button type="button" onclick="openCustomerModal()" style="border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);border-radius:8px;padding:4px 8px;font-size:11px;">O'zgartirish</button>
+            </div>
+            <div class="pos-cart-items" id="cart-items" style="gap:8px;">
+                <div class="pos-cart-empty" id="cart-empty">
+                    <i class="bi bi-cart-x pos-cart-empty-icon"></i>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-secondary);">Savat bo'sh</div>
+                            <div style="font-size: 13px;">Mahsulotni katalogdan tanlang yoki qidiruvdan foydalaning</div>
+                    </div>
+                </div>
+            </div>
+            <div class="pos-cart-summary">
+                <div class="pos-summary-row">
+                    <span>Oraliq yig'indi</span>
+                    <span id="cart-subtotal">0</span>
+                </div>
+                <div class="pos-summary-row">
+                    <span>Chegirma</span>
+                    <span id="cart-discount" style="color:#f8fafc;">0</span>
+                </div>
+                <div class="pos-summary-row total">
+                    <span>Jami</span>
+                    <span id="cart-total">0</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:6px;">
+                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:rgba(15,23,42,0.7);color:#e2e8f0;">Naqd</button>
+                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);">Karta</button>
+                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);">O'tkazma</button>
+                </div>
+            </div>
+            <div class="pos-cart-actions" style="grid-template-columns:1fr 1fr;">
+                <button class="pos-action-btn" onclick="holdSale()" title="Saqlab turish">
+                    <i class="bi bi-pause-circle"></i>
+                    <span>Saqlab turish</span>
+                </button>
+                <button class="pos-credit-btn" onclick="openCreditModal()">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Nasiya</span>
+                </button>
+                <button class="pos-pay-btn" style="grid-column:1 / -1;" onclick="openPaymentModal()">
+                    <span>To'lash</span>
+                    <span style="margin-left:8px;opacity:0.9;">·</span>
+                    <span id="cart-total-pay" style="margin-left:6px;">0</span>
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Credit sale -->
+    <div class="pos-modal-overlay" id="credit-modal" role="dialog" aria-modal="true" aria-labelledby="credit-modal-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide pos-credit-modal" role="document">
+            <header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-wallet2"></i><span id="credit-modal-title">Nasiya savdo</span></div><button type="button" class="pos-modal-close" onclick="closeModal('credit-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header>
+            <div class="pos-modal-body">
+                 <div class="pos-credit-summary"><span>Qarzga rasmiylashtiriladi</span><strong id="credit-total">0 UZS</strong></div>
+                 <div id="credit-customer-debt" class="pos-notice" hidden></div>
+                 <div class="pos-form-grid"><div class="pos-form-field full"><label class="pos-field-label" for="credit-customer-search">Mijoz / qarzdor</label><input id="credit-customer-search" type="search" placeholder="Ism yoki telefon bo'yicha qidiring..."><div id="credit-customer-results" class="pos-modal-results"></div></div><div class="pos-form-field"><label class="pos-field-label" for="credit-due-date">Qaytarish sanasi</label><input id="credit-due-date" type="date"><div class="pos-due-buttons"><button type="button" onclick="setDueDate(7)">1 hafta</button><button type="button" onclick="setDueDate(14)">2 hafta</button><button type="button" onclick="setDueDate(30)">1 oy</button></div></div><div class="pos-form-field"><label class="pos-field-label" for="credit-initial-payment">Oldindan to'lov (UZS)</label><input id="credit-initial-payment" type="number" min="0" step="1" placeholder="0"></div><div class="pos-form-field"><label class="pos-field-label" for="credit-initial-method">To'lov usuli</label><select id="credit-initial-method"><option value="cash">Naqd</option><option value="card">Karta</option><option value="transfer">O'tkazma/QR</option></select></div><div class="pos-form-field"><label class="pos-field-label" for="credit-second-payment">Ikkinchi to'lov (ixtiyoriy)</label><input id="credit-second-payment" type="number" min="0" step="1" placeholder="0"></div><div class="pos-form-field"><label class="pos-field-label" for="credit-second-method">Ikkinchi usul</label><select id="credit-second-method"><option value="card">Karta</option><option value="cash">Naqd</option><option value="transfer">O'tkazma/QR</option></select></div><div class="pos-form-field full"><label class="pos-field-label" for="credit-note">Izoh</label><textarea id="credit-note" rows="2" placeholder="Nasiya izohi..."></textarea></div></div>
+                <div class="pos-inline-create"><span>Mijoz ro'yxatda yo'qmi?</span><button type="button" class="pos-secondary-btn" onclick="toggleQuickCustomerCreate(true)"><i class="bi bi-person-plus"></i> Tez qo'shish</button></div>
+                <div id="quick-customer-create" class="pos-form-grid" hidden><div class="pos-form-field"><label class="pos-field-label" for="quick-customer-name">To'liq ism</label><input id="quick-customer-name"></div><div class="pos-form-field"><label class="pos-field-label" for="quick-customer-phone">Telefon raqam</label><input id="quick-customer-phone" placeholder="+998 90 ..."></div><button type="button" class="pos-secondary-btn" onclick="createQuickCustomer(true)">Mijozni saqlash</button></div>
+                <p class="pos-notice" id="credit-error" hidden></p><button type="button" class="pos-credit-submit" id="credit-submit" onclick="submitCreditCheckout()"><i class="bi bi-check2-circle"></i><span>Nasiya savdoni rasmiylashtirish</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="pos-modal-overlay" id="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide" role="document">
+            <header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-credit-card-2-front"></i><span id="payment-modal-title">To'lovni yakunlash</span></div><button type="button" class="pos-modal-close" onclick="closeModal('payment-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header>
+            <div class="pos-modal-body">
+                <div class="pos-form-grid" id="payment-entry">
+                     <div class="pos-form-field full"><label class="pos-field-label">To'lov usuli</label><div class="pos-payment-methods"><button type="button" class="pos-payment-method active" data-payment-method="cash" onclick="setPaymentMethod('cash')"><i class="bi bi-cash-coin"></i><b>Naqd</b></button><button type="button" class="pos-payment-method" data-payment-method="card" onclick="setPaymentMethod('card')"><i class="bi bi-credit-card"></i><b>Karta</b></button><button type="button" class="pos-payment-method" data-payment-method="transfer" onclick="setPaymentMethod('transfer')"><i class="bi bi-qr-code"></i><b>O'tkazma/QR</b><small>Click · Payme · Uzum</small></button><button type="button" class="pos-payment-method" data-payment-method="mixed" onclick="setPaymentMethod('mixed')"><i class="bi bi-diagram-3"></i><b>Aralash to'lov</b><small>Bir nechta usul</small></button><button type="button" class="pos-payment-method" data-payment-method="credit" onclick="openCreditModal()"><i class="bi bi-wallet2"></i><b>Nasiya</b><small>Mijoz va muddat</small></button></div><select id="payment-method" hidden><option value="cash">Naqd</option><option value="card">Karta</option><option value="transfer">O'tkazma</option><option value="online">Onlayn</option><option value="other">Boshqa</option></select></div>
+                    <div class="pos-form-field" id="cash-entry"><label class="pos-field-label" for="payment-amount">To'langan summa (UZS)</label><input id="payment-amount" type="number" min="0" step="1"></div>
+                    <div class="pos-cash-keypad" id="cash-keypad"><button type="button" onclick="keypadInput('1')">1</button><button type="button" onclick="keypadInput('2')">2</button><button type="button" onclick="keypadInput('3')">3</button><button type="button" onclick="keypadInput('4')">4</button><button type="button" onclick="keypadInput('5')">5</button><button type="button" onclick="keypadInput('6')">6</button><button type="button" onclick="keypadInput('7')">7</button><button type="button" onclick="keypadInput('8')">8</button><button type="button" onclick="keypadInput('9')">9</button><button type="button" onclick="keypadInput('0')">0</button><button type="button" onclick="keypadInput('00')">00</button><button type="button" onclick="keypadInput('clear')">C</button></div>
+                </div>
+                <div id="split-entry" hidden><div class="pos-split-row"><select data-split-method="cash"><option value="cash">Naqd</option><option value="card">Karta</option><option value="transfer">O'tkazma/QR</option></select><input data-split-amount type="number" min="0" step="1" placeholder="Summa"></div><button type="button" class="pos-secondary-btn" onclick="addSplitRow()">+ To'lov qo'shish</button></div>
+                <div class="pos-cash-shortcuts"><button type="button" class="pos-cash-shortcut" onclick="setPaymentAmount('exact')">Aniq summa</button><button type="button" class="pos-cash-shortcut" onclick="setPaymentAmount(50000)">50 000</button><button type="button" class="pos-cash-shortcut" onclick="setPaymentAmount(100000)">100 000</button><button type="button" class="pos-cash-shortcut" onclick="setPaymentAmount(200000)">200 000</button></div>
+                <div class="pos-summary-row total"><span>Jami</span><span id="payment-total">0 UZS</span></div>
+                <div class="pos-summary-row"><span>Qaytim</span><strong id="payment-change">0 UZS</strong></div>
+                 <p class="pos-notice" id="payment-error" hidden></p>
+                 <button type="button" class="pos-modal-submit" id="checkout-submit" onclick="submitCheckout()"><i class="bi bi-check2-circle"></i><span>Sotuvni yakunlash</span></button>
+                 <section id="payment-success" class="pos-payment-success" hidden><div class="pos-success-mark"><i class="bi bi-check-lg"></i></div><h3>To'lov muvaffaqiyatli</h3><p id="success-receipt-number"></p><div id="receipt-preview" class="pos-receipt-preview"></div><div class="pos-success-actions"><button type="button" class="pos-secondary-btn" onclick="printReceipt()">Chek chop etish</button><button type="button" class="pos-secondary-btn" onclick="copyReceipt()">Nusxalash/Telegramga yuborish</button><button type="button" class="pos-modal-submit" onclick="newSale()">Yangi savdo</button></div></section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div class="pos-modal-overlay" id="customer-modal" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide" role="document">
+            <header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-person"></i><span id="customer-modal-title">Mijozni tanlash</span></div><button type="button" class="pos-modal-close" onclick="closeModal('customer-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header>
+            <div class="pos-modal-body"><div class="pos-form-field"><label class="pos-field-label" for="customer-search">Ism yoki telefon</label><input id="customer-search" type="search" placeholder="Qidirish..."></div><div id="customer-results" class="pos-modal-results"></div><div class="pos-inline-create"><span>Yangi mijoz kerakmi?</span><button type="button" class="pos-secondary-btn" onclick="toggleQuickCustomerCreate(false)"><i class="bi bi-person-plus"></i> Tez qo'shish</button></div><div id="header-quick-customer-create" class="pos-form-grid" hidden><div class="pos-form-field"><label class="pos-field-label" for="header-customer-name">To'liq ism</label><input id="header-customer-name"></div><div class="pos-form-field"><label class="pos-field-label" for="header-customer-phone">Telefon raqam</label><input id="header-customer-phone"></div><button type="button" class="pos-secondary-btn" onclick="createQuickCustomer(false)">Mijozni saqlash</button></div><button type="button" class="pos-secondary-btn" onclick="selectCustomer(null)">Mijozsiz sotuv</button></div>
+        </div>
+    </div>
+
+    <!-- Held sales Modal -->
+    <div class="pos-modal-overlay" id="held-modal" role="dialog" aria-modal="true" aria-labelledby="held-modal-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide" role="document">
+            <header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-inbox"></i><span id="held-modal-title">Saqlangan sotuvlar</span></div><button type="button" class="pos-modal-close" onclick="closeModal('held-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header>
+             <div class="pos-modal-body"><div id="held-results" class="pos-modal-results">{% for held in held_sales %}<div class="pos-result-row"><div><strong>{{ held.name|default:held.ticket_number }}</strong><div class="pos-field-label">{{ held.ticket_number }} · {{ held.total|floatformat:0 }} UZS</div></div><div><button type="button" class="pos-secondary-btn" onclick="resumeHeld({{ held.pk }})">Davom ettirish</button><button type="button" class="pos-cart-remove" onclick="deleteHeld({{ held.pk }})" title="O'chirish"><i class="bi bi-trash3"></i></button></div></div>{% empty %}<p class="pos-notice">Saqlangan sotuvlar yo'q.</p>{% endfor %}</div></div>
+        </div>
+    </div>
+
+    <!-- Quick POS item -->
+    <div class="pos-modal-overlay" id="quick-item-modal" role="dialog" aria-modal="true" aria-labelledby="quick-item-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide" role="document"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-lightning-charge"></i><span id="quick-item-title">Tezkor mahsulot</span></div><button type="button" class="pos-modal-close" onclick="closeModal('quick-item-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><div class="pos-form-grid"><div class="pos-form-field full"><label class="pos-field-label" for="quick-item-name">Nomi</label><input id="quick-item-name" placeholder="Masalan: paket yoki xizmat"></div><div class="pos-form-field"><label class="pos-field-label" for="quick-item-price">Narxi (so'm)</label><input id="quick-item-price" type="number" min="0" step="1"></div><div class="pos-form-field"><label class="pos-field-label" for="quick-item-quantity">Miqdori</label><input id="quick-item-quantity" type="number" min="0.001" step="0.001" value="1"></div></div><label class="pos-check-label"><input id="quick-item-save" type="checkbox"> Katalogga saqlash</label><p class="pos-notice" id="quick-item-error" hidden></p><button type="button" class="pos-modal-submit" onclick="createQuickItem()"><i class="bi bi-cart-plus"></i><span>Savatga qo'shish</span></button></div></div>
+    </div>
+
+    <!-- Quick product creation -->
+    <div class="pos-modal-overlay" id="product-create-modal" role="dialog" aria-modal="true" aria-labelledby="product-create-title" aria-hidden="true">
+        <div class="pos-shift-modal is-wide" role="document">
+            <header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-box-seam"></i><span id="product-create-title">Mahsulot qo'shish</span></div><button type="button" class="pos-modal-close" onclick="closeModal('product-create-modal')" aria-label="Oynani yopish"><i class="bi bi-x-lg"></i></button></header>
+            <div class="pos-modal-body"><div class="pos-form-grid"><div class="pos-form-field full"><label class="pos-field-label" for="new-product-name">Nomi</label><input id="new-product-name" required></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-sku">SKU</label><input id="new-product-sku" required></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-barcode">Barcode (ixtiyoriy)</label><div class="pos-input-with-button"><input id="new-product-barcode"><button type="button" class="pos-secondary-btn" onclick="generateProductBarcode()" title="Barcode yaratish"><i class="bi bi-magic"></i></button></div></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-price">Sotuv narxi</label><input id="new-product-price" type="number" min="0" step="1" required></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-buy-price">Olish narxi</label><input id="new-product-buy-price" type="number" min="0" step="1" value="0"></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-stock">Boshlang'ich qoldiq</label><input id="new-product-stock" type="number" min="0" step="1" value="0"></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-min-stock">Minimal qoldiq</label><input id="new-product-min-stock" type="number" min="0" step="1" value="5"></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-category">Kategoriya</label><select id="new-product-category"><option value="">Tanlang</option>{% for cat in categories %}<option value="{{ cat.pk }}">{{ cat.name }}</option>{% endfor %}</select></div><div class="pos-form-field"><label class="pos-field-label" for="new-product-photo">Rasm (ixtiyoriy)</label><input id="new-product-photo" type="file" accept="image/*"></div></div><div class="pos-import-box"><strong>Excel/CSV import</strong><span>name,sell_price,buy_price,stock,min_stock,category,sku,barcode</span><button type="button" class="pos-secondary-btn" onclick="downloadImportTemplate()">Shablonni yuklash</button><input id="product-import-file" type="file" accept=".csv,text/csv"><button type="button" class="pos-secondary-btn" onclick="importProducts()">Import qilish</button><span id="product-import-result"></span></div><p class="pos-notice" id="product-create-error" hidden></p><button type="button" class="pos-modal-submit" onclick="createProduct()"><i class="bi bi-plus-lg"></i><span>Mahsulotni saqlash</span></button></div>
+        </div>
+    </div>
+
+    <!-- Shift Open Modal -->
+    {% if not open_shift %}
+    <div class="pos-modal-overlay" id="shift-modal" role="dialog" aria-modal="true" aria-labelledby="shift-modal-title" aria-hidden="true">
+        <div class="pos-shift-modal" role="document">
+            <header class="pos-modal-header">
+                <div class="pos-modal-title">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%); border: 1px solid rgba(52, 211, 153, 0.5);">
+                        <i class="bi bi-door-open" style="color: #a7f3d0;"></i>
+                    </div>
+                    <span id="shift-modal-title" style="font-size: 18px;">Smenani ochish</span>
+                </div>
+                <button type="button" class="pos-modal-close" onclick="closeShiftModal()" aria-label="Oynani yopish">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </header>
+            <div class="pos-modal-body">
+                {% if terminals|length == 1 %}
+                 <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <span class="pos-field-label">Terminal</span>
+                    <div class="pos-pill" style="justify-content: center; border-radius: 14px; height: 54px;">
+                        <i class="bi bi-pc-display"></i>
+                        <span>{{ terminals.0.name }}</span>
+                 </div>
+                 <div style="display:flex;flex-direction:column;gap:10px"><span class="pos-field-label">Izoh</span><input class="pos-input" id="shift-notes" placeholder="Smena izohi"></div>
+                    <input type="hidden" id="shift-terminal" value="{{ terminals.0.pk }}">
+                </div>
+                {% else %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <span class="pos-field-label">Terminal tanlang</span>
+                    <select id="shift-terminal" class="pos-select">
+                        {% for t in terminals %}<option value="{{ t.pk }}">{{ t.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <span class="pos-field-label">Boshlang'ich naqd summa (UZS)</span>
+                    <input type="number" class="pos-input" id="shift-opening" placeholder="0" value="0">
+                </div>
+                <button class="pos-modal-submit" onclick="openShift()">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Smenani ochish</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if open_shift %}
+    <div class="pos-modal-overlay" id="close-shift-modal" role="dialog" aria-modal="true" aria-hidden="true"><div class="pos-shift-modal is-wide"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-door-closed"></i><span>Smenani yopish</span></div><button type="button" class="pos-modal-close" onclick="closeModal('close-shift-modal')"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><div id="shift-report" class="pos-report-grid">Hisobot yuklanmoqda...</div><label class="pos-field-label" for="closing-amount">Sanab chiqilgan naqd (UZS)</label><input class="pos-input" id="closing-amount" type="number" min="0" step="1"><p class="pos-notice" id="close-shift-error" hidden></p><button class="pos-modal-submit" onclick="closeShift()">Smenani yopish</button></div></div></div>
+    {% endif %}
+    <div class="pos-modal-overlay" id="low-stock-modal" role="dialog" aria-modal="true" aria-hidden="true"><div class="pos-shift-modal is-wide"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-bell"></i><span>Kam qolgan mahsulotlar</span></div><button type="button" class="pos-modal-close" onclick="closeModal('low-stock-modal')"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><div id="low-stock-results" class="pos-modal-results"></div><a class="pos-secondary-btn" href="{% url 'pos:api_low_stock_export' %}">Buyurtma ro'yxati (CSV)</a></div></div></div>
+    <div class="pos-modal-overlay" id="expense-modal" role="dialog" aria-modal="true" aria-hidden="true"><div class="pos-shift-modal"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-wallet2"></i><span>Xarajat</span></div><button type="button" class="pos-modal-close" onclick="closeModal('expense-modal')"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><input id="expense-category" class="pos-input" placeholder="Kategoriya"><input id="expense-amount" class="pos-input" type="number" min="0" step="1" placeholder="Summa"><textarea id="expense-note" class="pos-input" placeholder="Izoh"></textarea><button class="pos-modal-submit" onclick="submitExpense()">Xarajatni saqlash</button></div></div></div>
+    <div class="pos-modal-overlay" id="shortcut-modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-title" aria-hidden="true"><div class="pos-shift-modal"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-keyboard"></i><span id="shortcut-title">Klaviatura yorliqlari</span></div><button type="button" class="pos-modal-close" aria-label="Yopish" onclick="closeModal('shortcut-modal')"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><div class="pos-result-row"><b>/</b><span>Mahsulot qidirish</span></div><div class="pos-result-row"><b>F2</b><span>Mijoz</span></div><div class="pos-result-row"><b>F4</b><span>Nasiya</span></div><div class="pos-result-row"><b>F8</b><span>To'lash</span></div><div class="pos-result-row"><b>F9</b><span>Savatni saqlash</span></div><div class="pos-result-row"><b>Esc</b><span>Oynani yopish</span></div><label class="pos-check-label"><input type="checkbox" id="sound-toggle"> Ovozli signal</label><label class="pos-check-label"><input type="checkbox" id="vibration-toggle"> Vibratsiya</label></div></div></div>
+    <div class="pos-modal-overlay" id="header-menu-modal" role="dialog" aria-modal="true" aria-hidden="true"><div class="pos-shift-modal"><header class="pos-modal-header"><div class="pos-modal-title"><i class="bi bi-three-dots"></i><span>Menyu</span></div><button type="button" class="pos-modal-close" aria-label="Yopish" onclick="closeModal('header-menu-modal')"><i class="bi bi-x-lg"></i></button></header><div class="pos-modal-body"><button class="pos-secondary-btn" onclick="openProductCreateModal();closeModal('header-menu-modal')">Mahsulot qo'shish</button><button class="pos-secondary-btn" onclick="openModal('shortcut-modal');closeModal('header-menu-modal')">Yordam</button><button class="pos-secondary-btn" onclick="toggleTheme();closeModal('header-menu-modal')">Yorug' mavzu</button><a class="pos-secondary-btn" href="{% url 'inventory_overview' %}">Ombor</a><a class="pos-secondary-btn" href="{% url 'pos:debt_ledger' %}">Nasiya daftari</a><a class="pos-secondary-btn" href="{% url 'pos:receipt_list' %}">Savdo tarixi</a><a class="pos-secondary-btn" href="{% url 'pos:pos_dashboard' %}">Boshqaruv</a></div></div></div>
+
+    {{ cart|json_script:"pos-cart-data" }}
+    <script>
+        const CSRF_TOKEN = '{{ csrf_token }}';
+        const POS_SEARCH_URL = '{% url "pos:api_product_search" %}';
+        const POS_BARCODE_URL = '{% url "pos:api_barcode_scan" %}';
+        const POS_CART_ADD_URL = '{% url "pos:api_cart_add" %}';
+        const POS_CART_UPDATE_URL = '{% url "pos:api_cart_update" %}';
+        const POS_CART_REMOVE_URL = '{% url "pos:api_cart_remove" %}';
+        const POS_CART_CLEAR_URL = '{% url "pos:api_cart_clear" %}';
+        const POS_CART_CUSTOMER_URL = '{% url "pos:api_cart_customer" %}';
+        const POS_DISCOUNT_URL = '{% url "pos:api_cart_discount" %}';
+        const POS_HOLD_URL = '{% url "pos:api_hold_sale" %}';
+         const POS_OPEN_SHIFT_URL = '{% url "pos:api_open_shift" %}';
+         const POS_CLOSE_SHIFT_URL = '{% url "pos:api_close_shift" %}';
+         const POS_SHIFT_SUMMARY_URL = '{% url "pos:api_shift_summary" %}';
+         const POS_SHIFT_EXPENSE_URL = '{% url "pos:api_shift_expense" %}';
+         const POS_LOW_STOCK_URL = '{% url "pos:api_low_stock" %}';
+         const POS_STOCK_IN_URL = '{% url "pos:api_stock_in" %}';
+        const POS_CUSTOMER_SEARCH_URL = '{% url "pos:api_customer_search" %}';
+        const POS_CUSTOMER_CREATE_URL = '{% url "pos:api_customer_create" %}';
+        const POS_PRODUCT_CREATE_URL = '{% url "pos:api_product_create" %}';
+        const POS_QUICK_ITEM_URL = '{% url "pos:api_quick_item" %}';
+        const POS_PRODUCT_IMPORT_URL = '{% url "pos:api_product_import" %}';
+        const POS_CUSTOMER_URL = '{% url "pos:api_cart_customer" %}';
+         const POS_RESUME_URL = '{% url "pos:api_resume_sale" %}';
+         const POS_DELETE_HELD_URL = '{% url "pos:api_delete_held" %}';
+        const POS_CHECKOUT_URL = '{% url "pos:api_checkout" %}';
+        const TERMINAL_ID = {{ terminal.pk|default:"null" }};
+        const SHIFT_ID = {{ open_shift.pk|default:"null" }};
+
+        let cart = JSON.parse(document.getElementById('pos-cart-data').textContent);
+        let searchTimeout = null;
+        let searchController = null;
+        let highlightedProduct = -1;
+         let checkoutBusy = false;
+         let checkoutKey = null;
+         let lastReceiptText = '';
+        let catalogProducts = [];
+        let pendingQuantity = 1;
+         let creditCustomerId = null;
+         let creditCustomerBalance = 0;
+         let creditCustomerLimit = 0;
+        let activeSmartFilter = '';
+        let catalogView = localStorage.getItem('sklat-pos-view') || 'grid';
+        let catalogPage = 1;
+        let catalogHasMore = false;
+        let catalogLoading = false;
+         function applyTheme(light) {
+             document.body.classList.toggle('light', light);
+             const button = document.getElementById('theme-toggle');
+             if (button) { button.setAttribute('aria-pressed', String(light)); button.querySelector('span').textContent = light ? 'Qorong\'i mavzu' : 'Yorug\' mavzu'; }
+         }
+         const THEME_KEY = `sklat-pos-theme-{{ request.user.pk }}`;
+         applyTheme(localStorage.getItem(THEME_KEY) === 'light');
+         const soundEnabled = localStorage.getItem('sklat-pos-sound') === 'true';
+         const vibrationEnabled = localStorage.getItem('sklat-pos-vibration') === 'true';
+         function feedback() { if (soundEnabled) { try { const audio = new AudioContext(); const osc = audio.createOscillator(); osc.connect(audio.destination); osc.frequency.value = 720; osc.start(); osc.stop(audio.currentTime + .045); } catch (e) {} } if (vibrationEnabled && navigator.vibrate) navigator.vibrate(20); }
+         document.getElementById('sound-toggle').checked = soundEnabled;
+         document.getElementById('vibration-toggle').checked = vibrationEnabled;
+         document.getElementById('sound-toggle').onchange = e => localStorage.setItem('sklat-pos-sound', e.target.checked);
+         document.getElementById('vibration-toggle').onchange = e => localStorage.setItem('sklat-pos-vibration', e.target.checked);
+        window.activeCategory = '';
+
+        function openShiftModal() {
+            const modal = document.getElementById('shift-modal');
+            if (!modal) return;
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.getElementById('shift-opening').focus();
+        }
+
+        function closeShiftModal() {
+            const modal = document.getElementById('shift-modal');
+            if (!modal) return;
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        const shiftModal = document.getElementById('shift-modal');
+        if (shiftModal) shiftModal.addEventListener('click', function (event) {
+            if (event.target === this) closeShiftModal();
+        });
+
+         document.addEventListener('keydown', function (event) {
+             const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable;
+            if (event.key === 'Escape') closeShiftModal();
+        });
+
+         renderCart();
+         validateCartOnLoad();
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        document.getElementById('barcode-input').addEventListener('input', function () {
+            document.getElementById('search-clear').classList.toggle('visible', Boolean(this.value.trim()));
+            const parsed = parseQuantityQuery(this.value.trim());
+            pendingQuantity = parsed.quantity;
+            filterCatalog(parsed.query, window.activeCategory);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchProducts(parsed.query), 250);
+        });
+
+        document.getElementById('barcode-input').addEventListener('keydown', function (e) {
+            const cards = document.querySelectorAll('.pos-product-card:not(.is-disabled)');
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (cards.length) {
+                    highlightedProduct = (highlightedProduct + (e.key === 'ArrowDown' ? 1 : cards.length - 1)) % cards.length;
+                    cards.forEach((card, index) => card.classList.toggle('keyboard-highlight', index === highlightedProduct));
+                }
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                const parsed = parseQuantityQuery(this.value.trim());
+                pendingQuantity = parsed.quantity;
+                if (highlightedProduct >= 0 && cards[highlightedProduct]) {
+                    cards[highlightedProduct].click();
+                } else {
+                    barcodeScan(parsed.query, parsed.quantity);
+                    this.value = '';
+                    pendingQuantity = 1;
+                }
+            }
+        });
+
+        document.getElementById('customer-search').addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchCustomers(this.value), 250);
+        });
+        document.getElementById('credit-customer-search').addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchCustomers(this.value, 'credit'), 250);
+        });
+
+        document.getElementById('payment-amount').addEventListener('input', updatePaymentChange);
+        document.getElementById('product-grid').addEventListener('scroll', function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 240) loadNextCatalogPage();
+        });
+         document.addEventListener('keydown', function (event) {
+             const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable;
+             if (event.key === '/' && !typing) {
+                event.preventDefault();
+                document.getElementById('barcode-input').focus();
+            }
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.pos-modal-overlay.active').forEach(modal => closeModal(modal.id));
+            }
+             if (!typing && event.key === 'F2') { event.preventDefault(); openCustomerModal(); }
+             if (!typing && event.key === 'F4') { event.preventDefault(); openCreditModal(); }
+             if (!typing && event.key === 'F8') { event.preventDefault(); openPaymentModal(); }
+             if (!typing && event.key === 'F9') { event.preventDefault(); holdSale(); }
+        });
+
+        loadProducts();
+
+         function updateClock() {
+             const now = new Date();
+             const months = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
+             document.getElementById('clock').textContent = `${String(now.getDate()).padStart(2, '0')} ${months[now.getMonth()]}, ${now.toLocaleTimeString('uz-UZ', {hour:'2-digit', minute:'2-digit'})}`;
+         }
+
+        async function loadProducts(category = '') {
+            catalogPage = 1;
+            catalogHasMore = false;
+            return searchProducts('', category, 1);
+        }
+
+        function clearProductSearch() {
+            const input = document.getElementById('barcode-input');
+            input.value = '';
+            document.getElementById('search-clear').classList.remove('visible');
+            highlightedProduct = -1;
+            searchProducts('', window.activeCategory || '');
+            input.focus();
+        }
+
+         async function searchProducts(query = document.getElementById('barcode-input').value.trim(), category = window.activeCategory || '', page = 1) {
+            if (searchController) searchController.abort();
+            searchController = new AbortController();
+            catalogLoading = true;
+            setCatalogState('loading', query ? 'Qidirilmoqda...' : 'Mahsulotlar yuklanmoqda...');
+            const params = new URLSearchParams({ q: query });
+            if (category) params.set('category', category);
+            if (activeSmartFilter === 'popular') params.set('filter', 'popular');
+            params.set('page', page);
+            if (!query && !category && page === 1) {
+                try { const cached = JSON.parse(localStorage.getItem('sklat-pos-products-cache') || 'null'); if (cached && Date.now() - cached.savedAt < 15 * 60 * 1000) { catalogProducts = cached.products; renderProductGrid(catalogProducts, ''); } } catch (e) {}
+            }
+            try {
+                const timeout = setTimeout(() => searchController.abort(), 10000);
+                const res = await fetch(`${POS_SEARCH_URL}?${params}`, { signal: searchController.signal, headers: {'Accept': 'application/json'} });
+                clearTimeout(timeout);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.success) {
+                    catalogHasMore = Boolean(data.has_more);
+                    catalogPage = data.page || page;
+                    if (!query && page > 1) catalogProducts = catalogProducts.concat(data.products);
+                    else if (!query) catalogProducts = data.products;
+                    if (!query && !category && page === 1) localStorage.setItem('sklat-pos-products-cache', JSON.stringify({savedAt: Date.now(), products: catalogProducts}));
+                    renderProductGrid(!query ? catalogProducts : data.products, query);
+                }
+                else setCatalogState('error', data.error || 'Mahsulotlarni yuklashda xatolik');
+            } catch (e) { if (e.name !== 'AbortError' && !navigator.onLine && catalogProducts.length) renderProductGrid(catalogProducts, query); else if (e.name !== 'AbortError' || !document.getElementById('product-grid').children.length) setCatalogState('error', 'Tarmoq xatosi. Qayta urinib ko\'ring.'); }
+            finally { catalogLoading = false; }
+        }
+
+        function loadNextCatalogPage() {
+            if (catalogLoading || !catalogHasMore || document.getElementById('barcode-input').value.trim()) return;
+            searchProducts('', window.activeCategory || '', catalogPage + 1);
+        }
+
+        function filterCatalog(query = '', category = '') {
+            const needle = query.toLocaleLowerCase();
+            const filtered = catalogProducts.filter(product => {
+                const matchesCategory = !category || String(product.category_id || '') === String(category);
+                const haystack = `${product.name} ${product.sku || ''} ${product.barcode || ''}`.toLocaleLowerCase();
+                return matchesCategory && (!needle || haystack.includes(needle));
+            });
+            renderProductGrid(filtered, query);
+        }
+
+        function parseQuantityQuery(value) {
+            const match = String(value || '').match(/^(\d+(?:\.\d+)?)\s*\*\s*(.*)$/);
+            if (!match) return { quantity: 1, query: value };
+            return { quantity: Math.max(1, Number(match[1])), query: match[2].trim() };
+        }
+
+        async function barcodeScan(code, quantity = 1) {
+            if (!code) return;
+            try {
+                const res = await fetch(`${POS_BARCODE_URL}?code=${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (data.success) {
+                    addToCart(data.product, quantity);
+                    document.getElementById('catalog-empty').style.display = 'none';
+                    document.getElementById('product-grid').style.display = 'grid';
+                } else {
+                    alert(data.error || 'Mahsulot topilmadi');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function setCatalogState(state, message) {
+            const empty = document.getElementById('catalog-empty');
+            const grid = document.getElementById('product-grid');
+            const skeleton = document.getElementById('catalog-skeleton');
+            document.getElementById('catalog-status').textContent = message;
+            if (state === 'loading') {
+                empty.style.display = 'none'; grid.style.display = 'none'; skeleton.style.display = 'grid';
+            } else if (state === 'error' || state === 'empty') {
+                empty.style.display = 'flex'; grid.style.display = 'none'; skeleton.style.display = 'none';
+            }
+        }
+
+        function renderProductGrid(products, query = '') {
+            const grid = document.getElementById('product-grid');
+            const empty = document.getElementById('catalog-empty');
+            if (!products.length) {
+                setCatalogState('empty', query ? 'Mos mahsulot topilmadi' : 'Katalogda mahsulotlar yo\'q');
+                grid.innerHTML = '';
+                return;
+            }
+            empty.style.display = 'none';
+            document.getElementById('catalog-skeleton').style.display = 'none';
+            grid.style.display = 'grid';
+            document.getElementById('catalog-status').textContent = `${products.length} ta mahsulot`;
+            highlightedProduct = -1;
+            const favorites = JSON.parse(localStorage.getItem('sklat-pos-favorites') || '[]');
+            const visibleProducts = activeSmartFilter === 'favorites' ? products.filter(p => favorites.includes(String(p.id))) : products;
+            grid.innerHTML = visibleProducts.map(p => {
+                const inCart = (cart.items || []).find(item => String(item.product_id) === String(p.id));
+                const initials = esc((p.name || 'M').split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase());
+                const stockClass = p.available <= 0 ? 'out-of-stock' : p.available < (p.min_stock || 5) ? 'low-stock' : 'in-stock';
+                return `
+                <div class="pos-product-card ${p.available <= 0 ? 'is-disabled' : ''}" tabindex="0" onclick='${p.available > 0 ? `addToCart(${JSON.stringify(p).replace(/'/g, "&#39;")})` : `showOutOfStock(${JSON.stringify(p.name).replace(/'/g, "&#39;")})`}' onkeydown="if(event.key === 'Enter') this.click()">
+                    <div class="pos-product-identity">
+                        <div class="pos-product-image">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : `<span class="pos-product-initials">${initials}</span>`}</div>
+                        <div class="pos-product-copy">
+                            <div class="pos-product-name">${esc(p.name)}</div>
+                            <div class="pos-product-meta"><span>${esc(p.category || 'Mahsulot')} · ${esc(p.sku)}</span></div>
+                        </div>
+                    </div>
+                    <div class="pos-product-actions">
+                        <div class="pos-product-price">${money(p.price)}</div>
+                        <span class="pos-stock-badge ${stockClass}" onclick="event.stopPropagation(); ${p.available <= 0 ? `quickStockIn(${p.id}, '${esc(p.name)}')` : ''}"><span>${p.available <= 0 ? 'Tugagan' : p.available < (p.min_stock || 5) ? 'Kam qoldi' : 'Mavjud'}</span><span class="pos-stock-inline"> (${p.available} ${p.unit_symbol || 'dona'})</span></span>
+                        <span class="pos-product-list-stock">Qoldiq: ${p.available} ${p.unit_symbol || 'dona'}</span>
+                        ${inCart ? `<span class="pos-product-quantity">${esc(inCart.quantity)}</span>` : ''}<button type="button" class="pos-product-favorite ${favorites.includes(String(p.id)) ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${p.id}')" aria-label="Sevimliga qo'shish"><i class="bi bi-star${favorites.includes(String(p.id)) ? '-fill' : ''}"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+            if (!visibleProducts.length) setCatalogState('empty', 'Sevimli mahsulotlar topilmadi');
+        }
+
+        async function addToCart(product, quantity = pendingQuantity || 1) {
+            try {
+                const res = await fetch(POS_CART_ADD_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ product_id: product.id, quantity: quantity, price_mode: 'retail' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    cart = data.cart;
+                    renderCart();
+                    feedback();
+                    pendingQuantity = 1;
+                } else alert(data.error || 'Mahsulot savatga qo\'shilmadi');
+            } catch (e) { alert('Tarmoq xatosi. Qayta urinib ko\'ring.'); }
+        }
+
+        async function updateQty(key, qty) {
+            if (qty <= 0) {
+                removeItem(key);
+                return;
+            }
+            try {
+                const res = await fetch(POS_CART_UPDATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ key: key, quantity: qty })
+                });
+                const data = await res.json();
+                if (data.success) { cart = data.cart; renderCart(); }
+                else { alert(data.error || 'Miqdor yangilanmadi'); renderCart(); }
+            } catch (e) { alert('Tarmoq xatosi.'); }
+        }
+
+        async function validateCartOnLoad() {
+            const items = [...(cart.items || [])];
+            for (const item of items) {
+                const res = await fetch(POS_CART_UPDATE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({key:item.key, quantity:item.quantity})});
+                if (!res.ok) continue;
+                const data = await res.json();
+                if (data.success) cart = data.cart;
+            }
+            renderCart();
+        }
+
+        async function removeItem(key) {
+            try {
+                const res = await fetch(POS_CART_REMOVE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ key: key })
+                });
+                const data = await res.json();
+                if (data.success) { cart = data.cart; renderCart(); }
+            } catch (e) { alert('Tarmoq xatosi.'); }
+        }
+
+        async function clearCart() {
+            if (!confirm("Savatni tozalamoqchimisiz?")) return;
+            try {
+                const res = await fetch(POS_CART_CLEAR_URL, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN } });
+                const data = await res.json();
+                if (data.success) { cart = data.cart; renderCart(); }
+            } catch (e) { alert('Tarmoq xatosi.'); }
+        }
+
+         async function applyDiscount() {
+            const value = Number(document.getElementById('discount-input').value || 0);
+            const mode = document.getElementById('discount-mode').value;
+            const subtotal = (cart.items || []).reduce((sum, item) => sum + Number(item.unit_price) * Number(item.quantity), 0);
+            const discount = mode === 'percent' ? subtotal * value / 100 : value;
+            const res = await fetch(POS_DISCOUNT_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({discount: discount, value: value, mode: mode, reason: mode === 'percent' ? `${value}%` : 'UZS'}) });
+            const data = await res.json();
+            if (data.success) { cart = data.cart; renderCart(); }
+             else alert(data.error || 'Chegirma qo\'llanmadi');
+         }
+
+         function setDiscountMode(mode) {
+             const input = document.getElementById('discount-mode');
+             if (input) input.value = mode;
+             document.querySelectorAll('[data-discount-mode]').forEach(button => button.classList.toggle('active', button.dataset.discountMode === mode));
+         }
+
+         function toggleShiftMenu(event) {
+             event.stopPropagation();
+             const dropdown = document.getElementById('shift-dropdown');
+             if (!dropdown) return;
+             const open = dropdown.classList.toggle('is-open');
+             dropdown.querySelector('button').setAttribute('aria-expanded', String(open));
+         }
+
+         document.addEventListener('click', event => {
+             const dropdown = document.getElementById('shift-dropdown');
+             if (dropdown && !dropdown.contains(event.target)) {
+                 dropdown.classList.remove('is-open');
+                 dropdown.querySelector('button').setAttribute('aria-expanded', 'false');
+             }
+         });
+
+        async function customPrice(key, name, current) {
+            const value = prompt(`Narxni o'zgartirish: ${name}`, current);
+            if (value === null || value.trim() === '') return;
+            try {
+                const res = await fetch(POS_CART_UPDATE_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({key: key, quantity: Number((cart.items || []).find(i => i.key === key)?.quantity || 1), custom_price: value}) });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Narx yangilanmadi');
+                cart = data.cart; renderCart();
+            } catch (e) { alert(e.message); }
+        }
+
+        function renderCart() {
+            const items = cart.items || [];
+            const container = document.getElementById('cart-items');
+            const empty = document.getElementById('cart-empty');
+             const discountInput = document.getElementById('discount-input');
+             if (discountInput) discountInput.value = cart.discount_value || cart.discount_amount || '';
+             setDiscountMode(cart.discount_mode || 'amount');
+            document.getElementById('customer-display').textContent = cart.customer_name ? `${cart.customer_name} (${money(cart.customer_balance)} qarz)` : 'Mijoz';
+            const cartCustomer = document.getElementById('cart-customer');
+            if (cartCustomer) {
+                cartCustomer.innerHTML = cart.customer_name ? `<div style="display:flex;flex-direction:column;min-width:0;"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mijoz: ${esc(cart.customer_name)}${cart.customer_phone ? ` ${esc(cart.customer_phone)}` : ''}</span>${cart.customer_balance ? `<span style="color:#fbbf24;font-size:11px;">Qarz ${money(cart.customer_balance).replace(' UZS','')}</span>` : ''}</div>` : 'Mijoz tanlanmagan';
+            }
+            document.getElementById('cart-customer').textContent = cart.customer_name ? `${cart.customer_name} · qarz: ${money(cart.customer_balance)}` : '';
+            document.getElementById('cart-count').textContent = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+            localStorage.setItem('sklat-pos-cart', JSON.stringify(cart));
+
+            if (!items.length) {
+                container.innerHTML = '<div class="pos-cart-empty" id="cart-empty"><i class="bi bi-cart-x pos-cart-empty-icon"></i><div><div style="font-weight:600;color:var(--text-secondary);">Savat bo\'sh</div><div style="font-size:13px;">Mahsulotni katalogdan tanlang yoki qidiruvdan foydalaning</div></div></div>';
+                container.classList.remove('has-overflow');
+                document.getElementById('cart-subtotal').textContent = '0';
+                const disc = document.getElementById('cart-discount');
+                if (disc) disc.textContent = '0';
+                const tax = document.getElementById('cart-tax');
+                if (tax) tax.textContent = '0';
+                document.getElementById('cart-total').textContent = '0';
+                const payBtnTotal = document.getElementById('cart-total-pay');
+                if (payBtnTotal) payBtnTotal.textContent = '0 so\'m';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.16);">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                        <div style="min-width:0;display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.name)}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">${money(item.unit_price)} / ${item.unit_symbol || 'dona'} ${item.custom_price ? '<span style="color:#fbbf24">• maxsus narx</span>' : ''}</div>
+                        </div>
+                        <div style="font-weight:700;color:#f8fafc;font-variant-numeric:tabular-nums;">${money(Number(parseFloat(item.unit_price) * parseFloat(item.quantity)) - Number(item.discount || 0))}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(148,163,184,0.25);padding:2px 8px;">
+                            <button style="border:none;background:transparent;color:var(--text-muted);" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) - 1})"><i class="bi bi-dash"></i></button>
+                            <input type="number" min="0" step="0.001" value="${item.quantity}" onchange="updateQty('${item.key}', this.value)" style="width:42px;text-align:center;border:none;background:transparent;color:#f1f5f9;font-variant-numeric:tabular-nums;">
+                            <button style="border:none;background:transparent;color:var(--text-muted);" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) + 1})"><i class="bi bi-plus"></i></button>
+                        </div>
+                        <button style="border:none;background:transparent;color:rgba(248,113,113,0.9);" onclick="removeItem('${item.key}')" title="O'chirish"><i class="bi bi-trash3"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            container.style.overflowY = container.scrollHeight > container.clientHeight + 2 ? 'auto' : 'hidden';
+
+            document.getElementById('cart-subtotal').textContent = money(cart.subtotal);
+            document.getElementById('cart-discount').textContent = cart.discount_amount ? money(cart.discount_amount) + (cart.discount_mode === 'percent' ? ` (${cart.discount_value}%)` : '') : money(0);
+            if (document.getElementById('cart-tax')) document.getElementById('cart-tax').textContent = money(cart.tax_amount);
+            document.getElementById('cart-total').textContent = money(cart.total);
+            const payBtnTotal = document.getElementById('cart-total-pay');
+            if (payBtnTotal) payBtnTotal.textContent = money(cart.total).replace(' UZS','') + " so'm";
+        }
+
+        function openPaymentModal() {
+            if (!cart.items || !cart.items.length) return alert('Savat bo\'sh');
+            if (!SHIFT_ID) { alert('Avval smenani oching'); return; }
+            const total = Number(cart.total || calculateCartTotal());
+            setPaymentMethod('cash');
+            document.getElementById('payment-total').textContent = money(total);
+            document.getElementById('payment-amount').value = total.toFixed(2);
+            document.getElementById('payment-error').hidden = true;
+            document.getElementById('payment-entry').hidden = false;
+            document.getElementById('payment-success').hidden = true;
+            document.getElementById('split-entry').hidden = true;
+            document.getElementById('cash-keypad').hidden = false;
+            checkoutKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+            openModal('payment-modal');
+            updatePaymentChange();
+            document.getElementById('payment-amount').focus();
+        }
+
+        function setPaymentMethod(method) {
+            document.getElementById('payment-method').value = method === 'mixed' ? 'cash' : method;
+            document.querySelectorAll('.pos-payment-method').forEach(button => button.classList.toggle('active', button.dataset.paymentMethod === method));
+            const mixed = method === 'mixed';
+            document.getElementById('split-entry').hidden = !mixed;
+            document.getElementById('cash-entry').hidden = mixed || method !== 'cash';
+            document.getElementById('cash-keypad').hidden = mixed || method !== 'cash';
+            document.querySelector('.pos-cash-shortcuts').hidden = mixed || method !== 'cash';
+        }
+
+        function setPaymentAmount(value) {
+            const total = calculateCartTotal();
+            document.getElementById('payment-amount').value = value === 'exact' ? total.toFixed(2) : Number(value).toFixed(2);
+            updatePaymentChange();
+        }
+
+        function keypadInput(value) {
+            const input = document.getElementById('payment-amount');
+            if (value === 'clear') input.value = '';
+            else input.value = `${input.value || ''}${value}`;
+            updatePaymentChange();
+        }
+
+        function addSplitRow() {
+            const row = document.querySelector('.pos-split-row').cloneNode(true);
+            row.querySelector('[data-split-amount]').value = '';
+            document.getElementById('split-entry').insertBefore(row, document.getElementById('split-entry').lastElementChild);
+        }
+
+        function openCreditModal() {
+            if (!cart.items || !cart.items.length) return alert('Savat bo\'sh');
+            if (!SHIFT_ID) return alert('Avval smenani oching');
+            closeModal('payment-modal');
+            creditCustomerId = cart.customer_id || null;
+            document.getElementById('credit-total').textContent = money(calculateCartTotal());
+            document.getElementById('credit-initial-payment').value = '0';
+            document.getElementById('credit-second-payment').value = '0';
+            document.getElementById('credit-note').value = '';
+            document.getElementById('credit-customer-debt').hidden = true;
+            document.getElementById('credit-due-date').value = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+            document.getElementById('credit-error').hidden = true;
+            openModal('credit-modal');
+            document.getElementById('credit-customer-search').focus();
+        }
+
+        function setDueDate(days) {
+            document.getElementById('credit-due-date').value = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+        }
+
+        async function submitCreditCheckout() {
+            const error = document.getElementById('credit-error');
+            const amount = Number(document.getElementById('credit-initial-payment').value || 0);
+            const total = calculateCartTotal();
+            if (!creditCustomerId) { error.textContent = 'Mijozni tanlang yoki tez qo\'shing.'; error.hidden = false; return; }
+            if (amount < 0 || amount > total) { error.textContent = 'Oldindan to\'lov jami summadan katta bo\'lishi mumkin emas.'; error.hidden = false; return; }
+            const submit = document.getElementById('credit-submit');
+            submit.disabled = true;
+            try {
+                const secondAmount = Number(document.getElementById('credit-second-payment').value || 0);
+                const payments = [];
+                if (amount > 0) payments.push({method: document.getElementById('credit-initial-method').value, amount: amount});
+                if (secondAmount > 0) payments.push({method: document.getElementById('credit-second-method').value, amount: secondAmount});
+                const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+                if (totalPaid > total) { error.textContent = 'Oldindan to\'lov jami summadan katta bo\'lishi mumkin emas.'; error.hidden = false; return; }
+                if (creditCustomerLimit > 0 && creditCustomerBalance + total - totalPaid > creditCustomerLimit) { error.textContent = `Kredit limiti oshadi. Joriy qarz: ${money(creditCustomerBalance)}, limit: ${money(creditCustomerLimit)}`; error.hidden = false; return; }
+                const res = await fetch(POS_CHECKOUT_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({terminal_id: TERMINAL_ID, shift_id: SHIFT_ID, credit_sale: true, due_date: document.getElementById('credit-due-date').value, amount_paid: totalPaid, payments: payments, credit_note: document.getElementById('credit-note').value}) });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Nasiya savdo saqlanmadi');
+                closeModal('credit-modal');
+                alert(`Nasiya savdo rasmiylashtirildi: ${data.receipt_number}\nQoldiq: ${money(total - totalPaid)}`);
+                location.reload();
+            } catch (e) { error.textContent = e.message; error.hidden = false; }
+            finally { submit.disabled = false; }
+        }
+
+        async function submitCheckout() {
+            if (checkoutBusy) return;
+            const selected = document.querySelector('.pos-payment-method.active')?.dataset.paymentMethod || 'cash';
+            const method = document.getElementById('payment-method').value;
+            const amount = Number(document.getElementById('payment-amount').value || 0);
+            const total = calculateCartTotal();
+            const error = document.getElementById('payment-error');
+            let payments = [];
+            if (selected === 'mixed') {
+                payments = [...document.querySelectorAll('.pos-split-row')].map(row => ({method: row.querySelector('[data-split-method]').value, amount: Number(row.querySelector('[data-split-amount]').value || 0)})).filter(item => item.amount > 0);
+                if (payments.reduce((sum, item) => sum + item.amount, 0) < total) { error.textContent = 'Aralash to\'lov jami summadan kam.'; error.hidden = false; return; }
+            } else {
+                payments = [{method: method, amount: amount}];
+                if (amount < total) { error.textContent = 'To\'lov summasi jami summadan kam.'; error.hidden = false; return; }
+            }
+            checkoutBusy = true;
+            const submit = document.getElementById('checkout-submit');
+            submit.disabled = true;
+            submit.querySelector('span').textContent = 'Yakunlanmoqda...';
+            try {
+                const paid = payments.reduce((sum, item) => sum + item.amount, 0);
+                const res = await fetch(POS_CHECKOUT_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({ terminal_id: TERMINAL_ID, shift_id: SHIFT_ID, payment_method: selected === 'mixed' ? 'cash' : method, amount_paid: paid, payments: payments, idempotency_key: checkoutKey }) });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Sotuv yakunlanmadi');
+                showPaymentSuccess(data, paid);
+                feedback();
+            } catch (e) { error.textContent = e.message; error.hidden = false; }
+            finally { checkoutBusy = false; submit.disabled = false; submit.querySelector('span').textContent = 'Sotuvni yakunlash'; }
+        }
+
+        function showPaymentSuccess(data, paid) {
+            const text = `SKLAT PRO\nChek: ${data.receipt_number}\nJami: ${money(data.total)}\nTo'landi: ${money(paid)}\nQaytim: ${money(data.change)}\nRahmat!`;
+            lastReceiptText = text;
+            document.getElementById('payment-entry').hidden = true;
+            document.querySelector('.pos-cash-shortcuts').hidden = true;
+            document.getElementById('checkout-submit').hidden = true;
+            document.getElementById('payment-success').hidden = false;
+            document.getElementById('success-receipt-number').textContent = `${data.receipt_number} · ${money(data.total)}`;
+            document.getElementById('receipt-preview').textContent = text;
+        }
+
+        function printReceipt() { window.print(); }
+        async function copyReceipt() { await navigator.clipboard.writeText(lastReceiptText); alert('Chek nusxalandi'); }
+        function newSale() { closeModal('payment-modal'); location.reload(); }
+
+        function calculateCartTotal() {
+            return Number(cart.total || 0);
+        }
+
+        function updatePaymentChange() {
+            const paid = Number(document.getElementById('payment-amount').value || 0);
+            document.getElementById('payment-change').textContent = money(Math.max(0, paid - calculateCartTotal()));
+        }
+
+        function openModal(id) { const modal = document.getElementById(id); if (!modal) return; modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); }
+        function closeModal(id) { const modal = document.getElementById(id); if (!modal) return; modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); }
+        document.querySelectorAll('.pos-modal-overlay').forEach(modal => modal.addEventListener('click', function (event) { if (event.target === this) closeModal(this.id); }));
+
+        async function searchCustomers(query, target = 'header') {
+            const results = document.getElementById(target === 'credit' ? 'credit-customer-results' : 'customer-results');
+            if (!query.trim()) { results.innerHTML = ''; return; }
+            const res = await fetch(`${POS_CUSTOMER_SEARCH_URL}?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            results.innerHTML = (data.customers || []).map(c => `<button type="button" class="pos-result-row" onclick="${target === 'credit' ? `selectCreditCustomer(${c.id}, '${esc(c.name)}', '${c.balance}', '${c.credit_limit || 0}')` : `selectCustomer(${c.id})`}"><span><strong>${esc(c.name)}</strong><small>${esc(c.phone || '')}</small></span><span>Qarz: ${money(c.balance)}</span></button>`).join('') || '<p class="pos-notice">Mijoz topilmadi.</p>';
+        }
+
+        function openCustomerModal() { openModal('customer-modal'); document.getElementById('customer-search').focus(); }
+
+        async function selectCustomer(id) {
+            const res = await fetch(POS_CUSTOMER_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({customer_id: id}) });
+            const data = await res.json();
+            if (data.success) { cart = data.cart; renderCart(); closeModal('customer-modal'); }
+            else alert(data.error || 'Mijoz tanlanmadi');
+        }
+
+        async function selectCreditCustomer(id, name, balance = '0', limit = '0') {
+            const res = await fetch(POS_CUSTOMER_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({customer_id: id}) });
+            const data = await res.json();
+            if (!data.success) return alert(data.error || 'Mijoz tanlanmadi');
+            creditCustomerId = id;
+            creditCustomerBalance = Number(balance || 0);
+            creditCustomerLimit = Number(limit || 0);
+            cart.customer_id = id;
+            cart.customer_name = name;
+            document.getElementById('credit-customer-search').value = name;
+            const creditInfo = document.getElementById('credit-customer-debt');
+            creditInfo.textContent = Number(limit) > 0 ? `${name}: joriy qarz ${money(balance)} · limit ${money(limit)}` : `${name}: joriy qarz ${money(balance)} · limit cheklanmagan`;
+            creditInfo.hidden = false;
+            document.getElementById('credit-customer-results').innerHTML = `<div class="pos-result-row"><strong>${esc(name)}</strong><span style="color:#6ee7b7">Tanlandi</span></div>`;
+        }
+
+        function toggleQuickCustomerCreate(credit) {
+            document.getElementById(credit ? 'quick-customer-create' : 'header-quick-customer-create').hidden = false;
+        }
+
+        async function createQuickCustomer(credit) {
+            const name = document.getElementById(credit ? 'quick-customer-name' : 'header-customer-name').value.trim();
+            const phone = document.getElementById(credit ? 'quick-customer-phone' : 'header-customer-phone').value.trim();
+            const res = await fetch(POS_CUSTOMER_CREATE_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({name, phone, credit}) });
+            const data = await res.json();
+            if (!data.success) return alert(data.error || 'Mijoz yaratilmadi');
+            if (credit) {
+                await selectCreditCustomer(data.customer.id, data.customer.name);
+            } else {
+                await selectCustomer(data.customer.id);
+            }
+        }
+
+        function openHeldModal() { openModal('held-modal'); }
+
+        async function resumeHeld(id) {
+            const res = await fetch(POS_RESUME_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: JSON.stringify({held_id: id}) });
+            const data = await res.json();
+            if (data.success) location.reload(); else alert(data.error || 'Sotuv tiklanmadi');
+        }
+
+        async function deleteHeld(id) {
+            if (!confirm('Saqlangan savatni o\'chirmoqchimisiz?')) return;
+            const res = await fetch(POS_DELETE_HELD_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({held_id:id})});
+            const data = await res.json();
+            if (data.success) location.reload(); else alert(data.error || 'O\'chirilmadi');
+        }
+
+        async function itemDiscount(key) {
+            const item = (cart.items || []).find(i => i.key === key);
+            const value = prompt('Mahsulot chegirmasi (UZS)', item ? item.discount : '0');
+            if (value === null) return;
+            const res = await fetch(POS_CART_UPDATE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({key:key, quantity:item.quantity, item_discount:value})});
+            const data = await res.json();
+            if (data.success) { cart = data.cart; renderCart(); } else alert(data.error || 'Chegirma qo\'llanmadi');
+        }
+
+        async function switchPrice(key, mode) {
+            const item = (cart.items || []).find(i => i.key === key);
+            if (!item) return;
+            const res = await fetch(POS_CART_UPDATE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({key:key, quantity:item.quantity, price_mode:mode})});
+            const data = await res.json();
+            if (data.success) { cart = data.cart; renderCart(); } else alert(data.error || 'Narx turi o\'zgarmadi');
+        }
+
+        function openProductCreateModal() { openModal('product-create-modal'); document.getElementById('new-product-name').focus(); }
+
+        function openQuickItemModal() { openModal('quick-item-modal'); document.getElementById('quick-item-name').focus(); }
+
+        async function createQuickItem() {
+            const error = document.getElementById('quick-item-error');
+            const payload = {name: document.getElementById('quick-item-name').value, price: document.getElementById('quick-item-price').value, quantity: document.getElementById('quick-item-quantity').value, save_to_catalog: document.getElementById('quick-item-save').checked};
+            try {
+                const res = await fetch(POS_QUICK_ITEM_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify(payload)});
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Tezkor mahsulot yaratilmadi');
+                closeModal('quick-item-modal');
+                await addToCart(data.product, Number(payload.quantity));
+                document.getElementById('quick-item-name').value = '';
+            } catch (e) { error.textContent = e.message; error.hidden = false; }
+        }
+
+        async function createProduct() {
+            const error = document.getElementById('product-create-error');
+            const photo = document.getElementById('new-product-photo').files[0];
+            const payload = { name: document.getElementById('new-product-name').value, sku: document.getElementById('new-product-sku').value, barcode: document.getElementById('new-product-barcode').value, price: document.getElementById('new-product-price').value, purchase_price: document.getElementById('new-product-buy-price').value, stock: document.getElementById('new-product-stock').value, min_stock: document.getElementById('new-product-min-stock').value, category_id: document.getElementById('new-product-category').value };
+            try {
+                const body = photo ? new FormData() : JSON.stringify(payload);
+                if (photo) { Object.entries(payload).forEach(([key, value]) => body.append(key, value)); body.append('image', photo); }
+                const res = await fetch(POS_PRODUCT_CREATE_URL, { method: 'POST', headers: photo ? {'X-CSRFToken': CSRF_TOKEN} : {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN}, body: body });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Mahsulot saqlanmadi');
+                closeModal('product-create-modal');
+                document.getElementById('barcode-input').value = data.product.name;
+                await searchProducts(data.product.name);
+            } catch (e) { error.textContent = e.message; error.hidden = false; }
+        }
+
+        function generateProductBarcode() { document.getElementById('new-product-barcode').value = `99890${Date.now().toString().slice(-8)}`; }
+        function downloadImportTemplate() {
+            const blob = new Blob(['name,sell_price,buy_price,stock,min_stock,category,sku,barcode\nSuv,5000,3000,20,5,Drinks,DEMO-NEW,998900000001\n'], {type:'text/csv;charset=utf-8'});
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'sklat-import-template.csv'; link.click(); URL.revokeObjectURL(link.href);
+        }
+        async function importProducts() {
+            const file = document.getElementById('product-import-file').files[0];
+            const result = document.getElementById('product-import-result');
+            if (!file) { result.textContent = 'CSV fayl tanlang'; return; }
+            const form = new FormData(); form.append('file', file);
+            const response = await fetch(POS_PRODUCT_IMPORT_URL, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}, body:form});
+            const data = await response.json();
+            result.textContent = data.success ? `${data.created} ta mahsulot import qilindi` : (data.errors ? `${data.errors.length} ta xato` : data.error);
+            if (data.success) loadProducts();
+        }
+
+        async function holdSale() {
+            if (!cart.items || !cart.items.length) return;
+            const name = prompt('Savat nomi', `Savat ${new Date().toLocaleTimeString('uz-UZ')}`);
+            if (name === null) return;
+            try {
+                const res = await fetch(POS_HOLD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN }, body: JSON.stringify({name: name}) });
+                const data = await res.json();
+                if (data.success) {
+                    cart = { items: [], customer_id: null, coupon_code: '', discount_amount: 0 };
+                    renderCart();
+                    alert('Sotuv saqlandi: ' + data.ticket_number);
+                    location.reload();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function openShift() {
+            const terminalId = document.getElementById('shift-terminal').value;
+            const openingAmount = document.getElementById('shift-opening').value || '0';
+            try {
+                const res = await fetch(POS_OPEN_SHIFT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ terminal_id: terminalId, opening_amount: openingAmount, notes: document.getElementById('shift-notes')?.value || '' })
+                });
+                const data = await res.json();
+                if (data.success) { location.reload(); }
+                else { alert(data.error || 'Xatolik yuz berdi'); }
+            } catch (e) { console.error(e); }
+        }
+
+        async function openCloseShiftModal() {
+            openModal('close-shift-modal');
+            const response = await fetch(`${POS_SHIFT_SUMMARY_URL}?shift_id=${SHIFT_ID}`);
+            const data = await response.json();
+            if (!data.success) return;
+            document.getElementById('shift-report').innerHTML = `<div>Naqd kutilgan: <b>${money(data.expected_cash)}</b></div><div>Karta: <b>${money(data.card)}</b></div><div>O'tkazma: <b>${money(data.transfer)}</b></div><div>Nasiya: <b>${money(data.credit)}</b></div><div>Xarajat: <b>${money(data.expenses)}</b></div><div>Cheklar: <b>${data.count}</b></div>`;
+            document.getElementById('closing-amount').value = data.expected_cash;
+        }
+
+        async function closeShift() {
+            const error = document.getElementById('close-shift-error');
+            const response = await fetch(POS_CLOSE_SHIFT_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({shift_id:SHIFT_ID, closing_amount:document.getElementById('closing-amount').value})});
+            const data = await response.json();
+            if (!data.success) { error.textContent = data.error || 'Smena yopilmadi'; error.hidden = false; return; }
+            alert(`Smena yopildi. Farq: ${money(data.difference)}`); location.reload();
+        }
+
+        async function submitExpense() {
+            const response = await fetch(POS_SHIFT_EXPENSE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({shift_id:SHIFT_ID, category:document.getElementById('expense-category').value, amount:document.getElementById('expense-amount').value, note:document.getElementById('expense-note').value})});
+            const data = await response.json();
+            if (!data.success) return alert(data.error || 'Xarajat saqlanmadi');
+            closeModal('expense-modal'); alert('Xarajat saqlandi');
+        }
+
+        async function openLowStockModal() {
+            openModal('low-stock-modal');
+            const response = await fetch(POS_LOW_STOCK_URL);
+            const data = await response.json();
+            document.getElementById('low-stock-results').innerHTML = (data.products || []).map(item => `<div class="pos-result-row"><span><strong>${esc(item.name)}</strong><small>${esc(item.sku)} · ${esc(item.warehouse)}</small></span><span>${item.available} / min ${item.min_stock}</span></div>`).join('') || '<p class="pos-notice">Kam qolgan mahsulotlar yo\'q.</p>';
+        }
+
+        async function quickStockIn(productId, name) {
+            const quantity = prompt(`${name} uchun kirim miqdori`, '20');
+            if (quantity === null) return;
+            const buyPrice = prompt('Olish narxi (ixtiyoriy)', '');
+            const response = await fetch(POS_STOCK_IN_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN}, body:JSON.stringify({product_id:productId, quantity:quantity, buy_price:buyPrice || null})});
+            const data = await response.json();
+            if (!data.success) return alert(data.error || 'Kirim saqlanmadi');
+            alert(`${name}: Qoldiq ${data.available}`); loadProducts();
+        }
+
+        function filterCategory(element, category) {
+            document.querySelectorAll('.pos-category-pill').forEach(button => button.classList.remove('active'));
+            element.classList.add('active');
+            activeSmartFilter = '';
+            window.activeCategory = category;
+            searchProducts(document.getElementById('barcode-input').value.trim(), category);
+        }
+
+        function setCatalogView(view) {
+            catalogView = view;
+            localStorage.setItem('sklat-pos-view', view);
+            document.querySelector('.pos-catalog-area').classList.toggle('is-list', view === 'list');
+            document.querySelectorAll('.pos-view-toggle').forEach(button => button.classList.toggle('active', button.dataset.view === view));
+        }
+
+        function toggleSmartFilter(element, filter) {
+            document.querySelectorAll('.pos-category-pill').forEach(button => button.classList.remove('active'));
+            element.classList.add('active');
+            activeSmartFilter = activeSmartFilter === filter ? '' : filter;
+            if (!activeSmartFilter) document.querySelector('.pos-category-pill:not(.pos-smart-filter)').classList.add('active');
+            if (activeSmartFilter === 'popular' || !activeSmartFilter) searchProducts(document.getElementById('barcode-input').value.trim(), window.activeCategory || '', 1);
+            else renderProductGrid(catalogProducts, document.getElementById('barcode-input').value.trim());
+        }
+
+        function toggleFavorite(id) {
+            const favorites = JSON.parse(localStorage.getItem('sklat-pos-favorites') || '[]');
+            const value = String(id);
+            const next = favorites.includes(value) ? favorites.filter(item => item !== value) : [...favorites, value];
+            localStorage.setItem('sklat-pos-favorites', JSON.stringify(next));
+            renderProductGrid(catalogProducts, document.getElementById('barcode-input').value.trim());
+        }
+
+        function showOutOfStock(name) { alert(`${name} tugagan. Qoldiqni to'ldirgach qayta urinib ko'ring.`); }
+        function toggleTheme() {
+            const light = document.body.classList.toggle('light');
+            localStorage.setItem(THEME_KEY, light ? 'light' : 'dark');
+            applyTheme(light);
+        }
+        setCatalogView(catalogView);
+
+        function toggleMobileCart() { if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('cart-panel').classList.toggle('mobile-collapsed'); }
+         function updateConnectionStatus() { const offline = !navigator.onLine; const status = document.getElementById('connection-status'); status.textContent = offline ? 'Oflayn · navbat 0' : 'Onlayn'; document.querySelector('.pos-status-badge span:last-child').textContent = offline ? 'Oflayn' : 'Onlayn'; }
+        function normalizeVisibleCurrency() { const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(node => { if (!node.parentElement.closest('script,style')) node.nodeValue = node.nodeValue.replace(/\bUZS\b/g, "so'm"); }); }
+        normalizeVisibleCurrency();
+        window.addEventListener('online', () => { updateConnectionStatus(); });
+        window.addEventListener('offline', updateConnectionStatus);
+        updateConnectionStatus();
+        function formatMoney(value) { return `${Math.round(Number(value || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} so'm`; }
+        const money = formatMoney;
+        function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if cp %}{% t "edit" %} {% t "customer_price" %}{% else %}{% t "create_customer_price" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pricing:customer_price_list' %}">{% t "customer_prices" %}</a>
+    <span class="separator">/</span>
+    {% if cp %}
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create_customer_price" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-head">
+    <a href="{% url 'pricing:customer_price_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if cp %}{% t "edit_customer_price" %}{% else %}{% t "create_customer_price" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-person-badge" style="color:var(--primary-600)"></i> {% t "customer_price_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "customer" %} <span class="required">*</span></label>
+                        <select class="input-pro" name="customer" required>
+                            <option value="">{% t "select_customer" %}</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.pk }}" {% if cp and cp.customer.pk == customer.pk %}selected{% endif %}>{{ customer }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "product" %} <span class="required">*</span></label>
+                        <select class="input-pro" name="product" required>
+                            <option value="">{% t "select_product" %}</option>
+                            {% for product in products %}
+                                <option value="{{ product.pk }}" {% if cp and cp.product.pk == product.pk %}selected{% endif %}>{{ product }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-currency-dollar" style="color:var(--primary-600)"></i> {% t "pricing" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "price" %} <span class="required">*</span></label>
+                        <input class="input-pro" type="number" name="price" step="0.01" min="0" value="{% if cp %}{{ cp.price }}{% endif %}" required>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "currency" %}</label>
+                        <select class="input-pro" name="currency">
+                            <option value="UZS" {% if not cp or cp.currency == 'UZS' %}selected{% endif %}>UZS</option>
+                            <option value="USD" {% if cp and cp.currency == 'USD' %}selected{% endif %}>USD</option>
+                            <option value="EUR" {% if cp and cp.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                            <option value="RUB" {% if cp and cp.currency == 'RUB' %}selected{% endif %}>RUB</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "min_quantity" %}</label>
+                        <input class="input-pro" type="number" name="min_quantity" min="1" value="{% if cp %}{{ cp.min_quantity }}{% else %}1{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_quantity" %}</label>
+                        <input class="input-pro" type="number" name="max_quantity" min="1" value="{% if cp and cp.max_quantity %}{{ cp.max_quantity }}{% endif %}" placeholder="{% t "unlimited" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <input class="input-pro" type="number" name="priority" min="0" value="{% if cp %}{{ cp.priority }}{% else %}100{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "active" %}</label>
+                        <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                            <input type="checkbox" name="is_active" value="true" {% if not cp or cp.is_active %}checked{% endif %} style="width:auto">
+                            <span class="text-pro-sm">{% t "customer_price_active" %}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calendar-range" style="color:var(--primary-600)"></i> {% t "validity_period" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "start_date" %}</label>
+                        <input class="input-pro" type="date" name="start_date" value="{% if cp and cp.start_date %}{{ cp.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "end_date" %}</label>
+                        <input class="input-pro" type="date" name="end_date" value="{% if cp and cp.end_date %}{{ cp.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-between">
+            <a href="{% url 'pricing:customer_price_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if cp %}{% t "save_changes" %}{% else %}{% t "create" %}{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ contact.name }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'contacts:contact_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ contact.name }}</h1>
+        <p class="page-subtitle" style="margin-top:4px"><span class="badge-pro badge-pro-{% if contact.type == 'customer' %}info{% elif contact.type == 'supplier' %}warning{% elif contact.type == 'employee' %}primary{% else %}neutral{% endif %}">{{ contact.get_type_display }}</span></p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'contacts:contact_update' pk=contact.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'contacts:contact_delete' pk=contact.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "personal_info" %}</span></div>
+        <div class="card-pro-body">
+            <div class="mb-3">
+                <span class="text-pro-sm text-pro-muted">{% t "name" %}</span>
+                <p class="fw-500">{{ contact.name }}</p>
+            </div>
+            {% if contact.company_name %}
+            <div class="mb-3">
+                <span class="text-pro-sm text-pro-muted">{% t "company_name_th" %}</span>
+                <p class="fw-500">{{ contact.company_name }}</p>
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <span class="text-pro-sm text-pro-muted">{% t "balance" %}</span>
+                <p class="fw-600" style="color:var(--primary-600)">${{ contact.balance|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "contact_info" %}</span></div>
+        <div class="card-pro-body">
+            {% if contact.phone %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-telephone text-pro-muted"></i>
+                <span class="text-pro-sm">{{ contact.phone }}</span>
+            </div>
+            {% endif %}
+            {% if contact.email %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-envelope text-pro-muted"></i>
+                <span class="text-pro-sm">{{ contact.email }}</span>
+            </div>
+            {% endif %}
+            {% if contact.telegram %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-telegram text-pro-muted"></i>
+                <span class="text-pro-sm">{{ contact.telegram }}</span>
+            </div>
+            {% endif %}
+            {% if contact.address %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-geo-alt text-pro-muted"></i>
+                <span class="text-pro-sm">{{ contact.address }}</span>
+            </div>
+            {% endif %}
+            {% if contact.notes %}
+            <div class="mt-3">
+                <span class="text-pro-sm text-pro-muted">{% t "notes" %}</span>
+                <p class="text-pro-sm">{{ contact.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

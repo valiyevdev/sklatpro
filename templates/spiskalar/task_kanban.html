@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "kanban_view" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "kanban_view" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:task_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-list"></i></a>
+        <a href="{% url 'spiskalar:task_create' %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-lg"></i> {% t "task_create" %}</a>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body" style="padding:0.5rem 1rem">
+        <form method="get" class="d-flex gap-2" style="align-items:center">
+            <select name="type" class="input-pro" style="max-width:160px" onchange="this.form.submit()">
+                <option value="">{% t "task_type" %}</option>
+                <option value="operational" {% if filters.type == 'operational' %}selected{% endif %}>{% t "task_operational" %}</option>
+                <option value="warehouse" {% if filters.type == 'warehouse' %}selected{% endif %}>{% t "task_warehouse" %}</option>
+                <option value="sales" {% if filters.type == 'sales' %}selected{% endif %}>{% t "task_sales" %}</option>
+                <option value="customer" {% if filters.type == 'customer' %}selected{% endif %}>{% t "task_customer" %}</option>
+                <option value="finance" {% if filters.type == 'finance' %}selected{% endif %}>{% t "task_finance" %}</option>
+            </select>
+            <select name="assigned" class="input-pro" style="max-width:180px" onchange="this.form.submit()">
+                <option value="">{% t "task_assigned_to" %}</option>
+                {% for e in employees %}<option value="{{ e.pk }}" {% if filters.assigned == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.get_full_name }}</option>{% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<div style="display:flex;gap:1rem;overflow-x:auto;padding-bottom:1rem;min-height:calc(100vh - 250px)">
+    {% for col in columns %}
+    <div style="min-width:280px;max-width:320px;flex:1;background:var(--bg-secondary);border-radius:var(--radius-lg);padding:0.75rem" id="column-{{ col.status }}">
+        <div class="d-flex align-center justify-between mb-3" style="padding:0 0.25rem">
+            <div class="d-flex align-center gap-2">
+                {% if col.status == 'backlog' %}<div style="width:8px;height:8px;border-radius:50%;background:var(--gray-400)"></div>
+                {% elif col.status == 'pending' %}<div style="width:8px;height:8px;border-radius:50%;background:var(--warning-400)"></div>
+                {% elif col.status == 'in_progress' %}<div style="width:8px;height:8px;border-radius:50%;background:var(--info-400)"></div>
+                {% elif col.status == 'waiting' %}<div style="width:8px;height:8px;border-radius:50%;background:var(--warning-500)"></div>
+                {% elif col.status == 'completed' %}<div style="width:8px;height:8px;border-radius:50%;background:var(--success-400)"></div>
+                {% endif %}
+                <span class="fw-600 text-pro-sm">{{ col.status }}</span>
+                <span class="text-pro-xs text-pro-muted">({{ col.tasks|length }})</span>
+            </div>
+        </div>
+        <div class="kanban-column" data-status="{{ col.status }}" style="min-height:100px">
+            {% for task in col.tasks %}
+            <div class="card-pro mb-2 kanban-card" data-task-id="{{ task.pk }}" draggable="true" style="cursor:grab;border-left:3px solid {% if task.priority == 'urgent' %}var(--danger-500){% elif task.priority == 'high' %}var(--warning-500){% elif task.priority == 'normal' %}var(--info-500){% else %}var(--gray-300){% endif %}">
+                <div class="card-pro-body" style="padding:0.75rem">
+                    <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" style="text-decoration:none;color:var(--text-primary)">
+                        <div class="fw-500 text-pro-sm mb-2">{{ task.title|truncatechars:50 }}</div>
+                    </a>
+                    <div class="d-flex align-center justify-between">
+                        <div class="d-flex gap-1">
+                            <span class="badge-pro badge-pro-neutral" style="font-size:0.65rem">{{ task.get_task_type_display }}</span>
+                        </div>
+                        {% if task.assigned_to %}
+                        <div class="text-pro-xs text-pro-muted">{{ task.assigned_to.get_full_name }}</div>
+                        {% endif %}
+                    </div>
+                    {% if task.due_date %}
+                    <div class="text-pro-xs mt-2 {% if task.is_overdue %}text-pro-danger{% else %}text-pro-muted{% endif %}">
+                        <i class="bi bi-calendar"></i> {{ task.due_date|date:"d.m" }}
+                    </div>
+                    {% endif %}
+                    {% if task.progress > 0 %}
+                    <div class="progress-pro mt-2" style="height:3px"><div class="progress-pro-bar" style="width:{{ task.progress }}%"></div></div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+    </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll('.kanban-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        card.style.opacity = '0.5';
+    });
+    card.addEventListener('dragend', e => {
+        card.style.opacity = '1';
+    });
+});
+document.querySelectorAll('.kanban-column').forEach(col => {
+    col.addEventListener('dragover', e => {
+        e.preventDefault();
+        col.style.background = 'var(--primary-50)';
+    });
+    col.addEventListener('dragleave', e => {
+        col.style.background = '';
+    });
+    col.addEventListener('drop', e => {
+        e.preventDefault();
+        col.style.background = '';
+        const taskId = e.dataTransfer.getData('text/plain');
+        const newStatus = col.dataset.status;
+        const formData = new FormData();
+        formData.append('status', newStatus);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch(`/lists/tasks/${taskId}/kanban/move/`, { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(d => { if (d.success) window.location.reload(); });
+    });
+});
+</script>
+{% endblock %}

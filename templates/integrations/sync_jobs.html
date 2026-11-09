@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "sync_center" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "sync_center" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "sync_center" %}</h1>
+        <p class="page-subtitle">{{ jobs.paginator.count }} {% t "results" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+            <label class="input-pro-label">{% t "connection" %}</label>
+            <select name="connection" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_connections" %}</option>
+                {% for conn in connections %}
+                <option value="{{ conn.pk }}" {% if connection_id == conn.pk|stringformat:"s" %}selected{% endif %}>{{ conn.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "type" %}</label>
+            <select name="type" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_types" %}</option>
+                {% for code, label in job_type_choices %}
+                <option value="{{ code }}" {% if job_type == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-funnel"></i></button>
+    </form>
+</div>
+
+{% if jobs %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "connection" %}</th>
+                    <th>{% t "job_type" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "direction" %}</th>
+                    <th>{% t "progress" %}</th>
+                    <th>{% t "duration" %}</th>
+                    <th>{% t "created" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'integrations:sync_job_detail' pk=job.pk %}" style="color:var(--text-primary);text-decoration:none">
+                            {{ job.connection.name }}
+                        </a>
+                    </td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ job.get_job_type_display }}</span></td>
+                    <td>
+                        {% if job.status == 'pending' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pending" %}</span>
+                        {% elif job.status == 'running' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                                {% t "running" %}
+                            </span>
+                        {% elif job.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                        {% elif job.status == 'partial' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "partial" %}</span>
+                        {% elif job.status == 'failed' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif job.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "cancelled" %}</span>
+                        {% elif job.status == 'retrying' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                                {% t "retrying" %}
+                            </span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ job.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ job.get_direction_display }}</span></td>
+                    <td style="min-width:140px">
+                        <div class="d-flex align-center gap-2">
+                            <div class="progress-pro" style="flex:1">
+                                {% if job.status == 'completed' %}
+                                <div class="progress-pro-bar success" style="width:{{ job.progress_percent }}%"></div>
+                                {% elif job.status == 'failed' %}
+                                <div class="progress-pro-bar danger" style="width:{{ job.progress_percent }}%"></div>
+                                {% elif job.status == 'partial' %}
+                                <div class="progress-pro-bar warning" style="width:{{ job.progress_percent }}%"></div>
+                                {% else %}
+                                <div class="progress-pro-bar" style="width:{{ job.progress_percent }}%"></div>
+                                {% endif %}
+                            </div>
+                            <span class="text-pro-xs text-pro-muted" style="min-width:36px;text-align:right">{{ job.progress_percent|floatformat:0 }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if job.duration_seconds != None %}
+                            {{ job.duration_seconds }}s
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="cell-muted">{{ job.created_at|date:"d M Y H:i" }}</td>
+                    <td>
+                        <div class="actions">
+                            {% if job.can_retry %}
+                            <form method="post" action="{% url 'integrations:sync_job_retry' pk=job.pk %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% t 'retry' %}" onclick="return confirm('{% t "confirm_retry" %}')">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% if job.status == 'pending' or job.status == 'running' or job.status == 'retrying' %}
+                            <form method="post" action="{% url 'integrations:sync_job_cancel' pk=job.pk %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% t 'cancel' %}" onclick="return confirm('{% t "confirm_cancel" %}')">
+                                    <i class="bi bi-x-circle" style="color:var(--danger-500)"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'integrations:sync_job_detail' pk=job.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm" title="{% t 'view' %}">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if jobs.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if jobs.has_previous %}
+    <a href="?page={{ jobs.previous_page_number }}&connection={{ connection_id }}&status={{ status_filter }}&type={{ job_type }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in jobs.paginator.page_range %}
+        {% if jobs.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > jobs.number|add:'-3' and num < jobs.number|add:'3' %}
+        <a href="?page={{ num }}&connection={{ connection_id }}&status={{ status_filter }}&type={{ job_type }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if jobs.has_next %}
+    <a href="?page={{ jobs.next_page_number }}&connection={{ connection_id }}&status={{ status_filter }}&type={{ job_type }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-arrow-repeat"></i></div>
+    <h5 class="empty-state-title">{% t "no_sync_jobs" %}</h5>
+    <p class="empty-state-desc">{% t "no_sync_jobs_desc" %}</p>
+</div>
+{% endif %}
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+{% endblock %}

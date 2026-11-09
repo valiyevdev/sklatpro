@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Companies — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-buildings" style="color:var(--primary-500)"></i> Companies</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Manage all registered companies on the platform</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <input class="input-pro" type="search" name="search" placeholder="{% t "search_companies" %}" value="{{ search_query }}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="input-pro" name="status">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+                </select>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Employees</th>
+                    <th>Plan</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in companies %}
+                <tr>
+                    <td class="cell-primary fw-500">
+                        <div class="d-flex align-center gap-2">
+                            <div style="width:32px;height:32px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--text-xs);flex-shrink:0">
+                                {{ company.company_name|first|upper }}
+                            </div>
+                            <a href="{% url 'saas_platform:company_detail' company_id=company.pk %}" style="color:var(--text-primary);text-decoration:none">{{ company.company_name }}</a>
+                        </div>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ company.email }}</td>
+                    <td style="font-size:var(--text-sm)">
+                        <span class="badge-pro badge-pro-info">{{ company.employees_count|default:0 }}</span>
+                    </td>
+                    <td>
+                        <span class="badge-pro {% if company.subscription_plan == 'enterprise' %}badge-pro-warning{% elif company.subscription_plan == 'professional' %}badge-pro-primary{% elif company.subscription_plan == 'basic' %}badge-pro-info{% else %}badge-pro-secondary{% endif %}">
+                            {{ company.get_subscription_plan_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if company.is_active %}
+                            <span class="badge-pro badge-pro-success">Active</span>
+                        {% elif company.is_suspended %}
+                            <span class="badge-pro badge-pro-danger">Suspended</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap">{{ company.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'saas_platform:company_detail' company_id=company.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-buildings"></i></div>
+                            <div class="empty-state-title">No companies found</div>
+                            <div class="empty-state-desc">No companies match your search criteria.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span style="font-size:var(--text-sm);color:var(--text-muted)">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

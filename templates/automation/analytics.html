@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "automation_analytics" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">{% t "automation" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "automation_analytics" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-graph-up" style="color:var(--primary-500)"></i> {% t "automation_analytics" %}</h1>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ total_executions }}</div>
+            <div class="stat-card-label">{% t "total_executions" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-play-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="color:var(--success-600)">{{ success_rate }}<span style="font-size:var(--text-sm);font-weight:400">%</span></div>
+            <div class="stat-card-label">{% t "success_rate" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="color:var(--danger-600)">{{ failure_rate }}<span style="font-size:var(--text-sm);font-weight:400">%</span></div>
+            <div class="stat-card-label">{% t "failure_rate" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ avg_duration|floatformat:0 }}<span style="font-size:var(--text-sm);font-weight:400">ms</span></div>
+            <div class="stat-card-label">{% t "avg_duration" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-clock"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ total_rules }}</div>
+            <div class="stat-card-label">{% t "total_rules" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-gear"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="color:var(--success-600)">{{ active_rules }}</div>
+            <div class="stat-card-label">{% t "active_rules" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check2-circle"></i></div>
+    </div>
+</div>
+
+{% if most_used_rules %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-trophy" style="color:var(--primary-600)"></i> {% t "most_used_rules" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ most_used_rules|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "rule" %}</th>
+                    <th>{% t "trigger" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "executions" %}</th>
+                    <th style="min-width:140px">{% t "success_rate" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in most_used_rules %}
+                <tr>
+                    <td>
+                        <a href="{% url 'automation:rule_detail' pk=rule.pk %}" style="color:var(--primary-600);font-weight:500;font-size:var(--text-sm);text-decoration:none">
+                            {{ rule.name }}
+                        </a>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ rule.get_trigger_display }}</td>
+                    <td>
+                        {% if rule.status == 'active' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% elif rule.status == 'paused' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "paused" %}</span>
+                        {% elif rule.status == 'error' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "error" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ rule.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;font-variant-numeric:tabular-nums">{{ rule.execution_count }}</td>
+                    <td style="min-width:140px">
+                        <div class="d-flex align-center gap-2">
+                            <div class="progress-pro" style="flex:1">
+                                {% if rule.execution_count > 0 %}
+                                {% widthratio rule.execution_count rule.execution_count 100 as total %}
+                                <div class="progress-pro-bar success" style="width:100%"></div>
+                                {% else %}
+                                <div class="progress-pro-bar" style="width:0%"></div>
+                                {% endif %}
+                            </div>
+                            <span class="text-pro-xs text-pro-muted" style="min-width:36px;text-align:right">{{ rule.execution_count }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if failed_rules %}
+<div class="card-pro mb-4" style="border-color:var(--danger-200)">
+    <div class="card-pro-header" style="background:var(--danger-50)">
+        <span class="card-pro-title" style="color:var(--danger-700)"><i class="bi bi-exclamation-triangle"></i> {% t "rules_with_errors" %}</span>
+        <span class="badge-pro badge-pro-danger">{{ failed_rules|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "rule" %}</th>
+                    <th>{% t "trigger" %}</th>
+                    <th>{% t "error_count" %}</th>
+                    <th>{% t "health" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in failed_rules %}
+                <tr>
+                    <td>
+                        <a href="{% url 'automation:rule_detail' pk=rule.pk %}" style="color:var(--primary-600);font-weight:500;font-size:var(--text-sm);text-decoration:none">
+                            {{ rule.name }}
+                        </a>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ rule.get_trigger_display }}</td>
+                    <td style="font-weight:600;color:var(--danger-600);font-variant-numeric:tabular-nums">{{ rule.error_count }}</td>
+                    <td>
+                        {% if rule.health_status == 'error' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> {% t "failing" %}</span>
+                        {% elif rule.health_status == 'warning' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> {% t "warning" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "healthy" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if action_distribution %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-bar-chart" style="color:var(--primary-600)"></i> {% t "action_distribution" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ action_distribution|length }} {% t "types" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--sp-3)">
+            {% for action in action_distribution %}
+            <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-page);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+                <div style="width:36px;height:36px;border-radius:var(--radius-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ action.label }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ action.type }}</div>
+                </div>
+                <div style="font-size:var(--text-lg);font-weight:700;color:var(--primary-600);font-variant-numeric:tabular-nums;flex-shrink:0">{{ action.count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not most_used_rules and not failed_rules and not action_distribution %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-graph-up"></i></div>
+    <h5 class="empty-state-title">{% t "no_analytics_data" %}</h5>
+    <p class="empty-state-desc">{% t "no_analytics_desc" %}</p>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:1024px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:768px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}}
+</style>
+{% endblock %}

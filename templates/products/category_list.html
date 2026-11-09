@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "categories" %} — SKLAT PRO{% endblock %}
+{% block extra_css %}
+<style>
+  .hdr-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    border: 1px solid rgba(99, 102, 241, 0.6);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+  .hdr-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--sp-3);
+  }
+  .cat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .cat-card:hover { border-color: var(--border-default); transform: translateY(-1px); }
+  .cat-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-surface-hover);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    font-size: 1.15rem;
+  }
+  .cat-card-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-card-body { flex: 1; min-width: 0; }
+  .cat-card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cat-card-slug {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cat-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .cat-card-actions a,
+  .cat-card-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface-hover);
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .cat-card-actions a:hover { background: var(--bg-surface); color: var(--text-primary); }
+  .cat-card-actions .cat-del:hover { background: var(--bg-surface); color: var(--danger-600); }
+</style>
+{% endblock %}
+{% block content %}
+<div style="background-color: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: var(--glass-shadow); backdrop-filter: blur(8px);">
+    <!-- Top Row: Back + Title/Subtitle -->
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="{% url 'product_list' %}" aria-label="Orqaga" style="width: 40px; height: 40px; border-radius: 12px; background-color: var(--pill-bg); border: 1px solid var(--pill-border); color: var(--pill-text); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; transition: color 0.2s ease;">
+            <svg style="width: 18px; height: 18px; pointer-events: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"></path></svg>
+        </a>
+        <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+            <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% t "categories_management" %}</h1>
+            <span style="font-size: 12px; font-weight: 500; color: var(--glass-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% t "showing" %} {{ categories|length }} {% t "results" %}</span>
+        </div>
+    </div>
+
+    <!-- Row 2: Primary CTA -->
+    <a href="{% url 'category_create' %}" class="hdr-cta" style="margin-top: 12px;"><i class="bi bi-plus-lg"></i> {% t "add_category" %}</a>
+</div>
+
+{% if categories %}
+<div class="cat-grid">
+    {% for cat in categories %}
+    <div class="cat-card">
+        <div class="cat-card-icon">
+            {% if cat.image %}
+            <img src="{{ cat.image.url }}" alt="{{ cat.name }}">
+            {% else %}
+            <i class="bi bi-tags"></i>
+            {% endif %}
+        </div>
+        <div class="cat-card-body">
+            <div class="cat-card-name">{{ cat.name }}</div>
+            <div class="cat-card-slug">{% if cat.parent %}{{ cat.parent.name }} → {% endif %}{{ cat.slug }}</div>
+        </div>
+        <div class="cat-card-actions">
+            <a href="{% url 'product_list' %}?category={{ cat.id }}" title="{% t "view" %}"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'category_update' pk=cat.pk %}" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{% url 'category_delete' pk=cat.pk %}" style="display:inline">{% csrf_token %}<button type="submit" class="cat-del" onclick="return confirm('{% t "confirm_delete_product" %}')" title="{% t "delete" %}"><i class="bi bi-trash"></i></button></form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-pro" style="padding:var(--sp-10);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <i class="bi bi-tags" style="font-size:2rem;color:var(--text-muted);margin-bottom:var(--sp-3)"></i>
+    <p style="color:var(--text-muted);margin-bottom:var(--sp-4)">{% t "no_categories" %}</p>
+    <a href="{% url 'category_create' %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-lg"></i> {% t "add_first_category" %}</a>
+</div>
+{% endif %}
+{% endblock %}

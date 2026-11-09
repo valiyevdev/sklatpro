@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "task_templates" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "task_templates" %}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:template_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_template" %}</a>
+    </div>
+</div>
+
+<div class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+    {% for tpl in templates %}
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div class="d-flex align-center justify-between mb-2">
+                <div class="fw-600" style="color:var(--text-primary)">{{ tpl.name }}</div>
+                <span class="badge-pro badge-pro-neutral">{{ tpl.get_task_type_display }}</span>
+            </div>
+            {% if tpl.description %}<p class="text-pro-sm text-pro-muted mb-2">{{ tpl.description|truncatechars:100 }}</p>{% endif %}
+            <div class="d-flex gap-2 mb-3">
+                <span class="badge-pro badge-pro-neutral">{{ tpl.get_priority_display }}</span>
+                {% if tpl.checklist_items %}<span class="badge-pro badge-pro-info">{{ tpl.checklist_items|length }} items</span>{% endif %}
+            </div>
+            {% if tpl.checklist_items %}
+            <div class="mb-3" style="padding:0.5rem;background:var(--bg-secondary);border-radius:var(--radius-md)">
+                {% for item in tpl.checklist_items %}
+                <div class="d-flex align-center gap-2 mb-1">
+                    <i class="bi bi-square" style="font-size:0.7rem;color:var(--text-muted)"></i>
+                    <span class="text-pro-xs">{% if item %}{{ item }}{% elif item.title %}{{ item.title }}{% endif %}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'spiskalar:template_use' pk=tpl.pk %}" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="date" name="due_date" class="input-pro" style="flex:1" placeholder="{% t "task_due_date" %}">
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-play"></i> {% t "use_template" %}</button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon"><i class="bi bi-file-earmark"></i></div>
+        <h5 class="empty-state-title">{% t "no_tasks" %}</h5>
+        <p class="empty-state-desc">{% t "create_first_task" %}</p>
+        <a href="{% url 'spiskalar:template_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_template" %}</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

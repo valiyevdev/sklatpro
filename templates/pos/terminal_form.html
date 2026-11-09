@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if terminal %}{% t "pos_edit_terminal" %}{% else %}{% t "pos_add_terminal" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<!-- Terminal qo'shish Header Card with Kafolatlangan Back Button -->
+<div class="page-header" style="display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 16px; padding: 12px 14px; border-radius: 16px; background-color: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(8px); box-shadow: var(--glass-shadow);">
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto;">
+        <!-- Title -->
+        <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% if terminal %}{% t "pos_edit_terminal" %}: {{ terminal.name }}{% else %}{% t "pos_add_terminal" %}{% endif %}</h1>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <a href="{% url 'pos:terminal_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--pill-bg); color: var(--pill-text); border: 1px solid var(--pill-border); font-size: 12px; font-weight: 500; text-decoration: none; transition: all 0.2s ease; white-space: nowrap;">{% t "pos_terminals" %}</a>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger mb-4">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "pos_basic_info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "pos_terminal_name" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="input-pro-error">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "pos_code" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.code }}
+                            {% if form.code.errors %}<div class="input-pro-error">{{ form.code.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "pos_serial_number" %}</label>
+                            {{ form.serial_number }}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "pos_warehouse" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.warehouse }}
+                        {% if form.warehouse.errors %}<div class="input-pro-error">{{ form.warehouse.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "pos_settings" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "pos_status" %}</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3 mb-3">
+                            {{ form.is_active }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "pos_active" %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-printer" style="color:var(--primary-600)"></i> {% t "pos_peripherals" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "pos_receipt_printer" %}</label>
+                        {{ form.receipt_printer }}
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3 mb-3">
+                            {{ form.cash_drawer }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "pos_cash_drawer" %}</label>
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3 mb-3">
+                            {{ form.barcode_scanner }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "pos_barcode_scanner" %}</label>
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3">
+                            {{ form.card_terminal }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "pos_card_terminal" %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% if terminal %}{% url 'pos:terminal_detail' pk=terminal.pk %}{% else %}{% url 'pos:terminal_list' %}{% endif %}" class="btn-pro btn-pro-secondary">{% t "pos_cancel" %}</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if terminal %}{% t "pos_save_changes" %}{% else %}{% t "pos_create" %}{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+.input-pro-checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary-500);
+    cursor: pointer;
+}
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

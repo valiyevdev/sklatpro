@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "kpi_dashboard" %}</h1>
+    </div>
+
+    <div class="card-pro">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "sales_metrics" %}</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "gross_sales" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ gross_sales|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "net_sales" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ net_sales|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "discounts" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-warning">{{ discounts|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "returns" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-danger">{{ returns|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "growth" %}</span>
+                <span class="text-pro-2xl fw-bold {% if growth >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{{ growth|floatformat:1 }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "purchase_metrics" %}</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "total_purchases" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ total_purchases|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "purchase_count" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ purchase_count|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "pending_orders" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-info">{{ pending_orders|floatformat:0 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "finance_metrics" %}</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "income" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-success">{{ income|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "expense" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-danger">{{ expense|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "profit" %}</span>
+                <span class="text-pro-2xl fw-bold {% if profit >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{{ profit|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "margin" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ margin|floatformat:1 }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "inventory_metrics" %}</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "total_stock_value" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ total_stock_value|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "total_products" %}</span>
+                <span class="text-pro-2xl fw-bold">{{ total_products|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "low_stock" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-warning">{{ low_stock|floatformat:0 }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "out_of_stock" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-danger">{{ out_of_stock|floatformat:0 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "customers" %}</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="stat-card">
+                <span class="text-pro-sm text-pro-muted">{% t "new_customers" %}</span>
+                <span class="text-pro-2xl fw-bold text-pro-info">{{ new_customers|floatformat:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

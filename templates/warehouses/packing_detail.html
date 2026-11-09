@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ packing_list.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:packing_list' %}">{% t "packing_lists" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ packing_list.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ packing_list.reference }}</h1>
+            {% if packing_list.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif packing_list.status == 'in_progress' %}
+                <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+            {% elif packing_list.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ packing_list.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if packing_list.status != 'completed' and packing_list.status != 'cancelled' %}
+        <form method="post" action="{% url 'warehouses:packing_complete' pk=packing_list.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="btn-pro btn-pro-success">
+                <i class="bi bi-check-circle"></i> {% t "complete" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ packing_list.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if packing_list.sale %}{{ packing_list.sale.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "sale" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-cart"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if packing_list.packer %}{{ packing_list.packer.get_full_name|default:packing_list.packer.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "packer" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ packing_list.package_count|default:"0" }}</div>
+            <div class="stat-card-label">{% t "packages" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-box"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if packing_list.total_weight %}{{ packing_list.total_weight }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "total_weight" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-speedometer"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "packed_quantity" %}</th>
+                    <th>{% t "package_number" %}</th>
+                    <th>{% t "weight" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.packed_quantity }}</td>
+                    <td>{% if item.package_number %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.package_number }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if item.weight %}{{ item.weight }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if item.is_packed %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "packed" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{% t "pending" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not item.is_packed and packing_list.status != 'completed' and packing_list.status != 'cancelled' %}
+                        <form method="post" action="{% url 'warehouses:packing_confirm_item' pk=packing_list.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item.pk }}">
+                            <button type="submit" class="btn-pro btn-pro-success btn-pro-sm">
+                                <i class="bi bi-check-lg"></i> {% t "confirm" %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "receive_products" %} - {{ purchase.reference }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "receive_purchase" %} - {{ purchase.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ purchase.supplier.name }} | {{ purchase.warehouse.name }}</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" id="stat-received">0</div>
+            <div class="stat-card-label">{% t "total_received" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" id="stat-damaged">0</div>
+            <div class="stat-card-label">{% t "total_damaged" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" id="stat-rejected">0</div>
+            <div class="stat-card-label">{% t "total_rejected" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card-pro mb-4">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-truck" style="color:var(--primary-600)"></i> {% t "items_to_receive" %}</span>
+            <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "product" %}</th>
+                        <th style="text-align:center">{% t "quantity_short" %}</th>
+                        <th style="text-align:center">{% t "received_qty" %}</th>
+                        <th style="text-align:center">{% t "remaining" %}</th>
+                        <th style="text-align:center">{% t "receive_quantity" %}</th>
+                        <th style="text-align:center">{% t "damaged_quantity" %}</th>
+                        <th style="text-align:center">{% t "rejected_quantity" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                        <td style="text-align:center">{{ item.quantity }}</td>
+                        <td style="text-align:center">{{ item.received_quantity }}</td>
+                        <td style="text-align:center">
+                            {% if item.remaining_quantity > 0 %}
+                                <span class="fw-600" style="color:var(--warning-600)">{{ item.remaining_quantity }}</span>
+                            {% else %}
+                                <span style="color:var(--success-600)"><i class="bi bi-check-circle-fill"></i></span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center">
+                            {% if not item.is_fully_received %}
+                                <input class="input-pro receive-input" type="number" name="received_{{ item.id }}" value="0" min="0" max="{{ item.remaining_quantity }}" style="width:80px;text-align:center" data-item="{{ forloop.counter0 }}">
+                            {% else %}
+                                <span class="text-pro-sm text-pro-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center">
+                            {% if not item.is_fully_received %}
+                                <input class="input-pro damaged-input" type="number" name="damaged_{{ item.id }}" value="0" min="0" max="{{ item.remaining_quantity }}" style="width:80px;text-align:center" data-item="{{ forloop.counter0 }}">
+                            {% else %}
+                                <span class="text-pro-sm text-pro-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center">
+                            {% if not item.is_fully_received %}
+                                <input class="input-pro rejected-input" type="number" name="rejected_{{ item.id }}" value="0" min="0" max="{{ item.remaining_quantity }}" style="width:80px;text-align:center" data-item="{{ forloop.counter0 }}">
+                            {% else %}
+                                <span class="text-pro-sm text-pro-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                                <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-between">
+        <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="btn-pro btn-pro-secondary"><i class="bi bi-x"></i> {% t "cancel" %}</a>
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check2-all"></i> {% t "receive_products" %}</button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+    var inputs = document.querySelectorAll('.receive-input, .damaged-input, .rejected-input');
+    inputs.forEach(function(inp){
+        inp.addEventListener('input', updateStats);
+    });
+    function updateStats(){
+        var totalReceived = 0, totalDamaged = 0, totalRejected = 0;
+        document.querySelectorAll('.receive-input').forEach(function(el){ totalReceived += parseInt(el.value)||0; });
+        document.querySelectorAll('.damaged-input').forEach(function(el){ totalDamaged += parseInt(el.value)||0; });
+        document.querySelectorAll('.rejected-input').forEach(function(el){ totalRejected += parseInt(el.value)||0; });
+        document.getElementById('stat-received').textContent = totalReceived;
+        document.getElementById('stat-damaged').textContent = totalDamaged;
+        document.getElementById('stat-rejected').textContent = totalRejected;
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "execution_detail" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">{% t "automation" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'automation:execution_list' %}">{% t "execution_history" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ execution.pk|truncatechars:8 }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{% t "execution_detail" %}</h1>
+            {% if execution.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif execution.status == 'failed' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+            {% elif execution.status == 'running' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                    <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                    {% t "running" %}
+                </span>
+            {% elif execution.status == 'pending' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pending" %}</span>
+            {% elif execution.status == 'partial' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "partial" %}</span>
+            {% elif execution.status == 'skipped' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "skipped" %}</span>
+            {% elif execution.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "cancelled" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            <i class="bi bi-gear"></i>
+            <a href="{% url 'automation:rule_detail' pk=execution.rule.pk %}" style="color:var(--primary-600);text-decoration:none">{{ execution.rule.name }}</a>
+            <span style="margin-left:var(--sp-3);color:var(--text-muted)">{{ execution.event_type }}</span>
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if execution.status == 'failed' or execution.status == 'partial' %}
+        <form method="post" action="{% url 'automation:execution_retry' pk=execution.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-primary" onclick="return confirm('{% t 'confirm_retry' %}')">
+                <i class="bi bi-arrow-clockwise"></i> {% t "retry" %}
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'automation:execution_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "back" %}
+        </a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">
+                {% if execution.status == 'completed' %}
+                <span style="color:var(--success-600)">{% t "completed" %}</span>
+                {% elif execution.status == 'failed' %}
+                <span style="color:var(--danger-600)">{% t "failed" %}</span>
+                {% elif execution.status == 'running' %}
+                <span style="color:var(--info-600)">{% t "running" %}</span>
+                {% elif execution.status == 'partial' %}
+                <span style="color:var(--warning-600)">{% t "partial" %}</span>
+                {% else %}
+                {{ execution.get_status_display }}
+                {% endif %}
+            </div>
+            <div class="stat-card-label">{% t "status" %}</div>
+        </div>
+        <div class="stat-card-icon {% if execution.status == 'completed' %}success{% elif execution.status == 'failed' %}danger{% elif execution.status == 'running' %}info{% else %}warning{% endif %}">
+            <i class="bi {% if execution.status == 'completed' %}bi-check-circle{% elif execution.status == 'failed' %}bi-x-circle{% elif execution.status == 'running' %}bi-arrow-repeat{% else %}bi-hourglass{% endif %}"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ execution.duration_ms|default:"—" }}{% if execution.duration_ms %}<span style="font-size:var(--text-sm);font-weight:400">ms</span>{% endif %}</div>
+            <div class="stat-card-label">{% t "duration" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-clock"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ execution.execution_depth }}</div>
+            <div class="stat-card-label">{% t "depth" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-layers"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ execution.event_type }}</div>
+            <div class="stat-card-label">{% t "event_type" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-lightning-charge"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">
+                {% if execution.object_type %}
+                {{ execution.object_type }} <code style="font-size:var(--text-xs);color:var(--text-muted)">{{ execution.object_id|truncatechars:16 }}</code>
+                {% else %}—{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "object" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-box"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">
+                {% if execution.dry_run %}
+                <span style="color:var(--warning-600)">{% t "yes" %}</span>
+                {% else %}
+                <span style="color:var(--text-secondary)">{% t "no" %}</span>
+                {% endif %}
+            </div>
+            <div class="stat-card-label">{% t "dry_run" %}</div>
+        </div>
+        <div class="stat-card-icon {% if execution.dry_run %}warning{% else %}neutral{% endif %}"><i class="bi bi-flask"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-funnel" style="color:var(--primary-600)"></i> {% t "condition_match" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex align-center gap-3">
+            {% if execution.conditions_matched %}
+            <div style="width:40px;height:40px;border-radius:var(--radius-lg);background:var(--success-50);color:var(--success-600);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <div>
+                <div style="font-weight:600;color:var(--success-700)">{% t "conditions_matched" %}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary)">{% t "execution_proceed_actions" %}</div>
+            </div>
+            {% else %}
+            <div style="width:40px;height:40px;border-radius:var(--radius-lg);background:var(--danger-50);color:var(--danger-600);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0">
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <div>
+                <div style="font-weight:600;color:var(--danger-700)">{% t "conditions_not_matched" %}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary)">{% t "execution_skipped_actions" %}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-list-check" style="color:var(--primary-600)"></i> {% t "actions_summary" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4)">
+            <div style="text-align:center;padding:var(--sp-4);background:var(--bg-page);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-3xl);font-weight:700;color:var(--text-primary)">{{ execution.actions_total }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">{% t "total" %}</div>
+            </div>
+            <div style="text-align:center;padding:var(--sp-4);background:var(--success-50);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-3xl);font-weight:700;color:var(--success-700)">{{ execution.actions_succeeded }}</div>
+                <div style="font-size:var(--text-xs);color:var(--success-600);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">{% t "succeeded" %}</div>
+            </div>
+            <div style="text-align:center;padding:var(--sp-4);background:var(--danger-50);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-3xl);font-weight:700;color:var(--danger-700)">{{ execution.actions_failed }}</div>
+                <div style="font-size:var(--text-xs);color:var(--danger-600);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">{% t "failed" %}</div>
+            </div>
+            <div style="text-align:center;padding:var(--sp-4);background:var(--warning-50);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-3xl);font-weight:700;color:var(--warning-700)">{{ execution.actions_skipped }}</div>
+                <div style="font-size:var(--text-xs);color:var(--warning-600);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">{% t "skipped" %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if execution.action_results %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-list-ol" style="color:var(--primary-600)"></i> {% t "action_details" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ execution.action_results|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="width:50px">#</th>
+                    <th>{% t "action_type" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "result" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for action in execution.action_results %}
+                <tr>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);font-weight:600">{{ forloop.counter }}</td>
+                    <td style="font-weight:500;font-size:var(--text-sm)">
+                        <i class="bi bi-gear" style="color:var(--text-muted);margin-right:4px"></i>
+                        {{ action.type|default:action.action_type|default:"—" }}
+                    </td>
+                    <td>
+                        {% if action.status == 'success' or action.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "success" %}</span>
+                        {% elif action.status == 'failed' or action.status == 'error' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif action.status == 'skipped' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "skipped" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ action.status|default:"—" }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width:300px">
+                        {% if action.error %}
+                        <span style="font-size:var(--text-xs);color:var(--danger-600)">{{ action.error|truncatechars:100 }}</span>
+                        {% elif action.result %}
+                        <span style="font-size:var(--text-xs);color:var(--text-secondary)">{{ action.result|truncatechars:100 }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if execution.status == 'failed' and execution.error_message %}
+<div class="card-pro mb-4" style="border-color:var(--danger-200)">
+    <div class="card-pro-header" style="background:var(--danger-50)">
+        <span class="card-pro-title" style="color:var(--danger-700)"><i class="bi bi-exclamation-triangle"></i> {% t "error_details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="background:var(--danger-50);border:1px solid var(--danger-200);border-radius:var(--radius-lg);padding:var(--sp-4);font-family:monospace;font-size:var(--text-sm);color:var(--danger-700);white-space:pre-wrap;word-break:break-all">{{ execution.error_message }}</div>
+        {% if execution.error_details %}
+        <div class="mt-4">
+            <button class="btn-pro btn-pro-ghost btn-pro-sm" onclick="var el=document.getElementById('errorDetails');el.style.display=el.style.display==='none'?'block':'none'">
+                <i class="bi bi-code-slash"></i> {% t "show_error_details" %}
+            </button>
+            <div id="errorDetails" style="display:none;margin-top:var(--sp-3)">
+                <pre style="background:var(--bg-page);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-4);font-size:var(--text-sm);overflow-x:auto;max-height:300px;font-family:'SF Mono',Consolas,monospace;color:var(--text-primary)">{{ execution.error_details|pprint }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "execution_info" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4)">
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "execution_id" %}</div>
+                <code style="font-size:var(--text-xs);background:var(--bg-page);padding:4px 8px;border-radius:var(--radius-sm);font-family:'SF Mono',Consolas,monospace">{{ execution.pk }}</code>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "event_id" %}</div>
+                <code style="font-size:var(--text-xs);background:var(--bg-page);padding:4px 8px;border-radius:var(--radius-sm);font-family:'SF Mono',Consolas,monospace">{{ execution.event_id|truncatechars:40 }}</code>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "created_at" %}</div>
+                <div class="text-pro-sm fw-500">{{ execution.created_at|date:"d M Y H:i:s" }}</div>
+            </div>
+            {% if execution.triggered_by %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "triggered_by" %}</div>
+                <div class="text-pro-sm fw-500">{{ execution.triggered_by.get_full_name|default:execution.triggered_by.email }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media(max-width:1024px){div[style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:768px){div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}}
+</style>
+{% endblock %}

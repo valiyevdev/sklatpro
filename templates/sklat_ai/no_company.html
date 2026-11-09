@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}No Company — SKLAT AI{% endblock %}
+{% block content %}
+<div class="empty-state" style="padding:var(--sp-12);text-align:center">
+    <i class="bi bi-building" style="font-size:48px;color:var(--text-muted);margin-bottom:var(--sp-4)"></i>
+    <h2 style="color:var(--text-primary);margin-bottom:var(--sp-2)">No Company Assigned</h2>
+    <p style="color:var(--text-secondary);margin-bottom:var(--sp-4)">You need to be assigned to a company to use SKLAT AI.</p>
+    <a href="{% url 'dashboard' %}" class="ai-action-btn" style="background:var(--primary-600);color:#fff;border-color:var(--primary-600)">Go to Dashboard</a>
+</div>
+{% endblock %}

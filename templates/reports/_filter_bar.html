@@ -1,0 +1,40 @@
+{% load i18n_tags %}
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end" id="report-filter-form">
+            <div class="input-pro-group" style="min-width:120px;margin-bottom:0">
+                <label class="input-pro-label">{% t "period" %}</label>
+                <select class="input-pro" name="preset" id="date-preset" onchange="toggleCustomDates(this.value)">
+                    <option value="today" {% if request.GET.preset == "today" %}selected{% endif %}>{% t "today" %}</option>
+                    <option value="yesterday" {% if request.GET.preset == "yesterday" %}selected{% endif %}>{% t "yesterday" %}</option>
+                    <option value="this_week" {% if request.GET.preset == "this_week" %}selected{% endif %}>{% t "this_week" %}</option>
+                    <option value="last_week" {% if request.GET.preset == "last_week" %}selected{% endif %}>{% t "last_week" %}</option>
+                    <option value="this_month" {% if request.GET.preset == "this_month" %}selected{% endif %}>{% t "this_month" %}</option>
+                    <option value="last_month" {% if request.GET.preset == "last_month" %}selected{% endif %}>{% t "last_month" %}</option>
+                    <option value="this_quarter" {% if request.GET.preset == "this_quarter" %}selected{% endif %}>{% t "this_quarter" %}</option>
+                    <option value="last_quarter" {% if request.GET.preset == "last_quarter" %}selected{% endif %}>{% t "last_quarter" %}</option>
+                    <option value="this_year" {% if request.GET.preset == "this_year" %}selected{% endif %}>{% t "this_year" %}</option>
+                    <option value="last_year" {% if request.GET.preset == "last_year" %}selected{% endif %}>{% t "last_year" %}</option>
+                    <option value="custom" {% if request.GET.preset == "custom" %}selected{% endif %}>{% t "custom" %}</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="min-width:140px;margin-bottom:0" id="custom-start">
+                <label class="input-pro-label">{% t "start_date_label" %}</label>
+                <input class="input-pro" type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="input-pro-group" style="min-width:140px;margin-bottom:0" id="custom-end">
+                <label class="input-pro-label">{% t "end_date_label" %}</label>
+                <input class="input-pro" type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-funnel"></i> {% t "filter" %}</button>
+            <a href="?" class="btn-pro btn-pro-ghost">{% t "reset" %}</a>
+        </form>
+    </div>
+</div>
+<script>
+function toggleCustomDates(val){
+    var d=document.getElementById('custom-start'),e=document.getElementById('custom-end');
+    if(val==='custom'){d.style.display='';e.style.display=''}else{d.style.display='none';e.style.display='none'}
+}
+toggleCustomDates(document.getElementById('date-preset').value);
+</script>

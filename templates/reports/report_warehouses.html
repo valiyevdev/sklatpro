@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "warehouses_report" %}</h1>
+    </div>
+
+    <div class="card-pro">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "warehouse_summary" %}</h2>
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "warehouse" %}</th>
+                        <th>{% t "total_qty" %}</th>
+                        <th>{% t "total_reserved" %}</th>
+                        <th>{% t "total_value" %}</th>
+                        <th>{% t "product_count" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for wh in warehouses %}
+                    <tr>
+                        <td class="fw-semibold">{{ wh.warehouse__name }}</td>
+                        <td>{{ wh.total_qty|floatformat:0 }}</td>
+                        <td>{{ wh.total_reserved|floatformat:0 }}</td>
+                        <td>{{ wh.total_value|floatformat:0 }}</td>
+                        <td>{{ wh.product_count|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <h2 class="text-pro-lg fw-bold mb-3">{% t "low_stock_by_warehouse" %}</h2>
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "warehouse" %}</th>
+                        <th>{% t "product" %}</th>
+                        <th>{% t "current_qty" %}</th>
+                        <th>{% t "min_qty" %}</th>
+                        <th>{% t "shortage" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock %}
+                    <tr>
+                        <td class="fw-semibold">{{ item.warehouse__name }}</td>
+                        <td>{{ item.product__name }}</td>
+                        <td class="text-pro-danger fw-semibold">{{ item.current_qty|floatformat:0 }}</td>
+                        <td>{{ item.min_qty|floatformat:0 }}</td>
+                        <td class="text-pro-danger fw-semibold">{{ item.shortage|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-pro-muted">{% t "no_low_stock" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,373 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "ai_chat" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-chat-layout{display:grid;grid-template-columns:300px 1fr;gap:0;height:calc(100vh - 160px);min-height:500px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow:hidden}
+
+.ai-chat-sidebar{display:flex;flex-direction:column;border-right:1px solid var(--border-default);background:var(--bg-page)}
+.ai-chat-sidebar-header{padding:var(--sp-4);border-bottom:1px solid var(--border-default)}
+.ai-chat-new-btn{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);width:100%;padding:var(--sp-3) var(--sp-4);border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:600;text-decoration:none;background:var(--primary-600);color:#fff;border:none;cursor:pointer;transition:all var(--transition-fast);font-family:var(--font-sans)}
+.ai-chat-new-btn:hover{background:var(--primary-700)}
+
+.ai-chat-list{flex:1;overflow-y:auto;padding:var(--sp-2)}
+.ai-chat-list-item{display:flex;align-items:flex-start;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-radius:var(--radius-lg);cursor:pointer;text-decoration:none;transition:background var(--transition-fast);margin-bottom:2px}
+.ai-chat-list-item:hover{background:var(--bg-surface-hover)}
+.ai-chat-list-item.active{background:var(--primary-50);border:1px solid var(--primary-200)}
+.ai-chat-list-item .conv-icon{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0;background:var(--primary-50);color:var(--primary-600)}
+.ai-chat-list-item.active .conv-icon{background:var(--primary-100);color:var(--primary-700)}
+.ai-chat-list-item .conv-info{flex:1;min-width:0}
+.ai-chat-list-item .conv-title{font-size:var(--text-sm);font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-chat-list-item.active .conv-title{color:var(--primary-700)}
+.ai-chat-list-item .conv-meta{font-size:var(--text-xs);color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:var(--sp-2)}
+.ai-chat-list-item .conv-count{background:var(--gray-100);color:var(--gray-600);padding:1px 6px;border-radius:var(--radius-full);font-size:0.625rem;font-weight:600}
+
+.ai-chat-main{display:flex;flex-direction:column;background:var(--bg-surface)}
+
+.ai-chat-header{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border-default)}
+.ai-chat-header-left{display:flex;align-items:center;gap:var(--sp-3)}
+.ai-chat-header-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;flex-shrink:0}
+.ai-chat-header-title{font-weight:600;font-size:var(--text-sm)}
+.ai-chat-header-sub{font-size:var(--text-xs);color:var(--text-muted)}
+
+.ai-chat-messages{flex:1;overflow-y:auto;padding:var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-4)}
+
+.ai-msg{display:flex;gap:var(--sp-3);max-width:80%}
+.ai-msg-user{align-self:flex-end;flex-direction:row-reverse}
+.ai-msg-ai{align-self:flex-start}
+.ai-msg-system{align-self:center;max-width:100%}
+
+.ai-msg-avatar{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0}
+.ai-msg-user .ai-msg-avatar{background:var(--primary-50);color:var(--primary-600)}
+.ai-msg-ai .ai-msg-avatar{background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff}
+
+.ai-msg-bubble{border-radius:var(--radius-xl);padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);line-height:var(--leading-relaxed)}
+.ai-msg-user .ai-msg-bubble{background:var(--primary-600);color:#fff;border-bottom-right-radius:var(--radius-sm)}
+.ai-msg-ai .ai-msg-bubble{background:var(--bg-page);border:1px solid var(--border-default);color:var(--text-primary);border-bottom-left-radius:var(--radius-sm)}
+.ai-msg-system .ai-msg-bubble{background:transparent;color:var(--text-muted);font-size:var(--text-xs);padding:var(--sp-2) var(--sp-4);border:none;text-align:center}
+
+.ai-msg-bubble strong{font-weight:600}
+.ai-msg-bubble em{font-style:italic;color:var(--text-secondary)}
+.ai-msg-bubble code{font-size:var(--text-xs);background:var(--bg-surface);padding:1px 4px;border-radius:var(--radius-sm);font-family:var(--font-mono)}
+.ai-msg-user .ai-msg-bubble code{background:rgba(255,255,255,0.2);color:#fff}
+.ai-msg-bubble ul,.ai-msg-bubble ol{margin:var(--sp-2) 0;padding-left:var(--sp-5)}
+.ai-msg-bubble li{margin-bottom:var(--sp-1)}
+.ai-msg-bubble p{margin-bottom:var(--sp-2)}
+.ai-msg-bubble p:last-child{margin-bottom:0}
+.ai-msg-time{font-size:0.625rem;color:var(--text-muted);margin-top:var(--sp-1);opacity:0.7}
+.ai-msg-user .ai-msg-time{text-align:right}
+
+.ai-chat-thinking{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-muted)}
+.ai-chat-thinking .dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text-muted);margin:0 2px;animation:ai-bounce 1.4s infinite ease-in-out both}
+.ai-chat-thinking .dots span:nth-child(1){animation-delay:-0.32s}
+.ai-chat-thinking .dots span:nth-child(2){animation-delay:-0.16s}
+@keyframes ai-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+
+.ai-suggested-questions{padding:var(--sp-5);display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+.ai-suggested-header{text-align:center;margin-bottom:var(--sp-6)}
+.ai-suggested-header h3{font-size:var(--text-lg);font-weight:600;margin-bottom:var(--sp-2)}
+.ai-suggested-header p{font-size:var(--text-sm);color:var(--text-secondary)}
+.ai-suggested-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);max-width:600px;width:100%}
+.ai-suggested-card{background:var(--bg-page);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-4);cursor:pointer;text-decoration:none;transition:all var(--transition-fast);display:flex;align-items:flex-start;gap:var(--sp-3)}
+.ai-suggested-card:hover{border-color:var(--primary-400);background:var(--primary-50);box-shadow:var(--shadow-md)}
+.ai-suggested-card .sq-icon{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0;background:var(--primary-50);color:var(--primary-600)}
+.ai-suggested-card:hover .sq-icon{background:var(--primary-100);color:var(--primary-700)}
+.ai-suggested-card .sq-text{font-size:var(--text-sm);color:var(--text-primary);line-height:1.5}
+
+.ai-chat-input-wrap{padding:var(--sp-4) var(--sp-5);border-top:1px solid var(--border-default);background:var(--bg-page)}
+.ai-chat-input-form{display:flex;gap:var(--sp-3);align-items:flex-end}
+.ai-chat-textarea{flex:1;min-height:44px;max-height:150px;padding:var(--sp-3) var(--sp-4);border:1px solid var(--border-default);border-radius:var(--radius-lg);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-surface);font-family:var(--font-sans);resize:none;transition:border-color var(--transition-fast);line-height:1.5}
+.ai-chat-textarea:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.ai-chat-textarea::placeholder{color:var(--text-muted)}
+.ai-chat-send-btn{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--radius-lg);background:var(--primary-600);color:#fff;border:none;cursor:pointer;transition:all var(--transition-fast);flex-shrink:0;font-size:1.125rem}
+.ai-chat-send-btn:hover{background:var(--primary-700)}
+.ai-chat-send-btn:disabled{opacity:0.5;cursor:not-allowed}
+.ai-chat-input-hint{font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--sp-2);text-align:right}
+
+.ai-chat-empty{display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:var(--sp-8)}
+.ai-chat-empty-content i{font-size:2.5rem;color:var(--text-muted);margin-bottom:var(--sp-3);display:block}
+.ai-chat-empty-content h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-chat-empty-content p{font-size:var(--text-sm);color:var(--text-muted)}
+
+.ai-chat-sidebar-empty{display:flex;align-items:center;justify-content:center;flex:1;text-align:center;padding:var(--sp-6);color:var(--text-muted);font-size:var(--text-sm)}
+
+@media(max-width:768px){
+    .ai-chat-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    .ai-chat-sidebar{max-height:200px;border-right:none;border-bottom:1px solid var(--border-default)}
+    .ai-msg{max-width:95%}
+    .ai-suggested-grid{grid-template-columns:1fr}
+}
+</style>
+
+<div class="ai-chat-layout">
+    <div class="ai-chat-sidebar">
+        <div class="ai-chat-sidebar-header">
+            <a href="{% url 'sklat_ai:chat' %}" class="ai-chat-new-btn">
+                <i class="bi bi-plus-lg"></i> {% t "new_conversation" %}
+            </a>
+        </div>
+        <div class="ai-chat-list">
+            {% for conv in conversations %}
+            <a href="{% url 'sklat_ai:chat' %}?conversation_id={{ conv.pk }}" class="ai-chat-list-item {% if current_conversation and current_conversation.pk == conv.pk %}active{% endif %}">
+                <div class="conv-icon"><i class="bi bi-chat-square-text"></i></div>
+                <div class="conv-info">
+                    <div class="conv-title">{{ conv.title }}</div>
+                    <div class="conv-meta">
+                        <span>{{ conv.updated_at|timesince }} ago</span>
+                        <span class="conv-count">{{ conv.message_count|default:"0" }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="ai-chat-sidebar-empty">
+                <div><i class="bi bi-chat-dots" style="font-size:1.5rem;display:block;margin-bottom:var(--sp-2)"></i>{% t "no_conversations_yet" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="ai-chat-main">
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-left">
+                <div class="ai-chat-header-icon"><i class="bi bi-stars"></i></div>
+                <div>
+                    <div class="ai-chat-header-title">{% if current_conversation %}{{ current_conversation.title }}{% else %}SKLAT AI Assistant{% endif %}</div>
+                    <div class="ai-chat-header-sub">{% t "ai_analytics_assistant" %}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-chat-messages" id="chatMessages">
+            {% if messages %}
+                {% for msg in messages %}
+                {% if msg.role == 'user' %}
+                <div class="ai-msg ai-msg-user">
+                    <div class="ai-msg-avatar"><i class="bi bi-person"></i></div>
+                    <div>
+                        <div class="ai-msg-bubble">{{ msg.content }}</div>
+                        <div class="ai-msg-time">{{ msg.created_at|date:"H:i" }}</div>
+                    </div>
+                </div>
+                {% elif msg.role == 'assistant' %}
+                <div class="ai-msg ai-msg-ai">
+                    <div class="ai-msg-avatar"><i class="bi bi-stars"></i></div>
+                    <div>
+                        <div class="ai-msg-bubble">{{ msg.content|linebreaksbr }}</div>
+                        <div class="ai-msg-time">{{ msg.created_at|date:"H:i" }}</div>
+                    </div>
+                </div>
+                {% elif msg.role == 'system' %}
+                <div class="ai-msg ai-msg-system">
+                    <div class="ai-msg-bubble"><i class="bi bi-info-circle" style="margin-right:var(--sp-1)"></i>{{ msg.content }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            {% else %}
+                {% if current_conversation %}
+                <div class="ai-chat-empty">
+                    <div class="ai-chat-empty-content">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h4>{% t "start_conversation" %}</h4>
+                        <p>{% t "ask_ai_anything" %}</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="ai-suggested-questions">
+                    <div class="ai-suggested-header">
+                        <h3><i class="bi bi-stars" style="color:var(--primary-600);margin-right:var(--sp-2)"></i>{% t "how_can_i_help" %}</h3>
+                        <p>{% t "ask_about_business" %}</p>
+                    </div>
+                    <div class="ai-suggested-grid">
+                        {% for q in suggested_questions %}
+                        <div class="ai-suggested-card" onclick="askSuggested(this)" data-question="{{ q.text }}">
+                            <div class="sq-icon"><i class="bi bi-{{ q.icon|default:'question-circle' }}"></i></div>
+                            <div class="sq-text">{{ q.text }}</div>
+                        </div>
+                        {% empty %}
+                        <div class="ai-suggested-card" onclick="askSuggested(this)" data-question="What are my top performing products this month?">
+                            <div class="sq-icon"><i class="bi bi-graph-up"></i></div>
+                            <div class="sq-text">What are my top performing products this month?</div>
+                        </div>
+                        <div class="ai-suggested-card" onclick="askSuggested(this)" data-question="Show me a summary of today's sales performance.">
+                            <div class="sq-icon"><i class="bi bi-receipt"></i></div>
+                            <div class="sq-text">Show me a summary of today's sales performance.</div>
+                        </div>
+                        <div class="ai-suggested-card" onclick="askSuggested(this)" data-question="Are there any inventory items that need restocking?">
+                            <div class="sq-icon"><i class="bi bi-box-seam"></i></div>
+                            <div class="sq-text">Are there any inventory items that need restocking?</div>
+                        </div>
+                        <div class="ai-suggested-card" onclick="askSuggested(this)" data-question="What are the key financial risks I should be aware of?">
+                            <div class="sq-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <div class="sq-text">What are the key financial risks I should be aware of?</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="ai-chat-input-wrap">
+            <form class="ai-chat-input-form" id="chatForm" onsubmit="return sendMessage(event)">
+                <textarea class="ai-chat-textarea" id="chatInput" rows="1" placeholder="{% t 'ask_ai_placeholder' %}" onkeydown="handleKeydown(event)" oninput="autoResize(this)"></textarea>
+                <button type="submit" class="ai-chat-send-btn" id="sendBtn" title="{% t 'send' %}">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+            </form>
+            <div class="ai-chat-input-hint">{% t "enter_to_send_shift_newline" %}</div>
+        </div>
+    </div>
+</div>
+
+<script>
+var chatMessages=document.getElementById('chatMessages');
+var chatInput=document.getElementById('chatInput');
+var chatForm=document.getElementById('chatForm');
+var sendBtn=document.getElementById('sendBtn');
+var currentConversationId='{% if current_conversation %}{{ current_conversation.pk }}{% endif %}';
+var csrfToken='{{ csrf_token }}';
+var isProcessing=false;
+
+function scrollToBottom(){
+    if(chatMessages)chatMessages.scrollTop=chatMessages.scrollHeight;
+}
+
+function autoResize(el){
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,150)+'px';
+}
+
+function handleKeydown(e){
+    if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        sendMessage(e);
+    }
+}
+
+function getCookie(name){
+    var v=null;
+    if(document.cookie&&document.cookie!==''){
+        var c=document.cookie.split(';');
+        for(var i=0;i<c.length;i++){
+            var cv=c[i].trim();
+            if(cv.substring(0,name.length+1)===(name+'=')){
+                v=decodeURIComponent(cv.substring(name.length+1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+
+function escapeHTML(str){
+    var div=document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+function formatAIBubble(text){
+    var html=escapeHTML(text);
+    html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
+    html=html.replace(/`(.+?)`/g,'<code>$1</code>');
+    html=html.replace(/\n/g,'<br>');
+    return html;
+}
+
+function addMessage(role,content,timeStr){
+    var isSystem=role==='system';
+    var isUser=role==='user';
+    var wrapper=document.createElement('div');
+    wrapper.className='ai-msg ai-msg-'+role;
+
+    var now=timeStr||new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    if(isSystem){
+        wrapper.innerHTML='<div class="ai-msg-bubble"><i class="bi bi-info-circle" style="margin-right:4px"></i>'+escapeHTML(content)+'</div>';
+    }else{
+        var avatarHTML='<div class="ai-msg-avatar"><i class="bi bi-'+(isUser?'person':'stars')+'"></i></div>';
+        var bubbleContent=isUser?escapeHTML(content):formatAIBubble(content);
+        wrapper.innerHTML=avatarHTML+'<div><div class="ai-msg-bubble">'+bubbleContent+'</div><div class="ai-msg-time">'+now+'</div></div>';
+    }
+
+    chatMessages.appendChild(wrapper);
+    scrollToBottom();
+    return wrapper;
+}
+
+function showThinking(){
+    var wrapper=document.createElement('div');
+    wrapper.className='ai-msg ai-msg-ai';
+    wrapper.id='thinkingIndicator';
+    wrapper.innerHTML='<div class="ai-msg-avatar"><i class="bi bi-stars"></i></div><div class="ai-chat-thinking"><div class="dots"><span></span><span></span><span></span></div><span>Analyzing...</span></div>';
+    chatMessages.appendChild(wrapper);
+    scrollToBottom();
+}
+
+function removeThinking(){
+    var el=document.getElementById('thinkingIndicator');
+    if(el)el.remove();
+}
+
+function sendMessage(e){
+    if(e)e.preventDefault();
+    if(isProcessing)return;
+
+    var text=chatInput.value.trim();
+    if(!text)return;
+
+    isProcessing=true;
+    sendBtn.disabled=true;
+    chatInput.value='';
+    chatInput.style.height='auto';
+    addMessage('user',text);
+
+    var suggestedSection=chatMessages.querySelector('.ai-suggested-questions');
+    if(suggestedSection)suggestedSection.remove();
+
+    showThinking();
+
+    var payload={message:text};
+    if(currentConversationId)payload.conversation_id=currentConversationId;
+
+    fetch("{% url 'sklat_ai:chat' %}",{
+        method:'POST',
+        headers:{
+            'X-CSRFToken':csrfToken||getCookie('csrftoken'),
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify(payload)
+    })
+    .then(function(r){return r.json()})
+    .then(function(data){
+        removeThinking();
+        if(data.conversation_id&&!currentConversationId){
+            currentConversationId=data.conversation_id;
+            window.history.replaceState(null,'','{% url "sklat_ai:chat" %}?conversation_id='+currentConversationId);
+        }
+        addMessage('assistant',data.response||data.message||'No response received.');
+        isProcessing=false;
+        sendBtn.disabled=false;
+        chatInput.focus();
+    })
+    .catch(function(err){
+        removeThinking();
+        addMessage('system','An error occurred while processing your request. Please try again.');
+        isProcessing=false;
+        sendBtn.disabled=false;
+    });
+}
+
+function askSuggested(el){
+    var question=el.getAttribute('data-question');
+    if(question){
+        chatInput.value=question;
+        sendMessage(new Event('submit'));
+    }
+}
+
+scrollToBottom();
+chatInput.focus();
+</script>
+{% endblock %}

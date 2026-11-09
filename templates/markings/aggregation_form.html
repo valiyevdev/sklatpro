@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "aggregation_form" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:aggregation_list' %}">{% t "aggregation_list" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% if form.instance.pk %}{% t "edit" %}{% else %}{% t "create_aggregation" %}{% endif %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if form.instance.pk %}{% t "edit" %}{% else %}{% t "create_aggregation" %}{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger mb-4">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-diagram-3" style="color:var(--primary-600)"></i> {% t "aggregation_info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "parent_code" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.parent_code }}
+                        {% if form.parent_code.errors %}<div class="input-pro-error">{{ form.parent_code.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "product" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.product }}
+                            {% if form.product.errors %}<div class="input-pro-error">{{ form.product.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "quantity" %}</label>
+                            {{ form.quantity }}
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "warehouse" %}</label>
+                            {{ form.warehouse }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "location" %}</label>
+                            {{ form.location }}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "status" %}</label>
+                        {{ form.status }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <p class="text-pro-sm text-pro-muted">{% t "child_codes_hint" %}</p>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% url 'markings:aggregation_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "save" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

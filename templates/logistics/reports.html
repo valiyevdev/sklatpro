@@ -1,0 +1,58 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "logistics_reports" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "logistics_reports" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "logistics_reports" %}</h1></div></div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body text-center"><div style="font-size:1.8rem;font-weight:700">{{ shipment_stats.total }}</div><div class="text-pro-sm text-pro-muted">{% t "total_shipments" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body text-center"><div style="font-size:1.8rem;font-weight:700;color:var(--color-success)">{{ shipment_stats.delivered }}</div><div class="text-pro-sm text-pro-muted">{% t "delivered" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body text-center"><div style="font-size:1.8rem;font-weight:700;color:var(--color-danger)">{{ shipment_stats.failed }}</div><div class="text-pro-sm text-pro-muted">{% t "failed" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body text-center"><div style="font-size:1.8rem;font-weight:700">{{ on_time_rate }}%</div><div class="text-pro-sm text-pro-muted">{% t "on_time_rate" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:200px"><div class="card-pro-body text-center"><div style="font-size:1.8rem;font-weight:700">{{ avg_cost_per_delivery|floatformat:0 }}</div><div class="text-pro-sm text-pro-muted">{% t "avg_cost_per_delivery" %} (UZS)</div></div></div>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:300px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "shipment_status_breakdown" %}</h5></div>
+        <div class="card-pro-body">
+            {% for key, count in shipment_stats.items %}
+                {% if key != 'total' %}
+                <div class="d-flex justify-between align-center mb-2"><span class="text-pro-sm">{{ key }}</span><span style="font-weight:600">{{ count }}</span></div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro" style="flex:1;min-width:300px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "cost_by_category" %}</h5></div>
+        <div class="card-pro-body">
+            {% for item in cost_by_category %}
+            <div class="d-flex justify-between align-center mb-2"><span class="text-pro-sm">{{ item.category }}</span><span style="font-weight:600">{{ item.total|floatformat:0 }} UZS</span></div>
+            {% empty %}<div class="text-pro-muted">{% t "no_costs" %}</div>{% endfor %}
+            <div class="d-flex justify-between align-center mt-3 pt-3" style="border-top:1px solid var(--border-color)"><span style="font-weight:600">{% t "total" %}</span><span style="font-weight:700">{{ total_cost|floatformat:0 }} UZS</span></div>
+        </div>
+    </div>
+</div>
+
+{% if driver_stats %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "driver_performance" %}</h5></div>
+    <div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "driver" %}</th><th>{% t "total_deliveries" %}</th><th>{% t "completed" %}</th><th>{% t "failed" %}</th></tr></thead>
+    <tbody>{% for d in driver_stats %}
+    <tr><td><a href="{% url 'logistics:driver_detail' pk=d.pk %}">{{ d.first_name }} {{ d.last_name }}</a></td><td>{{ d.total_deliveries }}</td><td style="color:var(--color-success)">{{ d.completed_deliveries }}</td><td style="color:var(--color-danger)">{{ d.failed_deliveries }}</td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+
+{% if vehicle_stats %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "vehicle_utilization" %}</h5></div>
+    <div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "vehicle" %}</th><th>{% t "total_routes" %}</th><th>{% t "total_deliveries" %}</th></tr></thead>
+    <tbody>{% for v in vehicle_stats %}
+    <tr><td><a href="{% url 'logistics:vehicle_detail' pk=v.pk %}">{{ v.vehicle_number }}</a></td><td>{{ v.total_routes }}</td><td>{{ v.total_deliveries }}</td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

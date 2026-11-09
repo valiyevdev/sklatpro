@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n_tags %}
+
+{% block title %}{% t "delete_employee" %} - {{ employee.get_full_name }}{% endblock %}
+
+{% block page_title %}{% t "delete_employee" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="card-title mb-0 text-danger">
+                            <i class="bi bi-person-x me-2"></i>{% t "delete_employee" %}
+                        </h5>
+                        <small class="text-muted">Xodimni tizimdan o'chirish</small>
+                    </div>
+                    <a href="{% url 'users:employee_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> {% t "back" %}
+                    </a>
+                </div>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Ogohlantirish:</strong> Siz bu xodimni o'chirmoqchimisiz. U tizimga kirish huquqini yo'qotadi.
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    {% if employee.profile_picture %}
+                                        <img src="{{ employee.profile_picture.url }}" alt="{{ employee.get_full_name }}" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold; font-size: 2rem;">
+                                        {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-9">
+                                    <h4 class="fw-bold mb-2">{{ employee.get_full_name }}</h4>
+                                    <p class="text-muted mb-2">{{ employee.email }}</p>
+                                    <p class="mb-1"><strong>{% t "role" %}:</strong> {{ employee.get_role_display }}</p>
+                                    <p class="mb-1"><strong>{% t "phone" %}:</strong> {{ employee.phone|default:"Ko'rsatilmagan" }}</p>
+                                    <p class="mb-0"><strong>{% t "created_at" %}:</strong> {{ employee.created_at|date:"d.m.Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-person-x me-2"></i>{% t "delete_employee" %}
+                            </button>
+                            <a href="{% url 'users:employee_list' %}" class="btn btn-outline-secondary btn-lg">{% t "cancel" %}</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

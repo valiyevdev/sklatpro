@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ return_order.reference }} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'purchases:purchase_list' %}">{% t "purchases" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'purchases:purchase_detail' pk=return_order.purchase.pk %}">{{ return_order.purchase.reference }}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ return_order.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ return_order.reference }}</h1>
+            {% if return_order.status == 'draft' %}
+                <span class="badge-pro badge-pro-warning">{% t "draft" %}</span>
+            {% elif return_order.status == 'approved' %}
+                <span class="badge-pro badge-pro-success">{% t "approved" %}</span>
+            {% elif return_order.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif return_order.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if return_order.status == 'draft' %}
+        <form method="post" action="{% url 'purchases:purchase_return_update_status' pk=return_order.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="approved">
+            <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "approve" %}</button>
+        </form>
+        {% elif return_order.status == 'approved' %}
+        <form method="post" action="{% url 'purchases:purchase_return_update_status' pk=return_order.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check2-all"></i> {% t "mark_completed" %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ return_order.purchase.reference }}</div>
+            <div class="stat-card-label">{% t "purchase_reference" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cart-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ return_order.supplier.name }}</div>
+            <div class="stat-card-label">{% t "supplier" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ return_order.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-house"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">${{ return_order.total|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_amount" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-cash-stack"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "return_info" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "return_reason" %}</div>
+                    <div class="fw-500">{{ return_order.get_reason_display }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "created_by" %}</div>
+                    <div class="fw-500">{% if return_order.created_by %}{{ return_order.created_by.get_full_name|default:return_order.created_by.email }}{% else %}—{% endif %}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "date" %}</div>
+                    <div class="fw-500">{{ return_order.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+            {% if return_order.reason_notes %}
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200)">
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "reason_notes" %}</div>
+                <div class="text-pro-sm">{{ return_order.reason_notes }}</div>
+            </div>
+            {% endif %}
+            {% if return_order.notes %}
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200)">
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "notes" %}</div>
+                <div class="text-pro-sm">{{ return_order.notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "returned_items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th style="text-align:center">{% t "quantity" %}</th>
+                    <th style="text-align:right">{% t "unit_price" %}</th>
+                    <th style="text-align:right">{% t "total_amount" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td style="text-align:center">{{ item.quantity }}</td>
+                    <td style="text-align:right">${{ item.unit_price }}</td>
+                    <td style="text-align:right" class="fw-600">${{ item.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {% if items %}
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align:right" class="fw-600">{% t "total_amount" %}</td>
+                    <td style="text-align:right" class="fw-700" style="font-size:var(--text-lg)">${{ return_order.total|floatformat:0 }}</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

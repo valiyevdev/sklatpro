@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}Mahsulotlar ro'yxati - SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .products-page {
+        --products-bg: #090d16;
+        --products-card: #131b2e;
+        --products-border: #1e293b;
+        --products-muted: #94a3b8;
+        --products-indigo: #6366f1;
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 8px 0 36px;
+        color: #f8fafc;
+    }
+    .products-page * { box-sizing: border-box; }
+    .products-hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .products-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        color: #818cf8;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+    .products-breadcrumb span { color: #475569; }
+    .products-title {
+        margin: 0;
+        color: #f8fafc;
+        font-size: clamp(26px, 3vw, 34px);
+        font-weight: 800;
+        letter-spacing: -.045em;
+        line-height: 1.1;
+    }
+    .products-subtitle { margin: 8px 0 0; color: var(--products-muted); font-size: 13px; }
+    .products-stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 7px 11px;
+        border: 1px solid rgba(99, 102, 241, .25);
+        border-radius: 999px;
+        background: rgba(99, 102, 241, .1);
+        color: #c7d2fe;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .products-stat i { color: #818cf8; }
+    .products-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 17px;
+        border: 1px solid #818cf8;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        box-shadow: 0 10px 28px rgba(79, 70, 229, .28), 0 0 0 1px rgba(129, 140, 248, .15);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .products-primary:hover { background: linear-gradient(135deg, #818cf8, #6366f1); color: #fff; transform: translateY(-2px); box-shadow: 0 16px 34px rgba(79, 70, 229, .38); }
+    .products-toolbar {
+        display: grid;
+        align-items: center;
+        grid-template-columns: minmax(220px, 1.45fr) minmax(175px, 1.15fr) minmax(150px, 1fr) minmax(140px, .95fr) minmax(145px, 1fr) minmax(110px, .85fr) 40px auto;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 12px;
+        border: 1px solid var(--products-border);
+        border-radius: 14px;
+        background: rgba(19, 27, 46, .88);
+        box-shadow: 0 16px 40px rgba(2, 6, 23, .18);
+    }
+    .products-search { position: relative; min-width: 0; }
+    .products-search i { position: absolute; top: 50%; left: 13px; color: #64748b; font-size: 15px; transform: translateY(-50%); pointer-events: none; }
+    .products-search input, .products-select {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #26334b;
+        border-radius: 9px;
+        outline: 0;
+        background: #0d1424;
+        color: #e2e8f0;
+        font: inherit;
+        font-size: 12px;
+    }
+    .products-search input { padding: 0 74px 0 37px; }
+    .products-search input::placeholder { color: #64748b; }
+    .products-search input:focus, .products-select:focus { border-color: var(--products-indigo); box-shadow: 0 0 0 3px rgba(99, 102, 241, .16); }
+    .products-shortcut { position: absolute; top: 50%; right: 10px; padding: 3px 6px; border: 1px solid #334155; border-radius: 5px; color: #94a3b8; font-size: 10px; transform: translateY(-50%); }
+    .products-select { min-width: 0; padding: 0 10px; white-space: nowrap; }
+    .products-filter-submit { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(99, 102, 241, .55); border-radius: 9px; background: rgba(99, 102, 241, .16); color: #c7d2fe; cursor: pointer; }
+    .products-filter-submit:hover { background: rgba(99, 102, 241, .28); }
+    .products-view-toggle { display: inline-flex; flex: 0 0 auto; overflow: hidden; border: 1px solid #26334b; border-radius: 9px; background: #0d1424; }
+    .products-view-toggle button { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: 0; background: transparent; color: #64748b; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .products-view-toggle button.active { background: rgba(99, 102, 241, .2); color: #c7d2fe; }
+    .products-results { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 2px 12px; color: var(--products-muted); font-size: 12px; }
+    .products-results strong { color: #e2e8f0; }
+    .products-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; align-items: stretch; }
+    .product-card {
+        display: flex;
+        min-width: 0;
+        height: 100%;
+        min-height: 450px;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--products-border);
+        border-radius: 16px;
+        background: linear-gradient(145deg, rgba(19, 27, 46, .98), rgba(15, 23, 42, .96));
+        box-shadow: 0 18px 45px rgba(2, 6, 23, .18);
+        transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+    .product-card:hover { border-color: rgba(99, 102, 241, .72); box-shadow: 0 22px 48px rgba(2, 6, 23, .34), 0 0 0 1px rgba(99, 102, 241, .08); transform: translateY(-3px); }
+    .product-card-media { position: relative; height: 176px; flex: 0 0 176px; overflow: hidden; background: rgba(30, 41, 59, .5); }
+    .product-card-media img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .product-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, .22), transparent 50%), #111a2d; color: #a5b4fc; font-size: 48px; font-weight: 800; letter-spacing: -.05em; }
+    .product-status { position: absolute; top: 12px; left: 12px; padding: 5px 9px; border: 1px solid rgba(52, 211, 153, .32); border-radius: 999px; background: rgba(6, 78, 59, .82); color: #a7f3d0; font-size: 10px; font-weight: 800; }
+    .product-status.inactive { border-color: rgba(251, 191, 36, .32); background: rgba(120, 53, 15, .82); color: #fde68a; }
+    .product-status.archived { border-color: rgba(148, 163, 184, .32); background: rgba(51, 65, 85, .82); color: #cbd5e1; }
+    .product-menu { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(148, 163, 184, .2); border-radius: 9px; background: rgba(9, 13, 22, .65); color: #cbd5e1; cursor: pointer; }
+    .product-menu:hover { border-color: #818cf8; color: #c7d2fe; }
+    .product-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 16px; }
+    .product-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-width: 0; }
+    .product-name { min-width: 0; overflow: hidden; color: #f8fafc; font-size: 15px; font-weight: 800; line-height: 1.3; text-decoration: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .product-name:hover { color: #a5b4fc; }
+    .product-category { flex: 0 0 auto; max-width: 42%; overflow: hidden; padding: 4px 8px; border: 1px solid rgba(99, 102, 241, .2); border-radius: 6px; background: rgba(99, 102, 241, .12); color: #a5b4fc; font-size: 10px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .product-identifiers { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 9px; color: #64748b; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; line-height: 1.4; }
+    .product-identifiers span { overflow-wrap: anywhere; }
+    .product-financials { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: auto; padding: 14px 0 0; border-top: 1px solid rgba(30, 41, 59, .9); }
+    .product-label { display: block; margin-bottom: 5px; color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .product-price { display: block; overflow-wrap: anywhere; color: #f8fafc; font-size: 16px; font-weight: 800; line-height: 1.2; }
+    .product-stock { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; padding: 5px 8px; border-radius: 7px; background: rgba(16, 185, 129, .13); color: #6ee7b7; font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .product-stock.empty { background: rgba(244, 63, 94, .12); color: #fda4af; }
+    .product-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 16px; }
+    .product-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 36px; padding: 0 8px; border-radius: 8px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+    .product-action.edit { border: 1px solid #6366f1; background: #4f46e5; color: #fff; }
+    .product-action.edit:hover { background: #6366f1; color: #fff; }
+    .product-action.copy { border: 1px solid #26334b; background: #0d1424; color: #cbd5e1; cursor: pointer; }
+    .product-action.copy:hover { border-color: #64748b; color: #fff; }
+    .product-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 8px; }
+    .product-tool { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 7px; color: #64748b; text-decoration: none; }
+    .product-tool:hover { background: rgba(99, 102, 241, .12); color: #a5b4fc; }
+    .product-tool.delete:hover { background: rgba(244, 63, 94, .12); color: #fb7185; }
+    .products-grid.is-compact { grid-template-columns: 1fr; gap: 8px; }
+    .products-grid.is-compact .product-card { display: grid; grid-template-columns: 56px minmax(0, 1fr) 150px 150px 120px 190px; align-items: center; min-height: 76px; padding: 10px 14px; }
+    .products-grid.is-compact .product-card-media { grid-column: 1; grid-row: 1; width: 56px; height: 56px; }
+    .products-grid.is-compact .product-card-body { display: contents; }
+    .products-grid.is-compact .product-card-head { display: contents; }
+    .products-grid.is-compact .product-name { grid-column: 2; grid-row: 1; }
+    .products-grid.is-compact .product-category { grid-column: 3; grid-row: 1; justify-self: start; max-width: 100%; }
+    .products-grid.is-compact .product-identifiers { grid-column: 4; grid-row: 1; margin: 0; }
+    .products-grid.is-compact .product-financials { display: contents; }
+    .products-grid.is-compact .product-financials > div:first-child { grid-column: 5; grid-row: 1; padding: 0; border: 0; }
+    .products-grid.is-compact .product-financials > div:last-child { grid-column: 6; grid-row: 1; padding: 0; border: 0; }
+    .products-grid.is-compact .product-card-actions, .products-grid.is-compact .product-tools, .products-grid.is-compact .product-label { display: none; }
+    .products-empty { padding: 70px 20px; border: 1px dashed #26334b; border-radius: 16px; background: rgba(19, 27, 46, .55); color: var(--products-muted); text-align: center; }
+    .products-empty i { display: block; margin-bottom: 12px; color: #818cf8; font-size: 38px; }
+    .products-pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+    .products-pagination a, .products-pagination span { display: grid; place-items: center; min-width: 36px; height: 36px; border: 1px solid #26334b; border-radius: 8px; color: #cbd5e1; text-decoration: none; }
+    .products-pagination .current { border-color: #6366f1; background: #4f46e5; color: #fff; }
+    @media (min-width: 640px) { .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 1024px) { .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @media (max-width: 1180px) and (min-width: 621px) { .products-toolbar { grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(135px, 1fr)); } .products-search { grid-column: span 2; } .products-filter-submit { width: 100%; } .products-view-toggle { justify-self: stretch; } }
+    @media (max-width: 620px) { .products-page { padding-top: 0; } .products-hero { align-items: stretch; flex-direction: column; gap: 16px; } .products-primary { width: 100%; } .products-toolbar { align-items: stretch; grid-template-columns: 1fr; } .products-search, .products-select, .products-filter-submit, .products-view-toggle { width: 100%; } .products-view-toggle button { flex: 1; justify-content: center; } .products-results { align-items: flex-start; flex-direction: column; } .products-grid { grid-template-columns: 1fr; gap: 1.5rem; } .products-grid.is-compact .product-card { display: flex; min-height: 0; padding: 0; } .products-grid.is-compact .product-card-media { width: 100%; height: 120px; } .products-grid.is-compact .product-card-body { display: flex; } .products-grid.is-compact .product-card-head, .products-grid.is-compact .product-financials { display: flex; } .products-grid.is-compact .product-category, .products-grid.is-compact .product-identifiers, .products-grid.is-compact .product-card-actions, .products-grid.is-compact .product-tools { display: flex; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="products-page">
+    <header class="products-hero">
+        <div>
+            <p class="products-breadcrumb"><span>SKLAT PRO</span><i class="bi bi-chevron-right"></i> Mahsulotlar</p>
+            <h1 class="products-title">Mahsulotlar ro'yxati</h1>
+            <p class="products-subtitle">Katalog, narxlar va zaxiralarni bir joyda boshqaring.</p>
+            <span class="products-stat"><i class="bi bi-check-circle-fill"></i> {{ active_products }} ta mahsulot faol</span>
+        </div>
+        <a href="{% url 'product_create' %}" class="products-primary"><i class="bi bi-plus-lg"></i> Mahsulot qo'shish</a>
+    </header>
+
+    <form method="get" class="products-toolbar">
+        <div class="products-search"><i class="bi bi-search"></i><input id="product-search" name="search" value="{{ search_query }}" placeholder="Mahsulot, SKU yoki barcode qidiring" aria-label="Mahsulotlarni qidirish"><span class="products-shortcut">Ctrl K</span></div>
+        <select name="category" class="products-select category" aria-label="Barcha kategoriyalar"><option value="">Barcha kategoriyalar</option>{% for category in categories %}<option value="{{ category.pk }}" {% if category_filter == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select>
+        <select name="brand" class="products-select brand" aria-label="Barcha brendlar"><option value="">Barcha brendlar</option>{% for brand in brands %}<option value="{{ brand.pk }}" {% if brand_filter == brand.pk|stringformat:'s' %}selected{% endif %}>{{ brand.name }}</option>{% endfor %}</select>
+        <select name="status" class="products-select status" aria-label="Barcha holatlar"><option value="">Barcha holatlar</option><option value="active" {% if status_filter == 'active' %}selected{% endif %}>Faol</option><option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Nofaol</option><option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Arxiv</option></select>
+        <select name="stock_status" class="products-select" aria-label="Barcha zaxiralar"><option value="">Barcha zaxiralar</option><option value="in_stock" {% if stock_filter == 'in_stock' %}selected{% endif %}>Mavjud</option><option value="low_stock" {% if stock_filter == 'low_stock' %}selected{% endif %}>Kam qolgan</option><option value="out_of_stock" {% if stock_filter == 'out_of_stock' %}selected{% endif %}>Tugagan</option></select>
+        <select name="sort" class="products-select" aria-label="Saralash"><option value="-created_at">Yangilari</option><option value="name" {% if sort_by == 'name' %}selected{% endif %}>Nomi A-Z</option><option value="-quantity" {% if sort_by == '-quantity' %}selected{% endif %}>Zaxira ko'p</option><option value="price" {% if sort_by == 'price' %}selected{% endif %}>Narx arzon</option></select>
+        <button type="submit" class="products-filter-submit" aria-label="Filtrlash"><i class="bi bi-arrow-right"></i></button>
+        <div class="products-view-toggle" role="group" aria-label="Ko'rinish"><button type="button" class="active" data-products-view="grid"><i class="bi bi-grid-3x3-gap"></i> Grid</button><button type="button" data-products-view="compact"><i class="bi bi-list"></i> Jadval</button></div>
+    </form>
+
+    <div class="products-results"><span><strong>{{ product_count }}</strong> ta mahsulot ko'rsatilmoqda</span><span>Yangilangan katalog</span></div>
+    {% if page_obj %}
+    <section class="products-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="products-grid">
+        {% for product in page_obj %}
+        <article class="product-card h-full flex flex-col justify-between">
+            <div class="product-card-media">
+                {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<span class="product-placeholder">{{ product.name|slice:':1'|upper }}</span>{% endif %}
+                <span class="product-status {% if product.status != 'active' %}{{ product.status }}{% endif %}">{% if product.status == 'active' %}Faol{% elif product.status == 'inactive' %}Nofaol{% else %}Arxiv{% endif %}</span>
+                <button type="button" class="product-menu" aria-label="Mahsulot amallari" title="Amallar"><i class="bi bi-three-dots-vertical"></i></button>
+            </div>
+            <div class="product-card-body">
+                <div class="product-card-head"><a href="{% url 'product_detail' pk=product.pk %}" class="product-name" title="{{ product.name }}">{{ product.name }}</a><span class="product-category">{% if product.category_fk %}{{ product.category_fk.name }}{% else %}Kategoriyasiz{% endif %}</span></div>
+                <div class="product-identifiers"><span>SKU: {{ product.sku }}</span><span>Barcode: {{ product.barcode|default:'yo\'q' }}</span></div>
+                <div class="product-financials"><div><span class="product-label">Sotish narxi</span><span class="product-price">{{ product.price|uzs }}</span></div><div><span class="product-label">Zaxira</span><span class="product-stock {% if product.quantity <= 0 %}empty{% endif %}">{{ product.quantity }} {{ product.unit.symbol|default:'dona' }}</span></div></div>
+                <div class="product-card-actions"><a href="{% url 'product_update' pk=product.pk %}" class="product-action edit"><i class="bi bi-pencil"></i> Tahrirlash</a><form method="post" action="{% url 'product_duplicate' pk=product.pk %}">{% csrf_token %}<button class="product-action copy" type="submit"><i class="bi bi-copy"></i> Nusxa ko'chirish</button></form></div>
+                <div class="product-tools"><a class="product-tool" href="{% url 'product_barcode' pk=product.pk %}" target="_blank" aria-label="Barcode" title="Barcode"><i class="bi bi-upc-scan"></i></a><a class="product-tool" href="{% url 'product_qrcode' pk=product.pk %}" target="_blank" aria-label="QR kod" title="QR kod"><i class="bi bi-qr-code"></i></a><a class="product-tool delete" href="{% url 'product_delete' pk=product.pk %}" aria-label="O'chirish" title="O'chirish"><i class="bi bi-trash3"></i></a></div>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}<section class="products-empty"><i class="bi bi-box-seam"></i><h2>Mahsulotlar topilmadi</h2><p>Qidiruv yoki filtrlarni o'zgartiring.</p><a class="products-primary" href="{% url 'product_create' %}">Mahsulot qo'shish</a></section>{% endif %}
+    {% if page_obj.has_other_pages %}<nav class="products-pagination" aria-label="Sahifalar">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">‹</a>{% endif %}{% for number in page_obj.paginator.page_range %}{% if page_obj.number == number %}<span class="current">{{ number }}</span>{% elif number > page_obj.number|add:'-2' and number < page_obj.number|add:'2' %}<a href="?page={{ number }}&search={{ search_query }}">{{ number }}</a>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">›</a>{% endif %}</nav>{% endif %}
+</main>
+<script>
+    (() => {
+        const grid = document.getElementById('products-grid');
+        const buttons = document.querySelectorAll('[data-products-view]');
+        buttons.forEach(button => button.addEventListener('click', () => {
+            const compact = button.dataset.productsView === 'compact';
+            grid?.classList.toggle('is-compact', compact);
+            buttons.forEach(item => item.classList.toggle('active', item === button));
+        }));
+        document.addEventListener('keydown', event => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                document.getElementById('product-search')?.focus();
+            }
+        });
+    })();
+</script>
+{% endblock %}

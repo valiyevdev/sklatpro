@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ company.company_name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'saas_platform:company_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ company.company_name }}</h1>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Employees</div>
+            <div class="stat-card-value">{{ employees.count|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Current Plan</div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">{{ company.get_subscription_plan_display }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-credit-card"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Status</div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">
+                {% if company.is_active %}
+                    <span class="badge-pro badge-pro-success">Active</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-danger">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-building-check"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-500)"></i> Company Info</h3>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:grid;gap:var(--sp-3)">
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Company Name</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.company_name }}</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Email</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.email }}</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Phone</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.phone|default:"Not provided" }}</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Currency</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.currency|default:"USD" }}</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Created</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Address</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.address|default:"Not provided" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-credit-card" style="color:var(--warning-500)"></i> Subscription</h3>
+        </div>
+        <div class="card-pro-body">
+            {% if company.is_subscription_active %}
+                <div style="background:var(--success-50);border:1px solid var(--success-200);border-radius:var(--radius-lg);padding:var(--sp-3);margin-bottom:var(--sp-3)">
+                    <div class="d-flex align-center gap-2" style="color:var(--success-700);font-size:var(--text-sm);font-weight:500">
+                        <i class="bi bi-check-circle-fill"></i> Subscription is active
+                    </div>
+                </div>
+            {% else %}
+                <div style="background:var(--warning-50);border:1px solid var(--warning-200);border-radius:var(--radius-lg);padding:var(--sp-3);margin-bottom:var(--sp-3)">
+                    <div class="d-flex align-center gap-2" style="color:var(--warning-700);font-size:var(--text-sm);font-weight:500">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Subscription expired or inactive
+                    </div>
+                </div>
+            {% endif %}
+
+            <div style="display:grid;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Current Plan</span>
+                    <span class="badge-pro badge-pro-primary">{{ company.get_subscription_plan_display }}</span>
+                </div>
+                {% if company.subscription_end_date %}
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-secondary);font-size:var(--text-sm)">Expires</span>
+                    <span style="font-weight:500;font-size:var(--text-sm);color:var(--text-primary)">{{ company.subscription_end_date|date:"M d, Y" }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <form method="post" action="{% url 'saas_platform:company_set_plan' company_id=company.pk %}">
+                {% csrf_token %}
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Change Plan</label>
+                <div class="d-flex gap-2">
+                    <select class="input-pro" name="plan" style="flex:1">
+                        {% for plan in available_plans %}
+                        <option value="{{ plan.id }}" {% if company.subscription_plan == plan.slug %}selected{% endif %}>{{ plan.name }} — ${{ plan.price|floatformat:2 }}/mo</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-check-lg"></i> Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-people" style="color:var(--info-500)"></i> Employees ({{ employees.count|default:0 }})</h3>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td class="cell-primary fw-500">
+                        <div class="d-flex align-center gap-2">
+                            <div style="width:28px;height:28px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--text-xs);flex-shrink:0">
+                                {{ emp.get_full_name|default:emp.username|first|upper }}
+                            </div>
+                            {{ emp.get_full_name|default:emp.username }}
+                        </div>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ emp.email }}</td>
+                    <td>
+                        <span class="badge-pro {% if emp.role == 'admin' %}badge-pro-danger{% elif emp.role == 'manager' %}badge-pro-warning{% else %}badge-pro-info{% endif %}">
+                            {{ emp.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if emp.is_active %}
+                            <span class="badge-pro badge-pro-success">Active</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ emp.date_joined|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                            <div class="empty-state-desc">No employees in this company</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-clipboard2-data" style="color:var(--primary-500)"></i> Recent Audit Logs</h3>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in company_audit_logs %}
+                    <tr>
+                        <td style="white-space:nowrap;font-size:var(--text-xs);color:var(--text-muted)">{{ log.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <span class="badge-pro {% if log.action_type == 'create' %}badge-pro-success{% elif log.action_type == 'update' %}badge-pro-warning{% elif log.action_type == 'delete' %}badge-pro-danger{% else %}badge-pro-info{% endif %}">
+                                {{ log.action_type|upper }}
+                            </span>
+                        </td>
+                        <td style="font-size:var(--text-sm)">{{ log.user.get_full_name|default:log.user.email }}</td>
+                        <td style="font-size:var(--text-sm);color:var(--text-secondary);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.description|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding:var(--sp-4)">
+                                <div class="empty-state-desc">No audit logs for this company</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-toggle2-on" style="color:var(--success-500)"></i> Feature Flags</h3>
+        </div>
+        <div class="card-pro-body">
+            {% for flag in company_feature_flags %}
+            <div class="d-flex align-center justify-between" style="padding:var(--sp-2) 0;{% if not forloop.last %}border-bottom:1px solid var(--border-subtle){% endif %}">
+                <div>
+                    <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ flag.name }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ flag.key }}</div>
+                </div>
+                <span class="badge-pro {% if flag.is_enabled %}badge-pro-success{% else %}badge-pro-secondary{% endif %}">
+                    {% if flag.is_enabled %}Enabled{% else %}Disabled{% endif %}
+                </span>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:var(--sp-4)">
+                <div class="empty-state-desc">No feature flags assigned to this company</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

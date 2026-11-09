@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "time_windows" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "time_windows" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "delivery_time_windows" %}</h1></div><div class="page-actions"><a href="{% url 'logistics:time_window_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_window" %}</a></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "name" %}</th><th>{% t "start_time" %}</th><th>{% t "end_time" %}</th><th>{% t "active" %}</th></tr></thead>
+<tbody>{% for w in windows %}<tr><td class="cell-primary">{{ w.name }}</td><td>{{ w.start_time|time:"H:i" }}</td><td>{{ w.end_time|time:"H:i" }}</td><td>{% if w.is_active %}<span class="badge-pro badge-pro-success">{% t "active" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{% t "inactive" %}</span>{% endif %}</td></tr>{% empty %}<tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-clock"></i></div><h5 class="empty-state-title">{% t "no_time_windows" %}</h5><a href="{% url 'logistics:time_window_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_window" %}</a></div></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

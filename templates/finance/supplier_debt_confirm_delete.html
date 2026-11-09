@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n_tags %}
+
+{% block title %}{% t "confirm_delete_title" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="bi bi-exclamation-triangle"></i> {% t "confirm_delete_title" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle"></i>
+                    {% t "confirm_delete_warning" %} <strong>{{ debt.supplier_name }}</strong> {% t "confirm_delete_debt_suffix" %}
+                </p>
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>{% t "debt_amount_label" %}:</th>
+                            <td>${{ debt.amount_owed }}</td>
+                        </tr>
+                        <tr>
+                            <th>{% t "paid_amount_label" %}:</th>
+                            <td>${{ debt.paid_amount }}</td>
+                        </tr>
+                        <tr>
+                            <th>{% t "remaining_balance" %}:</th>
+                            <td class="text-danger fw-bold">${{ debt.remaining_balance }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> {% t "yes_delete" %}
+                        </button>
+                        <a href="{% url 'finance:supplier_debt_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> {% t "no_go_back" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

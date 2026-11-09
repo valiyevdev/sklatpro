@@ -1,0 +1,871 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos_terminals" %} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==========================================================
+   POS Terminals (terminal_list.html) - modern glassmorphism UI.
+   All rules are scoped under `.posterm-` so the GLOBAL
+   `.page-header`, `.card-pro`, `.table-pro`, `.input-pro`,
+   `.btn-pro` and `.empty-state` rules (shared by 277 templates)
+   are never modified.
+   ========================================================== */
+
+/* ---------- 1. Header ---------- */
+.posterm-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 6px 22px rgba(2, 6, 23, 0.32);
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+.posterm-header__lead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 12rem;
+}
+.posterm-header__back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    color: var(--text-secondary, #cbd5e1);
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    text-decoration: none;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.posterm-header__back:hover {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(129, 140, 248, 0.45);
+    transform: translateX(-2px);
+}
+.posterm-header__back:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.55);
+}
+.posterm-header__title {
+    margin: 0;
+    padding: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--glass-title, #f8fafc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.posterm-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.posterm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.posterm-btn i { font-size: 15px; line-height: 1; }
+.posterm-btn--ghost {
+    color: var(--text-secondary, #cbd5e1);
+    background: rgba(148, 163, 184, 0.1);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+.posterm-btn--ghost:hover {
+    color: var(--text-primary, #f1f5f9);
+    background: rgba(148, 163, 184, 0.18);
+    border-color: rgba(148, 163, 184, 0.32);
+}
+/* Primary CTA - violet-to-blue gradient with a soft neon glow */
+.posterm-btn--primary {
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 45%, #2563eb 100%);
+    border-color: rgba(165, 180, 252, 0.5);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+.posterm-btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.6);
+}
+.posterm-btn--primary:active { transform: translateY(0); }
+.posterm-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.55);
+}
+
+/* ---------- 2. Filter bar ---------- */
+.posterm-filter {
+    margin-bottom: 24px;
+    /* Explicit width + min-width:0 => the bar can never be widened by
+       its children and can never push the page sideways. */
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    border-radius: 18px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 6px 22px rgba(2, 6, 23, 0.28);
+    box-sizing: border-box;
+}
+.posterm-filter__body { padding: 18px 20px; }
+.posterm-filter__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    width: 100%;
+    box-sizing: border-box;
+}
+.posterm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+    flex: 1 1 190px;
+    box-sizing: border-box;
+}
+.posterm-field--search { flex: 2 1 260px; }
+.posterm-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #94a3b8);
+}
+.posterm-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: var(--text-primary, #f1f5f9);
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.posterm-input::placeholder { color: var(--text-muted, #94a3b8); }
+.posterm-input:hover { border-color: rgba(148, 163, 184, 0.34); }
+.posterm-input:focus {
+    outline: none;
+    background: rgba(2, 6, 23, 0.75);
+    border-color: rgba(129, 140, 248, 0.65);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+}
+select.posterm-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 38px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.22a.75.75 0 011.06 0L8 9.19l2.72-2.97a.75.75 0 111.08 1.04l-3.25 3.56a.75.75 0 01-1.08 0L4.22 7.28a.75.75 0 010-1.06z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    background-size: 14px;
+}
+select.posterm-input option {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+.posterm-filter__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+/* ---------- 3. Table ---------- */
+.posterm-table-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    border-radius: 18px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 6px 22px rgba(2, 6, 23, 0.28);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+.posterm-table-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.posterm-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 900px;
+}
+.posterm-table__thead {
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.45) 0%, rgba(30, 41, 59, 0.35) 100%);
+}
+.posterm-table__th {
+    padding: 15px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-muted, #94a3b8);
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+.posterm-table__th--actions { text-align: right; }
+.posterm-table__row { transition: background 0.2s ease; }
+.posterm-table__row:hover { background: rgba(99, 102, 241, 0.08); }
+.posterm-table__row:not(:last-child) .posterm-table__td {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.posterm-table__td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    font-size: 14px;
+    color: var(--text-secondary, #cbd5e1);
+}
+.posterm-table__td--actions { text-align: right; }
+.posterm-table__link {
+    color: var(--text-primary, #f1f5f9);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.18s ease;
+}
+.posterm-table__link:hover { color: #a5b4fc; text-decoration: underline; }
+.posterm-code {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 7px;
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    color: #c4b5fd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.posterm-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.posterm-actions--devices {
+    justify-content: flex-start;
+    gap: 6px;
+}
+.posterm-badge-sm {
+    font-size: 10px !important;
+    padding: 3px 7px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.posterm-badge-sm i { font-size: 11px; line-height: 1; }
+
+/* ---------- 4. Empty state ---------- */
+.posterm-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 64px 24px;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.posterm-empty__icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 132px;
+    height: 132px;
+    margin-bottom: 12px;
+}
+/* Soft translucent gradient circle behind the floating icon */
+.posterm-empty__halo {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.32) 0%, rgba(59, 130, 246, 0.16) 45%, transparent 70%);
+    border: 1px solid rgba(165, 180, 252, 0.18);
+    animation: posterm-float 6s ease-in-out infinite;
+}
+.posterm-empty__ring {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px dashed rgba(165, 180, 252, 0.28);
+    animation: posterm-spin 22s linear infinite;
+}
+.posterm-empty__icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    font-size: 32px;
+    line-height: 1;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 48%, #2563eb 100%);
+    box-shadow:
+        0 10px 28px rgba(99, 102, 241, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    text-shadow: 0 2px 8px rgba(15, 23, 42, 0.45);
+    /* The badge itself is alive: it bobs (transform) while its glow
+       swells and fades (box-shadow). Both are compositor-friendly
+       properties, so the animation never causes layout or reflow. */
+    animation:
+        posterm-icon-float 5.4s ease-in-out infinite,
+        posterm-icon-pulse 6s ease-in-out infinite;
+}
+.posterm-empty__title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary, #f8fafc);
+}
+.posterm-empty__desc {
+    margin: 0;
+    max-width: 380px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-muted, #94a3b8);
+}
+.posterm-empty__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 13px 24px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 45%, #2563eb 100%);
+    border: 1px solid rgba(165, 180, 252, 0.5);
+    box-shadow: 0 10px 28px rgba(99, 102, 241, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.posterm-empty__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 38px rgba(99, 102, 241, 0.62);
+}
+.posterm-empty__cta:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.55);
+}
+@keyframes posterm-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+}
+@keyframes posterm-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+/* Icon float: the badge bobs on its own rhythm (offset from the halo
+   so the two never move in lockstep, which looks mechanical). */
+@keyframes posterm-icon-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+}
+/* Icon glow pulse: the coloured halo around the badge swells and fades. */
+@keyframes posterm-icon-pulse {
+    0%, 100% {
+        box-shadow:
+            0 10px 28px rgba(99, 102, 241, 0.45),
+            inset 0 1px 0 rgba(255, 255, 255, 0.28),
+            0 0 0 0 rgba(99, 102, 241, 0.34);
+    }
+    50% {
+        box-shadow:
+            0 14px 34px rgba(99, 102, 241, 0.58),
+            inset 0 1px 0 rgba(255, 255, 255, 0.28),
+            0 0 0 16px rgba(99, 102, 241, 0);
+    }
+}
+
+/* ---------- 5. Responsive ---------- */
+@media (max-width: 768px) {
+    .posterm-header { padding: 12px 14px; gap: 10px; }
+    .posterm-header__actions { width: 100%; }
+    .posterm-btn { flex: 1 1 auto; justify-content: center; }
+    .posterm-field, .posterm-field--search { flex: 1 1 100%; min-width: 0; }
+    .posterm-filter__actions { width: 100%; }
+    .posterm-filter__actions .posterm-btn { flex: 1 1 auto; justify-content: center; }
+    .posterm-empty { padding: 44px 18px; }
+    .posterm-empty__icon-wrap { width: 108px; height: 108px; }
+    .posterm-empty__icon { width: 66px; height: 66px; font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .posterm-empty__halo,
+    .posterm-empty__ring,
+    .posterm-empty__icon { animation: none; }
+    .posterm-btn, .posterm-empty__cta { transition: none; }
+    .posterm-btn--primary:hover, .posterm-empty__cta:hover { transform: none; }
+}
+
+
+/* ============================================================
+   POS TERMINALS - Mobile Responsive (<768px)
+   (merged from the previous bottom extra_css block)
+   ============================================================ */
+
+/* ============================================================
+   POS TERMINALS — Mobile Responsive (<768px)
+   ============================================================ */
+
+/* ——— DESKTOP DEFAULTS (>=768px) ——— */
+.posterm-mobile-cards {
+    display: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* ——— MOBILE (<767px) ——— */
+
+/* 1. FILTER FORM — force 1-column stacked layout */
+@media (max-width: 767px) {
+    .posterm-filter__form {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 12px !important;
+    }
+
+    .posterm-filter__form .posterm-field,
+    .posterm-filter__form .posterm-field--search {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+
+    .terminal-filter-form input,
+    .terminal-filter-form select,
+    .terminal-filter-form button {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .terminal-filter-form .btn-pro {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .terminal-filter-form .d-flex {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+}
+
+/* 2. TABLE → HIDDEN on mobile, CARDS → SHOWN */
+@media (max-width: 767px) {
+    .posterm-table-card {
+        display: none !important;
+    }
+
+    .posterm-mobile-cards {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+}
+
+/* 3. MOBILE CARD STYLES */
+@media (max-width: 767px) {
+    .posterm-mobile-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 6px 22px rgba(2, 6, 23, 0.32);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-sizing: border-box;
+    }
+
+    /* Header: Name + Status badge */
+    .posterm-mobile-card-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .posterm-mobile-card-name {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .posterm-mobile-card-name:hover {
+        color: var(--text-link) !important;
+    }
+
+    /* Warehouse + Code row */
+    .posterm-mobile-card-warehouse {
+        font-size: 13px !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .posterm-mobile-card-label {
+        color: var(--text-muted) !important;
+        font-weight: 500 !important;
+    }
+
+    .posterm-mobile-card-code {
+        font-size: 11px !important;
+        background: var(--bg-page) !important;
+        padding: 1px 6px !important;
+        border-radius: var(--radius-sm) !important;
+        font-family: monospace !important;
+        color: var(--text-secondary) !important;
+    }
+
+    /* Devices badges row */
+    .posterm-mobile-card-devices {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .posterm-mobile-card-devices .badge-pro:not(.posterm-badge-sm) {
+        font-size: 11px !important;
+        padding: 2px 8px !important;
+    }
+
+    /* Footer: Payment method + Action buttons */
+    .posterm-mobile-card-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px;
+        padding-top: 8px !important;
+        border-top: 1px solid var(--border-subtle) !important;
+    }
+
+    .posterm-mobile-card-actions {
+        display: flex !important;
+        gap: 4px !important;
+    }
+
+    .posterm-mobile-card-actions .btn-pro {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- POS Terminals Header Card with Back Button & Quick Links -->
+<div class="posterm-header">
+    <div class="posterm-header__lead">
+        <!-- Back -->
+        <a href="{% url 'pos:pos_dashboard' %}" class="posterm-header__back" aria-label="Boshqaruv paneli">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <!-- Title -->
+        <h1 class="posterm-header__title">POS terminali</h1>
+    </div>
+
+    <div class="posterm-header__actions">
+        <!-- Dashboard Quick Link -->
+        <a href="{% url 'pos:pos_dashboard' %}" class="posterm-btn posterm-btn--ghost">
+            <i class="bi bi-grid-1x2"></i> Boshqaruv paneli
+        </a>
+
+        <!-- Add Terminal Button -->
+        <a href="{% url 'pos:terminal_create' %}" class="posterm-btn posterm-btn--primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>{% t "pos_add_terminal" %}</span>
+        </a>
+    </div>
+</div>
+
+<div class="posterm-filter">
+    <div class="posterm-filter__body">
+        <form method="get" action="">
+            <div class="posterm-filter__form">
+                <div class="posterm-field posterm-field--search">
+                    <label class="posterm-label" for="posterm-q">{% t "search" %}</label>
+                    <input class="posterm-input" id="posterm-q" type="text" name="q" value="{{ q }}" placeholder="{% t "pos_search_terminals" %}">
+                </div>
+                <div class="posterm-field">
+                    <label class="posterm-label" for="posterm-status">{% t "status" %}</label>
+                    <select class="posterm-input" id="posterm-status" name="status">
+                        <option value="">{% t "pos_all_statuses" %}</option>
+                        {% for val, label in status_choices %}
+                            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{% if val == 'active' %}{% t "pos_active" %}{% elif val == 'inactive' %}{% t "pos_inactive" %}{% elif val == 'maintenance' %}{% t "pos_maintenance" %}{% else %}{{ label }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="posterm-field">
+                    <label class="posterm-label" for="posterm-warehouse">{% t "warehouse" %}</label>
+                    <select class="posterm-input" id="posterm-warehouse" name="warehouse">
+                        <option value="">{% t "pos_all_warehouses" %}</option>
+                        {% for w in warehouses %}
+                            <option value="{{ w.pk }}" {% if warehouse_filter == w.pk|stringformat:"d" %}selected{% endif %}>{{ w.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="posterm-filter__actions">
+                    <button type="submit" class="posterm-btn posterm-btn--primary"><i class="bi bi-funnel"></i> {% t "pos_filter" %}</button>
+                    {% if q or status_filter or warehouse_filter %}
+                        <a href="{% url 'pos:terminal_list' %}" class="posterm-btn posterm-btn--ghost"><i class="bi bi-x-lg"></i> {% t "pos_clear" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="posterm-table-card">
+    <div class="posterm-table-container">
+        <table class="posterm-table">
+            <thead class="posterm-table__thead">
+                <tr>
+                    <th class="posterm-table__th">{% t "pos_name" %}</th>
+                    <th class="posterm-table__th">{% t "pos_code" %}</th>
+                    <th class="posterm-table__th">{% t "pos_warehouse" %}</th>
+                    <th class="posterm-table__th">{% t "pos_status" %}</th>
+                    <th class="posterm-table__th">{% t "pos_peripherals" %}</th>
+                    <th class="posterm-table__th">{% t "pos_default_payment" %}</th>
+                    <th class="posterm-table__th posterm-table__th--actions">{% t "pos_actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in page_obj %}
+                <tr class="posterm-table__row">
+                    <td class="posterm-table__td">
+                        <a href="{% url 'pos:terminal_detail' pk=t.pk %}" class="posterm-table__link">{{ t.name }}</a>
+                    </td>
+                    <td class="posterm-table__td"><span class="posterm-code">{{ t.code }}</span></td>
+                    <td class="posterm-table__td">{{ t.warehouse.name }}</td>
+                    <td class="posterm-table__td">
+                        {% if t.status == 'active' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_active" %}</span>
+                        {% elif t.status == 'inactive' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_inactive" %}</span>
+                        {% elif t.status == 'maintenance' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_maintenance" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ t.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="posterm-table__td">
+                        <div class="posterm-actions posterm-actions--devices">
+                            {% if t.cash_drawer %}<span class="badge-pro badge-pro-success posterm-badge-sm"><i class="bi bi-cash"></i> {% t "pos_cash_drawer" %}</span>{% endif %}
+                            {% if t.barcode_scanner %}<span class="badge-pro badge-pro-info posterm-badge-sm"><i class="bi bi-upc-scan"></i> {% t "pos_scanner" %}</span>{% endif %}
+                            {% if t.card_terminal %}<span class="badge-pro badge-pro-primary posterm-badge-sm"><i class="bi bi-credit-card"></i> {% t "pos_card_terminal" %}</span>{% endif %}
+                            {% if t.receipt_printer %}<span class="badge-pro badge-pro-neutral posterm-badge-sm"><i class="bi bi-printer"></i> {% t "pos_printer" %}</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="posterm-table__td">
+                        {% if t.default_payment_method == 'cash' %}
+                            <span class="badge-pro badge-pro-success">{% t "pos_cash" %}</span>
+                        {% elif t.default_payment_method == 'card' %}
+                            <span class="badge-pro badge-pro-info">{% t "pos_card" %}</span>
+                        {% elif t.default_payment_method == 'transfer' %}
+                            <span class="badge-pro badge-pro-primary">{% t "pos_transfer" %}</span>
+                        {% elif t.default_payment_method == 'online' %}
+                            <span class="badge-pro badge-pro-warning">{% t "pos_online" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ t.get_default_payment_method_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="posterm-table__td posterm-table__td--actions">
+                        <div class="posterm-actions">
+                            <a href="{% url 'pos:terminal_detail' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "pos_view" %}"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'pos:terminal_update' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "pos_edit" %}"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'pos:terminal_delete' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-600)" title="{% t "pos_delete" %}"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="posterm-empty">
+                            <div class="posterm-empty__icon-wrap">
+                                <div class="posterm-empty__halo"></div>
+                                <div class="posterm-empty__ring"></div>
+                                <i class="bi bi-pc-display posterm-empty__icon" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="posterm-empty__title">{% t "pos_no_terminals" %}</h3>
+                            <p class="posterm-empty__desc">{% t "pos_create_first_terminal" %}</p>
+                            <a href="{% url 'pos:terminal_create' %}" class="posterm-empty__cta">
+                                <i class="bi bi-plus-lg"></i> {% t "pos_add_terminal" %}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Mobile card view — hidden on desktop, shown on mobile -->
+<div class="posterm-mobile-cards">
+    {% for t in page_obj %}
+    <div class="posterm-mobile-card">
+        <div class="posterm-mobile-card-header">
+            <a href="{% url 'pos:terminal_detail' pk=t.pk %}" class="posterm-mobile-card-name">{{ t.name }}</a>
+            {% if t.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_active" %}</span>
+            {% elif t.status == 'inactive' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_inactive" %}</span>
+            {% elif t.status == 'maintenance' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_maintenance" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ t.get_status_display }}</span>
+            {% endif %}
+        </div>
+        <div class="posterm-mobile-card-warehouse">
+            <span class="posterm-mobile-card-label">{% t "pos_warehouse" %}:</span> {{ t.warehouse.name }}
+            <span class="posterm-mobile-card-code">{{ t.code }}</span>
+        </div>
+        <div class="posterm-mobile-card-devices">
+            {% if t.cash_drawer %}<span class="badge-pro badge-pro-success posterm-badge-sm"><i class="bi bi-cash"></i> {% t "pos_cash_drawer" %}</span>{% endif %}
+            {% if t.barcode_scanner %}<span class="badge-pro badge-pro-info posterm-badge-sm"><i class="bi bi-upc-scan"></i> {% t "pos_scanner" %}</span>{% endif %}
+            {% if t.card_terminal %}<span class="badge-pro badge-pro-primary posterm-badge-sm"><i class="bi bi-credit-card"></i> {% t "pos_card_terminal" %}</span>{% endif %}
+            {% if t.receipt_printer %}<span class="badge-pro badge-pro-neutral posterm-badge-sm"><i class="bi bi-printer"></i> {% t "pos_printer" %}</span>{% endif %}
+        </div>
+        <div class="posterm-mobile-card-footer">
+            <div class="posterm-mobile-card-payment">
+                {% if t.default_payment_method == 'cash' %}
+                    <span class="badge-pro badge-pro-success">{% t "pos_cash" %}</span>
+                {% elif t.default_payment_method == 'card' %}
+                    <span class="badge-pro badge-pro-info">{% t "pos_card" %}</span>
+                {% elif t.default_payment_method == 'transfer' %}
+                    <span class="badge-pro badge-pro-primary">{% t "pos_transfer" %}</span>
+                {% elif t.default_payment_method == 'online' %}
+                    <span class="badge-pro badge-pro-warning">{% t "pos_online" %}</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-neutral">{{ t.get_default_payment_method_display }}</span>
+                {% endif %}
+            </div>
+            <div class="posterm-mobile-card-actions">
+                <a href="{% url 'pos:terminal_detail' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "pos_view" %}"><i class="bi bi-eye"></i></a>
+                <a href="{% url 'pos:terminal_update' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "pos_edit" %}"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'pos:terminal_delete' pk=t.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-600)" title="{% t "pos_delete" %}"><i class="bi bi-trash"></i></a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="posterm-empty">
+        <div class="posterm-empty__icon-wrap">
+            <div class="posterm-empty__halo"></div>
+            <div class="posterm-empty__ring"></div>
+            <i class="bi bi-pc-display posterm-empty__icon" aria-hidden="true"></i>
+        </div>
+        <h3 class="posterm-empty__title">{% t "pos_no_terminals" %}</h3>
+        <p class="posterm-empty__desc">{% t "pos_create_first_terminal" %}</p>
+        <a href="{% url 'pos:terminal_create' %}" class="posterm-empty__cta">
+            <i class="bi bi-plus-lg"></i> {% t "pos_add_terminal" %}
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <div class="text-pro-sm text-pro-muted">
+        {% t "pos_showing" %} {{ page_obj.start_index }}-{% t "pos_of" %} {{ page_obj.paginator.count }}
+    </div>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if warehouse_filter %}&warehouse={{ warehouse_filter }}{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        {% else %}
+            <span class="disabled"><i class="bi bi-chevron-left"></i></span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if warehouse_filter %}&warehouse={{ warehouse_filter }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if warehouse_filter %}&warehouse={{ warehouse_filter }}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        {% else %}
+            <span class="disabled"><i class="bi bi-chevron-right"></i></span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+

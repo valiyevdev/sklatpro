@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ receipt.receipt_number }} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Desktop (>=768px) — hide mobile views */
+@media (min-width: 768px) {
+  .receipt-mobile-view { display: none !important; }
+  .receipt-desktop-view { display: block !important; }
+}
+
+/* Mobile (<768px) */
+@media (max-width: 767px) {
+  .breadcrumb-pro { display: none !important; }
+
+  .page-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    margin-bottom: 12px !important;
+    gap: 6px !important;
+  }
+  .page-header-content { min-width: 0 !important; }
+
+  .receipt-header-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 6px !important;
+    margin-bottom: 2px !important;
+  }
+  .receipt-header-top .page-title {
+    font-size: 16px !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+  .receipt-header-top .badge-pro {
+    flex-shrink: 0 !important;
+  }
+
+  .receipt-meta-info {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 12px !important;
+    margin-top: 0 !important;
+  }
+
+  .page-actions .btn-pro {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .receipt-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .receipt-detail-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+
+  .receipt-detail-grid > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-bottom: 12px !important;
+  }
+  .table-pro th,
+  .table-pro td {
+    white-space: nowrap !important;
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+  }
+
+  .elementlar-table {
+    min-width: 520px !important;
+    width: 100% !important;
+  }
+  .elementlar-table th,
+  .elementlar-table td {
+    padding: 10px 12px !important;
+  }
+  .elementlar-table th:first-child,
+  .elementlar-table td:first-child {
+    min-width: 140px !important;
+    text-align: left !important;
+  }
+  .elementlar-table th:not(:first-child),
+  .elementlar-table td:not(:first-child) {
+    text-align: right !important;
+  }
+
+  .receipt-desktop-view { display: none !important; }
+  .receipt-mobile-view { display: block !important; }
+
+  .elementlar-cards { padding: 0; }
+  .element-card-item {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  .element-card-item:last-child { border-bottom: none !important; }
+  .element-card-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  .element-card-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+  }
+  .element-card-total {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .element-card-sub {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  .pos-print-row .btn-pro {
+    width: 100% !important;
+    height: 42px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Receipt Detail Header Card with Back Button & Badges -->
+<div class="page-header" style="display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 16px; padding: 12px 14px; border-radius: 16px; background-color: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(8px); box-shadow: var(--glass-shadow); flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto;">
+        <!-- Back Button: nested POS view, so the global handler routes to /pos/ -->
+        <button type="button" class="back-btn" data-action="back" aria-label="Orqaga">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+
+        <!-- Title + Status badges -->
+        <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;">
+            <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ receipt.receipt_number }}</h1>
+            {% if receipt.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+            {% elif receipt.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+            {% elif receipt.status == 'refunded' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_refunded" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ receipt.get_status_display }}</span>
+            {% endif %}
+
+            {% if receipt.payment_method == 'cash' %}
+                <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "pos_cash" %}</span>
+            {% elif receipt.payment_method == 'card' %}
+                <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "pos_card" %}</span>
+            {% elif receipt.payment_method == 'transfer' %}
+                <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "pos_transfer" %}</span>
+            {% elif receipt.payment_method == 'online' %}
+                <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "pos_online" %}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        {% if receipt.status == 'completed' %}
+            {% if is_owner %}<a href="{% url 'pos:receipt_cancel' pk=receipt.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-x-circle"></i> {% t "pos_cancel_receipt" %}</a>{% endif %}
+            {% if is_owner and receipt.status == 'completed' %}<button type="button" class="btn-pro btn-pro-warning btn-pro-sm" onclick="returnReceipt()"><i class="bi bi-arrow-return-left"></i> Qaytarish</button>{% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div style="font-size: 12px; font-weight: 500; color: var(--glass-muted); margin-bottom: 16px;">
+    {{ receipt.terminal.name }} &middot; {{ receipt.created_at|date:"d.m.Y H:i" }}
+    {% if receipt.customer %} &middot; {{ receipt.customer.name }}{% endif %}
+</div>
+
+<div class="receipt-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ receipt.subtotal|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_subtotal" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ receipt.tax_amount|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_tax" %} ({{ receipt.tax_rate }}%)</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-percent"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ receipt.total|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_total" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ receipt.amount_paid|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "pos_amount_paid" %}</div>
+        </div>
+        <div class="stat-card-icon {% if receipt.change > 0 %}warning{% else %}success{% endif %}"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+
+<div class="receipt-detail-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+    <div>
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "pos_items" %}</span>
+            </div>
+            {# Desktop table #}
+            <div class="table-responsive receipt-desktop-view">
+                <table class="table-pro elementlar-table">
+                    <thead>
+                        <tr>
+                            <th>{% t "pos_product" %}</th>
+                            <th>{% t "pos_qty" %}</th>
+                            <th>{% t "pos_unit_price" %}</th>
+                            <th>{% t "pos_discount_short" %}</th>
+                            <th>{% t "pos_total" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="cell-primary fw-500">
+                                {{ item.product.name }}
+                                {% if item.variant %}<span class="text-pro-muted text-pro-xs"> ({{ item.variant.name }})</span>{% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit_price|floatformat:0 }}</td>
+                            <td>{% if item.discount > 0 %}{{ item.discount|floatformat:0 }}{% else %}—{% endif %}</td>
+                            <td class="fw-600">{{ item.line_total|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state" style="padding:var(--sp-6)">
+                                    <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_items" %}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Mobile cards #}
+            <div class="receipt-mobile-view elementlar-cards">
+                {% for item in items %}
+                <div class="element-card-item">
+                    <div class="element-card-top">
+                        <span class="element-card-name">
+                            {{ item.product.name }}
+                            {% if item.variant %}<span class="text-pro-muted text-pro-xs"> ({{ item.variant.name }})</span>{% endif %}
+                        </span>
+                        <span class="element-card-total">{{ item.line_total|floatformat:0 }}</span>
+                    </div>
+                    <div class="element-card-sub">
+                        <span>{% t "pos_qty" %}: {{ item.quantity }}</span>
+                        <span>{% t "pos_unit_price" %}: {{ item.unit_price|floatformat:0 }}</span>
+                        <span>{% t "pos_discount_short" %}: {% if item.discount > 0 %}{{ item.discount|floatformat:0 }}{% else %}—{% endif %}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state" style="padding:var(--sp-6)">
+                    <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_items" %}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calculator" style="color:var(--primary-600)"></i> {% t "pos_summary" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div class="d-flex justify-between mb-2">
+                    <span class="text-pro-sm text-pro-muted">{% t "pos_subtotal" %}</span>
+                    <span class="fw-500">{{ receipt.subtotal|floatformat:0 }}</span>
+                </div>
+                {% if receipt.discount_amount > 0 %}
+                <div class="d-flex justify-between mb-2">
+                    <span class="text-pro-sm text-pro-muted">{% t "pos_discount" %}</span>
+                    <span class="fw-500" style="color:var(--danger-600)">-{{ receipt.discount_amount|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-between mb-2">
+                    <span class="text-pro-sm text-pro-muted">{% t "pos_tax" %} ({{ receipt.tax_rate }}%)</span>
+                    <span class="fw-500">{{ receipt.tax_amount|floatformat:0 }}</span>
+                </div>
+                <div class="d-flex justify-between" style="border-top:2px solid var(--border-default);padding-top:var(--sp-2);margin-top:var(--sp-2)">
+                    <span class="fw-700">{% t "pos_total" %}</span>
+                    <span class="fw-700" style="font-size:1.25rem">{{ receipt.total|floatformat:0 }}</span>
+                </div>
+                <div style="margin-top:var(--sp-4);padding-top:var(--sp-3);border-top:1px solid var(--border-subtle)">
+                    <div class="d-flex justify-between mb-2">
+                        <span class="text-pro-sm text-pro-muted">{% t "pos_amount_paid" %}</span>
+                        <span class="fw-600">{{ receipt.amount_paid|floatformat:0 }}</span>
+                    </div>
+                    {% if receipt.change > 0 %}
+                    <div class="d-flex justify-between">
+                        <span class="text-pro-sm text-pro-muted">{% t "pos_change" %}</span>
+                        <span class="fw-600" style="color:var(--success-600)">{{ receipt.change|floatformat:0 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "pos_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;gap:var(--sp-3)">
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_terminal" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.terminal.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_shift" %}</div>
+                        <div class="text-pro-sm fw-500">
+                            <a href="{% url 'pos:shift_detail' pk=receipt.shift.pk %}" style="color:var(--primary-600);text-decoration:none">{{ receipt.shift.shift_number }}</a>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_cashier" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.created_by.get_full_name|default:receipt.created_by.username }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_created_at" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.created_at|date:"d.m.Y H:i:s" }}</div>
+                    </div>
+                    {% if receipt.completed_at %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_completed_at" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.completed_at|date:"d.m.Y H:i:s" }}</div>
+                    </div>
+                    {% endif %}
+                    {% if receipt.coupon_code %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_coupon_code" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.coupon_code }}</div>
+                    </div>
+                    {% endif %}
+                    {% if receipt.customer %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "pos_customer" %}</div>
+                        <div class="text-pro-sm fw-500">{{ receipt.customer.name }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if receipt.status == 'completed' %}
+<div class="pos-print-row" style="text-align:center;margin-top:var(--sp-6)">
+    <button onclick="printReceipt()" class="btn-pro btn-pro-secondary"><i class="bi bi-printer"></i> {% t "pos_print_receipt" %}</button>
+</div>
+
+<style>
+@media print {
+    .app-topbar, .app-sidebar, .breadcrumb-pro, .page-actions, .pos-no-print { display: none !important; }
+    .app-main { margin-left: 0 !important; }
+    .app-content { max-width: 100%; padding: 1rem; }
+    body { background: #fff; }
+}
+</style>
+
+<script>
+function printReceipt() { window.print(); }
+async function returnReceipt() {
+    const items = [];
+    {% for item in items %}const quantity{{ item.pk }} = Number(prompt('{{ item.product.name|escapejs }} qaytarish miqdori (maksimum {{ item.quantity }})', '0') || 0); if (quantity{{ item.pk }} > 0) items.push({receipt_item_id: {{ item.pk }}, quantity: quantity{{ item.pk }}});{% endfor %}
+    if (!items.length) return;
+    const response = await fetch('{% url "pos:api_return_sale" %}', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'}, body:JSON.stringify({receipt_id: {{ receipt.pk }}, items: items, refund_method: '{{ receipt.payment_method }}'})});
+    const data = await response.json();
+    if (!data.success) return alert(data.error || 'Qaytarish saqlanmadi');
+    alert(`Qaytarish saqlandi: ${data.return_number}`); location.reload();
+}
+</script>
+{% endif %}
+{% endblock %}

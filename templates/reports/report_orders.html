@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "orders_report" %}</h1>
+    </div>
+
+    <div class="card-pro">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "status" %}</label>
+                <select name="status" class="form-select">
+                    <option value="">{% t "all_statuses" %}</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if s == selected_status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total_orders" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ total_orders|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "confirmed" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-info">{{ confirmed|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "completed" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-success">{{ completed|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "cancelled" %}</span>
+            <span class="text-pro-2xl fw-bold text-pro-danger">{{ cancelled|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "fulfillment_rate" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ fulfillment_rate|floatformat:1 }}%</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total_value" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ total_value|floatformat:0 }}</span>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "date" %}</th>
+                        <th>{% t "order_number" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "total" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.created_at|date:"d.m.Y" }}</td>
+                        <td class="fw-semibold">#{{ order.order_number }}</td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>
+                            <span class="badge-pro badge-pro-{{ order.status }}">{{ order.status_display }}</span>
+                        </td>
+                        <td class="fw-semibold">{{ order.total|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1246 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "dashboard_title" %} — SKLAT PRO{% endblock %}
+
+{% comment %}
+SKLAT PRO dashboard.
+
+Every number, link and action below comes from `inventory.views.dashboard`
+(`context` there is the single source of truth) — nothing here is hardcoded
+and no query is duplicated in this template.
+
+Reading order: hero -> quick actions -> KPIs -> category analytics +
+stock alerts -> recent transactions + health summary.
+
+All styling is scoped under `.dbd-` so the global `.page-header`,
+`.table-pro`, `.empty-state` and `.stat-card` rules (shared by 277 templates)
+are never modified. Colours come from design-system.css custom properties so
+both the dark and light themes keep working.
+{% endcomment %}
+
+{% block content %}
+<div class="dbd">
+
+    <!-- ============ 1. HERO ============ -->
+    <header class="dbd-hero">
+        <div class="dbd-hero__lead">
+            <h1 class="dbd-hero__title">{% t "dashboard_title" %}</h1>
+            <p class="dbd-hero__sub">{% t "welcome_back" %} {{ user.get_full_name|default:user.email }}</p>
+        </div>
+        <span class="dbd-pill dbd-pill--live">
+            <span class="dbd-pill__dot" aria-hidden="true"></span>
+            {% t "active_status" %}
+        </span>
+    </header>
+
+    <!-- ============ 2. QUICK ACTIONS ============ -->
+    <nav class="dbd-actions" aria-label="{% t "quick_actions" %}">
+        <a href="{% url 'product_create' %}" class="dbd-action dbd-action--primary" data-spa-ignore data-product-type-picker>
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            <span>{% t "new_product" %}</span>
+        </a>
+        <a href="{% url 'stock_in' %}" class="dbd-action dbd-action--in">
+            <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
+            <span>{% t "stock_in" %}</span>
+        </a>
+        <a href="{% url 'stock_out' %}" class="dbd-action dbd-action--out">
+            <i class="bi bi-arrow-up-circle" aria-hidden="true"></i>
+            <span>{% t "stock_out" %}</span>
+        </a>
+        <a href="{% url 'scanner:scanner_view' %}" class="dbd-action">
+            <i class="bi bi-upc-scan" aria-hidden="true"></i>
+            <span>{% t "scanner" %}</span>
+        </a>
+    </nav>
+
+    <!-- ============ 3. KPIs ============ -->
+    <section class="dbd-kpis" aria-label="{% t "dashboard_title" %}">
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="total_products" kpi_value=total_products|num kpi_icon="bi-box-seam" kpi_tone="primary" kpi_url_name="product_list" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="total_stock" kpi_value=total_stock|num kpi_icon="bi-stack" kpi_tone="info" kpi_url_name="inventory_overview" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="low_stock" kpi_value=low_stock_count|num kpi_icon="bi-exclamation-triangle" kpi_tone="warning" kpi_url_name="low_stock_list" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="inventory_value" kpi_value=inventory_value|uzs kpi_icon="bi-cash-stack" kpi_tone="success" kpi_url_name="inventory_table" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="received_7d" kpi_value=recent_stock_in|num kpi_icon="bi-arrow-down-circle" kpi_tone="success" kpi_url_name="transaction_list" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="sent_7d" kpi_value=recent_stock_out|num kpi_icon="bi-arrow-up-circle" kpi_tone="danger" kpi_url_name="transaction_list" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="customer_debt" kpi_value=customer_debt_total|uzs kpi_icon="bi-person-exclamation" kpi_tone="warning" kpi_url_name="finance:customer_debt_list" %}
+        {% include "inventory/partials/_kpi_card.html" with kpi_key="supplier_debt" kpi_value=supplier_debt_total|uzs kpi_icon="bi-building-exclamation" kpi_tone="warning" kpi_url_name="finance:supplier_debt_list" %}
+    </section>
+
+    <!-- ============ 4. CATEGORY ANALYTICS + STOCK ALERTS ============ -->
+    <div class="dbd-split">
+
+        <!-- Category analytics -->
+        <section class="card-pro dbd-card">
+            <div class="card-pro-header dbd-card__head">
+                <h2 class="card-pro-title">{% t "category_breakdown" %}</h2>
+                <a href="{% url 'inventory_table' %}" class="dbd-link">{% t "view_all" %}</a>
+            </div>
+            <div class="card-pro-body dbd-chart">
+                {% if category_counts %}
+                    {# Skeleton holds the space while Chart.js is fetched. #}
+                    <div class="dbd-chart__skel" id="dbdChartSkel" aria-hidden="true">
+                        <span class="skt-skeleton skt-skeleton-circle"></span>
+                        <span class="skt-skeleton skt-skeleton-line w-60"></span>
+                    </div>
+                    <canvas id="dbdCategoryChart" role="img"
+                            data-dbd-caption="{% t "total_products" %}"
+                            aria-label="{% t "category_breakdown" %}"></canvas>
+                    <div class="dbd-chart__error" id="dbdChartError" hidden>
+                        <i class="bi bi-pie-chart" aria-hidden="true"></i>
+                        <span>{% t "no_data" %}</span>
+                    </div>
+                {% else %}
+                    <div class="dbd-state">
+                        <span class="dbd-state__icon"><i class="bi bi-folder2-open" aria-hidden="true"></i></span>
+                        <p class="dbd-state__title">{% t "category_empty_title" %}</p>
+                        <p class="dbd-state__desc">{% t "category_empty_subtitle" %}</p>
+                        <a href="{% url 'category_list' %}" class="dbd-btn dbd-btn--primary">{% t "create_category" %}</a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Stock alerts: out-of-stock first (quantity == 0), then low stock -->
+        <section class="card-pro dbd-card dbd-card--fill">
+            <div class="card-pro-header dbd-card__head">
+                <h2 class="card-pro-title">{% t "stock_alerts" %}</h2>
+                <a href="{% url 'low_stock_list' %}" class="dbd-link">{% t "view_all" %}</a>
+            </div>
+            <div class="card-pro-body dbd-card__flush">
+                {% if out_of_stock_products or low_stock_products %}
+                    <ul class="dbd-list dbd-list--scroll">
+                        {% for product in out_of_stock_products %}
+                        <li class="dbd-row">
+                            <span class="dbd-row__main">
+                                <span class="dbd-row__title">{{ product.name }}</span>
+                                <span class="dbd-row__meta">{{ product.sku }}</span>
+                            </span>
+                            <span class="badge-pro badge-pro-dot badge-pro-danger">{{ product.quantity|num }}</span>
+                        </li>
+                        {% endfor %}
+                        {% for product in low_stock_products %}
+                        <li class="dbd-row">
+                            <span class="dbd-row__main">
+                                <span class="dbd-row__title">{{ product.name }}</span>
+                                <span class="dbd-row__meta">{{ product.sku }}</span>
+                            </span>
+                            <span class="badge-pro badge-pro-dot badge-pro-warning">{{ product.quantity|num }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="dbd-state">
+                        <span class="dbd-state__icon dbd-state__icon--ok"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                        <p class="dbd-state__title">{% t "stock_ok" %}</p>
+                        <p class="dbd-state__desc">{% t "stock_ok_desc" %}</p>
+                        <a href="{% url 'low_stock_list' %}" class="dbd-btn">{% t "view_all" %}</a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <!-- ============ 5. RECENT TRANSACTIONS + HEALTH SUMMARY ============ -->
+    <div class="dbd-split">
+
+        <section class="card-pro dbd-card">
+            <div class="card-pro-header dbd-card__head">
+                <h2 class="card-pro-title">{% t "recent_transactions" %}</h2>
+                <a href="{% url 'transaction_list' %}" class="dbd-link">{% t "view_all" %}</a>
+            </div>
+
+            <!-- Desktop table -->
+            <div class="card-pro-body table-desktop dbd-table-wrap dbd-tx">
+                <table class="table-pro dbd-tx__table">
+                    <thead class="dbd-tx__thead">
+                        <tr>
+                            <th class="dbd-tx__th">{% t "products" %}</th>
+                            <th class="dbd-tx__th">{% t "type" %}</th>
+                            <th class="dbd-tx__th dbd-num">{% t "quantity" %}</th>
+                            <th class="dbd-tx__th">{% t "users" %}</th>
+                            <th class="dbd-tx__th">{% t "date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="dbd-tx__tbody">
+                        {% for txn in recent_transactions %}
+                        <tr class="dbd-tx__row">
+                            <td class="dbd-tx__td cell-primary">
+                                <div class="dbd-tx__product">
+                                    <span class="dbd-tx__product-name">{{ txn.product.name }}</span>
+                                </div>
+                            </td>
+                            <td class="dbd-tx__td">
+                                <span class="dbd-tx__badge {% if txn.transaction_type == 'IN' %}dbd-tx__badge--in{% else %}dbd-tx__badge--out{% endif %}">
+                                    <span class="dbd-tx__dot"></span>
+                                    {% if txn.transaction_type == 'IN' %}{% t "stock_in" %}{% else %}{% t "stock_out" %}{% endif %}
+                                </span>
+                            </td>
+                            <td class="dbd-tx__td dbd-num">
+                                <span class="dbd-tx__qty {% if txn.transaction_type == 'IN' %}dbd-tx__qty--in{% else %}dbd-tx__qty--out{% endif %}">
+                                    {% if txn.transaction_type == 'IN' %}+{% else %}-{% endif %}{{ txn.quantity|num }}
+                                </span>
+                            </td>
+                            <td class="dbd-tx__td">
+                                <span class="dbd-tx__user">{{ txn.user.get_full_name|default:txn.user.email }}</span>
+                            </td>
+                            <td class="dbd-tx__td cell-muted">
+                                <span class="dbd-tx__date">{{ txn.created_at|date:"d M H:i" }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="dbd-empty-tx">
+                                    <div class="dbd-empty-tx__icon-wrap">
+                                        <div class="dbd-empty-tx__glow"></div>
+                                        <i class="bi bi-arrow-left-right dbd-empty-tx__icon" aria-hidden="true"></i>
+                                    </div>
+                                    <h3 class="dbd-empty-tx__title">{% t "no_transactions" %}</h3>
+                                    <p class="dbd-empty-tx__desc">Hozircha tranzaksiyalar mavjud emas</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile cards -->
+            <div class="table-mobile-cards dbd-cards">
+                {% for txn in recent_transactions %}
+                <div class="dbd-mtx-card">
+                    <div class="dbd-mtx-card__header">
+                        <div class="dbd-mtx-card__product">
+                            <div class="dbd-mtx-card__name">{{ txn.product.name }}</div>
+                        </div>
+                        <span class="dbd-tx__badge {% if txn.transaction_type == 'IN' %}dbd-tx__badge--in{% else %}dbd-tx__badge--out{% endif %}">
+                            <span class="dbd-tx__dot"></span>
+                            {% if txn.transaction_type == 'IN' %}{% t "stock_in" %}{% else %}{% t "stock_out" %}{% endif %}
+                        </span>
+                    </div>
+                    <div class="dbd-mtx-card__grid">
+                        <div class="dbd-mtx-card__item">
+                            <span class="dbd-mtx-card__label">{% t "quantity" %}</span>
+                            <span class="dbd-tx__qty {% if txn.transaction_type == 'IN' %}dbd-tx__qty--in{% else %}dbd-tx__qty--out{% endif %}">
+                                {% if txn.transaction_type == 'IN' %}+{% else %}-{% endif %}{{ txn.quantity|num }}
+                            </span>
+                        </div>
+                        <div class="dbd-mtx-card__item">
+                            <span class="dbd-mtx-card__label">{% t "users" %}</span>
+                            <span class="dbd-mtx-card__value">{{ txn.user.get_full_name|default:txn.user.email }}</span>
+                        </div>
+                        <div class="dbd-mtx-card__item dbd-mtx-card__item--full">
+                            <span class="dbd-mtx-card__label">{% t "date" %}</span>
+                            <span class="dbd-mtx-card__value dbd-mtx-card__value--muted">{{ txn.created_at|date:"d M H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="dbd-empty-tx">
+                    <div class="dbd-empty-tx__icon-wrap">
+                        <div class="dbd-empty-tx__glow"></div>
+                        <i class="bi bi-arrow-left-right dbd-empty-tx__icon" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="dbd-empty-tx__title">{% t "no_transactions" %}</h3>
+                    <p class="dbd-empty-tx__desc">Hozircha tranzaksiyalar mavjud emas</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Health summary: real counts, each one a drill-down -->
+        <section class="card-pro dbd-card dbd-card--fill">
+            <div class="card-pro-header dbd-card__head">
+                <h2 class="card-pro-title">Zaxira holati</h2>
+                <a href="{% url 'business_insights' %}" class="dbd-link">{% t "analytics" %}</a>
+            </div>
+            <div class="card-pro-body dbd-card__flush">
+                <div class="dbd-health">
+                    <a href="{% url 'low_stock_list' %}" class="dbd-health__item">
+                        <div class="dbd-health__left">
+                            <div class="dbd-health__icon dbd-health__icon--warn">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <span class="dbd-health__label">Kam qolgan</span>
+                        </div>
+                        <span class="dbd-health__badge dbd-health__badge--warn">{{ low_stock_count|num }}</span>
+                    </a>
+                    <a href="{% url 'out_of_stock_list' %}" class="dbd-health__item">
+                        <div class="dbd-health__left">
+                            <div class="dbd-health__icon dbd-health__icon--danger">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                            <span class="dbd-health__label">Tugagan</span>
+                        </div>
+                        <span class="dbd-health__badge dbd-health__badge--danger">{{ out_of_stock_count|num }}</span>
+                    </a>
+                    <a href="{% url 'overstock_list' %}" class="dbd-health__item">
+                        <div class="dbd-health__left">
+                            <div class="dbd-health__icon dbd-health__icon--info">
+                                <i class="bi bi-arrow-up-circle"></i>
+                            </div>
+                            <span class="dbd-health__label">Oshib ketgan</span>
+                        </div>
+                        <span class="dbd-health__badge dbd-health__badge--info">{{ overstock_count|num }}</span>
+                    </a>
+                    <div class="dbd-health__divider"></div>
+                    <div class="dbd-health__item dbd-health__item--static">
+                        <div class="dbd-health__left">
+                            <div class="dbd-health__icon dbd-health__icon--success">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <span class="dbd-health__label">Olish kerak</span>
+                        </div>
+                        <span class="dbd-health__value">{{ customer_debt_total|uzs }}</span>
+                    </div>
+                    <div class="dbd-health__item dbd-health__item--static">
+                        <div class="dbd-health__left">
+                            <div class="dbd-health__icon dbd-health__icon--primary">
+                                <i class="bi bi-credit-card"></i>
+                            </div>
+                            <span class="dbd-health__label">To'lash kerak</span>
+                        </div>
+                        <span class="dbd-health__value">{{ supplier_debt_total|uzs }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+/* ==========================================================
+   Scoped styles for inventory/dashboard.html only.
+   Prefixed `.dbd-` so the GLOBAL `.page-header`, `.table-pro`,
+   `.card-pro`, `.badge-pro`, `.empty-state` and `.grid-*` rules
+   shared by 277 templates are never modified. Every colour is a
+   design-system custom property, so light/dark themes both work.
+   ========================================================== */
+
+.dbd { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+/* ---------- 1. Hero ---------- */
+.dbd-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    flex-wrap: wrap;
+    padding: var(--sp-5);
+    border-radius: var(--radius-2xl, 1rem);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    box-shadow: var(--shadow-xl);
+}
+.dbd-hero__lead { min-width: 0; flex: 1 1 12rem; }
+.dbd-hero__title {
+    margin: 0;
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.375rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--glass-title);
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.dbd-hero__sub {
+    margin: 2px 0 0;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--glass-muted);
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.dbd-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+.dbd-pill--live {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--success-600, #059669);
+}
+.dbd-pill__dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success-500, #10b981);
+    box-shadow: 0 0 8px var(--success-500, #10b981);
+    animation: dbd-live-pulse 2.6s ease-in-out infinite;
+}
+
+/* ---------- 2. Quick actions ---------- */
+/* auto-fit keeps this a 2x2 block on a 360px phone and a single row from
+   ~700px up, with no fixed widths that could overflow. */
+.dbd-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: var(--sp-3);
+}
+.dbd-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: var(--sp-3);
+    border-radius: var(--radius-lg, 0.75rem);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+    min-width: 0;
+}
+.dbd-action span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbd-action i { font-size: 1.05rem; flex-shrink: 0; }
+.dbd-action:hover { background: var(--bg-surface-hover); transform: translateY(-1px); }
+.dbd-action:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-500, #6366f1); }
+.dbd-action--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary-500, #6366f1), var(--primary-700, #4338ca));
+    border-color: var(--primary-500, #6366f1);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+}
+.dbd-action--primary:hover { background: linear-gradient(135deg, var(--primary-600, #4f46e5), var(--primary-700, #4338ca)); }
+.dbd-action--in { color: var(--success-600, #059669); border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.1); }
+.dbd-action--out { color: var(--danger-600, #dc2626); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.1); }
+
+/* ---------- 3. KPIs ---------- */
+.dbd-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+}
+.dbd-kpi {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-4);
+    border-radius: var(--radius-xl, 0.75rem);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.dbd-kpi:hover { transform: translateY(-2px); border-color: #334155; box-shadow: var(--shadow-md); }
+a.dbd-kpi:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-500, #6366f1); }
+.dbd-kpi__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-lg, 0.75rem);
+    font-size: 1.1rem;
+}
+/* tone colours */
+.dbd-kpi--primary .dbd-kpi__icon { background: var(--primary-50); color: var(--primary-600); }
+.dbd-kpi--info    .dbd-kpi__icon { background: var(--info-50);    color: var(--info-600); }
+.dbd-kpi--success .dbd-kpi__icon { background: var(--success-50); color: var(--success-600); }
+.dbd-kpi--warning .dbd-kpi__icon { background: var(--warning-50); color: var(--warning-600); }
+.dbd-kpi--danger  .dbd-kpi__icon { background: var(--danger-50);  color: var(--danger-600); }
+.dbd-kpi__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.dbd-kpi__label {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--text-muted);
+    line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dbd-kpi__value {
+    font-size: clamp(1.0625rem, 0.95rem + 0.4vw, 1.375rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    /* long money strings shrink instead of forcing the grid wider */
+    overflow-wrap: anywhere;
+}
+.dbd-kpi__hint { font-size: var(--text-xs); color: var(--text-muted); }
+.dbd-kpi__chevron { font-size: 0.7rem; color: var(--text-muted); flex-shrink: 0; opacity: 0; transition: opacity var(--transition-fast); }
+a.dbd-kpi:hover .dbd-kpi__chevron, a.dbd-kpi:focus-visible .dbd-kpi__chevron { opacity: 1; }
+
+/* ---------- 4. Split layout ---------- */
+/* Two explicit tracks. `minmax(0, ...)` is what actually prevents overflow:
+   a plain `2fr 1fr` track keeps its automatic `min-width: auto` minimum, so
+   one long unbroken value inside a track widens the whole page instead of
+   being clipped by the track. */
+.dbd-split {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: var(--sp-4);
+    /* Top-align every card in the row so nothing is nudged down. */
+    align-items: start;
+    /* Rows hug the top of the container instead of being spread apart. */
+    align-content: start;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* Grid items must be allowed to shrink, otherwise the track's content
+   minimum re-introduces the overflow `minmax(0, ...)` was there to stop. */
+.dbd-split > * { min-width: 0; }
+
+.dbd-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Cards sit at the top of their row (the grid's `align-items: start`),
+       and the sidebar card opts into filling the row with `align-self`. */
+    align-self: start;
+    box-sizing: border-box;
+    /* Clips the rounded corners so an overflowing list cannot bleed out. */
+    overflow: hidden;
+}
+/* Sidebar card: still starts at the TOP of the row, but grows to the row
+   height so there is no ragged void under it. */
+.dbd-card--fill { align-self: stretch; }
+
+.dbd-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    flex-shrink: 0;
+}
+.dbd-card__head .card-pro-title { margin: 0; }
+.dbd-card__flush {
+    padding: 0;
+    min-width: 0;
+    /* Fill the remaining card height and allow the inner list to scroll
+       instead of forcing the card taller. */
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dbd-link {
+    flex-shrink: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-link);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.dbd-link:hover { color: var(--text-link-hover); text-decoration: underline; }
+
+/* ---------- 5. Chart ---------- */
+/* The chart body fills the card and holds a floor height, so the chart card
+   and the sidebar card resolve to a predictable, matching height.
+   NOTE: it must stay a block container. Chart.js measures the parent's
+   computed height to size the canvas, so turning it into a flex row with
+   `align-items: center` would collapse the canvas and loop the resize. */
+.dbd-chart {
+    position: relative;
+    min-height: 280px;
+    flex: 1 1 auto;
+    display: block;
+}
+.dbd-chart canvas { max-width: 100%; display: block; }
+.dbd-chart__skel {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    background: var(--bg-surface);
+}
+.dbd-chart__skel .skt-skeleton-circle { width: 132px; height: 132px; }
+.dbd-chart__skel .skt-skeleton-line { height: 12px; }
+.dbd-chart__error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    background: var(--bg-surface);
+}
+.dbd-chart__error i { font-size: 1.5rem; opacity: 0.7; }
+.dbd-chart__error[hidden] { display: none; }
+
+/* ---------- 6. Rows / lists ---------- */
+.dbd-list { list-style: none; margin: 0; padding: 0; min-width: 0; }
+.dbd-list--scroll {
+    flex: 1 1 auto;
+    /* min-height:0 lets the flex child actually shrink so the list scrolls
+       inside the card instead of stretching the row. */
+    min-height: 0;
+    max-height: 320px;
+    padding: var(--sp-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.dbd-list--scroll::-webkit-scrollbar { width: 6px; }
+.dbd-list--scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 9999px; }
+
+.dbd-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg, 0.5rem);
+    min-width: 0;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.dbd-row:hover { transform: translateY(-1px); border-color: #334155; box-shadow: var(--shadow-sm); }
+.dbd-row--split { border-top: 1px solid var(--border-subtle); }
+.dbd-row__anchor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    width: 100%;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+.dbd-row__main { display: flex; flex-direction: column; min-width: 0; }
+.dbd-row__title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dbd-row__meta { font-size: var(--text-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbd-row__value { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.dbd-row--link:hover { background: var(--bg-surface-hover); }
+.dbd-row--link:focus-within { box-shadow: inset 0 0 0 2px var(--primary-500, #6366f1); }
+
+/* ---------- 7. Table ---------- */
+/* the scroll container lives here, so a wide table scrolls inside its card
+   instead of widening the page */
+.dbd-table-wrap {
+    padding: 0;
+    overflow-x: auto;
+    /* Fill the card body and let it scroll internally, so the row heights
+       of both columns stay in step. */
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.dbd-num { text-align: right; font-variant-numeric: tabular-nums; }
+.dbd-cards { padding: var(--sp-3); flex: 1 1 auto; min-height: 0; }
+
+/* ---------- 8. Shared states ---------- */
+.dbd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-lg, 0.75rem);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+    border: 1px solid var(--border-default);
+}
+.dbd-btn--primary { color: #fff; background: var(--primary-600, #4f46e5); border-color: var(--primary-600, #4f46e5); }
+.dbd-btn--primary:hover { background: var(--primary-700, #4338ca); }
+
+.dbd-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--sp-2);
+    /* `height: 100%` was the miscalculation: inside an auto-height flex
+       parent it resolved against an indefinite height and pushed the card
+       down. `flex: 1` + `min-height` fills the parent correctly. */
+    flex: 1 1 auto;
+    min-height: 280px;
+    padding: var(--sp-6);
+    box-sizing: border-box;
+}
+.dbd-state--tight { min-height: 0; padding: var(--sp-6) var(--sp-4); }
+.dbd-state__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px; height: 56px;
+    border-radius: 9999px;
+    background: var(--bg-surface-hover);
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    margin-bottom: var(--sp-2);
+    animation: dbd-float 4s ease-in-out infinite;
+}
+.dbd-state__icon--ok { background: rgba(16, 185, 129, 0.14); color: var(--success-600, #059669); }
+.dbd-state__title { margin: 0; font-size: var(--text-base); font-weight: 600; color: var(--text-primary); }
+.dbd-state__desc { margin: 0; font-size: var(--text-sm); color: var(--text-muted); max-width: 300px; line-height: 1.5; }
+.dbd-state .dbd-btn { margin-top: var(--sp-3); }
+
+/* ---------- Transactions Redesign ---------- */
+.dbd-tx {
+    padding: 0;
+    overflow-x: auto;
+}
+.dbd-tx__table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.dbd-tx__thead {
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.4) 0%, rgba(30, 41, 59, 0.4) 100%);
+}
+.dbd-tx__th {
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #94a3b8);
+    text-align: left;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    white-space: nowrap;
+}
+.dbd-tx__th.dbd-num {
+    text-align: right;
+}
+.dbd-tx__tbody .dbd-tx__row {
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.dbd-tx__tbody .dbd-tx__row:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+.dbd-tx__tbody .dbd-tx__row:not(:last-child) .dbd-tx__td {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.dbd-tx__td {
+    padding: 16px 20px;
+    vertical-align: middle;
+}
+.dbd-tx__product {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.dbd-tx__product-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+}
+.dbd-tx__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+.dbd-tx__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.dbd-tx__badge--in {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.dbd-tx__badge--in .dbd-tx__dot {
+    background: #34d399;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+.dbd-tx__badge--out {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+.dbd-tx__badge--out .dbd-tx__dot {
+    background: #f87171;
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+}
+.dbd-tx__qty {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.dbd-tx__qty--in {
+    color: #34d399;
+}
+.dbd-tx__qty--out {
+    color: #f87171;
+}
+.dbd-tx__user {
+    font-size: 14px;
+    color: var(--text-secondary, #cbd5e1);
+}
+.dbd-tx__date {
+    font-size: 13px;
+    color: var(--text-muted, #94a3b8);
+}
+
+/* Modern empty state */
+.dbd-empty-tx {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    gap: 16px;
+}
+.dbd-empty-tx__icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+}
+.dbd-empty-tx__glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+    animation: dbd-pulse 3s ease-in-out infinite;
+}
+.dbd-empty-tx__icon {
+    position: relative;
+    font-size: 32px;
+    color: #a5b4fc;
+    z-index: 1;
+    animation: dbd-float 4s ease-in-out infinite;
+}
+.dbd-empty-tx__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+}
+.dbd-empty-tx__desc {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted, #94a3b8);
+}
+@keyframes dbd-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+@keyframes dbd-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+@keyframes dbd-live-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--success-500, #10b981); }
+    50% { opacity: 0.55; box-shadow: 0 0 12px var(--success-500, #10b981); }
+}
+@keyframes dbd-warn-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: translateY(0); }
+    50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.08); transform: translateY(-1px); }
+}
+
+/* Mobile transaction cards */
+.dbd-mtx-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+.dbd-mtx-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.dbd-mtx-card__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    line-height: 1.4;
+}
+.dbd-mtx-card__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.dbd-mtx-card__item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.dbd-mtx-card__item--full {
+    grid-column: 1 / -1;
+}
+.dbd-mtx-card__label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #94a3b8);
+}
+.dbd-mtx-card__value {
+    font-size: 13px;
+    color: var(--text-secondary, #cbd5e1);
+}
+.dbd-mtx-card__value--muted {
+    color: var(--text-muted, #94a3b8);
+}
+
+/* Zaxira holati redesign */
+.dbd-health {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    /* Fill the card body so the sidebar card matches the row height. */
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.dbd-health__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+    border-left: 2px solid transparent;
+}
+.dbd-health__item:not(.dbd-health__item--static) {
+    cursor: pointer;
+}
+.dbd-health__item:not(.dbd-health__item--static):hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-left-color: rgba(99, 102, 241, 0.6);
+}
+.dbd-health__item--static {
+    cursor: default;
+}
+.dbd-health__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.dbd-health__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.dbd-health__icon--warn {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    animation: dbd-warn-pulse 3s ease-in-out infinite;
+}
+.dbd-health__icon--danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+.dbd-health__icon--info {
+    background: rgba(59, 130, 246, 0.12);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+.dbd-health__icon--success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.dbd-health__icon--primary {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+    border: 1px solid rgba(165, 180, 252, 0.3);
+}
+.dbd-health__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #f1f5f9);
+}
+.dbd-health__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.dbd-health__badge--warn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+}
+.dbd-health__badge--danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.4);
+}
+.dbd-health__badge--info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.4);
+}
+.dbd-health__value {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary, #f1f5f9);
+}
+.dbd-health__divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
+    margin: 8px 20px;
+}
+
+/* ---------- 9. Responsive ---------- */
+@media (max-width: 1024px) {
+    .dbd-split {
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    /* Stacked: each card sizes to its own content again. */
+    .dbd-card--fill { align-self: start; }
+}
+@media (max-width: 640px) {
+    .dbd { gap: var(--sp-4); }
+    .dbd-hero { flex-direction: column; align-items: stretch; padding: var(--sp-4); }
+    .dbd-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dbd-kpi { padding: var(--sp-3); gap: var(--sp-2); }
+    .dbd-kpi__icon { width: 34px; height: 34px; font-size: 0.95rem; }
+    .dbd-kpi__chevron { display: none; }
+    .dbd-chart { min-height: 240px; }
+    .dbd-list--scroll { max-height: 260px; }
+}
+@media (max-width: 380px) {
+    /* Below this the 2-up KPI grid cannot hold an icon and a money value
+       side by side, so each tile goes full width. */
+    .dbd-kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- 10. Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .dbd-action, .dbd-kpi, .dbd-kpi__chevron, .dbd-row { transition: none; }
+    .dbd-action:hover, .dbd-kpi:hover, .dbd-row:hover { transform: none; }
+    .dbd-pill__dot, .dbd-state__icon, .dbd-empty-tx__icon,
+    .dbd-health__icon--warn, .dbd-empty-tx__glow { animation: none; }
+}
+</style>
+
+{% comment %}
+Chart payload is emitted as JSON via `json_script`, which escapes `<`, `>`
+and `&` and produces valid JSON for any category label. (The previous
+`{{ category_counts|safe }}` interpolated Python's dict repr straight into
+JavaScript and only worked because no label happened to contain a quote.)
+{% endcomment %}
+{% if category_counts %}{{ category_counts|json_script:"dbdCategoryData" }}{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+        onerror="window.__dbdChartFailed=true"></script>
+<script>
+(function () {
+    'use strict';
+
+    var payload = document.getElementById('dbdCategoryData');
+    var canvas = document.getElementById('dbdCategoryChart');
+    var skel = document.getElementById('dbdChartSkel');
+    var errBox = document.getElementById('dbdChartError');
+    if (!payload || !canvas) { return; }
+
+    var raw;
+    try { raw = JSON.parse(payload.textContent || '{}'); }
+    catch (e) { if (errBox) { errBox.hidden = false; } if (skel) { skel.remove(); } return; }
+
+    var labels = Object.keys(raw);
+    var values = labels.map(function (k) { return raw[k]; });
+    if (!labels.length) { if (skel) { skel.remove(); } return; }
+
+    function fail() {
+        if (skel) { skel.remove(); }
+        canvas.hidden = true;
+        if (errBox) { errBox.hidden = false; }
+    }
+    if (window.__dbdChartFailed || typeof window.Chart === 'undefined') { fail(); return; }
+
+    var PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function cssVar(name, fallback) {
+        var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+        return (v && v.trim()) || fallback;
+    }
+
+    // Read theme colours from CSS so the legend and centre label stay legible
+    // when the user flips the light/dark switch.
+    function palette() {
+        return {
+            text: cssVar('--text-secondary', '#94a3b8'),
+            muted: cssVar('--text-muted', '#64748b'),
+            track: cssVar('--border-subtle', 'rgba(148,163,184,.15)')
+        };
+    }
+    var theme = palette();
+
+    var total = values.reduce(function (a, b) { return a + b; }, 0);
+
+    function formatCount(n) {
+        return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    // Centre-label colours live in a closure rather than on the chart
+    // instance: Chart.js runs `afterDatasetsDraw` during construction, before
+    // a property assigned after `new Chart()` would exist.
+    var centre = { value: '', label: '' };
+
+    // Centre label inside the doughnut hole.
+    var centrePlugin = {
+        id: 'dbdCentre',
+        afterDatasetsDraw: function (chart) {
+            var meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || !meta.data.length) { return; }
+            var arc = meta.data[0];
+            if (!arc) { return; }
+            var ctx = chart.ctx;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = centre.value;
+            ctx.font = '700 20px Inter, system-ui, sans-serif';
+            ctx.fillText(formatCount(total), arc.x, arc.y - 7);
+            ctx.fillStyle = centre.label;
+            ctx.font = '500 11px Inter, system-ui, sans-serif';
+            ctx.fillText(canvas.getAttribute('data-dbd-caption') || '', arc.x, arc.y + 13);
+            ctx.restore();
+        }
+    };
+
+    var chart;
+    try {
+        chart = new window.Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: PALETTE.slice(0, labels.length),
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                animation: prefersReduced ? false : { duration: 450 },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: theme.text,
+                            padding: 12,
+                            boxWidth: 9,
+                            boxHeight: 9,
+                            usePointStyle: true,
+                            font: { size: 12, family: 'Inter, system-ui, sans-serif' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#ffffff',
+                        titleColor: '#0f172a',
+                        bodyColor: '#0f172a',
+                        borderColor: 'rgba(15, 23, 42, 0.1)',
+                        borderWidth: 1,
+                        titleFont: { size: 12, weight: '600' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                }
+            },
+            plugins: [centrePlugin]
+        });
+    } catch (e) { fail(); return; }
+
+    centre.value = cssVar('--text-primary', '#f1f5f9');
+    centre.label = theme.muted;
+    canvas.setAttribute('aria-label', labels.join(', '));
+    if (skel) { skel.remove(); }
+
+    // Legend goes beside the ring once there is room for it.
+    function layout() {
+        var wide = window.innerWidth >= 1024;
+        chart.options.plugins.legend.position = wide ? 'right' : 'bottom';
+        chart.options.cutout = wide ? '62%' : '58%';
+        chart.options.plugins.legend.labels.padding = wide ? 16 : 10;
+        chart.update('none');
+    }
+    layout();
+
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(layout, 150);
+    });
+
+    // Re-read theme colours whenever the toggle changes data-theme.
+    if (window.MutationObserver) {
+        var observer = new MutationObserver(function () {
+            theme = palette();
+            centre.value = cssVar('--text-primary', '#f1f5f9');
+            centre.label = theme.muted;
+            chart.options.plugins.legend.labels.color = theme.text;
+            chart.options.plugins.tooltip.backgroundColor = '#ffffff';
+            chart.options.plugins.tooltip.titleColor = '#0f172a';
+            chart.options.plugins.tooltip.bodyColor = '#0f172a';
+            chart.options.plugins.tooltip.borderColor = 'rgba(15, 23, 42, 0.1)';
+            chart.options.plugins.tooltip.borderWidth = 1;
+
+            chart.update('none');
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        window.addEventListener('pagehide', function () { observer.disconnect(); }, { once: true });
+    }
+})();
+</script>
+{% endblock %}

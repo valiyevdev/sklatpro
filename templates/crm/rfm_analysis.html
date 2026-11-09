@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "rfm_analysis" %} — CRM — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'crm:customer_crm_list' %}">CRM</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "rfm_analysis" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-graph-up-arrow" style="color:var(--primary-500)"></i> {% t "rfm_analysis" %}</h1>
+        <p class="page-subtitle">{{ total_analyzed }} {% t "customers_analyzed" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'crm:rfm_analyze' %}" class="btn-pro btn-pro-primary" onclick="event.preventDefault();document.getElementById('rfmRunForm').submit();">
+            <i class="bi bi-play-circle"></i> {% t "run_analysis" %}
+        </a>
+    </div>
+</div>
+
+<!-- RFM Info Card -->
+<div class="card-pro mb-6" style="border-left:4px solid var(--primary-500)">
+    <div class="card-pro-body">
+        <div class="d-flex align-center gap-3">
+            <div class="stat-card-icon primary" style="width:40px;height:40px;font-size:1rem"><i class="bi bi-info-circle"></i></div>
+            <div>
+                <div class="fw-600 mb-1">{% t "how_rfm_works" %}</div>
+                <div class="text-pro-sm text-pro-muted" style="line-height:1.6">
+                    <span class="d-flex align-center gap-1" style="display:inline-flex;margin-right:var(--sp-4)">
+                        <strong style="color:var(--primary-600)">R</strong> — {% t "recency_desc" %} (1–5)
+                    </span>
+                    <span class="d-flex align-center gap-1" style="display:inline-flex;margin-right:var(--sp-4)">
+                        <strong style="color:var(--primary-600)">F</strong> — {% t "frequency_desc" %} (1–5)
+                    </span>
+                    <span class="d-flex align-center gap-1" style="display:inline-flex">
+                        <strong style="color:var(--primary-600)">M</strong> — {% t "monetary_desc" %} (1–5)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Segment Summary Cards -->
+<div class="grid grid-4 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "champions" %}</div>
+            <div class="stat-card-value">{{ segment_counts.champions|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-trophy"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "loyal" %}</div>
+            <div class="stat-card-value">{{ segment_counts.loyal|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-heart"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "potential_loyalists" %}</div>
+            <div class="stat-card-value">{{ segment_counts.potential_loyalists|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-rocket"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "new_customers" %}</div>
+            <div class="stat-card-value">{{ segment_counts.new_customers|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "at_risk" %}</div>
+            <div class="stat-card-value">{{ segment_counts.at_risk|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "need_attention" %}</div>
+            <div class="stat-card-value">{{ segment_counts.need_attention|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-bell"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "lost" %}</div>
+            <div class="stat-card-value">{{ segment_counts.lost|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-person-x"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "others" %}</div>
+            <div class="stat-card-value">{{ segment_counts.others|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon neutral"><i class="bi bi-three-dots"></i></div>
+    </div>
+</div>
+
+<!-- RFM Table -->
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div>
+            <span class="card-pro-title"><i class="bi bi-table" style="color:var(--primary-600)"></i> {% t "customer_scores" %}</span>
+        </div>
+        <form method="get" class="d-flex gap-2">
+            <select class="input-pro" name="segment" style="width:auto">
+                <option value="">{% t "all_segments" %}</option>
+                <option value="champions" {% if request.GET.segment == "champions" %}selected{% endif %}>{% t "champions" %}</option>
+                <option value="loyal" {% if request.GET.segment == "loyal" %}selected{% endif %}>{% t "loyal" %}</option>
+                <option value="potential_loyalists" {% if request.GET.segment == "potential_loyalists" %}selected{% endif %}>{% t "potential_loyalists" %}</option>
+                <option value="new_customers" {% if request.GET.segment == "new_customers" %}selected{% endif %}>{% t "new_customers" %}</option>
+                <option value="at_risk" {% if request.GET.segment == "at_risk" %}selected{% endif %}>{% t "at_risk" %}</option>
+                <option value="need_attention" {% if request.GET.segment == "need_attention" %}selected{% endif %}>{% t "need_attention" %}</option>
+                <option value="lost" {% if request.GET.segment == "lost" %}selected{% endif %}>{% t "lost" %}</option>
+            </select>
+            <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-funnel"></i></button>
+        </form>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "customer_name" %}</th>
+                    <th style="text-align:center">{% t "recency" %} (R)</th>
+                    <th style="text-align:center">{% t "frequency" %} (F)</th>
+                    <th style="text-align:center">{% t "monetary" %} (M)</th>
+                    <th style="text-align:center">{% t "total_score" %}</th>
+                    <th>{% t "rfm_segment" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rfm_data %}
+                <tr>
+                    <td>
+                        <a href="{% url 'crm:customer_360' pk=row.customer.pk %}" class="cell-primary fw-500" style="text-decoration:none;color:var(--primary-600)">
+                            {{ row.customer.name }}
+                        </a>
+                    </td>
+                    <td style="text-align:center">
+                        {% if row.recency_score >= 4 %}
+                            <span class="badge-pro badge-pro-success">{{ row.recency_score }}</span>
+                        {% elif row.recency_score >= 3 %}
+                            <span class="badge-pro badge-pro-info">{{ row.recency_score }}</span>
+                        {% elif row.recency_score >= 2 %}
+                            <span class="badge-pro badge-pro-warning">{{ row.recency_score }}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{{ row.recency_score }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center">
+                        {% if row.frequency_score >= 4 %}
+                            <span class="badge-pro badge-pro-success">{{ row.frequency_score }}</span>
+                        {% elif row.frequency_score >= 3 %}
+                            <span class="badge-pro badge-pro-info">{{ row.frequency_score }}</span>
+                        {% elif row.frequency_score >= 2 %}
+                            <span class="badge-pro badge-pro-warning">{{ row.frequency_score }}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{{ row.frequency_score }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center">
+                        {% if row.monetary_score >= 4 %}
+                            <span class="badge-pro badge-pro-success">{{ row.monetary_score }}</span>
+                        {% elif row.monetary_score >= 3 %}
+                            <span class="badge-pro badge-pro-info">{{ row.monetary_score }}</span>
+                        {% elif row.monetary_score >= 2 %}
+                            <span class="badge-pro badge-pro-warning">{{ row.monetary_score }}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{{ row.monetary_score }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center" class="fw-700">{{ row.total_score }}</td>
+                    <td>
+                        {% if row.segment == "champions" %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-trophy"></i> {% t "champions" %}</span>
+                        {% elif row.segment == "loyal" %}
+                            <span class="badge-pro badge-pro-info"><i class="bi bi-heart"></i> {% t "loyal" %}</span>
+                        {% elif row.segment == "potential_loyalists" %}
+                            <span class="badge-pro badge-pro-primary"><i class="bi bi-rocket"></i> {% t "potential_loyalists" %}</span>
+                        {% elif row.segment == "new_customers" %}
+                            <span class="badge-pro badge-pro-success" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-person-plus"></i> {% t "new_customers" %}</span>
+                        {% elif row.segment == "at_risk" %}
+                            <span class="badge-pro badge-pro-warning"><i class="bi bi-exclamation-triangle"></i> {% t "at_risk" %}</span>
+                        {% elif row.segment == "need_attention" %}
+                            <span class="badge-pro badge-pro-warning" style="background:#fef3c7;color:#92400e"><i class="bi bi-bell"></i> {% t "need_attention" %}</span>
+                        {% elif row.segment == "lost" %}
+                            <span class="badge-pro badge-pro-danger"><i class="bi bi-person-x"></i> {% t "lost" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ row.segment }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                            <h5 class="empty-state-title">{% t "no_rfm_data" %}</h5>
+                            <p class="empty-state-desc">{% t "run_rfm_analysis_first" %}</p>
+                            <a href="{% url 'crm:rfm_analyze' %}" class="btn-pro btn-pro-primary" onclick="event.preventDefault();document.getElementById('rfmRunForm').submit();">
+                                <i class="bi bi-play-circle"></i> {% t "run_analysis" %}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form method="post" action="{% url 'crm:rfm_analyze' %}" id="rfmRunForm" style="display:none">{% csrf_token %}</form>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ receiving.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:receiving_list' %}">{% t "receiving" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ receiving.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ receiving.reference }}</h1>
+            {% if receiving.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif receiving.status == 'accepted' %}
+                <span class="badge-pro badge-pro-success">{% t "accepted" %}</span>
+            {% elif receiving.status == 'arrived' %}
+                <span class="badge-pro badge-pro-info">{% t "arrived" %}</span>
+            {% elif receiving.status == 'unloading' %}
+                <span class="badge-pro badge-pro-warning">{% t "unloading" %}</span>
+            {% elif receiving.status == 'inspection' %}
+                <span class="badge-pro badge-pro-warning">{% t "inspection" %}</span>
+            {% elif receiving.status == 'putaway' %}
+                <span class="badge-pro badge-pro-info">{% t "putaway" %}</span>
+            {% elif receiving.status == 'partial' %}
+                <span class="badge-pro badge-pro-warning">{% t "partial" %}</span>
+            {% elif receiving.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-info">{{ receiving.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if receiving.status != 'completed' and receiving.status != 'cancelled' %}
+        <form method="post" action="{% url 'warehouses:receiving_update_status' pk=receiving.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="
+                {% if receiving.status == 'expected' %}arrived
+                {% elif receiving.status == 'arrived' %}unloading
+                {% elif receiving.status == 'unloading' %}inspection
+                {% elif receiving.status == 'inspection' %}accepted
+                {% elif receiving.status == 'accepted' %}completed
+                {% elif receiving.status == 'partial' %}completed
+                {% endif %}">
+            <button type="submit" class="btn-pro btn-pro-primary">
+                <i class="bi bi-arrow-right-circle"></i> {% t "advance_status" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ receiving.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if receiving.supplier %}{{ receiving.supplier.name }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "supplier" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if receiving.purchase %}{{ receiving.purchase }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "purchase_ref" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-cart-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if receiving.assigned_to %}{{ receiving.assigned_to.get_full_name|default:receiving.assigned_to.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "assigned_to" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if receiving.expected_date %}{{ receiving.expected_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "expected_date" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-calendar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if receiving.actual_date %}{{ receiving.actual_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "actual_date" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-calendar-check"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-graph-up" style="color:var(--primary-600)"></i> {% t "progress" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex align-center justify-between mb-2">
+            <span class="text-pro-sm fw-500">{% t "received" %}: {{ receiving.total_received }} / {{ receiving.total_expected }}</span>
+            <span class="text-pro-sm fw-600">{{ receiving.progress_percent }}%</span>
+        </div>
+        <div style="height:10px;background:var(--gray-100);border-radius:var(--radius-full);overflow:hidden">
+            <div style="height:100%;width:{{ receiving.progress_percent }}%;background:{% if receiving.progress_percent == 100 %}var(--success-500){% elif receiving.progress_percent >= 50 %}var(--primary-500){% else %}var(--warning-500){% endif %};border-radius:var(--radius-full);transition:width 0.3s ease"></div>
+        </div>
+        {% if receiving.total_damaged > 0 or receiving.total_rejected > 0 %}
+        <div class="d-flex gap-4 mt-3">
+            {% if receiving.total_damaged > 0 %}
+            <span class="text-pro-xs"><i class="bi bi-exclamation-triangle" style="color:var(--warning-500)"></i> {% t "damaged" %}: {{ receiving.total_damaged }}</span>
+            {% endif %}
+            {% if receiving.total_rejected > 0 %}
+            <span class="text-pro-xs"><i class="bi bi-x-circle" style="color:var(--danger-500)"></i> {% t "rejected" %}: {{ receiving.total_rejected }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "expected_qty" %}</th>
+                    <th>{% t "received_qty" %}</th>
+                    <th>{% t "damaged_qty" %}</th>
+                    <th>{% t "rejected_qty" %}</th>
+                    <th>{% t "remaining" %}</th>
+                    <th>{% t "batch_number" %}</th>
+                    <th>{% t "expiry_date" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.expected_quantity }}</td>
+                    <td>{{ item.received_quantity }}</td>
+                    <td>{% if item.damaged_quantity > 0 %}<span style="color:var(--warning-600);font-weight:600">{{ item.damaged_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.rejected_quantity > 0 %}<span style="color:var(--danger-600);font-weight:600">{{ item.rejected_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{{ item.remaining_quantity }}</td>
+                    <td>{% if item.batch_number %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.batch_number }}</code>{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.expiry_date %}{{ item.expiry_date|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.notes %}{{ item.notes|truncatechars:40 }}{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if receiving.status != 'completed' and receiving.status != 'cancelled' %}
+    <div class="card-pro-body" style="border-top:1px solid var(--border-subtle)">
+        <a href="{% url 'warehouses:receiving_add_item' pk=receiving.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm">
+            <i class="bi bi-plus-lg"></i> {% t "add_item" %}
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

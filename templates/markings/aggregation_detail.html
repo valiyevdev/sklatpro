@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ aggregation.parent_code }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:aggregation_list' %}">{% t "aggregation_list" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ aggregation.parent_code }}</span>
+</div>
+
+<div class="page-head">
+    <a href="{% url 'markings:aggregation_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title" style="margin:0"><code>{{ aggregation.parent_code }}</code></h1>
+            <span class="badge-pro {% if aggregation.status == 'active' %}badge-pro-success{% elif aggregation.status == 'disaggregated' %}badge-pro-secondary{% else %}badge-pro-danger{% endif %}">{{ aggregation.get_status_display }}</span>
+        </div>
+        <p class="page-subtitle" style="margin-top:4px">{{ aggregation.product.name }} — {{ aggregation.quantity }} {% t "items" %}</p>
+    </div>
+    <div class="page-actions">
+        {% if aggregation.status == 'active' %}
+        <form method="post" action="{% url 'markings:aggregation_disaggregate' pk=aggregation.pk %}" onsubmit="return confirm('{% t "confirm" %}?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-diagram-3"></i> {% t "disaggregate" %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ aggregation.quantity }}</div>
+            <div class="stat-card-label">{% t "quantity" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ items.count }}</div>
+            <div class="stat-card-label">{% t "child_items" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-diagram-3"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value text-pro-sm">{{ aggregation.warehouse|default:"—" }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value text-pro-sm">{{ aggregation.created_at|date:"d M Y" }}</div>
+            <div class="stat-card-label">{% t "created" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-calendar"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-diagram-3" style="color:var(--primary-600)"></i> {% t "child_items" %} ({{ items.count }})</span>
+    </div>
+    <div style="overflow-x:auto">
+        {% if items %}
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "marking_code" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "added_at" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><a href="{% url 'markings:marking_detail' pk=item.marking_code.pk %}" class="fw-500" style="color:var(--primary-600);text-decoration:none">{{ item.marking_code.code|truncatechars:30 }}</a></td>
+                    <td class="fw-500">{{ item.marking_code.product.name|truncatechars:30 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.added_at|date:"d M Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-diagram-3"></i></div>
+            <h5 class="empty-state-title">{% t "no_child_items" %}</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

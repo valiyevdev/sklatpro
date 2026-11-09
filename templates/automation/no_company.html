@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block content %}
+<div style="text-align:center;padding:4rem 1rem">
+    <i class="bi bi-building" style="font-size:4rem;color:var(--text-muted);margin-bottom:1rem;display:block"></i>
+    <h2 style="color:var(--text-primary);margin-bottom:0.5rem">{% t "no_company_assigned" %}</h2>
+    <p style="color:var(--text-secondary);margin-bottom:1.5rem">{% t "contact_admin" %}</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">{% t "back_home" %}</a>
+</div>
+{% endblock %}

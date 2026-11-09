@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ conversation.title|default:"Chat" }} — SKLAT AI{% endblock %}
+{% block page_title %}{{ conversation.title|default:"AI Chat" }}{% endblock %}
+
+{% block content %}
+<style>
+.chat-msgs{max-height:500px;overflow-y:auto;padding:var(--sp-4);background:var(--bg-base);border-radius:var(--radius-md);margin-bottom:var(--sp-4)}
+.chat-msg{margin-bottom:var(--sp-3);display:flex;gap:var(--sp-3)}
+.chat-msg.user{justify-content:flex-end}
+.chat-msg.assistant{justify-content:flex-start}
+.chat-bubble{max-width:70%;padding:var(--sp-3);border-radius:var(--radius-lg);font-size:var(--text-sm);line-height:1.6}
+.chat-msg.user .chat-bubble{background:var(--primary-600);color:#fff;border-bottom-right-radius:var(--sp-1)}
+.chat-msg.assistant .chat-bubble{background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-color);border-bottom-left-radius:var(--sp-1)}
+</style>
+<div class="chat-msgs">
+{% for msg in messages %}
+<div class="chat-msg {{ msg.role }}">
+    <div class="chat-bubble">{{ msg.content|linebreaksbr }}</div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:var(--sp-8);color:var(--text-muted)"><i class="bi bi-chat-dots" style="font-size:var(--text-3xl)"></i><p>Start a conversation</p></div>
+{% endfor %}
+</div>
+<div style="text-align:center"><a href="{% url 'sklat_ai:chat' %}" class="ai-action-btn"><i class="bi bi-arrow-left"></i> Back to Chat</a></div>
+{% endblock %}

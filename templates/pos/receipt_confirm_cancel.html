@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos_cancel_receipt" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pos:pos_dashboard' %}">{% t "pos" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:receipt_list' %}">{% t "pos_receipts" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:receipt_detail' pk=receipt.pk %}">{{ receipt.receipt_number }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "pos_cancel" %}</span>
+</div>
+
+<div style="max-width:520px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto var(--sp-5)">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 class="fw-600 mb-2">{% t "pos_confirm_cancel_receipt" %}</h3>
+            <p class="text-pro-muted mb-4">{% t "pos_cancel_receipt_warning" %}</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;text-align:left">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_receipt_number" %}</div>
+                    <div class="fw-600">{{ receipt.receipt_number }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_total" %}</div>
+                    <div class="fw-600">{{ receipt.total|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_customer" %}</div>
+                    <div class="fw-500">{{ receipt.customer.name|default:"Walk-in" }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_payment_method" %}</div>
+                    <div>
+                        {% if receipt.payment_method == 'cash' %}
+                            <span class="badge-pro badge-pro-success">{% t "pos_cash" %}</span>
+                        {% elif receipt.payment_method == 'card' %}
+                            <span class="badge-pro badge-pro-info">{% t "pos_card" %}</span>
+                        {% elif receipt.payment_method == 'transfer' %}
+                            <span class="badge-pro badge-pro-primary">{% t "pos_transfer" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ receipt.payment_method }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_terminal" %}</div>
+                    <div class="fw-500">{{ receipt.terminal.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_date" %}</div>
+                    <div class="fw-500">{{ receipt.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+
+            <div class="alert-pro alert-pro-danger" style="margin-bottom:1.5rem;text-align:left">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>{% t "pos_cancel_receipt_irreversible" %}</span>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2" style="justify-content:center">
+                    <a href="{% url 'pos:receipt_detail' pk=receipt.pk %}" class="btn-pro btn-pro-secondary">{% t "pos_go_back" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-x-circle"></i> {% t "pos_yes_cancel" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

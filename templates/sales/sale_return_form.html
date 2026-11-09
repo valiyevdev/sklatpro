@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "return_for" %} {{ sale.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "return_for" %} {{ sale.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ sale.customer.name }}</p>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <div class="card-pro mb-4">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "return_details" %}</span></div>
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "reason" %} *</label>
+                        <select class="input-pro" name="reason" required>
+                            <option value="">{% t "select" %}...</option>
+                            <option value="damaged">{% t "damaged" %}</option>
+                            <option value="wrong_item">{% t "wrong_item" %}</option>
+                            <option value="not_needed">{% t "not_needed" %}</option>
+                            <option value="quality_issue">{% t "quality_issue" %}</option>
+                            <option value="other">{% t "other" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "condition" %} *</label>
+                        <select class="input-pro" name="condition" required>
+                            <option value="">{% t "select" %}...</option>
+                            <option value="new">{% t "new" %}</option>
+                            <option value="used_good">{% t "used_good" %}</option>
+                            <option value="used_fair">{% t "used_fair" %}</option>
+                            <option value="damaged">{% t "damaged" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "reason_notes" %}</label>
+                        <input class="input-pro" type="text" name="reason_notes" placeholder="{% t "reason_notes_placeholder" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "notes" %}</label>
+                        <input class="input-pro" type="text" name="notes" placeholder="{% t "notes" %}">
+                    </div>
+                </div>
+
+                <h4 class="fw-600 mb-3" style="font-size:0.9rem;color:var(--gray-700)">{% t "items_to_return" %}</h4>
+                <div class="table-responsive">
+                    <table class="table-pro">
+                        <thead>
+                            <tr>
+                                <th style="width:40px"></th>
+                                <th>{% t "product" %}</th>
+                                <th>{% t "shipped_quantity" %}</th>
+                                <th>{% t "unit_price" %}</th>
+                                <th>{% t "return_quantity" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in returnable_items %}
+                            <tr>
+                                <td><input type="checkbox" name="selected_items" value="{{ item.pk }}" class="return-checkbox" data-max="{{ item.shipped_quantity }}"></td>
+                                <td class="fw-500">{{ item.product.name }}</td>
+                                <td>{{ item.shipped_quantity }}</td>
+                                <td>${{ item.unit_price }}</td>
+                                <td>
+                                    <input type="number" name="qty_{{ item.pk }}" class="input-pro return-qty" min="0" max="{{ item.shipped_quantity }}" value="0" style="width:100px" disabled>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-pro-muted" style="text-align:center;padding:2rem">{% t "no_returnable_items" %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-between mt-4">
+                    <a href="{% url 'sales:sale_detail' pk=sale.pk %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "submit_return" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.return-checkbox').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var row = this.closest('tr');
+        var qtyInput = row.querySelector('.return-qty');
+        if (this.checked) {
+            qtyInput.disabled = false;
+            qtyInput.value = qtyInput.getAttribute('max');
+        } else {
+            qtyInput.disabled = true;
+            qtyInput.value = 0;
+        }
+    });
+});
+</script>
+{% endblock %}

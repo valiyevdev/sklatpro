@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "serial_numbers" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "serial_numbers" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:serial_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_serial" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="available" {% if selected_status == 'available' %}selected{% endif %}>{% t "available" %}</option>
+                <option value="reserved" {% if selected_status == 'reserved' %}selected{% endif %}>{% t "reserved" %}</option>
+                <option value="sold" {% if selected_status == 'sold' %}selected{% endif %}>{% t "sold" %}</option>
+                <option value="damaged" {% if selected_status == 'damaged' %}selected{% endif %}>{% t "damaged" %}</option>
+                <option value="returned" {% if selected_status == 'returned' %}selected{% endif %}>{% t "returned" %}</option>
+                <option value="quarantine" {% if selected_status == 'quarantine' %}selected{% endif %}>{% t "quarantine" %}</option>
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "warehouse" %}</label>
+            <select name="warehouse" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_warehouses" %}</option>
+                {% for w in warehouses %}<option value="{{ w.pk }}" {% if selected_warehouse == w.pk|stringformat:"d" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="q" class="input-pro" value="{{ q }}" placeholder="{% t "search_serial" %}">
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "serial" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "batch" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "created_at" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:serial_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">
+                            <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ s.serial }}</code>
+                        </a>
+                    </td>
+                    <td>{{ s.product.name }}</td>
+                    <td>{{ s.warehouse.name }}</td>
+                    <td>{% if s.location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ s.location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if s.batch %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ s.batch.batch_number }}</code>{% else %}—{% endif %}</td>
+                    <td>
+                        {% if s.status == 'available' %}
+                            <span class="badge-pro badge-pro-success">{% t "available" %}</span>
+                        {% elif s.status == 'reserved' %}
+                            <span class="badge-pro badge-pro-info">{% t "reserved" %}</span>
+                        {% elif s.status == 'sold' %}
+                            <span class="badge-pro badge-pro-neutral">{% t "sold" %}</span>
+                        {% elif s.status == 'damaged' %}
+                            <span class="badge-pro badge-pro-danger">{% t "damaged" %}</span>
+                        {% elif s.status == 'returned' %}
+                            <span class="badge-pro badge-pro-warning">{% t "returned" %}</span>
+                        {% elif s.status == 'quarantine' %}
+                            <span class="badge-pro badge-pro-warning">{% t "quarantine" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ s.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{{ s.created_at|date:"d.m.Y" }}</td>
+                    <td>
+                        <a href="{% url 'warehouses:serial_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-upc-scan"></i></div>
+                            <h5 class="empty-state-title">{% t "no_serial_numbers" %}</h5>
+                            <p class="empty-state-desc">{% t "no_serial_numbers_created" %}</p>
+                            <a href="{% url 'warehouses:serial_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_serial" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}&warehouse={{ selected_warehouse }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&status={{ selected_status }}&warehouse={{ selected_warehouse }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}&warehouse={{ selected_warehouse }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

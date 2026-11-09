@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ connection.name }} - Integration Connection - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'integrations:integration_list' %}">{% t "all_integrations" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ connection.name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <div style="width:44px;height:44px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0">
+                <i class="bi {{ connection.provider.icon_class|default:'bi-plug' }}"></i>
+            </div>
+            <div>
+                <h1 class="page-title" style="margin:0">{{ connection.name }}</h1>
+                <span style="font-size:var(--text-xs);color:var(--text-muted)">{{ connection.provider.name }} &middot; {{ connection.provider.get_category_display }}</span>
+            </div>
+            <span class="badge-pro badge-pro-{% if connection.status == 'connected' %}success{% elif connection.status == 'error' %}danger{% elif connection.status == 'suspended' %}warning{% elif connection.status == 'testing' %}info{% else %}neutral{% endif %} badge-pro-dot">{{ connection.get_status_display }}</span>
+            <span class="badge-pro badge-pro-{% if connection.environment == 'production' %}danger{% elif connection.environment == 'test' %}warning{% else %}info{% endif %}">{{ connection.get_environment_display }}</span>
+            {% if connection.is_active %}
+            <span class="badge-pro badge-pro-success">Active</span>
+            {% else %}
+            <span class="badge-pro badge-pro-neutral">Inactive</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        <button type="button" class="btn-pro btn-pro-info" onclick="testConnection()" id="testBtn">
+            <i class="bi bi-lightning"></i> Test Connection
+        </button>
+        <a href="{% url 'integrations:connection_edit' pk=connection.pk %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{% url 'integrations:sync_jobs' %}?connection={{ connection.pk }}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-repeat"></i> Sync
+        </a>
+        <a href="{% url 'integrations:connection_toggle' pk=connection.pk %}" class="btn-pro {% if connection.is_active %}btn-pro-danger{% else %}btn-pro-success{% endif %}" onclick="return confirm('{% if connection.is_active %}{% t "deactivate_connection" %}{% else %}{% t "activate_connection" %}{% endif %}')">
+            <i class="bi bi-{% if connection.is_active %}pause-circle{% else %}play-circle{% endif %}"></i> {% if connection.is_active %}{% t "deactivate_connection" %}{% else %}{% t "activate_connection" %}{% endif %}
+        </a>
+    </div>
+</div>
+
+<div id="testResult" style="display:none;margin-bottom:var(--sp-4)"></div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ connection.success_count }}</div>
+            <div class="stat-card-label">Successful</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ connection.failure_count }}</div>
+            <div class="stat-card-label">Failures</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-sm)">{{ connection.last_tested|date:"M d, H:i"|default:"Never" }}</div>
+            <div class="stat-card-label">Last Tested</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-lightning"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-sm)">{{ connection.last_successful_sync|date:"M d, H:i"|default:"Never" }}</div>
+            <div class="stat-card-label">Last Sync</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-arrow-repeat"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);margin-bottom:var(--sp-6)">
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> Connection Info</span>
+            </div>
+            <div class="card-pro-body" style="padding:0">
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Provider</span>
+                    <span style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ connection.provider.name }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Status</span>
+                    <span class="badge-pro badge-pro-{% if connection.status == 'connected' %}success{% elif connection.status == 'error' %}danger{% elif connection.status == 'suspended' %}warning{% else %}neutral{% endif %} badge-pro-dot">{{ connection.get_status_display }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Environment</span>
+                    <span class="badge-pro badge-pro-{% if connection.environment == 'production' %}danger{% elif connection.environment == 'test' %}warning{% else %}info{% endif %}">{{ connection.get_environment_display }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Last Tested</span>
+                    <span style="font-size:var(--text-sm);color:var(--text-primary)">{{ connection.last_tested|date:"M d, Y H:i"|default:"Never" }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Last Sync</span>
+                    <span style="font-size:var(--text-sm);color:var(--text-primary)">{{ connection.last_successful_sync|date:"M d, Y H:i"|default:"Never" }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Failure Count</span>
+                    <span style="font-size:var(--text-sm);font-weight:600;color:{% if connection.failure_count > 0 %}var(--danger-600){% else %}var(--text-primary){% endif %}">{{ connection.failure_count }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Success Count</span>
+                    <span style="font-size:var(--text-sm);font-weight:600;color:var(--success-600)">{{ connection.success_count }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Health</span>
+                    <span class="badge-pro badge-pro-{% if connection.health_status == 'healthy' %}success{% elif connection.health_status == 'degraded' %}warning{% elif connection.health_status == 'failing' %}danger{% else %}neutral{% endif %} badge-pro-dot">{{ connection.get_health_status_display|default:connection.health_status }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-key" style="color:var(--primary-600)"></i> Credentials</span>
+                <span class="badge-pro badge-pro-neutral">{{ credentials|length }}</span>
+            </div>
+            <div class="card-pro-body" style="padding:0">
+                {% for cred in credentials %}
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <div class="d-flex align-center gap-3">
+                        <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--bg-page);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:0.875rem"><i class="bi bi-key"></i></div>
+                        <div>
+                            <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ cred.key_name }}</div>
+                            <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ cred.get_key_type_display }}</div>
+                        </div>
+                    </div>
+                    <code style="font-size:var(--text-xs);background:var(--bg-page);padding:4px 8px;border-radius:var(--radius-sm);color:var(--text-secondary)">{{ cred.masked_value }}</code>
+                </div>
+                {% empty %}
+                <div style="padding:var(--sp-8);text-align:center">
+                    <i class="bi bi-key" style="font-size:1.5rem;color:var(--text-muted);margin-bottom:var(--sp-2);display:block"></i>
+                    <p style="color:var(--text-muted);font-size:var(--text-sm)">No credentials configured.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> Configuration</span>
+            </div>
+            <div class="card-pro-body" style="padding:0">
+                {% if connection.config %}
+                {% for key, value in connection.config.items %}
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">{{ key }}</span>
+                    <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 8px;border-radius:var(--radius-sm);color:var(--text-secondary);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ value }}</code>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="padding:var(--sp-8);text-align:center">
+                    <p style="color:var(--text-muted);font-size:var(--text-sm)">No configuration set.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-shield-check" style="color:var(--primary-600)"></i> Circuit Breaker</span>
+            </div>
+            <div class="card-pro-body" style="padding:0">
+                {% if circuit_state %}
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">State</span>
+                    <span class="badge-pro badge-pro-{% if circuit_state.state == 'closed' %}success{% elif circuit_state.state == 'open' %}danger{% else %}warning{% endif %} badge-pro-dot">{{ circuit_state.get_state_display }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Failure Count</span>
+                    <span style="font-size:var(--text-sm);font-weight:600;color:var(--text-primary)">{{ circuit_state.failure_count }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Success Count</span>
+                    <span style="font-size:var(--text-sm);font-weight:600;color:var(--text-primary)">{{ circuit_state.success_count }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Failure Threshold</span>
+                    <span style="font-size:var(--text-sm);color:var(--text-primary)">{{ circuit_state.failure_threshold }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:var(--sp-3) var(--sp-5)">
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">Recovery Timeout</span>
+                    <span style="font-size:var(--text-sm);color:var(--text-primary)">{{ circuit_state.recovery_timeout_seconds }}s</span>
+                </div>
+                {% else %}
+                <div style="padding:var(--sp-8);text-align:center">
+                    <p style="color:var(--text-muted);font-size:var(--text-sm)">Circuit breaker not initialized.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if connection.last_error %}
+        <div class="card-pro">
+            <div class="card-pro-header" style="background:var(--danger-50)">
+                <span class="card-pro-title"><i class="bi bi-exclamation-triangle" style="color:var(--danger-600)"></i> Last Error</span>
+            </div>
+            <div class="card-pro-body">
+                <pre style="font-size:var(--text-xs);color:var(--danger-700);background:var(--danger-50);padding:var(--sp-3);border-radius:var(--radius-md);margin:0;white-space:pre-wrap;word-break:break-all">{{ connection.last_error }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-repeat" style="color:var(--primary-600)"></i> Sync History</span>
+        <a href="{% url 'integrations:sync_jobs' %}?connection={{ connection.pk }}" class="btn-pro btn-pro-sm btn-pro-ghost">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Job Type</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Duration</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in sync_jobs %}
+                    <tr>
+                        <td class="cell-primary">
+                            <a href="{% url 'integrations:sync_job_detail' pk=job.pk %}" style="color:var(--text-primary);text-decoration:none">{{ job.get_job_type_display }}</a>
+                        </td>
+                        <td>
+                            <span class="badge-pro badge-pro-{% if job.status == 'completed' %}success{% elif job.status == 'failed' %}danger{% elif job.status == 'running' %}info{% elif job.status == 'pending' %}warning{% elif job.status == 'partial' %}warning{% else %}neutral{% endif %} badge-pro-dot">{{ job.get_status_display }}</span>
+                        </td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--sp-2);min-width:120px">
+                                <div style="flex:1;height:6px;background:var(--bg-page);border-radius:3px;overflow:hidden">
+                                    <div style="height:100%;width:{{ job.progress_percent }}%;background:{% if job.status == 'completed' %}var(--success-500){% elif job.status == 'failed' %}var(--danger-500){% else %}var(--primary-500){% endif %};border-radius:3px;transition:width 0.3s"></div>
+                                </div>
+                                <span style="font-size:var(--text-xs);color:var(--text-muted);min-width:36px;text-align:right">{{ job.progress_percent|floatformat:0 }}%</span>
+                            </div>
+                        </td>
+                        <td style="font-size:var(--text-xs);color:var(--text-secondary)">{% if job.duration_seconds %}{{ job.duration_seconds }}s{% else %}&mdash;{% endif %}</td>
+                        <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ job.created_at|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:var(--sp-8)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:48px;height:48px;margin:0 auto var(--sp-3)"><i class="bi bi-arrow-repeat"></i></div>
+                                <div class="empty-state-title" style="font-size:var(--text-sm)">No sync jobs yet</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> Recent Logs</span>
+        <a href="{% url 'integrations:logs' %}?connection={{ connection.pk }}" class="btn-pro btn-pro-sm btn-pro-ghost">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>Direction</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td style="font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap">{{ log.created_at|date:"M d H:i:s" }}</td>
+                        <td class="cell-primary" style="font-size:var(--text-sm)">{{ log.action }}</td>
+                        <td><span class="badge-pro badge-pro-neutral">{{ log.get_direction_display }}</span></td>
+                        <td>
+                            <span class="badge-pro badge-pro-{% if log.status == 'success' %}success{% elif log.status == 'error' %}danger{% elif log.status == 'timeout' %}warning{% else %}neutral{% endif %} badge-pro-dot">{{ log.get_status_display }}</span>
+                        </td>
+                        <td style="font-size:var(--text-xs);color:var(--text-secondary)">{% if log.duration_ms %}{{ log.duration_ms }}ms{% else %}&mdash;{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:var(--sp-8)">
+                            <div class="empty-state" style="padding:0">
+                                <div class="empty-state-icon" style="width:48px;height:48px;margin:0 auto var(--sp-3)"><i class="bi bi-journal-text"></i></div>
+                                <div class="empty-state-title" style="font-size:var(--text-sm)">No logs yet</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if errors %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header" style="background:var(--danger-50)">
+        <span class="card-pro-title"><i class="bi bi-exclamation-triangle" style="color:var(--danger-600)"></i> Recent Errors</span>
+        <a href="{% url 'integrations:errors' %}?connection={{ connection.pk }}" class="btn-pro btn-pro-sm btn-pro-ghost">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        {% for error in errors %}
+        <div style="display:flex;align-items:flex-start;gap:var(--sp-3);padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle)">
+            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px;
+                {% if error.severity == 'critical' %}background:var(--danger-500)
+                {% elif error.severity == 'high' %}background:var(--danger-400)
+                {% elif error.severity == 'medium' %}background:var(--warning-500)
+                {% else %}background:var(--text-muted){% endif %}"></span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ error.error_type }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px">{{ error.message|truncatechars:120 }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px">
+                    <span class="badge-pro badge-pro-{% if error.severity == 'critical' %}danger{% elif error.severity == 'high' %}danger{% elif error.severity == 'medium' %}warning{% else %}neutral{% endif %}" style="font-size:10px">{{ error.get_severity_display }}</span>
+                    <span class="badge-pro badge-pro-{% if error.status == 'open' %}danger{% elif error.status == 'acknowledged' %}warning{% else %}success{% endif %}" style="font-size:10px">{{ error.get_status_display }}</span>
+                    <span style="margin-left:var(--sp-2)">{{ error.last_occurrence|timesince }} ago</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if webhooks %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-600)"></i> Webhooks</span>
+        <a href="{% url 'integrations:webhook_list' %}?connection={{ connection.pk }}" class="btn-pro btn-pro-sm btn-pro-ghost">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="card-pro-body" style="padding:0">
+        {% for wh in webhooks %}
+        <a href="{% url 'integrations:webhook_detail' pk=wh.pk %}" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border-subtle);text-decoration:none;transition:background var(--transition-fast)" onmouseover="this.style.background='var(--bg-surface-hover)'" onmouseout="this.style.background=''">
+            <div class="d-flex align-center gap-3">
+                <div style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--info-50);color:var(--info-600);display:flex;align-items:center;justify-content:center;font-size:0.875rem"><i class="bi bi-{% if wh.direction == 'incoming' %}box-arrow-in-down{% else %}box-arrow-up{% endif %}"></i></div>
+                <div>
+                    <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-primary)">{{ wh.name }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ wh.url }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <span class="badge-pro badge-pro-neutral">{{ wh.get_direction_display }}</span>
+                <span class="badge-pro badge-pro-{% if wh.status == 'active' %}success{% elif wh.status == 'failed' %}danger{% else %}neutral{% endif %} badge-pro-dot">{{ wh.get_status_display }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:1024px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}
+}
+</style>
+
+<script>
+function getCookie(name){
+    var v=null;
+    if(document.cookie&&document.cookie!==''){
+        var c=document.cookie.split(';');
+        for(var i=0;i<c.length;i++){
+            var cv=c[i].trim();
+            if(cv.substring(0,name.length+1)===(name+'=')){
+                v=decodeURIComponent(cv.substring(name.length+1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+
+function testConnection(){
+    var btn=document.getElementById('testBtn');
+    var result=document.getElementById('testResult');
+    btn.disabled=true;
+    btn.innerHTML='<i class="bi bi-hourglass-split"></i> Testing...';
+    result.style.display='none';
+
+    fetch("{% url 'integrations:test_connection' pk=connection.pk %}",{
+        method:'POST',
+        headers:{
+            'X-CSRFToken':getCookie('csrftoken'),
+            'Content-Type':'application/json'
+        }
+    })
+    .then(function(r){return r.json()})
+    .then(function(data){
+        result.style.display='block';
+        if(data.status==='connected'){
+            result.innerHTML='<div class="alert-pro alert-pro-success" style="margin-bottom:0"><i class="bi bi-check-circle-fill"></i><span><strong>Connection successful!</strong> '+ (data.message||'')+'</span></div>';
+        } else {
+            result.innerHTML='<div class="alert-pro alert-pro-danger" style="margin-bottom:0"><i class="bi bi-exclamation-circle-fill"></i><span><strong>Connection failed.</strong> '+ (data.message||'Unknown error')+'</span></div>';
+        }
+        setTimeout(function(){result.style.display='none'},8000);
+    })
+    .catch(function(err){
+        result.style.display='block';
+        result.innerHTML='<div class="alert-pro alert-pro-danger" style="margin-bottom:0"><i class="bi bi-exclamation-circle-fill"></i><span><strong>Test failed.</strong> '+err.message+'</span></div>';
+    })
+    .finally(function(){
+        btn.disabled=false;
+        btn.innerHTML='<i class="bi bi-lightning"></i> Test Connection';
+    });
+}
+</script>
+{% endblock %}

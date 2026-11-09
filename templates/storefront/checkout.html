@@ -1,0 +1,109 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}Checkout - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section" style="max-width:1000px">
+    <h1 class="store-section-title"><i class="bi bi-credit-card"></i> Checkout</h1>
+    <form method="post" class="checkout-form">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start">
+            <div>
+                {% if not user.is_authenticated %}
+                <div style="background:var(--bg-alt);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Mehmon sifatida buyurtma berish</h3>
+                    <div style="display:grid;gap:0.75rem">
+                        <input type="text" name="guest_name" class="form-control" placeholder="To'liq ism" required>
+                        <input type="email" name="guest_email" class="form-control" placeholder="Email" required>
+                        <input type="tel" name="guest_phone" class="form-control" placeholder="Telefon">
+                    </div>
+                </div>
+                {% endif %}
+
+                <div style="margin-bottom:1.5rem">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Delivery Address</h3>
+                    {% if addresses %}
+                    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem">
+                        {% for addr in addresses %}
+                        <label style="display:flex;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer">
+                            <input type="radio" name="selected_address" value="{{ addr.pk }}" {% if addr.is_default_shipping %}checked{% endif %} style="margin-top:0.25rem">
+                            <div>
+                                <strong>{{ addr.name }}</strong><br>
+                                <span style="font-size:0.875rem;color:var(--text-secondary)">{{ addr.full_address }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div style="display:grid;gap:0.75rem">
+                        <input type="text" name="delivery_address" class="form-control" placeholder="Yetkazib berish manzili" required>
+                        <input type="tel" name="delivery_phone" class="form-control" placeholder="Yetkazib berish telefoni" required>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1.5rem">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Shipping Method</h3>
+                    {% for method in shipping_methods %}
+                    <label style="display:flex;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:0.5rem">
+                        <input type="radio" name="shipping_method" value="{{ method.pk }}" {% if selected_shipping == method.pk|stringformat:"d" %}checked{% endif %}>
+                        <div style="flex:1">
+                            <strong>{{ method.name }}</strong>
+                            <div style="font-size:0.8125rem;color:var(--text-secondary)">{{ method.estimated_days_min }}-{{ method.estimated_days_max }} business days</div>
+                        </div>
+                        <div style="font-weight:600">{{ method.base_fee|floatformat:0 }} so'm</div>
+                    </label>
+                    {% empty %}
+                    <p style="font-size:0.875rem;color:var(--text-muted)">No shipping methods available</p>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-bottom:1.5rem">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Payment Method</h3>
+                    <label style="display:flex;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:0.5rem">
+                        <input type="radio" name="payment_method" value="cod" checked>
+                        <span><strong>Cash on Delivery</strong><br><span style="font-size:0.8125rem;color:var(--text-secondary)">Pay when you receive your order</span></span>
+                    </label>
+                    <label style="display:flex;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:0.5rem">
+                        <input type="radio" name="payment_method" value="card">
+                        <span><strong>Card Payment</strong><br><span style="font-size:0.8125rem;color:var(--text-secondary)">Pay online with your card</span></span>
+                    </label>
+                    <label style="display:flex;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer">
+                        <input type="radio" name="payment_method" value="transfer">
+                        <span><strong>Bank Transfer</strong><br><span style="font-size:0.8125rem;color:var(--text-secondary)">Transfer to bank account</span></span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="form-label">Buyurtma izohlari (ixtiyoriy)</label>
+                    <textarea name="order_notes" class="form-control" rows="2" placeholder="Maxsus ko'rsatmalar..."></textarea>
+                </div>
+            </div>
+
+            <div>
+                <div class="checkout-summary" style="position:sticky;top:80px">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Order Summary</h3>
+                    {% for item in cart_items %}
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:0.875rem;border-bottom:1px solid var(--border-light)">
+                        <div style="flex:1">
+                            <div style="font-weight:500">{{ item.product.name }}</div>
+                            <div style="color:var(--text-muted)">x{{ item.quantity }}</div>
+                        </div>
+                        <div style="font-weight:500;white-space:nowrap">{{ item.line_total|floatformat:0 }} so'm</div>
+                    </div>
+                    {% endfor %}
+                    <div class="checkout-summary-row"><span>Subtotal</span><span>{{ subtotal|floatformat:0 }} so'm</span></div>
+                    {% if coupon_discount %}
+                    <div class="checkout-summary-row" style="color:#16a34a"><span>Discount</span><span>-{{ coupon_discount|floatformat:0 }} so'm</span></div>
+                    {% endif %}
+                    <div class="checkout-summary-row"><span>Shipping</span><span>{{ shipping_fee|floatformat:0 }} so'm</span></div>
+                    <div class="checkout-summary-row total"><span>Total</span><span>{{ total|floatformat:0 }} so'm</span></div>
+                    <button type="submit" class="btn-store-primary" style="width:100%;margin-top:1rem;padding:0.875rem;font-size:1rem">
+                        <i class="bi bi-lock"></i> Place Order
+                    </button>
+                    <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:0.75rem">
+                        <i class="bi bi-shield-check"></i> Your information is secure
+                    </p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

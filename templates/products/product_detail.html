@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ product.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+  /* Scoped to the "Narxlar" (Pricing) tab. Prefixed `.pd-price-` so the
+     GLOBAL `.card-pro` used by the other detail templates is untouched.
+     Replaces a rigid `grid-template-columns:1fr 1fr 1fr` + --text-3xl row,
+     which clipped the 3rd column (Foyda marjasi) on phone viewports. */
+
+  /* 2 columns on phones, 3 from md up. minmax(0,1fr) is required: grid items
+     default to min-width:auto, so a long price string would otherwise force
+     the track wider than the viewport instead of shrinking. */
+  .pd-price-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.9);        /* slate-900 / 90% */
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: var(--radius-2xl, 1rem);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
+  }
+
+  .pd-price-cell {
+    min-width: 0;                              /* let the track actually shrink */
+    padding: 12px;
+    background: rgba(2, 6, 23, 0.6);           /* slate-950 / 60% */
+    border: 1px solid rgba(30, 41, 59, 0.6);   /* slate-800 / 60% */
+    border-radius: var(--radius-xl, 0.75rem);
+  }
+
+  /* Foyda marjasi spans the full row on phones so nothing is clipped. */
+  .pd-price-cell--wide {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .pd-price-cell__label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;                           /* was var(--text-xs) */
+    font-weight: 500;
+    color: var(--slate-400, #94a3b8);
+  }
+
+  /* 0.875rem on phones replaces --text-3xl, which was far too wide for a
+     3-up grid inside a phone. overflow-wrap guards long values. */
+  .pd-price-cell__value {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    color: #f8fafc;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-price-cell__value--sell {
+    color: #818cf8;                            /* indigo-400 */
+  }
+
+  .pd-price-cell__value--profit {
+    font-weight: 800;
+    color: #34d399;                            /* emerald-400 */
+  }
+
+  .pd-price-total {
+    margin-top: 12px;
+    padding: 12px;
+    text-align: center;
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(30, 41, 59, 0.6);
+    border-radius: var(--radius-xl, 0.75rem);
+  }
+
+  .pd-price-total__label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--slate-400, #94a3b8);
+  }
+
+  .pd-price-total__value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #f8fafc;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 768px) {
+    .pd-price-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pd-price-cell--wide {
+      grid-column: span 1;
+    }
+
+    .pd-price-cell__value {
+      font-size: 1rem;
+    }
+  }
+
+  /* Very narrow phones (< 360px): 2 columns no longer fit 12px padding plus a
+     readable price, so stack to a single column. */
+  @media (max-width: 359px) {
+    .pd-price-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pd-price-cell--wide {
+      grid-column: span 1;
+    }
+  }
+
+  /* ---------- Stock tab: Zaxira / Minimal / Maksimal mini-cards ----------
+     Same rigid 1fr 1fr 1fr + --text-3xl defect as the Pricing tab had.
+     3 columns are safe here only because the values are counts and the font
+     is 0.875rem, not --text-3xl. */
+  .pd-stock-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 12px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: var(--radius-2xl, 1rem);
+  }
+
+  .pd-stock-cell {
+    min-width: 0;                              /* let the track actually shrink */
+    padding: 10px;
+    text-align: center;
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(30, 41, 59, 0.6);
+    border-radius: var(--radius-xl, 0.75rem);
+  }
+
+  .pd-stock-cell__label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slate-400, #94a3b8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 0.875rem on phones replaces --text-3xl. nowrap keeps the number on one
+     line; the smaller size is what stops it overflowing in the first place. */
+  .pd-stock-cell__value {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pd-stock-cell__value--min {
+    color: #fbbf24;                            /* amber-400 */
+  }
+
+  .pd-stock-cell__value--max {
+    color: #60a5fa;                            /* blue-400 */
+  }
+
+  @media (min-width: 768px) {
+    .pd-stock-cell__value {
+      font-size: 1rem;
+    }
+  }
+
+  /* Below 360px three columns cannot hold a grouped count without
+     truncating, so drop to a single column. */
+  @media (max-width: 359px) {
+    .pd-stock-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<div class="detail-zone">
+
+<!-- Standardized Header Card -->
+<div class="detail-head">
+    <button type="button"
+            data-back-href="{% url 'product_list' %}"
+            onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{% url "product_list" %}'; }"
+            class="detail-back" aria-label="Orqaga">
+        <svg style="width:18px;height:18px;pointer-events:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </button>
+    <div class="detail-head-info">
+        <h1 class="detail-head-title">{{ product.name }}</h1>
+        <span class="detail-head-sub">{{ product.get_product_type_display }}</span>
+    </div>
+    {% if product.status == 'active' %}
+    <span class="detail-status-badge detail-status-badge--active"><i class="bi bi-circle-fill" style="font-size:6px"></i> {% t "active" %}</span>
+    {% elif product.status == 'inactive' %}
+    <span class="detail-status-badge detail-status-badge--inactive"><i class="bi bi-circle-fill" style="font-size:6px"></i> {% t "inactive" %}</span>
+    {% else %}
+    <span class="detail-status-badge detail-status-badge--archived"><i class="bi bi-circle-fill" style="font-size:6px"></i> {% t "archived" %}</span>
+    {% endif %}
+</div>
+
+<!-- Hero Image -->
+<div class="detail-hero">
+    {% if product.image %}
+    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+    {% else %}
+    <div class="detail-hero-ph"><i class="bi bi-box-seam"></i></div>
+    {% endif %}
+</div>
+
+<!-- Product Information -->
+<div class="detail-info">
+    <div class="detail-name-row">
+        <h2 class="detail-name">{{ product.name }}</h2>
+        {% if product.status == 'active' %}
+        <span class="detail-badge detail-badge--active">{% t "active" %}</span>
+        {% elif product.status == 'inactive' %}
+        <span class="detail-badge detail-badge--inactive">{% t "inactive" %}</span>
+        {% else %}
+        <span class="detail-badge detail-badge--archived">{% t "archived" %}</span>
+        {% endif %}
+    </div>
+
+    <div class="detail-stats">
+        <div class="detail-stat">
+            <span class="detail-stat-label">{% t "sale_price" %}</span>
+            <span class="detail-stat-value detail-stat-value--price">{{ product.price|uzs }}</span>
+        </div>
+        <div class="detail-stat">
+            <span class="detail-stat-label">{% t "stock_warehouse" %}</span>
+            <span class="detail-stat-value detail-stat-value--stock">{{ product.quantity|num }}{% if product.unit %}&nbsp;{{ product.unit.symbol }}{% endif %}</span>
+        </div>
+    </div>
+
+    <div class="detail-facts">
+        <div class="detail-fact">
+            <span class="detail-fact-label">SKU</span>
+            <span class="detail-fact-value">{{ product.sku|default:"—" }}</span>
+        </div>
+        <div class="detail-fact">
+            <span class="detail-fact-label">Barcode</span>
+            <span class="detail-fact-value">{{ product.barcode|default:"—" }}</span>
+        </div>
+        <div class="detail-fact">
+            <span class="detail-fact-label">{% t "category" %}</span>
+            <span class="detail-fact-value">{% if product.category_fk %}{{ product.category_fk.name }}{% else %}{{ product.get_category_display }}{% endif %}</span>
+        </div>
+        <div class="detail-fact">
+            <span class="detail-fact-label">{% t "brand" %}</span>
+            <span class="detail-fact-value">{% if product.brand %}{{ product.brand.name }}{% else %}—{% endif %}</span>
+        </div>
+    </div>
+
+    {% if product.description %}
+    <p class="detail-desc">{{ product.description }}</p>
+    {% endif %}
+</div>
+
+<!-- Bottom Action Bar -->
+<div class="detail-actions">
+    <a href="{% url 'product_update' pk=product.pk %}" class="detail-btn detail-btn--primary"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+    <form method="post" action="{% url 'product_duplicate' pk=product.pk %}" class="detail-btn-form">
+        {% csrf_token %}
+        <button type="submit" class="detail-btn detail-btn--muted"><i class="bi bi-copy"></i> {% t "duplicate" %}</button>
+    </form>
+    <div class="detail-tools">
+        <a href="{% url 'product_barcode' pk=product.pk %}" data-spa-ignore target="_blank" rel="noopener" class="detail-tool">
+            <i class="bi bi-upc-scan"></i><span>Barcode</span>
+        </a>
+        <a href="{% url 'product_qrcode' pk=product.pk %}" data-spa-ignore target="_blank" rel="noopener" class="detail-tool">
+            <i class="bi bi-qr-code"></i><span>QR</span>
+        </a>
+        <a href="{% url 'product_delete' pk=product.pk %}" class="detail-tool detail-tool--danger">
+            <i class="bi bi-trash"></i><span>{% t "delete" %}</span>
+        </a>
+    </div>
+</div>
+
+</div>
+
+<!-- Tabs -->
+<div class="pd-tabs" role="tablist" aria-label="{% t "overview" %}">
+    <button class="pd-tab is-active" onclick="switchTab('overview')" data-tab="overview" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{% t "overview" %}</span>
+    </button>
+    <button class="pd-tab" onclick="switchTab('stock')" data-tab="stock" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        <span>{% t "stock_tab" %}</span>
+    </button>
+    <button class="pd-tab" onclick="switchTab('pricing')" data-tab="pricing" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{% t "pricing_tab" %}</span>
+    </button>
+    <button class="pd-tab" onclick="switchTab('variants')" data-tab="variants" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{% t "variants_tab" %}</span>
+    </button>
+    <button class="pd-tab" onclick="switchTab('transactions')" data-tab="transactions" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        <span>{% t "transactions_tab" %}</span>
+    </button>
+    <button class="pd-tab" onclick="switchTab('dimensions')" data-tab="dimensions" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 4h4m-4 8v4m0-4h4m8-8h4m-4 0V4m4 4h-4M8 20h8"/></svg>
+        <span>{% t "dimensions_tab" %}</span>
+    </button>
+</div>
+
+<!-- Tab: Overview -->
+<div class="tab-content active" id="tab-overview">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--sp-4)">
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "stock" %}</div>
+            <div style="font-size:var(--text-2xl);font-weight:700;color:var(--{{ product.stock_status_color }}-600,var(--text-primary))">{{ product.quantity|num }}</div>
+            {% if product.unit %}<div style="font-size:var(--text-xs);color:var(--text-muted)">{{ product.unit.name }}</div>{% endif %}
+        </div>
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "sale_price" %}</div>
+            <div style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary)">{{ product.price|uzs }}</div>
+        </div>
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "purchase_price" %}</div>
+            <div style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary)">{{ product.purchase_price|uzs }}</div>
+        </div>
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "inventory_value" %}</div>
+            <div style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary)">{{ product.inventory_value|uzs }}</div>
+        </div>
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "min_stock" %} / {% t "max_stock" %}</div>
+            <div style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary)">{{ product.min_stock|num }} / {{ product.max_stock|num }}</div>
+        </div>
+        <div class="card-pro" style="padding:var(--sp-4)">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--sp-1)">{% t "profit_margin" %}</div>
+            <div style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary)">{{ product.profit_margin|floatformat:1 }}%</div>
+        </div>
+    </div>
+    {% if product.expiration_date %}
+    <div class="card-pro" style="margin-top:var(--sp-4);padding:var(--sp-4)">
+        <div style="display:flex;align-items:center;gap:var(--sp-3)">
+            <span class="badge-pro badge-pro-{{ product.expiration_status_color }}">{{ product.expiration_status_display }}</span>
+            <span style="font-size:var(--text-sm);color:var(--text-secondary)">{% t "expiration_date" %}: {{ product.expiration_date }}</span>
+        </div>
+    </div>
+    {% endif %}
+    {% if product.batch_number or product.supplier or product.shelf or product.rack or product.section %}
+    <div class="card-pro" style="margin-top:var(--sp-4);padding:var(--sp-4)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--sp-4)">
+            {% if product.batch_number %}<div><span style="font-size:var(--text-xs);color:var(--text-muted);display:block">{% t "batch_number" %}</span><span style="font-weight:500">{{ product.batch_number }}</span></div>{% endif %}
+            {% if product.supplier %}<div><span style="font-size:var(--text-xs);color:var(--text-muted);display:block">{% t "supplier" %}</span><span style="font-weight:500">{{ product.supplier }}</span></div>{% endif %}
+            {% if product.shelf %}<div><span style="font-size:var(--text-xs);color:var(--text-muted);display:block">{% t "shelf" %}</span><span style="font-weight:500">{{ product.shelf }}</span></div>{% endif %}
+            {% if product.rack %}<div><span style="font-size:var(--text-xs);color:var(--text-muted);display:block">{% t "rack" %}</span><span style="font-weight:500">{{ product.rack }}</span></div>{% endif %}
+            {% if product.section %}<div><span style="font-size:var(--text-xs);color:var(--text-muted);display:block">{% t "section" %}</span><span style="font-weight:500">{{ product.section }}</span></div>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Tab: Stock -->
+<div class="tab-content" id="tab-stock" style="display:none">
+    <div class="card-pro" style="padding:var(--sp-6)">
+        <div class="pd-stock-grid">
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "stock" %}</span>
+                <span class="pd-stock-cell__value">{{ product.quantity|num }}</span>
+            </div>
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "min_stock" %}</span>
+                <span class="pd-stock-cell__value pd-stock-cell__value--min">{{ product.min_stock|num }}</span>
+            </div>
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "max_stock" %}</span>
+                <span class="pd-stock-cell__value pd-stock-cell__value--max">{{ product.max_stock|num }}</span>
+            </div>
+        </div>
+        <div style="margin-top:var(--sp-6);text-align:center">
+            <span class="badge-pro badge-pro-{{ product.stock_status_color }}" style="font-size:var(--text-sm);padding:var(--sp-2) var(--sp-4)">{{ product.stock_status_display }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Pricing -->
+<div class="tab-content" id="tab-pricing" style="display:none">
+    <div class="pd-price-grid">
+        <div class="pd-price-cell">
+            <span class="pd-price-cell__label">{% t "purchase_price" %}</span>
+            <span class="pd-price-cell__value">{{ product.purchase_price|uzs }}</span>
+        </div>
+        <div class="pd-price-cell">
+            <span class="pd-price-cell__label">{% t "sale_price" %}</span>
+            <span class="pd-price-cell__value pd-price-cell__value--sell">{{ product.price|uzs }}</span>
+        </div>
+        <div class="pd-price-cell pd-price-cell--wide">
+            <span class="pd-price-cell__label">{% t "profit_margin" %}</span>
+            <span class="pd-price-cell__value pd-price-cell__value--profit">{{ product.profit_margin|floatformat:1 }}%</span>
+        </div>
+    </div>
+    <div class="pd-price-total">
+        <span class="pd-price-total__label">{% t "inventory_value" %}</span>
+        <span class="pd-price-total__value">{{ product.inventory_value|uzs }}</span>
+    </div>
+</div>
+
+<!-- Tab: Variants -->
+<div class="tab-content" id="tab-variants" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)">
+        <h3 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary)">{% t "variants_tab" %}</h3>
+        <a href="{% url 'variant_create' product_pk=product.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-lg"></i> {% t "add_variant" %}</a>
+    </div>
+    {% if variants %}
+    <div class="card-pro" style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "variant_name" %}</th>
+                    <th>SKU</th>
+                    <th style="text-align:right">{% t "stock" %}</th>
+                    <th style="text-align:right">{% t "sale_price" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in variants %}
+                <tr>
+                    <td style="font-weight:500">{{ v.name }}</td>
+                    <td><code style="font-size:var(--text-xs)">{{ v.sku }}</code></td>
+                    <td style="text-align:right;font-weight:600">{{ v.quantity|num }}</td>
+                    <td style="text-align:right">{{ v.price|uzs }}</td>
+                    <td>{% if v.is_active %}<span class="badge-pro badge-pro-success">{% t "active" %}</span>{% else %}<span class="badge-pro badge-pro-secondary">{% t "inactive" %}</span>{% endif %}</td>
+                    <td>
+                        <div style="display:flex;gap:4px">
+                            <a href="{% url 'variant_update' product_pk=product.pk pk=v.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'variant_delete' product_pk=product.pk pk=v.pk %}" style="display:inline">{% csrf_token %}<button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px;color:var(--danger-600)"><i class="bi bi-trash"></i></button></form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-pro" style="text-align:center;padding:var(--sp-10)">
+        <i class="bi bi-layers" style="font-size:2rem;color:var(--text-muted);margin-bottom:var(--sp-3);display:block"></i>
+        <p style="color:var(--text-muted);margin-bottom:var(--sp-4)">{% t "no_variants" %}</p>
+        <a href="{% url 'variant_create' product_pk=product.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-lg"></i> {% t "add_first_variant" %}</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Tab: Transactions -->
+<div class="tab-content" id="tab-transactions" style="display:none">
+    {% if transactions %}
+    <div class="card-pro" style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "user" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.created_at }}</td>
+                    <td><span class="badge-pro {% if t.transaction_type == 'IN' %}badge-pro-success{% else %}badge-pro-danger{% endif %}">{{ t.transaction_type }}</span></td>
+                    <td style="font-weight:600">{{ t.quantity|num }}</td>
+                    <td>{{ t.user.get_full_name|default:t.user.email }}</td>
+                    <td style="color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-pro" style="text-align:center;padding:var(--sp-10)">
+        <i class="bi bi-arrow-left-right" style="font-size:2rem;color:var(--text-muted);margin-bottom:var(--sp-3);display:block"></i>
+        <p style="color:var(--text-muted)">{% t "no_results" %}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Tab: Dimensions -->
+<div class="tab-content" id="tab-dimensions" style="display:none">
+    <div class="card-pro" style="padding:var(--sp-6)">
+        <div class="pd-stock-grid">
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "weight_kg" %}</span>
+                <span class="pd-stock-cell__value">{{ product.weight|default:"—"|num }}</span>
+            </div>
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "length_cm" %}</span>
+                <span class="pd-stock-cell__value">{{ product.length|default:"—"|num }}</span>
+            </div>
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "width_cm" %}</span>
+                <span class="pd-stock-cell__value">{{ product.width|default:"—"|num }}</span>
+            </div>
+            <div class="pd-stock-cell">
+                <span class="pd-stock-cell__label">{% t "height_cm" %}</span>
+                <span class="pd-stock-cell__value">{{ product.height|default:"—"|num }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-zone{max-width:760px;margin:0 auto}
+.detail-head{display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-radius:16px;background:rgba(15,23,42,0.6);border:1px solid rgba(30,41,59,0.8);margin-bottom:16px}
+.detail-back{width:40px;height:40px;border-radius:12px;background:var(--pill-bg,#1e293b);border:1px solid var(--pill-border,rgba(51,65,85,0.8));color:var(--pill-text,#e2e8f0);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;outline:none;touch-action:manipulation;transition:background .15s ease}
+.detail-back:hover{background:var(--bg-surface-hover,#334155)}
+.detail-head-info{flex:1;min-width:0}
+.detail-head-title{font-size:19px;font-weight:700;color:#fff;margin:0;padding:0;line-height:1.2;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-head-sub{font-size:12px;font-weight:500;color:#94a3b8;margin-top:2px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-status-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:600;flex-shrink:0;white-space:nowrap}
+.detail-status-badge--active{color:#34d399;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)}
+.detail-status-badge--inactive{color:#fbbf24;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2)}
+.detail-status-badge--archived{color:#94a3b8;background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2)}
+.detail-hero{margin-bottom:16px}
+.detail-hero img{width:100%;height:224px;object-fit:cover;border-radius:16px;border:1px solid rgba(30,41,59,1);background:#020617;box-shadow:0 8px 24px rgba(0,0,0,0.35);display:block}
+.detail-hero-ph{width:100%;height:224px;border-radius:16px;border:1px solid rgba(30,41,59,1);background:#020617;box-shadow:0 8px 24px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:#334155;font-size:4rem}
+.detail-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.detail-name{font-size:20px;font-weight:700;color:#fff;margin:0;line-height:1.25}
+.detail-badge{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.detail-badge--active{color:#34d399;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)}
+.detail-badge--inactive{color:#fbbf24;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2)}
+.detail-badge--archived{color:#94a3b8;background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2)}
+.detail-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.detail-stat{background:rgba(15,23,42,0.8);border:1px solid #1e293b;padding:14px;border-radius:16px;min-width:0}
+.detail-stat-label{font-size:11px;color:#94a3b8;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-stat-value{font-size:16px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* "50 000 UZS" at 18px overflowed the 2-col grid on phones. nowrap is kept
+   so the price never wraps to a second line mid-number. */
+@media (min-width:640px){.detail-stat-value{font-size:18px}}
+.detail-stat-value--price{color:#818cf8}
+.detail-stat-value--stock{color:#34d399}
+.detail-facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px;background:rgba(2,6,23,0.6);border-radius:16px;border:1px solid rgba(30,41,59,0.8);margin-bottom:20px}
+.detail-fact{min-width:0}
+.detail-fact-label{font-size:10px;color:#94a3b8;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.03em}
+.detail-fact-value{font-size:12px;color:#cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.detail-desc{font-size:13px;color:#94a3b8;margin:0 0 20px;line-height:1.55}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.detail-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;font-size:14px;transition:background .15s ease,color .15s ease,border-color .15s ease;cursor:pointer;text-decoration:none;font-family:var(--font-sans)}
+.detail-btn--primary{background:#4f46e5;color:#fff;font-weight:600;border:none}
+.detail-btn--primary:hover{background:#4338ca}
+.detail-btn--muted{background:#1e293b;color:#e2e8f0;font-weight:500;border:1px solid rgba(51,65,85,0.6);width:100%}
+.detail-btn--muted:hover{background:#334155;color:#f8fafc}
+.detail-btn-form{margin:0;display:flex;min-width:0}
+.detail-btn-form .detail-btn{flex:1}
+/* Secondary actions. Equal-flex so all three stay the same width instead of
+   Delete (the longest label) setting the row width. min-width:0 lets each
+   label ellipsis rather than force the row wider than the viewport. */
+.detail-tools{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:12px;margin-top:2px;border-top:1px solid rgba(30,41,59,0.8)}
+.detail-tool{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:10px 8px;border:1px solid rgba(51,65,85,0.6);border-radius:12px;background:rgba(30,41,59,0.4);color:#cbd5e1;font-size:12.5px;font-weight:500;text-decoration:none;transition:color .15s ease,background .15s ease,border-color .15s ease}
+.detail-tool span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-tool i{flex:0 0 auto}
+.detail-tool:hover{color:#fff;background:rgba(51,65,85,0.6);border-color:rgba(71,85,105,0.8)}
+.detail-tool--danger{background:rgba(244,63,94,0.1);color:#fb7185;border-color:rgba(244,63,94,0.2)}
+.detail-tool--danger:hover{background:rgba(244,63,94,0.2);color:#fda4af;border-color:rgba(244,63,94,0.3)}
+/* Below 360px three columns squeeze the labels; stack the row instead. */
+@media (max-width:359px){
+    .detail-tools{grid-template-columns:minmax(0,1fr)}
+}
+@media (min-width:768px){
+    .detail-hero img,.detail-hero-ph{height:300px}
+}
+/* ---------- Tabs: pill segmented control ----------
+   There are 6 tabs, so an equal-width flex-1 row cannot hold translated
+   labels like "Amallar transaktsiyalari" on a phone without clipping.
+   Below sm the row scrolls horizontally (active pill is scrolled into view
+   by switchTab); from sm up there is room for an equal-width grid. */
+.pd-tabs{display:flex;gap:4px;width:100%;padding:4px;margin:16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:rgba(15,23,42,0.8);border:1px solid rgba(30,41,59,0.8);border-radius:12px}
+.pd-tabs::-webkit-scrollbar{display:none}
+.pd-tab{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border:none;border-radius:8px;background:none;color:#94a3b8;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;cursor:pointer;font-family:var(--font-sans);transition:color .15s ease,background .15s ease}
+.pd-tab svg{width:14px;height:14px;flex:0 0 auto;fill:none;stroke:currentColor;pointer-events:none}
+.pd-tab:hover{color:#f8fafc}
+.pd-tab.is-active{background:#4f46e5;color:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+@media (min-width:640px){
+    .pd-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow-x:visible}
+    .pd-tab{flex:1 1 auto;min-width:0}
+    .pd-tab span{overflow:hidden;text-overflow:ellipsis}
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelectorAll('.pd-tab').forEach(function(el) {
+        el.classList.remove('is-active');
+        el.setAttribute('aria-selected', 'false');
+    });
+    var tab = document.getElementById('tab-' + name);
+    if (tab) tab.style.display = 'block';
+    var btn = document.querySelector('[data-tab="' + name + '"]');
+    if (btn) {
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-selected', 'true');
+        // The pill row scrolls horizontally below sm; without this the newly
+        // activated tab can sit outside the visible area.
+        if (typeof btn.scrollIntoView === 'function') {
+            btn.scrollIntoView({block: 'nearest', inline: 'nearest', behavior: 'smooth'});
+        }
+    }
+}
+</script>
+{% endblock %}

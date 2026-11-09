@@ -1,0 +1,35 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% if vehicle %}{% t "edit_vehicle" %}{% else %}{% t "new_vehicle" %}{% endif %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:vehicle_list' %}">{% t "vehicles" %}</a><span class="separator">/</span><span class="current">{% if vehicle %}{% t "edit" %}{% else %}{% t "new" %}{% endif %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% if vehicle %}{% t "edit_vehicle" %}{% else %}{% t "new_vehicle" %}{% endif %}</h1></div></div>
+<div class="card-pro"><div class="card-pro-body"><form method="post">{% csrf_token %}
+    {% if form.errors %}<div class="mb-4" style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px"><strong style="color:var(--color-danger)">{% t "fix_errors" %}</strong>{{ form.errors }}</div>{% endif %}
+    <h5 class="mb-3" style="font-weight:600">{% t "vehicle_info" %}</h5>
+    <div class="d-flex gap-4 flex-wrap mb-4">
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "vehicle_number" %}</label>{{ form.vehicle_number }}</div>
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "plate_number" %}</label>{{ form.plate_number }}</div>
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "type" %}</label>{{ form.vehicle_type }}</div>
+    </div>
+    <div class="d-flex gap-4 flex-wrap mb-4">
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "brand" %}</label>{{ form.brand }}</div>
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "model" %}</label>{{ form.model_name }}</div>
+        <div style="flex:1;min-width:150px"><label class="form-label">{% t "year" %}</label>{{ form.year }}</div>
+        <div style="flex:1;min-width:150px"><label class="form-label">{% t "fuel_type" %}</label>{{ form.fuel_type }}</div>
+    </div>
+    <h5 class="mb-3" style="font-weight:600">{% t "capacity" %}</h5>
+    <div class="d-flex gap-4 flex-wrap mb-4">
+        <div style="flex:1;min-width:150px"><label class="form-label">{% t "max_weight_kg" %}</label>{{ form.max_weight_kg }}</div>
+        <div style="flex:1;min-width:150px"><label class="form-label">{% t "max_volume_m3" %}</label>{{ form.max_volume_m3 }}</div>
+        <div style="flex:1;min-width:150px"><label class="form-label">{% t "max_packages" %}</label>{{ form.max_packages }}</div>
+    </div>
+    <h5 class="mb-3" style="font-weight:600">{% t "assignment" %}</h5>
+    <div class="d-flex gap-4 flex-wrap mb-4">
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "current_driver" %}</label>{{ form.current_driver }}</div>
+        <div style="flex:1;min-width:200px"><label class="form-label">{% t "status" %}</label>{{ form.status }}</div>
+    </div>
+    <div class="mb-4"><label class="form-label">{% t "notes" %}</label>{{ form.notes }}</div>
+    <div class="d-flex gap-3"><button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button><a href="{% url 'logistics:vehicle_list' %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a></div>
+</form></div></div>
+{% endblock %}

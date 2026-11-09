@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% if employee %}{% t "edit_employee" %}{% else %}{% t "add_employee" %}{% endif %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'users:employee_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if employee %}{% t "edit_employee" %}{% else %}{% t "add_employee" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:560px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "first_name" %} *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="input-pro-error">{{ form.first_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "last_name" %} *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="input-pro-error">{{ form.last_name.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "username" %} *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<div class="input-pro-error">{{ form.username.errors }}</div>{% endif %}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "email" %} *</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<div class="input-pro-error">{{ form.email.errors }}</div>{% endif %}
+                </div>
+                {% if not employee %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "password" %} *</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}<div class="input-pro-error">{{ form.password.errors }}</div>{% endif %}
+                </div>
+                {% endif %}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "position" %}</label>
+                        {{ form.position }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "role" %}</label>
+                        {{ form.role }}
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "phone" %}</label>
+                    {{ form.phone }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "profile_picture" %}</label>
+                    {{ form.profile_picture }}
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="{% url 'users:employee_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if employee %}{% t "save" %}{% else %}{% t "save" %}{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

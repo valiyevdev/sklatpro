@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "view_customer_debts" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex align-center justify-between mb-4">
+    <div>
+        <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "view_customer_debts" %}</h2>
+        <p class="text-pro-sm text-pro-muted mb-0">{% t "recent_customer_debts_title" %}</p>
+    </div>
+    <a href="{% url 'finance:customer_debt_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_debt_btn" %}</a>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <input class="input-pro" type="search" name="search" placeholder="{% t "search_placeholder_short" %}" value="{{ search_query }}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="input-pro" name="status">
+                    <option value="">{% t "all_statuses_short" %}</option>
+                    <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>{% t "unpaid" %}</option>
+                    <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>{% t "partially_paid" %}</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>{% t "fully_paid" %}</option>
+                </select>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i> {% t "search" %}</button>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "customer" %}</th><th>{% t "phone" %}</th><th>{% t "debt_th" %}</th><th>{% t "paid_th" %}</th><th>{% t "remaining_label" %}</th><th>{% t "due_date" %}</th><th>{% t "status" %}</th><th>{% t "actions" %}</th></tr></thead>
+            <tbody>
+                {% for d in page_obj %}
+                <tr>
+                    <td class="fw-500">{{ d.customer_name }}</td>
+                    <td>{{ d.phone_number|default:"-" }}</td>
+                    <td class="fw-600">${{ d.debt_amount|floatformat:0 }}</td>
+                    <td>${{ d.paid_amount|floatformat:0 }}</td>
+                    <td class="fw-600" style="color:{% if d.remaining_balance > 0 %}var(--danger-500){% else %}var(--success-600){% endif %}">${{ d.remaining_balance|floatformat:0 }}</td>
+                    <td class="text-pro-sm">{{ d.due_date|date:"d.m.Y" }}</td>
+                    <td><span class="badge-pro badge-pro-{% if d.payment_status == 'paid' %}success{% elif d.payment_status == 'partial' %}warning{% elif d.payment_status == 'overdue' %}danger{% else %}danger{% endif %}">{{ d.get_payment_status_display }}</span></td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'finance:customer_debt_detail' pk=d.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'finance:customer_debt_update' pk=d.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'finance:payment_create' debt_type='customer' debt_id=d.pk %}" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-plus-circle"></i> {% t "payment_btn" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-person-dash"></i></div><h5 class="empty-state-title">{% t "no_debts" %}</h5><p class="empty-state-desc">{% t "no_debts_customer" %}</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}Create Integration Connection - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'integrations:integration_list' %}">{% t "all_integrations" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "create" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-plug" style="color:var(--primary-500)"></i> Create Integration Connection</h1>
+        <p class="page-subtitle">Configure a new connection to an external service provider</p>
+    </div>
+</div>
+
+<form method="post" id="connectionForm">
+    {% csrf_token %}
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> Connection Details</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Provider <span style="color:var(--danger-500)">*</span></label>
+                        <select class="input-pro" name="provider" id="providerSelect" required onchange="onProviderChange(this)">
+                            <option value="">Select provider...</option>
+                            {% for p in providers %}
+                            <option value="{{ p.pk }}" data-auth-type="{{ p.auth_type }}" data-icon="{{ p.icon_class }}" {% if selected_provider and selected_provider.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ p.get_category_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Ulanish nomi <span style="color:var(--danger-500)">*</span></label>
+                            <input class="input-pro" type="text" name="name" required placeholder="Masalan, ishlab chiqarish to'lov shlyozi">
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Muhit</label>
+                            <select class="input-pro" name="environment">
+                                {% for val, label in environment_choices %}
+                                <option value="{{ val }}" {% if val == 'production' %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-key" style="color:var(--primary-600)"></i> Credentials</span>
+                    <span id="authTypeBadge" class="badge-pro badge-pro-neutral">{{ selected_provider.get_auth_type_display|default:"API Key" }}</span>
+                </div>
+                <div class="card-pro-body" id="credentialsSection">
+                    {% for field in credential_fields %}
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{{ field.label }}</label>
+                        {% if field.type == 'textarea' %}
+                        <textarea class="input-pro" name="cred_{{ field.name }}" rows="4" placeholder="{{ field.label }} ni joylashtiring..."></textarea>
+                        {% else %}
+                        <input class="input-pro" type="{{ field.type }}" name="cred_{{ field.name }}" placeholder="{{ field.label }} ni kiriting...">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> Configuration</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Webhook URL</label>
+                        <input class="input-pro" type="url" name="webhook_url" id="webhookUrl" placeholder="https://example.com/webhooks/integration">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">Callback URL</label>
+                        <input class="input-pro" type="url" name="callback_url" id="callbackUrl" placeholder="https://example.com/callbacks/integration">
+                    </div>
+                    <input type="hidden" name="config" id="configHidden" value="{}">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4" id="providerPreview" style="{% if not selected_provider %}display:none{% endif %}">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> Provider Info</span>
+                </div>
+                <div class="card-pro-body">
+                    <div style="text-align:center;padding:var(--sp-3) 0">
+                        <div style="width:56px;height:56px;border-radius:var(--radius-lg);background:var(--primary-50);color:var(--primary-600);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:var(--sp-3)">
+                            <i class="bi {{ selected_provider.icon_class|default:'bi-plug' }}"></i>
+                        </div>
+                        <div style="font-weight:600;color:var(--text-primary);font-size:var(--text-sm)" id="previewName">{{ selected_provider.name|default:"" }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)" id="previewCategory">{{ selected_provider.get_category_display|default:"" }}</div>
+                    </div>
+                    {% if selected_provider.description %}
+                    <p style="font-size:var(--text-xs);color:var(--text-secondary);text-align:center;margin-top:var(--sp-2)" id="previewDesc">{{ selected_provider.description }}</p>
+                    {% endif %}
+                    <div style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3)">
+                        <div style="display:flex;justify-content:space-between;font-size:var(--text-xs)">
+                            <span style="color:var(--text-muted)">Auth Type</span>
+                            <span style="font-weight:500;color:var(--text-primary)" id="previewAuth">{{ selected_provider.get_auth_type_display|default:"-" }}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:var(--text-xs)">
+                            <span style="color:var(--text-muted)">Version</span>
+                            <span style="font-weight:500;color:var(--text-primary)" id="previewVersion">{{ selected_provider.version|default:"1.0" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% url 'integrations:integration_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> Cancel</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> Create Connection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+@media(max-width:1024px){
+    div[style*="grid-template-columns:2fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+
+<script>
+var CREDENTIAL_FIELDS = {
+    'api_key': [
+        {name:'api_key',label:'API Key',type:'password'},
+        {name:'api_secret',label:'API Secret',type:'password'}
+    ],
+    'oauth2': [
+        {name:'client_id',label:'Client ID',type:'text'},
+        {name:'client_secret',label:'Client Secret',type:'password'},
+        {name:'authorization_url',label:'Authorization URL',type:'url'}
+    ],
+    'basic': [
+        {name:'username',label:'Username',type:'text'},
+        {name:'password',label:'Password',type:'password'}
+    ],
+    'bearer': [
+        {name:'access_token',label:'Token',type:'password'}
+    ],
+    'certificate': [
+        {name:'certificate',label:'Certificate',type:'textarea'},
+        {name:'private_key',label:'Private Key',type:'textarea'}
+    ],
+    'webhook_secret': [
+        {name:'webhook_secret',label:'Webhook Secret',type:'password'}
+    ],
+    'custom': [
+        {name:'api_key',label:'API Key',type:'password'},
+        {name:'api_secret',label:'API Secret',type:'password'},
+        {name:'access_token',label:'Access Token',type:'password'}
+    ]
+};
+
+var AUTH_LABELS = {
+    'api_key':'API Key','oauth2':'OAuth 2.0','basic':'Basic Auth',
+    'bearer':'Bearer Token','certificate':'Certificate',
+    'webhook_secret':'Webhook Secret','custom':'Custom'
+};
+
+function onProviderChange(sel){
+    var opt = sel.options[sel.selectedIndex];
+    if(!opt || !opt.value){document.getElementById('providerPreview').style.display='none';return;}
+    var authType = opt.getAttribute('data-auth-type')||'api_key';
+    document.getElementById('authTypeBadge').textContent = AUTH_LABELS[authType]||authType;
+    document.getElementById('previewName').textContent = opt.text.split('(')[0].trim();
+    document.getElementById('previewAuth').textContent = AUTH_LABELS[authType]||authType;
+    document.getElementById('providerPreview').style.display='';
+    renderCredentialFields(authType);
+}
+
+function renderCredentialFields(authType){
+    var fields = CREDENTIAL_FIELDS[authType]||CREDENTIAL_FIELDS['api_key'];
+    var html = '';
+    for(var i=0;i<fields.length;i++){
+        var f = fields[i];
+        if(f.type==='textarea'){
+            html += '<div class="input-pro-group"><label class="input-pro-label">'+f.label+'</label><textarea class="input-pro" name="cred_'+f.name+'" rows="4" placeholder="'+f.label+' ni joylashtiring..."></textarea></div>';
+        } else {
+            html += '<div class="input-pro-group"><label class="input-pro-label">'+f.label+'</label><input class="input-pro" type="'+f.type+'" name="cred_'+f.name+'" placeholder="'+f.label+' ni kiriting..."></div>';
+        }
+    }
+    document.getElementById('credentialsSection').innerHTML = html;
+}
+
+document.getElementById('connectionForm').addEventListener('submit', function(e){
+    var webhookUrl = document.getElementById('webhookUrl').value;
+    var callbackUrl = document.getElementById('callbackUrl').value;
+    var config = {};
+    if(webhookUrl) config.webhook_url = webhookUrl;
+    if(callbackUrl) config.callback_url = callbackUrl;
+    document.getElementById('configHidden').value = JSON.stringify(config);
+});
+</script>
+{% endblock %}

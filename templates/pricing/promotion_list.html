@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "promotions" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "promotions" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "promotions" %}</h1>
+        <p class="page-subtitle">{{ page.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'pricing:promotion_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_promotion" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:200px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="search" value="{{ search }}" class="input-pro" placeholder="{% t "search_promotions" %}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select class="input-pro" name="status">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% t "active" %}</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>{% t "inactive" %}</option>
+                <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>{% t "scheduled" %}</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-search"></i></button>
+        {% if search or status_filter %}
+            <a href="{% url 'pricing:promotion_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm" style="height:38px"><i class="bi bi-x-circle"></i></a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "code" %}</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "discount_value" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "priority" %}</th>
+                    <th>{% t "start_date" %}</th>
+                    <th>{% t "end_date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in page %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'pricing:promotion_edit' pk=p.pk %}" style="color:var(--text-primary);text-decoration:none">{{ p.name }}</a>
+                        {% if p.description %}<div class="text-pro-xs text-pro-muted" style="margin-top:2px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description }}</div>{% endif %}
+                    </td>
+                    <td>
+                        {% if p.code %}
+                            <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ p.code }}</code>
+                        {% else %}
+                            <span class="text-pro-sm text-pro-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.discount_type == 'percentage' %}
+                            <span class="badge-pro badge-pro-info">{% t "percentage" %}</span>
+                        {% elif p.discount_type == 'fixed' %}
+                            <span class="badge-pro badge-pro-warning">{% t "fixed_amount" %}</span>
+                        {% elif p.discount_type == 'fixed_price' %}
+                            <span class="badge-pro badge-pro-primary">{% t "fixed_price" %}</span>
+                        {% elif p.discount_type == 'bogo' %}
+                            <span class="badge-pro badge-pro-success">BOGO</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">
+                        {% if p.discount_type == 'percentage' %}
+                            {{ p.discount_value }}%
+                        {% else %}
+                            {{ p.discount_value|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.status == 'active' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% elif p.status == 'inactive' %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+                        {% elif p.status == 'scheduled' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "scheduled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ p.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">{{ p.priority }}</td>
+                    <td class="cell-muted text-pro-sm">
+                        {% if p.start_date %}{{ p.start_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td class="cell-muted text-pro-sm">
+                        {% if p.end_date %}{{ p.end_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <div class="actions" style="justify-content:flex-end">
+                            <a href="{% url 'pricing:promotion_edit' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'pricing:promotion_delete' pk=p.pk %}" style="display:inline" onsubmit="return confirm('{% t "confirm_delete" %}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "delete" %}" style="color:var(--danger-600)"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-megaphone"></i></div>
+                            <h5 class="empty-state-title">{% t "no_promotions" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_promotion" %}</p>
+                            <a href="{% url 'pricing:promotion_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_promotion" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "showing" %} {{ page.start_index }}-{% t "of" %} {{ page.paginator.count }}</span>
+    <div class="d-flex gap-1">
+        {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}&search={{ search }}&status={{ status_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        {% for num in page.paginator.page_range %}
+            {% if page.number == num %}
+                <span class="btn-pro btn-pro-primary btn-pro-sm">{{ num }}</span>
+            {% elif num > page.number|add:'-3' and num < page.number|add:'3' %}
+                <a href="?page={{ num }}&search={{ search }}&status={{ status_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page.has_next %}
+            <a href="?page={{ page.next_page_number }}&search={{ search }}&status={{ status_filter }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

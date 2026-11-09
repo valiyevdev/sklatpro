@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Platform Dashboard — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-speedometer2" style="color:var(--primary-500)"></i> Platform Dashboard</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Overview of the entire SKLAT PRO platform</p>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Companies</div>
+            <div class="stat-card-value">{{ total_companies }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-buildings"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Active Companies</div>
+            <div class="stat-card-value">{{ active_companies }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-building-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Users</div>
+            <div class="stat-card-value">{{ total_users }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Subscription Plans</div>
+            <div class="stat-card-value">{{ total_plans }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-credit-card"></i></div>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-6" style="flex-wrap:wrap">
+    <a href="{% url 'saas_platform:company_list' %}" class="btn-pro btn-pro-primary"><i class="bi bi-buildings"></i> Companies</a>
+    <a href="{% url 'saas_platform:subscription_plans' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-credit-card"></i> Plans</a>
+    <a href="{% url 'saas_platform:user_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-people"></i> Users</a>
+    <a href="{% url 'saas_platform:role_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-shield-lock"></i> Roles</a>
+    <a href="{% url 'saas_platform:audit_log' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-clipboard2-data"></i> Audit Log</a>
+    <a href="{% url 'saas_platform:feature_flags' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-toggle2-on"></i> Feature Flags</a>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-clipboard2-data" style="color:var(--primary-500)"></i> Recent Audit Log</h3>
+            <a href="{% url 'saas_platform:audit_log' %}" class="btn-pro btn-pro-ghost btn-pro-sm">View All</a>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Company</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in recent_audit_logs %}
+                    <tr>
+                        <td style="white-space:nowrap;font-size:var(--text-xs);color:var(--text-muted)">{{ entry.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <span class="badge-pro {% if entry.action_type == 'create' %}badge-pro-success{% elif entry.action_type == 'update' %}badge-pro-warning{% elif entry.action_type == 'delete' %}badge-pro-danger{% else %}badge-pro-info{% endif %}">
+                                {{ entry.action_type|upper }}
+                            </span>
+                        </td>
+                        <td style="font-size:var(--text-sm)">{{ entry.user.get_full_name|default:entry.user.email }}</td>
+                        <td style="font-size:var(--text-sm)">{{ entry.company.company_name|default:"-" }}</td>
+                        <td style="font-size:var(--text-sm);color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ entry.description|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-icon"><i class="bi bi-clipboard2-data"></i></div>
+                                <div class="empty-state-desc">No audit log entries yet</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <h3 class="card-pro-title"><i class="bi bi-credit-card" style="color:var(--warning-500)"></i> Plan Subscribers</h3>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Plan</th>
+                        <th>Price</th>
+                        <th>Subscribers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plan in plan_subscriber_counts %}
+                    <tr>
+                        <td class="cell-primary fw-500">{{ plan.name }}</td>
+                        <td style="font-size:var(--text-sm)">${{ plan.price|floatformat:2 }}/mo</td>
+                        <td>
+                            <span class="badge-pro badge-pro-primary">{{ plan.subscriber_count }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-icon"><i class="bi bi-credit-card"></i></div>
+                                <div class="empty-state-desc">No subscription plans defined</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-3">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:var(--sp-6)">
+            <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--primary-50);color:var(--primary-600);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:var(--sp-3)">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <h4 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary);margin:0 0 var(--sp-1)">New Users (30d)</h4>
+            <div style="font-size:var(--text-3xl);font-weight:700;color:var(--primary-600)">{{ new_users_30d }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:var(--sp-6)">
+            <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--success-50);color:var(--success-600);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:var(--sp-3)">
+                <i class="bi bi-building-check"></i>
+            </div>
+            <h4 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary);margin:0 0 var(--sp-1)">New Companies (30d)</h4>
+            <div style="font-size:var(--text-3xl);font-weight:700;color:var(--success-600)">{{ new_companies_30d }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:var(--sp-6)">
+            <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--warning-50);color:var(--warning-600);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:var(--sp-3)">
+                <i class="bi bi-toggle2-on"></i>
+            </div>
+            <h4 style="font-size:var(--text-lg);font-weight:600;color:var(--text-primary);margin:0 0 var(--sp-1)">Active Feature Flags</h4>
+            <div style="font-size:var(--text-3xl);font-weight:700;color:var(--warning-600)">{{ active_feature_flags }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

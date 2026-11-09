@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "packing_lists" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "packing_lists" %}</h1>
+        <p class="page-subtitle">{{ total_count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:packing_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_packing" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>{% t "pending" %}</option>
+                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>{% t "in_progress" %}</option>
+                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>{% t "completed" %}</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>{% t "cancelled" %}</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "sale_ref" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "packer" %}</th>
+                    <th>{% t "packages" %}</th>
+                    <th>{% t "items_packed" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pl in page_obj %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:packing_detail' pk=pl.pk %}" style="color:var(--text-primary);text-decoration:none">{{ pl.reference }}</a>
+                    </td>
+                    <td>{{ pl.warehouse.name }}</td>
+                    <td>{% if pl.sale %}{{ pl.sale.reference }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if pl.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                        {% elif pl.status == 'in_progress' %}
+                            <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+                        {% elif pl.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ pl.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{% if pl.packer %}{{ pl.packer.get_full_name|default:pl.packer.email }}{% else %}—{% endif %}</td>
+                    <td>{{ pl.package_count }}</td>
+                    <td>{{ pl.items_packed_count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-arrow-in-right"></i></div>
+                            <h5 class="empty-state-title">{% t "no_packing_lists" %}</h5>
+                            <p class="empty-state-desc">{% t "no_packing_created" %}</p>
+                            <a href="{% url 'warehouses:packing_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_packing" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "delivery_zones" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "delivery_zones" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "delivery_zones" %}</h1></div><div class="page-actions"><a href="{% url 'logistics:zone_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_zone" %}</a></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "name" %}</th><th>{% t "code" %}</th><th>{% t "base_price" %}</th><th>{% t "per_km" %}</th><th>{% t "est_time_min" %}</th><th>{% t "active" %}</th><th></th></tr></thead>
+<tbody>{% for z in zones %}<tr><td class="cell-primary"><a href="{% url 'logistics:zone_update' pk=z.pk %}" style="color:var(--text-primary);text-decoration:none">{{ z.name }}</a></td><td>{{ z.code|default:"-" }}</td><td>{{ z.base_price|floatformat:0 }}</td><td>{{ z.price_per_km|floatformat:0 }}</td><td>{{ z.estimated_time_minutes }}</td><td>{% if z.is_active %}<span class="badge-pro badge-pro-success">{% t "active" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{% t "inactive" %}</span>{% endif %}</td><td><a href="{% url 'logistics:zone_update' pk=z.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a></td></tr>{% empty %}<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div><h5 class="empty-state-title">{% t "no_zones" %}</h5><a href="{% url 'logistics:zone_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_zone" %}</a></div></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

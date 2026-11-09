@@ -1,0 +1,166 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}{{ product.name }} - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section">
+    <nav style="font-size:0.875rem;color:var(--text-muted);margin-bottom:1.5rem">
+        <a href="{% url 'storefront:home' %}" style="color:var(--primary);text-decoration:none">Home</a> /
+        <a href="{% url 'storefront:catalog' %}" style="color:var(--primary);text-decoration:none">Catalog</a> /
+        {% if product.category_fk %}
+        <a href="{% url 'storefront:category' slug=product.category_fk.slug %}" style="color:var(--primary);text-decoration:none">{{ product.category_fk.name }}</a> /
+        {% endif %}
+        <span>{{ product.name }}</span>
+    </nav>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:1000px">
+        <div>
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:100%;border-radius:var(--radius);border:1px solid var(--border)">
+            {% else %}
+            <div style="width:100%;aspect-ratio:1;background:var(--bg-alt);border-radius:var(--radius);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:4rem"><i class="bi bi-box"></i></div>
+            {% endif %}
+        </div>
+        <div>
+            <h1 style="font-size:1.75rem;font-weight:700;margin-bottom:0.5rem">{{ product.name }}</h1>
+            <div style="font-size:0.875rem;color:var(--text-muted);margin-bottom:1rem">SKU: {{ product.sku }}</div>
+            {% if avg_rating %}
+            <div style="margin-bottom:1rem">
+                {% for i in product.review_set.all %}
+                {% endfor %}
+                <span style="color:#f59e0b;font-size:1.125rem">{% for _ in star_range %}&#9733;{% endfor %}{% for _ in empty_star_range %}&#9734;{% endfor %}</span>
+                <span style="font-size:0.875rem;color:var(--text-secondary);margin-left:0.5rem">({{ review_count }} reviews)</span>
+            </div>
+            {% endif %}
+            <div style="font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:1rem">{{ product.price|floatformat:0 }} so'm</div>
+            {% if product.quantity > 0 %}
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem">
+                <span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>
+                <span style="font-size:0.875rem;color:#16a34a;font-weight:500">In Stock ({{ product.quantity }} available)</span>
+            </div>
+            {% else %}
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem">
+                <span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>
+                <span style="font-size:0.875rem;color:#dc2626;font-weight:500">Out of Stock</span>
+            </div>
+            {% endif %}
+            {% if product.brand %}
+            <div style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem">Brand: <strong>{{ product.brand.name }}</strong></div>
+            {% endif %}
+            {% if product.description %}
+            <div style="font-size:0.9375rem;color:var(--text-secondary);line-height:1.7;margin-bottom:1.5rem">{{ product.description }}</div>
+            {% endif %}
+            {% if variants %}
+            <div style="margin-bottom:1.5rem">
+                <label style="font-size:0.875rem;font-weight:600;display:block;margin-bottom:0.5rem">Select Variant:</label>
+                <select id="variantSelect" class="form-select" style="max-width:300px;border-radius:var(--radius-sm)" onchange="updateVariantPrice()">
+                    <option value="">Default</option>
+                    {% for v in variants %}
+                    <option value="{{ v.pk }}" data-price="{{ v.price }}" data-stock="{{ v.quantity }}">{{ v.name }} - {{ v.price|floatformat:0 }} so'm ({{ v.quantity }} available)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            {% if product.quantity > 0 %}
+            <form action="{% url 'storefront:add_to_cart' %}" method="post" style="display:flex;gap:1rem;align-items:flex-end;margin-bottom:1.5rem">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.pk }}">
+                <input type="hidden" name="variant_id" id="variantId" value="">
+                <div>
+                    <label style="font-size:0.875rem;font-weight:600;display:block;margin-bottom:0.25rem">Quantity</label>
+                    <input type="number" name="quantity" value="1" min="1" max="{{ product.quantity }}" style="width:80px;height:42px;text-align:center;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font)">
+                </div>
+                <button type="submit" class="btn-store-primary" style="height:42px;padding:0 2rem">
+                    <i class="bi bi-bag-plus"></i> Add to Cart
+                </button>
+            </form>
+            {% endif %}
+            <form action="{% url 'storefront:wishlist_toggle' %}" method="post" style="margin-bottom:1rem">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.pk }}">
+                <button type="submit" class="btn-store-outline" style="padding:0.5rem 1rem;font-size:0.8125rem">
+                    <i class="bi bi-heart{% if in_wishlist %}-fill{% endif %}"></i> {% if in_wishlist %}In Wishlist{% else %}Add to Wishlist{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if reviews %}
+    <div style="margin-top:3rem">
+        <h2 class="store-section-title">Customer Reviews</h2>
+        {% for review in reviews %}
+        <div style="border:1px solid var(--border-light);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                <div>
+                    <strong>{{ review.customer.name }}</strong>
+                    {% if review.is_verified_purchase %}<span style="font-size:0.75rem;color:var(--success-600);background:#dcfce7;padding:0.125rem 0.5rem;border-radius:999px;margin-left:0.5rem">Verified Purchase</span>{% endif %}
+                </div>
+                <span style="color:#f59e0b">{% for _ in review.star_range %}&#9733;{% endfor %}{% for _ in review.empty_star_range %}&#9734;{% endfor %}</span>
+            </div>
+            {% if review.title %}<div style="font-weight:600;margin-bottom:0.25rem">{{ review.title }}</div>{% endif %}
+            <div style="font-size:0.9375rem;color:var(--text-secondary)">{{ review.comment }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:2rem">
+        <h3 style="font-weight:600;margin-bottom:1rem">Write a Review</h3>
+        <form action="{% url 'storefront:add_review' %}" method="post" style="max-width:500px">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ product.pk }}">
+            <div style="margin-bottom:1rem">
+                <label style="font-size:0.875rem;font-weight:500;display:block;margin-bottom:0.25rem">Rating</label>
+                <select name="rating" class="form-select form-select-sm" style="width:auto">
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+            <div style="margin-bottom:1rem">
+                <input type="text" name="title" class="form-control" placeholder="Sharh sarlavhasi (ixtiyoriy)">
+            </div>
+            <div style="margin-bottom:1rem">
+                <textarea name="comment" class="form-control" rows="3" placeholder="Sharhingiz..." required></textarea>
+            </div>
+            <button type="submit" class="btn-store-primary">Submit Review</button>
+        </form>
+    </div>
+
+    {% if related_products %}
+    <div style="margin-top:3rem">
+        <h2 class="store-section-title">Related Products</h2>
+        <div class="products-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+            {% for product in related_products %}
+            <a href="{% url 'storefront:product_detail' slug=product.slug %}" class="product-card">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+                {% else %}
+                <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+                {% endif %}
+                <div class="product-card-body">
+                    <div class="product-card-name">{{ product.name }}</div>
+                    <div class="product-card-price">{{ product.price|floatformat:0 }} so'm</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block store_scripts %}
+<script>
+function updateVariantPrice() {
+    var sel = document.getElementById('variantSelect');
+    var opt = sel.options[sel.selectedIndex];
+    var variantId = document.getElementById('variantId');
+    variantId.value = sel.value;
+    if (opt.value) {
+        var price = opt.getAttribute('data-price');
+        var stock = opt.getAttribute('data-stock');
+        document.querySelector('[style*="font-size:2rem"]').textContent = parseFloat(price).toLocaleString() + ' so\'m';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ task.title }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:task_list' %}">{% t "warehouse_tasks" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ task.title }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ task.title }}</h1>
+            {% if task.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif task.status == 'in_progress' %}
+                <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+            {% elif task.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ task.get_status_display }}</span>
+            {% endif %}
+            {% if task.priority == 'high' %}
+                <span class="badge-pro badge-pro-danger">{% t "high" %}</span>
+            {% elif task.priority == 'medium' %}
+                <span class="badge-pro badge-pro-warning">{% t "medium" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral">{% t "low" %}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if task.status == 'pending' %}
+        <form method="post" action="{% url 'warehouses:task_update' pk=task.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="in_progress">
+            <button type="submit" class="btn-pro btn-pro-primary">
+                <i class="bi bi-play-circle"></i> {% t "start" %}
+            </button>
+        </form>
+        {% endif %}
+        {% if not task.assigned_to and task.status != 'completed' and task.status != 'cancelled' %}
+        <form method="post" action="{% url 'warehouses:task_update' pk=task.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="assigned_to" value="{{ request.user.pk }}">
+            <button type="submit" class="btn-pro btn-pro-info">
+                <i class="bi bi-person-plus"></i> {% t "assign_to_me" %}
+            </button>
+        </form>
+        {% endif %}
+        {% if task.status == 'in_progress' %}
+        <form method="post" action="{% url 'warehouses:task_update' pk=task.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="btn-pro btn-pro-success">
+                <i class="bi bi-check-circle"></i> {% t "complete" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ task.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ task.get_task_type_display }}</div>
+            <div class="stat-card-label">{% t "task_type" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-tag"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if task.assigned_to %}{{ task.assigned_to.get_full_name|default:task.assigned_to.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "assigned_to" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if task.created_by %}{{ task.created_by.get_full_name|default:task.created_by.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "created_by" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-person-badge"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if task.reference %}{{ task.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "reference" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-link-45deg"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ task.created_at|date:"d.m.Y H:i" }}</div>
+            <div class="stat-card-label">{% t "created_at" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clock"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if task.started_at %}{{ task.started_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "started_at" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-clock-history"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if task.completed_at %}{{ task.completed_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "completed_at" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check2-circle"></i></div>
+    </div>
+</div>
+
+{% if task.description %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-text-left" style="color:var(--primary-600)"></i> {% t "description" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p style="color:var(--text-secondary);line-height:1.6">{{ task.description|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if task.notes %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p style="color:var(--text-secondary);line-height:1.6">{{ task.notes|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

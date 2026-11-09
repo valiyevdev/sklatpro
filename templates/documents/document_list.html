@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "document_list" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "document_list" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "document_list" %}</h1>
+        <p class="page-subtitle">{{ total_count }} {% t "documents" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_document" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-funnel" style="color:var(--primary-600)"></i> {% t "filter_by_type" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <form method="get" class="grid grid-5" style="gap:var(--sp-3);align-items:end">
+            <div class="form-group">
+                <label class="form-label">{% t "filter_by_type" %}</label>
+                {{ filter_form.doc_type }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "filter_by_status" %}</label>
+                {{ filter_form.status }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "date_from" %}</label>
+                {{ filter_form.date_from }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "date_to" %}</label>
+                {{ filter_form.date_to }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "search_documents" %}</label>
+                {{ filter_form.search }}
+            </div>
+            <div style="grid-column:1/-1;display:flex;gap:var(--sp-2)">
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i> {% t "search_documents" %}</button>
+                <a href="{% url 'documents:document_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-file-earmark-text" style="color:var(--primary-600)"></i> {% t "document_list" %}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "document_number" %}</th>
+                    <th>{% t "document_type" %}</th>
+                    <th>{% t "title" %}</th>
+                    <th>{% t "customer" %}</th>
+                    <th>{% t "total_amount" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'documents:document_detail' pk=doc.pk %}" style="color:var(--text-primary);text-decoration:none">{{ doc.number }}</a>
+                    </td>
+                    <td>
+                        <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
+                    </td>
+                    <td>{{ doc.title|default:"—" }}</td>
+                    <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
+                    <td class="cell-primary fw-600">{{ doc.total|floatformat:0 }} {{ doc.currency }}</td>
+                    <td>
+                        {% if doc.status == 'draft' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "drafts" %}</span>
+                        {% elif doc.status == 'pending' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "pending" %}</span>
+                        {% elif doc.status == 'approved' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+                        {% elif doc.status == 'sent' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "sent" %}</span>
+                        {% elif doc.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                        {% elif doc.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                        {% elif doc.status == 'archived' %}
+                            <span class="badge-pro badge-pro-dot">{% t "archived" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{{ doc.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ doc.date|date:"d.m.Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            <h5 class="empty-state-title">{% t "no_documents" %}</h5>
+                            <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ terminal.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro terminal-breadcrumb">
+    <a href="{% url 'pos:pos_dashboard' %}">{% t "pos" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:terminal_list' %}">{% t "pos_terminals" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ terminal.name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ terminal.name }}</h1>
+            {% if terminal.status == 'active' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_active" %}</span>
+            {% elif terminal.status == 'inactive' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_inactive" %}</span>
+            {% elif terminal.status == 'maintenance' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_maintenance" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ terminal.get_status_display }}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle"><code>{{ terminal.code }}</code> &middot; {{ terminal.warehouse.name }}</p>
+    </div>
+    <div class="page-actions d-flex gap-2" style="flex-wrap:wrap">
+        <a href="{% url 'pos:terminal_update' pk=terminal.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "pos_edit" %}</a>
+        <a href="{% url 'pos:terminal_delete' pk=terminal.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div class="grid grid-4" style="gap:var(--sp-3);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ terminal.shifts.count }}</div>
+            <div class="stat-card-label">{% t "pos_total_shifts" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clock-history"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ terminal.shifts.filter.status_open|length }}</div>
+            <div class="stat-card-label">{% t "pos_open_shifts" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-door-open"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ terminal.receipts.count }}</div>
+            <div class="stat-card-label">{% t "pos_total_receipts" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-receipt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ terminal.serial_number|default:"—" }}</div>
+            <div class="stat-card-label">{% t "pos_serial_number" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-hash"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "pos_terminal_info" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-5)">
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-pc-display"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_name" %}</div>
+                    <div class="text-pro-sm fw-500">{{ terminal.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_warehouse" %}</div>
+                    <div class="text-pro-sm fw-500">{{ terminal.warehouse.name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-cash"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_default_payment" %}</div>
+                    <div class="text-pro-sm fw-500">{{ terminal.get_default_payment_method_display }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon {% if terminal.is_active %}success{% else %}danger{% endif %}" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-toggle-{% if terminal.is_active %}on{% else %}off{% endif %}"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "pos_status" %}</div>
+                    <div class="text-pro-sm fw-500">{{ terminal.get_status_display }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-center gap-2" style="flex-wrap:wrap;margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--border-subtle)">
+            <div class="d-flex align-center gap-2">
+                <i class="bi bi-{% if terminal.cash_drawer %}check-circle{% else %}x-circle{% endif %}" style="color:{% if terminal.cash_drawer %}var(--success-600){% else %}var(--danger-600){% endif %};font-size:0.875rem"></i>
+                <span class="text-pro-sm">{% t "pos_cash_drawer" %}</span>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <i class="bi bi-{% if terminal.barcode_scanner %}check-circle{% else %}x-circle{% endif %}" style="color:{% if terminal.barcode_scanner %}var(--success-600){% else %}var(--danger-600){% endif %};font-size:0.875rem"></i>
+                <span class="text-pro-sm">{% t "pos_barcode_scanner" %}</span>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <i class="bi bi-{% if terminal.card_terminal %}check-circle{% else %}x-circle{% endif %}" style="color:{% if terminal.card_terminal %}var(--success-600){% else %}var(--danger-600){% endif %};font-size:0.875rem"></i>
+                <span class="text-pro-sm">{% t "pos_card_terminal" %}</span>
+            </div>
+            {% if terminal.receipt_printer %}
+            <div class="d-flex align-center gap-2">
+                <i class="bi bi-printer" style="color:var(--primary-600);font-size:0.875rem"></i>
+                <span class="text-pro-sm">{{ terminal.receipt_printer }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="terminal-bottom-grid grid" style="grid-template-columns:1fr">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "pos_recent_shifts" %}</span>
+            <a href="{% url 'pos:shift_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "pos_all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="terminal-desktop-table">
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+                <table class="table-pro" style="width:100%;min-width:550px">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_shift_number" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_cashier" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_status" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_opened" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in shifts %}
+                        <tr>
+                            <td class="cell-primary px-3 py-2 text-xs" style="white-space:nowrap">
+                                <a href="{% url 'pos:shift_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.shift_number }}</a>
+                            </td>
+                            <td class="px-3 py-2 text-xs" style="white-space:nowrap">{{ s.cashier.get_full_name|default:s.cashier.username }}</td>
+                            <td class="px-3 py-2 text-xs" style="white-space:nowrap">
+                                {% if s.status == 'open' %}
+                                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_open" %}</span>
+                                {% else %}
+                                    <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pos_closed" %}</span>
+                                {% endif %}
+                            </td>
+                            <td class="cell-muted px-3 py-2 text-xs" style="white-space:nowrap">{{ s.opened_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state" style="padding:var(--sp-6)">
+                                    <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_shifts" %}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="terminal-mobile-cards">
+            {% for s in shifts %}
+            <div class="terminal-mobile-card" style="padding:var(--sp-3);margin-bottom:var(--sp-2);border-radius:var(--radius-lg);background:color-mix(in srgb, var(--bg-surface) 60%, transparent);border:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:var(--sp-1)">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <a href="{% url 'pos:shift_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none;font-weight:600;font-size:var(--text-sm)">{{ s.shift_number }}</a>
+                    {% if s.status == 'open' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_open" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pos_closed" %}</span>
+                    {% endif %}
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:var(--text-xs);color:var(--text-muted)">{% t "pos_cashier" %}: {{ s.cashier.get_full_name|default:s.cashier.username }}</span>
+                    <span style="font-size:var(--text-xs);color:var(--text-muted)">{{ s.opened_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:var(--sp-6)">
+                <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_shifts" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-receipt" style="color:var(--primary-600)"></i> {% t "pos_recent_receipts" %}</span>
+            <a href="{% url 'pos:receipt_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "pos_all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="terminal-desktop-table">
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+                <table class="table-pro" style="width:100%;min-width:550px">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_receipt_number" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_total" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_status" %}</th>
+                            <th class="px-3 py-2 text-xs" style="white-space:nowrap">{% t "pos_date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in recent_receipts %}
+                        <tr>
+                            <td class="cell-primary px-3 py-2 text-xs" style="white-space:nowrap">
+                                <a href="{% url 'pos:receipt_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.receipt_number }}</a>
+                            </td>
+                            <td class="fw-600 px-3 py-2 text-xs" style="white-space:nowrap">{{ r.total|floatformat:0 }}</td>
+                            <td class="px-3 py-2 text-xs" style="white-space:nowrap">
+                                {% if r.status == 'completed' %}
+                                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                                {% elif r.status == 'cancelled' %}
+                                    <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                                {% else %}
+                                    <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="cell-muted px-3 py-2 text-xs" style="white-space:nowrap">{{ r.created_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state" style="padding:var(--sp-6)">
+                                    <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="terminal-mobile-cards">
+            {% for r in recent_receipts %}
+            <div class="terminal-mobile-card" style="padding:var(--sp-3);margin-bottom:var(--sp-2);border-radius:var(--radius-lg);background:color-mix(in srgb, var(--bg-surface) 60%, transparent);border:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:var(--sp-1)">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <a href="{% url 'pos:receipt_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none;font-weight:600;font-size:var(--text-sm)">{{ r.receipt_number }}</a>
+                    <span style="font-weight:700;font-size:var(--text-sm)">{{ r.total|floatformat:0 }} so'm</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    {% if r.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                    {% elif r.status == 'cancelled' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                    {% endif %}
+                    <span style="font-size:var(--text-xs);color:var(--text-muted)">{{ r.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:var(--sp-6)">
+                <div class="empty-state-desc" style="margin-bottom:0">{% t "pos_no_receipts" %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .terminal-desktop-table { display: block; }
+    .terminal-mobile-cards { display: none; }
+    .terminal-bottom-grid { grid-template-columns: 1fr !important; }
+    @media (max-width: 767px) {
+        .terminal-breadcrumb { display: none !important; }
+        .terminal-desktop-table { display: none !important; }
+        .terminal-mobile-cards { display: block !important; }
+        .terminal-bottom-grid { grid-template-columns: 1fr !important; }
+        .terminal-bottom-grid .card-pro { overflow: visible !important; }
+        .page-actions { flex-direction: column; width: 100%; }
+        .page-actions .btn-pro { width: 100%; justify-content: center; }
+    }
+    @media (min-width: 768px) {
+        .terminal-bottom-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+</style>
+{% endblock %}

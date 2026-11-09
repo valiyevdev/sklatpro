@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "document_templates" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "document_templates" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "document_templates" %}</h1>
+        <p class="page-subtitle">{{ templates|length }} {% t "templates" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'documents:document_template_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_template" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "template_name" %}</th>
+                    <th>{% t "document_type" %}</th>
+                    <th>{% t "is_default" %}</th>
+                    <th>{% t "is_active" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tpl in templates %}
+                <tr>
+                    <td class="cell-primary">{{ tpl.name }}</td>
+                    <td><span class="badge-pro badge-pro-info">{{ tpl.get_doc_type_display }}</span></td>
+                    <td>
+                        {% if tpl.is_default %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-check-lg"></i></span>
+                        {% else %}
+                            <span class="badge-pro">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tpl.is_active %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-dot">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'documents:document_template_create' %}" class="btn-pro btn-pro-sm btn-pro-ghost">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            <h5 class="empty-state-title">{% t "no_templates" %}</h5>
+                            <a href="{% url 'documents:document_template_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_template" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

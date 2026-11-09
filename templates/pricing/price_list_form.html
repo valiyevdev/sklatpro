@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if pl %}{% t "edit" %} {% t "price_list" %}{% else %}{% t "create_price_list" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:price_list_list' %}">{% t "price_lists" %}</a>
+    <span class="separator">/</span>
+    {% if pl %}
+        <a href="{% url 'pricing:price_list_detail' pk=pl.pk %}">{{ pl.name }}</a>
+        <span class="separator">/</span>
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create_price_list" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-head">
+    <a href="{% url 'pricing:price_list_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if pl %}{% t "edit_price_list" %}: {{ pl.name }}{% else %}{% t "create_price_list" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "general_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "name" %} <span style="color:var(--danger-500)">*</span></label>
+                        <input class="input-pro" type="text" name="name" value="{% if pl %}{{ pl.name }}{% endif %}" required maxlength="200" placeholder="{% t "name" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "code" %} <span style="color:var(--danger-500)">*</span></label>
+                        <input class="input-pro" type="text" name="code" value="{% if pl %}{{ pl.code }}{% endif %}" required maxlength="50" placeholder="{% t "code" %}">
+                    </div>
+                    <div class="input-pro-group" style="grid-column:span 2">
+                        <label class="input-pro-label">{% t "description" %}</label>
+                        <textarea class="input-pro" name="description" rows="2">{% if pl %}{{ pl.description }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-cash-coin" style="color:var(--primary-600)"></i> {% t "pricing_settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "currency" %}</label>
+                        <select class="input-pro" name="currency">
+                            <option value="UZS" {% if pl and pl.currency == 'UZS' %}selected{% endif %}>UZS</option>
+                            <option value="USD" {% if pl and pl.currency == 'USD' %}selected{% endif %}>USD</option>
+                            <option value="EUR" {% if pl and pl.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                            <option value="RUB" {% if pl and pl.currency == 'RUB' %}selected{% endif %}>RUB</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "status" %}</label>
+                        <select class="input-pro" name="status">
+                            <option value="active" {% if not pl or pl.status == 'active' %}selected{% endif %}>{% t "active" %}</option>
+                            <option value="inactive" {% if pl and pl.status == 'inactive' %}selected{% endif %}>{% t "inactive" %}</option>
+                            <option value="scheduled" {% if pl and pl.status == 'scheduled' %}selected{% endif %}>{% t "scheduled" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <input class="input-pro" type="number" name="priority" min="0" value="{% if pl %}{{ pl.priority }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "channel" %}</label>
+                        <select class="input-pro" name="channel">
+                            <option value="">{% t "all_channels" %}</option>
+                            <option value="retail" {% if pl and pl.channel == 'retail' %}selected{% endif %}>{% t "retail" %}</option>
+                            <option value="pos" {% if pl and pl.channel == 'pos' %}selected{% endif %}>{% t "pos" %}</option>
+                            <option value="website" {% if pl and pl.channel == 'website' %}selected{% endif %}>{% t "website" %}</option>
+                            <option value="telegram" {% if pl and pl.channel == 'telegram' %}selected{% endif %}>{% t "telegram" %}</option>
+                            <option value="marketplace" {% if pl and pl.channel == 'marketplace' %}selected{% endif %}>{% t "marketplace" %}</option>
+                            <option value="wholesale" {% if pl and pl.channel == 'wholesale' %}selected{% endif %}>{% t "wholesale" %}</option>
+                            <option value="sales_manager" {% if pl and pl.channel == 'sales_manager' %}selected{% endif %}>{% t "sales_manager" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group mt-3">
+                    <div class="d-flex align-center gap-3">
+                        <input class="input-pro" type="checkbox" name="is_default" id="is_default" {% if pl and pl.is_default %}checked{% endif %} style="width:auto">
+                        <label class="input-pro-label" for="is_default" style="margin-bottom:0">{% t "default_price_list" %}</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calendar-range" style="color:var(--primary-600)"></i> {% t "validity_period" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "start_date" %}</label>
+                        <input class="input-pro" type="date" name="start_date" value="{% if pl and pl.start_date %}{{ pl.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "end_date" %}</label>
+                        <input class="input-pro" type="date" name="end_date" value="{% if pl and pl.end_date %}{{ pl.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-diagram-3" style="color:var(--primary-600)"></i> {% t "targeting" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "customer_segment" %}</label>
+                        <select class="input-pro" name="customer_segment">
+                            <option value="">{% t "none" %}</option>
+                            {% for seg in segments %}
+                                <option value="{{ seg.pk }}" {% if pl and pl.customer_segment_id == seg.pk %}selected{% endif %}>{{ seg.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "warehouse" %}</label>
+                        <select class="input-pro" name="warehouse">
+                            <option value="">{% t "none" %}</option>
+                            {% for w in warehouses %}
+                                <option value="{{ w.pk }}" {% if pl and pl.warehouse_id == w.pk %}selected{% endif %}>{{ w.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-between">
+            <a href="{% url 'pricing:price_list_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if pl %}{% t "save_changes" %}{% else %}{% t "create" %}{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

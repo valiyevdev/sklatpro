@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_transactions" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_transactions" %}</h1>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-6">
+    <a href="{% url 'finance:transaction_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "fin_create_transaction" %}</a>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <input class="form-control" type="search" name="search" placeholder="{% t "fin_search_transactions" %}" value="{{ search_query }}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="form-control" name="type">
+                    <option value="">{% t "fin_all_types" %}</option>
+                    <option value="sale" {% if type_filter == 'sale' %}selected{% endif %}>{% t "fin_type_sale" %}</option>
+                    <option value="purchase" {% if type_filter == 'purchase' %}selected{% endif %}>{% t "fin_type_purchase" %}</option>
+                    <option value="customer_payment" {% if type_filter == 'customer_payment' %}selected{% endif %}>{% t "fin_type_customer_payment" %}</option>
+                    <option value="supplier_payment" {% if type_filter == 'supplier_payment' %}selected{% endif %}>{% t "fin_type_supplier_payment" %}</option>
+                    <option value="customer_refund" {% if type_filter == 'customer_refund' %}selected{% endif %}>{% t "fin_type_customer_refund" %}</option>
+                    <option value="supplier_refund" {% if type_filter == 'supplier_refund' %}selected{% endif %}>{% t "fin_type_supplier_refund" %}</option>
+                    <option value="income" {% if type_filter == 'income' %}selected{% endif %}>{% t "fin_type_income" %}</option>
+                    <option value="expense" {% if type_filter == 'expense' %}selected{% endif %}>{% t "fin_type_expense" %}</option>
+                    <option value="transfer_in" {% if type_filter == 'transfer_in' %}selected{% endif %}>{% t "fin_type_transfer_in" %}</option>
+                    <option value="transfer_out" {% if type_filter == 'transfer_out' %}selected{% endif %}>{% t "fin_type_transfer_out" %}</option>
+                    <option value="adjustment" {% if type_filter == 'adjustment' %}selected{% endif %}>{% t "fin_type_adjustment" %}</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="form-control" name="direction">
+                    <option value="">{% t "fin_all_directions" %}</option>
+                    <option value="income" {% if direction_filter == 'income' %}selected{% endif %}>{% t "fin_direction_income" %}</option>
+                    <option value="expense" {% if direction_filter == 'expense' %}selected{% endif %}>{% t "fin_direction_expense" %}</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <input class="form-control" type="date" name="date_from" value="{{ date_from }}" placeholder="{% t "date" %} {% t "fin_from" %}">
+            </div>
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <input class="form-control" type="date" name="date_to" value="{{ date_to }}" placeholder="{% t "date" %} {% t "fin_to" %}">
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i> {% t "search" %}</button>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "fin_type" %}</th>
+                    <th>{% t "fin_direction" %}</th>
+                    <th>{% t "amount" %}</th>
+                    <th>{% t "fin_account" %}</th>
+                    <th>{% t "fin_category" %}</th>
+                    <th>{% t "fin_reference" %}</th>
+                    <th>{% t "fin_method" %}</th>
+                    <th>{% t "description" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in page_obj %}
+                <tr>
+                    <td>{{ t.date|date:"d.m.Y" }}</td>
+                    <td>{{ t.get_txn_type_display }}</td>
+                    <td>
+                        {% if t.direction == 'income' %}
+                            <span class="badge-pro badge-pro-success">{% t "fin_direction_income" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "fin_direction_expense" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-primary fw-600">{{ t.currency }} {{ t.amount|floatformat:2 }}</td>
+                    <td>{{ t.account|default:"-" }}</td>
+                    <td>{{ t.category|default:"-" }}</td>
+                    <td>{{ t.reference_number|default:"-" }}</td>
+                    <td>{{ t.get_payment_method_display|default:"-" }}</td>
+                    <td class="text-pro-sm">{{ t.description|truncatechars:40|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_transactions" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

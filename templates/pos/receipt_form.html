@@ -1,0 +1,416 @@
+﻿{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t 'pos_new_receipt' %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{% t 'pos_new_receipt' %}</h1>
+        <a href="{% url 'pos:receipt_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {% t 'pos_back' %}
+        </a>
+    </div>
+
+    <form method="post" id="receiptForm">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% t 'pos_scan_product' %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control form-control-lg" id="barcodeInput" 
+                                   placeholder="{% t 'pos_scan_or_search' %}" autofocus>
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" onclick="searchProduct()">
+                                    <i class="fas fa-search"></i> {% t 'pos_search' %}
+                                </button>
+                            </div>
+                        </div>
+                        <div id="searchResults" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% t 'pos_receipt_items' %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>{% t 'pos_product' %}</th>
+                                        <th>{% t 'pos_quantity' %}</th>
+                                        <th>{% t 'pos_unit_price' %}</th>
+                                        <th>{% t 'pos_discount' %}</th>
+                                        <th>{% t 'pos_tax' %}</th>
+                                        <th>{% t 'pos_total' %}</th>
+                                        <th>{% t 'pos_actions' %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="noItems" class="text-center text-muted py-4">
+                            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                            <p>{% t 'pos_no_items' %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% t 'pos_receipt_details' %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="terminal">{% t 'pos_terminal' %} *</label>
+                            <select class="form-control" id="terminal" name="terminal" required>
+                                <option value="">{% t 'pos_select_terminal' %}</option>
+                                {% for terminal in terminals %}
+                                <option value="{{ terminal.pk }}" {% if open_shift and open_shift.terminal_id == terminal.pk %}selected{% endif %}>
+                                    {{ terminal.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shift">{% t 'pos_shift' %} *</label>
+                            <select class="form-control" id="shift" name="shift" required>
+                                <option value="">{% t 'pos_select_shift' %}</option>
+                                {% if open_shift %}
+                                <option value="{{ open_shift.pk }}" selected>{{ open_shift.shift_number }}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customer">{% t 'pos_customer' %}</label>
+                            <select class="form-control" id="customer" name="customer">
+                                <option value="">{% t 'pos_walk_in_customer' %}</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.pk }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="payment_method">{% t 'pos_payment_method' %} *</label>
+                            <select class="form-control" id="payment_method" name="payment_method" required>
+                                {% for value, label in payment_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tax_rate">{% t 'pos_tax_rate' %} (%)</label>
+                            <input type="number" class="form-control" id="tax_rate" name="tax_rate" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="discount_amount">{% t 'pos_discount_amount' %}</label>
+                            <input type="number" class="form-control" id="discount_amount" name="discount_amount" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">{% t 'pos_notes' %}</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% t 'pos_order_summary' %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>{% t 'pos_subtotal' %}</th>
+                                <td class="text-right" id="subtotal">0 UZS</td>
+                            </tr>
+                            <tr>
+                                <th>{% t 'pos_tax' %}</th>
+                                <td class="text-right" id="taxTotal">0 UZS</td>
+                            </tr>
+                            <tr>
+                                <th>{% t 'pos_discount' %}</th>
+                                <td class="text-right" id="discountTotal">0 UZS</td>
+                            </tr>
+                            <tr class="border-top">
+                                <th><h5 class="mb-0">{% t 'pos_total' %}</h5></th>
+                                <td class="text-right"><h5 class="mb-0" id="grandTotal">0 UZS</h5></td>
+                            </tr>
+                        </table>
+
+                        <div class="form-group mt-4">
+                            <label for="amount_paid">{% t 'pos_amount_paid' %} *</label>
+                            <input type="number" class="form-control form-control-lg" id="amount_paid" name="amount_paid" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>{% t 'pos_change' %}</label>
+                            <div class="form-control form-control-lg bg-light" id="changeDisplay">0 UZS</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg btn-block" id="submitBtn" disabled>
+                            <i class="fas fa-check"></i> {% t 'pos_complete_sale' %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+let itemCount = 0;
+let items = [];
+
+function searchProduct() {
+    const query = document.getElementById('barcodeInput').value.trim();
+    if (!query) return;
+
+    fetch(`/pos/api/barcode/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.products.length > 0) {
+                showSearchResults(data.products);
+            } else {
+                showNoResults();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function showSearchResults(products) {
+    const container = document.getElementById('searchResults');
+    container.innerHTML = '';
+
+    products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.innerHTML = `
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${product.name}</strong>
+                        <br>
+                        <small class="text-muted">SKU: ${product.sku} | Barcode: ${product.barcode || '-'}</small>
+                        <br>
+                        <small class="text-success">Available: ${product.available_quantity} ${product.unit || ''}</small>
+                    </div>
+                    <div class="text-right">
+                        <strong>${product.price} UZS</strong>
+                        <br>
+                        <button type="button" class="btn btn-sm btn-primary mt-1" onclick="addItem(${product.id}, '${product.name}', ${product.price}, '${product.unit || ''}', ${product.available_quantity})">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function showNoResults() {
+    const container = document.getElementById('searchResults');
+    container.innerHTML = '<div class="alert alert-warning">{% t "pos_product_not_found" %}</div>';
+}
+
+function addItem(productId, productName, price, unit, availableQuantity) {
+    const existingItem = items.find(item => item.productId === productId);
+    if (existingItem) {
+        if (existingItem.quantity < availableQuantity) {
+            existingItem.quantity++;
+        } else {
+            alert('{% t "pos_insufficient_stock" %}');
+            return;
+        }
+    } else {
+        items.push({
+            productId: productId,
+            productName: productName,
+            price: parseFloat(price),
+            unit: unit,
+            quantity: 1,
+            discount: 0,
+            tax: 0,
+            availableQuantity: availableQuantity
+        });
+    }
+    
+    itemCount++;
+    updateTable();
+    updateTotals();
+    
+    document.getElementById('barcodeInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+    document.getElementById('barcodeInput').focus();
+}
+
+function removeItem(index) {
+    items.splice(index, 1);
+    updateTable();
+    updateTotals();
+}
+
+function updateQuantity(index, change) {
+    const item = items[index];
+    const newQuantity = item.quantity + change;
+    
+    if (newQuantity > 0 && newQuantity <= item.availableQuantity) {
+        item.quantity = newQuantity;
+        updateTable();
+        updateTotals();
+    } else if (newQuantity <= 0) {
+        removeItem(index);
+    } else {
+        alert('{% t "pos_insufficient_stock" %}');
+    }
+}
+
+function updateTable() {
+    const tbody = document.getElementById('itemsBody');
+    const noItems = document.getElementById('noItems');
+    
+    if (items.length === 0) {
+        tbody.innerHTML = '';
+        noItems.style.display = 'block';
+        document.getElementById('submitBtn').disabled = true;
+        return;
+    }
+    
+    noItems.style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    
+    tbody.innerHTML = items.map((item, index) => `
+        <tr>
+            <td>
+                ${item.productName}
+                <input type="hidden" name="products" value="${item.productId}">
+                <br><small class="text-muted">${item.unit}</small>
+            </td>
+            <td>
+                <div class="input-group input-group-sm" style="width: 120px;">
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">-</button>
+                    </div>
+                    <input type="number" class="form-control text-center" name="quantities" value="${item.quantity}" readonly>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">+</button>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" name="prices" value="${item.price}" step="0.01" onchange="updateItemPrice(${index}, this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" name="item_discounts" value="${item.discount}" step="0.01" onchange="updateItemDiscount(${index}, this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" name="item_taxes" value="${item.tax}" step="0.01" onchange="updateItemTax(${index}, this.value)">
+            </td>
+            <td class="text-right">${((item.price * item.quantity) - item.discount + item.tax).toFixed(2)} UZS</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateItemPrice(index, value) {
+    items[index].price = parseFloat(value) || 0;
+    updateTable();
+    updateTotals();
+}
+
+function updateItemDiscount(index, value) {
+    items[index].discount = parseFloat(value) || 0;
+    updateTable();
+    updateTotals();
+}
+
+function updateItemTax(index, value) {
+    items[index].tax = parseFloat(value) || 0;
+    updateTable();
+    updateTotals();
+}
+
+function updateTotals() {
+    let subtotal = 0;
+    let totalTax = 0;
+    let totalDiscount = 0;
+    
+    items.forEach(item => {
+        const lineTotal = (item.price * item.quantity);
+        subtotal += lineTotal;
+        totalTax += item.tax;
+        totalDiscount += item.discount;
+    });
+    
+    const taxRate = parseFloat(document.getElementById('tax_rate').value) || 0;
+    const additionalTax = subtotal * (taxRate / 100);
+    const discountAmount = parseFloat(document.getElementById('discount_amount').value) || 0;
+    
+    const grandTotal = subtotal + totalTax + additionalTax - totalDiscount - discountAmount;
+    
+    document.getElementById('subtotal').textContent = subtotal.toFixed(2) + ' UZS';
+    document.getElementById('taxTotal').textContent = (totalTax + additionalTax).toFixed(2) + ' UZS';
+    document.getElementById('discountTotal').textContent = (totalDiscount + discountAmount).toFixed(2) + ' UZS';
+    document.getElementById('grandTotal').textContent = grandTotal.toFixed(2) + ' UZS';
+    
+    updateChange();
+}
+
+function updateChange() {
+    const amountPaid = parseFloat(document.getElementById('amount_paid').value) || 0;
+    const grandTotal = parseFloat(document.getElementById('grandTotal').textContent.replace(' UZS', '')) || 0;
+    const change = amountPaid - grandTotal;
+    
+    document.getElementById('changeDisplay').textContent = change.toFixed(2) + ' UZS';
+    document.getElementById('changeDisplay').className = 'form-control form-control-lg ' + (change >= 0 ? 'bg-success text-white' : 'bg-danger text-white');
+}
+
+// Event listeners
+document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchProduct();
+    }
+});
+
+document.getElementById('tax_rate').addEventListener('change', updateTotals);
+document.getElementById('discount_amount').addEventListener('change', updateTotals);
+document.getElementById('amount_paid').addEventListener('input', updateChange);
+
+// Load shift when terminal changes
+document.getElementById('terminal').addEventListener('change', function() {
+    const terminalId = this.value;
+    const shiftSelect = document.getElementById('shift');
+    
+    if (terminalId) {
+        // In a real implementation, you would fetch open shifts for this terminal
+        // For now, we'll use the pre-selected shift if available
+    }
+});
+
+// Initial load
+updateTable();
+</script>
+{% endblock %}

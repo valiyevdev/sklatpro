@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "adjustment_detail" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'adjustment_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ adjustment.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ adjustment.warehouse.name }} | {{ adjustment.created_at|date:"d.m.Y" }}
+            {% if adjustment.status == 'draft' %}
+                <span class="badge-pro badge-pro-neutral">{% t "adjustment_status_draft" %}</span>
+            {% elif adjustment.status == 'pending' %}
+                <span class="badge-pro badge-pro-warning">{% t "adjustment_status_pending" %}</span>
+            {% elif adjustment.status == 'approved' %}
+                <span class="badge-pro badge-pro-success">{% t "adjustment_status_approved" %}</span>
+            {% elif adjustment.status == 'completed' %}
+                <span class="badge-pro badge-pro-info">{% t "adjustment_status_completed" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger">{{ adjustment.get_status_display }}</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if adjustment.status == 'draft' %}
+            <form method="post" action="{% url 'adjustment_submit' pk=adjustment.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-send"></i> {% t "submit" %}</button>
+            </form>
+        {% endif %}
+        {% if adjustment.status == 'pending' %}
+            <form method="post" action="{% url 'adjustment_approve' pk=adjustment.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "approve_adjustment" %}</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ adjustment.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ adjustment.reason|default:"-" }}</div>
+            <div class="stat-card-label">{% t "reason" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-info-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ items.count }}</div>
+            <div class="stat-card-label">{% t "products" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-box-seam"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "adjustment_info" %}</span></div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+                <span class="text-pro-sm text-pro-muted">{% t "created_by" %}</span>
+                <p class="fw-500 mb-0">{{ adjustment.created_by.get_full_name|default:adjustment.created_by.email }}</p>
+            </div>
+            <div>
+                <span class="text-pro-sm text-pro-muted">{% t "approved_by" %}</span>
+                <p class="fw-500 mb-0">{% if adjustment.approved_by %}{{ adjustment.approved_by.get_full_name|default:adjustment.approved_by.email }}{% else %}-{% endif %}</p>
+            </div>
+            <div>
+                <span class="text-pro-sm text-pro-muted">{% t "created_at" %}</span>
+                <p class="fw-500 mb-0">{{ adjustment.created_at|date:"d.m.Y H:i" }}</p>
+            </div>
+            <div>
+                <span class="text-pro-sm text-pro-muted">{% t "status" %}</span>
+                <p class="fw-500 mb-0">
+                    {% if adjustment.status == 'draft' %}
+                        <span class="badge-pro badge-pro-neutral">{% t "adjustment_status_draft" %}</span>
+                    {% elif adjustment.status == 'pending' %}
+                        <span class="badge-pro badge-pro-warning">{% t "adjustment_status_pending" %}</span>
+                    {% elif adjustment.status == 'approved' %}
+                        <span class="badge-pro badge-pro-success">{% t "adjustment_status_approved" %}</span>
+                    {% elif adjustment.status == 'completed' %}
+                        <span class="badge-pro badge-pro-info">{% t "adjustment_status_completed" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-danger">{{ adjustment.get_status_display }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "adjustment_items" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "expected_qty" %}</th>
+                    <th>{% t "actual_qty" %}</th>
+                    <th>{% t "difference" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.expected_quantity }}</td>
+                    <td>{{ item.actual_quantity }}</td>
+                    <td>
+                        {% if item.difference > 0 %}
+                            <span class="fw-600" style="color:var(--green-600)">+{{ item.difference }}</span>
+                        {% elif item.difference < 0 %}
+                            <span class="fw-600" style="color:var(--red-600)">{{ item.difference }}</span>
+                        {% else %}
+                            <span class="text-pro-muted">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm text-pro-muted">{{ item.notes|default:"-"|truncatechars:40 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_adjustment_items" %}</h5>
+                            <a href="{% url 'adjustment_add_item' pk=adjustment.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-plus-circle"></i> {% t "add_item" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if adjustment.status == 'draft' or adjustment.status == 'pending' %}
+<div class="d-flex justify-between">
+    <a href="{% url 'adjustment_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> {% t "back" %}</a>
+    <a href="{% url 'adjustment_add_item' pk=adjustment.pk %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "add_item" %}</a>
+</div>
+{% else %}
+<div class="d-flex">
+    <a href="{% url 'adjustment_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-arrow-left"></i> {% t "back" %}</a>
+</div>
+{% endif %}
+
+{% if adjustment.notes %}
+<div class="card-pro mt-4">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "notes" %}</span></div>
+    <div class="card-pro-body"><p class="text-pro-sm">{{ adjustment.notes }}</p></div>
+</div>
+{% endif %}
+{% endblock %}

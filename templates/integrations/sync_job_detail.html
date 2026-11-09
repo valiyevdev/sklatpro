@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "sync_job" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'integrations:sync_jobs' %}">{% t "sync_center" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ job.get_job_type_display }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ job.get_job_type_display }}</h1>
+            {% if job.status == 'pending' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pending" %}</span>
+            {% elif job.status == 'running' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                    <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                    {% t "running" %}
+                </span>
+            {% elif job.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif job.status == 'partial' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "partial" %}</span>
+            {% elif job.status == 'failed' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+            {% elif job.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "cancelled" %}</span>
+            {% elif job.status == 'retrying' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                    <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                    {% t "retrying" %}
+                </span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral">{{ job.get_status_display }}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            <i class="bi bi-plug"></i> {{ job.connection.name }}
+            <span style="margin-left:var(--sp-3)">{{ job.connection.provider.name }}</span>
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if job.can_retry %}
+        <form method="post" action="{% url 'integrations:sync_job_retry' pk=job.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-primary" onclick="return confirm('{% t "confirm_retry" %}')">
+                <i class="bi bi-arrow-clockwise"></i> {% t "retry" %}
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'integrations:sync_jobs' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "back" %}
+        </a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ job.total_items }}</div>
+            <div class="stat-card-label">{% t "total_items" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-collection"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ job.processed_items }}</div>
+            <div class="stat-card-label">{% t "processed" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-gear"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ job.succeeded_items }}</div>
+            <div class="stat-card-label">{% t "succeeded" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ job.failed_items }}</div>
+            <div class="stat-card-label">{% t "failed" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-graph-up" style="color:var(--primary-600)"></i> {% t "progress" %}</span>
+        <span class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{{ job.progress_percent|floatformat:1 }}%</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="progress-pro" style="height:12px">
+            {% if job.status == 'completed' %}
+            <div class="progress-pro-bar success" style="width:{{ job.progress_percent }}%"></div>
+            {% elif job.status == 'failed' %}
+            <div class="progress-pro-bar danger" style="width:{{ job.progress_percent }}%"></div>
+            {% elif job.status == 'partial' %}
+            <div class="progress-pro-bar warning" style="width:{{ job.progress_percent }}%"></div>
+            {% else %}
+            <div class="progress-pro-bar" style="width:{{ job.progress_percent }}%"></div>
+            {% endif %}
+        </div>
+        <div class="d-flex justify-between mt-4">
+            <span class="text-pro-sm text-pro-muted">{% t "0_items" %}</span>
+            <span class="text-pro-sm text-pro-muted">{{ job.total_items }} {% t "items" %}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "timeline" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4)">
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-play-circle"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "started" %}</div>
+                    <div class="text-pro-sm fw-500">{% if job.started_at %}{{ job.started_at|date:"d M Y H:i:s" }}{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-stop-circle"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "completed" %}</div>
+                    <div class="text-pro-sm fw-500">{% if job.completed_at %}{{ job.completed_at|date:"d M Y H:i:s" }}{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-hourglass"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "duration" %}</div>
+                    <div class="text-pro-sm fw-500">{% if job.duration_seconds != None %}{{ job.duration_seconds }}s{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "triggered_by" %}</div>
+                    <div class="text-pro-sm fw-500">{% if job.triggered_by %}{{ job.triggered_by.get_full_name|default:job.triggered_by.email }}{% else %}{% t "system" %}{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if job.status == 'failed' and job.error_summary %}
+<div class="card-pro mb-4" style="border-color:var(--danger-200)">
+    <div class="card-pro-header" style="background:var(--danger-50)">
+        <span class="card-pro-title" style="color:var(--danger-700)"><i class="bi bi-exclamation-triangle"></i> {% t "error_summary" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="background:var(--danger-50);border:1px solid var(--danger-200);border-radius:var(--radius-lg);padding:var(--sp-4);font-family:monospace;font-size:var(--text-sm);color:var(--danger-700);white-space:pre-wrap;word-break:break-all">{{ job.error_summary }}</div>
+        {% if job.error_details %}
+        <div class="mt-4">
+            <button class="btn-pro btn-pro-ghost btn-pro-sm" onclick="var el=document.getElementById('errorDetails');el.style.display=el.style.display==='none'?'block':'none'">
+                <i class="bi bi-code-slash"></i> {% t "show_error_details" %}
+            </button>
+            <div id="errorDetails" style="display:none;margin-top:var(--sp-3)">
+                <pre style="background:var(--bg-page);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-4);font-size:var(--text-sm);overflow-x:auto;max-height:300px">{{ job.error_details|pprint }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4)">
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "direction" %}</div>
+                <div class="text-pro-sm fw-500">{{ job.get_direction_display }}</div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "retry_count" %}</div>
+                <div class="text-pro-sm fw-500">{{ job.retry_count }} / {{ job.max_retries }}</div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "created" %}</div>
+                <div class="text-pro-sm fw-500">{{ job.created_at|date:"d M Y H:i:s" }}</div>
+            </div>
+            {% if job.next_retry_at %}
+            <div>
+                <div class="text-pro-xs text-pro-muted mb-1">{% t "next_retry" %}</div>
+                <div class="text-pro-sm fw-500">{{ job.next_retry_at|date:"d M Y H:i:s" }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if logs %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-journal-text" style="color:var(--primary-600)"></i> {% t "related_logs" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ logs.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "timestamp" %}</th>
+                    <th>{% t "level" %}</th>
+                    <th>{% t "message" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="cell-muted">{{ log.created_at|date:"d M Y H:i:s" }}</td>
+                    <td>
+                        {% if log.level == 'error' or log.level == 'critical' %}
+                            <span class="badge-pro badge-pro-danger">{{ log.get_level_display }}</span>
+                        {% elif log.level == 'warning' %}
+                            <span class="badge-pro badge-pro-warning">{{ log.get_level_display }}</span>
+                        {% elif log.level == 'success' %}
+                            <span class="badge-pro badge-pro-success">{{ log.get_level_display }}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ log.get_level_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-pro-sm" style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media(max-width:1024px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:768px){div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}}
+</style>
+{% endblock %}

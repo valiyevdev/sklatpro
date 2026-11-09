@@ -1,0 +1,77 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "drivers" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "drivers" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "drivers" %}</h1>
+        <p class="page-subtitle">{{ total }} {% t "total" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'logistics:driver_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_driver" %}</a>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="get">
+            <div class="d-flex gap-3 flex-wrap align-center">
+                <div style="flex:2;min-width:200px"><input class="input-pro" type="text" name="q" placeholder="{% t "search_drivers" %}" value="{{ search }}"></div>
+                <div style="flex:1;min-width:150px">
+                    <select class="input-pro" name="status"><option value="">{% t "all_statuses" %}</option>{% for val, label in status_choices %}<option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                </div>
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i></button>
+                <a href="{% url 'logistics:driver_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead><tr><th>{% t "name" %}</th><th>{% t "phone" %}</th><th>{% t "license_number" %}</th><th>{% t "license_category" %}</th><th>{% t "status" %}</th><th style="text-align:right">{% t "actions" %}</th></tr></thead>
+            <tbody>
+                {% for d in drivers %}
+                <tr>
+                    <td class="cell-primary"><a href="{% url 'logistics:driver_detail' pk=d.pk %}" style="color:var(--text-primary);text-decoration:none">{{ d.full_name }}</a></td>
+                    <td>{{ d.phone|default:"-" }}</td>
+                    <td>{{ d.license_number|default:"-" }}</td>
+                    <td>{{ d.license_category|default:"-" }}</td>
+                    <td>
+                        {% if d.status == 'available' %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "available" %}</span>
+                        {% elif d.status == 'on_route' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "on_route" %}</span>
+                        {% elif d.status == 'assigned' %}<span class="badge-pro badge-pro-warning badge-pro-dot">{% t "assigned" %}</span>
+                        {% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{{ d.get_status_display }}</span>{% endif %}
+                    </td>
+                    <td><div class="actions">
+                        <a href="{% url 'logistics:driver_detail' pk=d.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'logistics:driver_update' pk=d.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                    </div></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-person-badge"></i></div><h5 class="empty-state-title">{% t "no_drivers" %}</h5><a href="{% url 'logistics:driver_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_driver" %}</a></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<div class="d-flex justify-between align-center mt-4">
+    <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page }} / {{ total_pages }}</span>
+    <div class="d-flex gap-1">
+        {% if page > 1 %}<a href="?page={{ page|add:'-1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        {% if page < total_pages %}<a href="?page={{ page|add:'1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

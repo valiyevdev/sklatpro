@@ -1,0 +1,69 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}My Account - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section" style="max-width:900px">
+    <h1 class="store-section-title"><i class="bi bi-person"></i> My Account</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem">
+        <div style="background:var(--bg-alt);border-radius:var(--radius);padding:1.25rem">
+            <div style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:0.25rem">Total Orders</div>
+            <div style="font-size:1.5rem;font-weight:700">{{ orders|length }}</div>
+        </div>
+        <div style="background:var(--bg-alt);border-radius:var(--radius);padding:1.25rem">
+            <div style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:0.25rem">Total Spent</div>
+            <div style="font-size:1.5rem;font-weight:700">{{ customer.total_sales|floatformat:0 }} so'm</div>
+        </div>
+        <div style="background:var(--bg-alt);border-radius:var(--radius);padding:1.25rem">
+            <div style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:0.25rem">Wishlist</div>
+            <div style="font-size:1.5rem;font-weight:700">{{ wishlist_items|length }} items</div>
+        </div>
+    </div>
+
+    <h2 style="font-size:1.125rem;font-weight:600;margin-bottom:1rem">Recent Orders</h2>
+    {% if orders %}
+    <div style="overflow-x:auto;margin-bottom:2rem">
+        <table style="width:100%;font-size:0.875rem">
+            <thead><tr style="border-bottom:2px solid var(--border)">
+                <th style="padding:0.75rem 0;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase">Order</th>
+                <th style="padding:0.75rem 0;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase">Date</th>
+                <th style="padding:0.75rem 0;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase">Status</th>
+                <th style="padding:0.75rem 0;text-align:right;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase">Total</th>
+            </tr></thead>
+            <tbody>
+            {% for order in orders %}
+            <tr style="border-bottom:1px solid var(--border-light)">
+                <td style="padding:0.75rem 0"><a href="{% url 'storefront:order_tracking' %}?order={{ order.reference }}" style="color:var(--primary);text-decoration:none;font-weight:600">{{ order.reference }}</a></td>
+                <td style="padding:0.75rem 0;color:var(--text-secondary)">{{ order.date }}</td>
+                <td style="padding:0.75rem 0"><span style="padding:0.125rem 0.5rem;border-radius:999px;font-size:0.75rem;font-weight:600;
+                    {% if order.status == 'completed' %}background:#dcfce7;color:#166534
+                    {% elif order.status == 'cancelled' %}background:#fee2e2;color:#991b1b
+                    {% else %}background:#fef3c7;color:#92400e{% endif %}">{{ order.get_status_display }}</span></td>
+                <td style="padding:0.75rem 0;text-align:right;font-weight:600">{{ order.total|floatformat:0 }} so'm</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-muted);margin-bottom:2rem">No orders yet.</p>
+    {% endif %}
+
+    {% if wishlist_items %}
+    <h2 style="font-size:1.125rem;font-weight:600;margin-bottom:1rem">Wishlist</h2>
+    <div class="products-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+        {% for w in wishlist_items %}
+        <a href="{% url 'storefront:product_detail' slug=w.product.slug %}" class="product-card">
+            {% if w.product.image %}
+            <img src="{{ w.product.image.url }}" alt="{{ w.product.name }}" class="product-card-img" loading="lazy">
+            {% else %}
+            <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+            {% endif %}
+            <div class="product-card-body">
+                <div class="product-card-name">{{ w.product.name }}</div>
+                <div class="product-card-price">{{ w.product.price|floatformat:0 }} so'm</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

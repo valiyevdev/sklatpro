@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "abc_xyz_matrix" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "abc_xyz_matrix" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "abc_xyz_matrix" %}</span></div>
+    <div class="card-pro-body">
+        <p class="text-pro-sm text-pro-muted mb-4">{% t "abc_xyz_methodology" %}</p>
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="text-center" style="width:33%">{% t "x_stable" %} (CV &le; 0.2)</th>
+                        <th class="text-center" style="width:33%">{% t "y_variable" %} (0.2 &lt; CV &le; 0.5)</th>
+                        <th class="text-center" style="width:33%">{% t "z_irregular" %} (CV &gt; 0.5)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-700" style="background:var(--success-50)"><span class="badge-pro badge-pro-success">A</span> {% t "high_value" %}</td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--success-600)">{{ matrix_dict.AX.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "ax_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--info-600)">{{ matrix_dict.AY.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "ay_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--warning-600)">{{ matrix_dict.AZ.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "az_desc" %}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-700" style="background:var(--info-50)"><span class="badge-pro badge-pro-info">B</span> {% t "medium_value" %}</td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--success-600)">{{ matrix_dict.BX.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "bx_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--info-600)">{{ matrix_dict.BY.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "by_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--warning-600)">{{ matrix_dict.BZ.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "bz_desc" %}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-700" style="background:var(--warning-50)"><span class="badge-pro badge-pro-warning">C</span> {% t "low_value" %}</td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--success-600)">{{ matrix_dict.CX.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "cx_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--info-600)">{{ matrix_dict.CY.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "cy_desc" %}</div>
+                        </td>
+                        <td style="text-align:center;padding:1rem">
+                            <div class="fw-700 text-lg" style="color:var(--danger-500)">{{ matrix_dict.CZ.count|default:0 }}</div>
+                            <div class="text-pro-xs text-pro-muted">{% t "cz_desc" %}</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

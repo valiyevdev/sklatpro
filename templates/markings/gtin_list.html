@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "gtin_list" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "gtin_list" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "gtin_list" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'markings:gtin_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_gtin" %}</a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end">
+        <div style="flex:1">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="search" value="{{ search }}" class="input-pro" placeholder="{% t "search" %}...">
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+{% if page_obj %}
+<div class="card-pro mb-4">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "gtin" %}</th>
+                    <th>{% t "format" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "primary" %}</th>
+                    <th>{% t "active" %}</th>
+                    <th>{% t "created" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gtin in page_obj %}
+                <tr>
+                    <td><a href="{% url 'markings:gtin_detail' pk=gtin.pk %}" class="fw-500" style="color:var(--primary-600);text-decoration:none"><code style="font-size:var(--text-xs)">{{ gtin.gtin }}</code></a></td>
+                    <td><span class="badge-pro badge-pro-info">{{ gtin.format_type }}</span></td>
+                    <td class="fw-500">{{ gtin.product.name|truncatechars:40 }}</td>
+                    <td>{% if gtin.is_primary %}<span class="badge-pro badge-pro-success">{% t "yes" %}</span>{% else %}<span class="badge-pro badge-pro-secondary">{% t "no" %}</span>{% endif %}</td>
+                    <td>{% if gtin.is_active %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>{% else %}<span class="badge-pro badge-pro-danger badge-pro-dot">{% t "inactive" %}</span>{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ gtin.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&search={{ search }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&search={{ search }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&search={{ search }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-upc"></i></div>
+    <h5 class="empty-state-title">{% t "no_gtins_found" %}</h5>
+    <p class="empty-state-desc">{% t "create_first_gtin" %}</p>
+    <a href="{% url 'markings:gtin_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_gtin" %}</a>
+</div>
+{% endif %}
+{% endblock %}

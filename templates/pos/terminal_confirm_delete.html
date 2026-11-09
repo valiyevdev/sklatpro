@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos_delete_terminal" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pos:pos_dashboard' %}">{% t "pos" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:terminal_list' %}">{% t "pos_terminals" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:terminal_detail' pk=terminal.pk %}">{{ terminal.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "pos_delete" %}</span>
+</div>
+
+<div style="max-width:480px;margin:0 auto">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+            <div class="empty-state-icon" style="background:var(--danger-50);color:var(--danger-500);margin:0 auto var(--sp-5)">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 class="fw-600 mb-2">{% t "pos_confirm_delete_terminal" %}</h3>
+            <p class="text-pro-muted mb-4"><strong>{{ terminal.name }}</strong> ({{ terminal.code }}) {% t "pos_will_be_deleted_irreversible" %}</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;text-align:left">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_warehouse" %}</div>
+                    <div class="fw-500">{{ terminal.warehouse.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_status" %}</div>
+                    <div>
+                        {% if terminal.status == 'active' %}
+                            <span class="badge-pro badge-pro-success">{% t "pos_active" %}</span>
+                        {% elif terminal.status == 'inactive' %}
+                            <span class="badge-pro badge-pro-danger">{% t "pos_inactive" %}</span>
+                        {% elif terminal.status == 'maintenance' %}
+                            <span class="badge-pro badge-pro-warning">{% t "pos_maintenance" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_total_shifts" %}</div>
+                    <div class="fw-500">{{ terminal.shifts.count }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_total_receipts" %}</div>
+                    <div class="fw-500">{{ terminal.receipts.count }}</div>
+                </div>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-3 justify-center">
+                    <a href="{% url 'pos:terminal_detail' pk=terminal.pk %}" class="btn-pro btn-pro-secondary">{% t "pos_cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "pos_yes_delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

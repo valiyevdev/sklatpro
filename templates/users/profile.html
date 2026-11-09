@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "profile" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "profile" %}</h2>
+    <p class="text-pro-sm text-pro-muted mb-0">{% t "profile_subtitle" %}</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-body" style="text-align:center;padding:2rem">
+            <div style="width:80px;height:80px;border-radius:50%;background:var(--primary-50);display:flex;align-items:center;justify-content:center;color:var(--primary-600);font-size:1.75rem;font-weight:700;margin:0 auto 1rem">
+                {% if user.profile_picture %}<img src="{{ user.profile_picture.url }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover" alt="">
+                {% else %}{{ user.get_full_name|default:user.username|first|upper }}{% endif %}
+            </div>
+            <h4 class="fw-600 mb-1" style="color:var(--gray-900)">{{ user.get_full_name|default:user.username }}</h4>
+            <span class="badge-pro badge-pro-{% if user.role == 'admin' %}danger{% elif user.role == 'manager' %}warning{% elif user.role == 'warehouse' %}info{% else %}primary{% endif %}">{{ user.get_role_display }}</span>
+            {% if user.position %}
+            <p class="text-pro-sm text-pro-muted mt-2">{{ user.position }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "edit_profile" %}</span></div>
+        <div class="card-pro-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "first_name" %}</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "last_name" %}</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "email" %}</label>
+                    {{ form.email }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "phone" %}</label>
+                    {{ form.phone }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "position" %}</label>
+                    {{ form.position }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "profile_picture" %}</label>
+                    {{ form.profile_picture }}
+                </div>
+                <div class="d-flex justify-end">
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "save" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}Payment Providers - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <nav class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:dashboard' %}">{% t "E-Commerce" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'ecommerce:integration_list' %}">{% t "Integrations" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "Payment Providers" %}</span>
+        </nav>
+        <h1 class="page-title">{% t "Payment Providers" %}</h1>
+        <p class="page-subtitle">{% t "Manage payment gateway integrations" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'ecommerce:integration_list' %}" class="btn-pro btn-pro-secondary">
+            <i class="bi bi-arrow-left"></i> {% t "Back" %}
+        </a>
+    </div>
+</div>
+
+<div class="form-section" style="margin-bottom:var(--sp-6)">
+    <h3 class="form-section-title"><i class="bi bi-plus-circle" style="margin-right:var(--sp-2)"></i>{% t "Add Payment Provider" %}</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:var(--sp-4);align-items:end">
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Name" %} <span class="required">*</span></label>
+                <input type="text" name="name" class="input-pro" required placeholder="Masalan, Click">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Provider Type" %} <span class="required">*</span></label>
+                <select name="provider_type" class="input-pro">
+                    <option value="click">{% t "Click" %}</option>
+                    <option value="payme">{% t "Payme" %}</option>
+                    <option value="uzum">{% t "Uzum Bank" %}</option>
+                    <option value="stripe">{% t "Stripe" %}</option>
+                    <option value="manual">{% t "Manual" %}</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "Merchant ID" %}</label>
+                <input type="text" name="merchant_id" class="input-pro" placeholder="{% t 'Merchant ID' %}">
+            </div>
+            <button type="submit" class="btn-pro btn-pro-primary" style="margin-bottom:0"><i class="bi bi-plus-lg"></i> {% t "Add" %}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-top:var(--sp-4)">
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "API URL" %}</label>
+                <input type="url" name="api_url" class="input-pro" placeholder="{% t 'https://...' %}">
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0;display:flex;align-items:end;gap:var(--sp-3)">
+                <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                    <input type="checkbox" name="test_mode" style="width:16px;height:16px;accent-color:var(--primary-600)">
+                    <span class="input-pro-label" style="margin-bottom:0">{% t "Test Mode" %}</span>
+                </label>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--sp-4)">
+    {% for pp in providers %}
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)">
+                <div style="display:flex;align-items:center;gap:var(--sp-3)">
+                    <div style="width:44px;height:44px;border-radius:var(--radius-lg);background:var(--success-50);color:var(--success-600);display:flex;align-items:center;justify-content:center;font-size:1.125rem"><i class="bi bi-credit-card"></i></div>
+                    <div>
+                        <div style="font-weight:600;font-size:var(--text-base);color:var(--text-primary)">{{ pp.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ pp.get_provider_type_display }}</div>
+                    </div>
+                </div>
+                <span class="badge-pro badge-pro-{% if pp.status == 'active' %}success{% else %}neutral{% endif %} badge-pro-dot">{{ pp.get_status_display }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--sp-2);margin-bottom:var(--sp-4)">
+                <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
+                    <span style="color:var(--text-muted)">{% t "Merchant ID" %}</span>
+                    <span style="color:var(--text-primary);font-weight:500">{{ pp.merchant_id|default:"-" }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
+                    <span style="color:var(--text-muted)">{% t "Test Mode" %}</span>
+                    <span>{% if pp.test_mode %}<span class="badge-pro badge-pro-warning">{% t "Yes" %}</span>{% else %}<span class="badge-pro badge-pro-success">{% t "No" %}</span>{% endif %}</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:var(--sp-2)">
+                <form method="post" style="flex:1">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="provider_id" value="{{ pp.pk }}">
+                    <button type="submit" class="btn-pro {% if pp.status == 'active' %}btn-pro-danger{% else %}btn-pro-success{% endif %}" style="width:100%">
+                        {% if pp.status == 'active' %}
+                        <i class="bi bi-pause-fill"></i> {% t "Disable" %}
+                        {% else %}
+                        <i class="bi bi-play-fill"></i> {% t "Enable" %}
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1">
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-credit-card"></i></div>
+            <h3 class="empty-state-title">{% t "No payment providers" %}</h3>
+            <p class="empty-state-desc">{% t "Add a payment provider above to start accepting online payments." %}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

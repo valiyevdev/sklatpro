@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "abc_analysis" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "abc_analysis" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="?metric=revenue" class="btn-pro {% if metric == 'revenue' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}"><i class="bi bi-currency-dollar"></i> {% t "revenue" %}</a>
+        <a href="?metric=units" class="btn-pro {% if metric == 'units' %}btn-pro-primary{% else %}btn-pro-ghost{% endif %}"><i class="bi bi-box-seam"></i> {% t "units" %}</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ a_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_a" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-star-fill"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--info-600)">{{ b_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_b" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-star-half"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--warning-600)">{{ c_count|floatformat:0 }}</div><div class="stat-card-label">{% t "class_c" %}</div></div>
+        <div class="stat-card-icon warning"><i class="bi bi-star"></i></div>
+    </div>
+</div>
+
+{% if abc_list %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "abc_details" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "rank" %}</th><th>{% t "product" %}</th><th>{% t "value" %}</th><th>{% t "percentage" %}</th><th>{% t "cumulative_pct" %}</th><th>{% t "class" %}</th></tr></thead>
+            <tbody>
+                {% for item in abc_list %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ item.rank }}</span></td>
+                    <td class="fw-500">{{ item.product }}</td>
+                    <td class="fw-600">{{ item.value|floatformat:0 }}</td>
+                    <td>{{ item.pct|floatformat:1 }}%</td>
+                    <td>{{ item.cum_pct|floatformat:1 }}%</td>
+                    <td>
+                        {% if item.class == 'A' %}
+                        <span class="badge-pro badge-pro-success">A</span>
+                        {% elif item.class == 'B' %}
+                        <span class="badge-pro badge-pro-info">B</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-warning">C</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

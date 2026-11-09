@@ -1,0 +1,19 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}Order Confirmed - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section" style="max-width:600px;text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2rem;color:#16a34a"><i class="bi bi-check-lg"></i></div>
+    <h1 style="font-size:1.75rem;font-weight:700;margin-bottom:0.5rem">Order Confirmed!</h1>
+    <p style="color:var(--text-secondary);margin-bottom:2rem">Thank you for your order.</p>
+    <div style="background:var(--bg-alt);border-radius:var(--radius);padding:1.5rem;text-align:left;margin-bottom:2rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><span style="color:var(--text-secondary)">Order Number:</span><strong>{{ order.reference }}</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><span style="color:var(--text-secondary)">Date:</span><span>{{ order.date }}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><span style="color:var(--text-secondary)">Status:</span><span style="padding:0.125rem 0.5rem;border-radius:999px;background:#fef3c7;color:#92400e;font-size:0.8125rem">{{ order.get_status_display }}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:0.75rem;padding-top:0.75rem;border-top:2px solid var(--border);font-weight:700"><span>Total:</span><span style="color:var(--primary)">{{ order.total|floatformat:0 }} so'm</span></div>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a href="{% url 'storefront:order_tracking' %}?order={{ order.reference }}" class="btn-store-primary" style="text-decoration:none">Track Order</a>
+        <a href="{% url 'storefront:catalog' %}" class="btn-store-outline" style="text-decoration:none">Continue Shopping</a>
+    </div>
+</div>
+{% endblock %}

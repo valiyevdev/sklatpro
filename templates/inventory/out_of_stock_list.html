@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "out_of_stock_title" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+  /* Scoped to out_of_stock_list.html. Prefixed `.oos-` so the GLOBAL
+     `.card-pro` / `.table-pro` / `.empty-state` used across the other 177
+     templates are never modified. Mirrors low_stock_list.html. */
+
+  /* ---------- Desktop table card ---------- */
+  .oos-card {
+    border-radius: var(--radius-2xl, 1rem);
+    border: 1px solid var(--slate-800, #1e293b);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+
+  /* Horizontal scroll instead of letting the columns collapse. */
+  .oos-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .oos-scroll .table-pro {
+    min-width: 600px;
+  }
+
+  .oos-count {
+    flex: 0 0 auto;
+    padding: 4px var(--sp-3, 0.75rem);
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+  }
+
+  /* ---------- Product cards (below md) ----------
+     Single-level surface: no nested inner box. Zero stock reads as a rose
+     hero badge on the left plus a rose-tinted card border. */
+  .oos-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .oos-card-item {
+    padding: 14px;
+    background: var(--slate-900, #0f172a);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    border-radius: var(--radius-2xl, 1rem);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  }
+
+  .oos-card-item__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Hero zero-stock badge: current qty over "/ min unit". */
+  .oos-card-item__qty {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl, 0.75rem);
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+  }
+
+  .oos-card-item__qty-n {
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oos-card-item__qty-min {
+    margin-top: 2px;
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    color: rgba(244, 63, 94, 0.8);
+  }
+
+  .oos-card-item__info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .oos-card-item__titlerow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .oos-card-item__name {
+    flex: 0 1 auto;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #fff;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .oos-card-item__meta {
+    margin: 2px 0 0;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--slate-400, #94a3b8);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .oos-card-item__meta-muted {
+    color: var(--slate-500, #64748b);
+  }
+
+  .oos-card-item__badge {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+  }
+
+  .oos-card-item__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .oos-card-item__actions .btn-pro {
+    flex: 1 1 120px;
+  }
+
+  .oos-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.6875rem;
+    color: var(--slate-300, #cbd5e1);
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--slate-700, #334155);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---------- Visibility swap ---------- */
+  /* The table is desktop-only, and its header is pinned off below md so a
+     bare column-less table can never be rendered. */
+  @media (max-width: 767px) {
+    .oos-desk {
+      display: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .oos-cards {
+      display: none;
+    }
+  }
+
+  /* ---------- Empty state ---------- */
+  /* Rendered OUTSIDE .oos-scroll: inside it the 600px min-width table forced
+     this content off to the right and clipped it on narrow screens. */
+  .oos-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 320px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: var(--radius-2xl, 1rem);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
+  }
+
+  .oos-empty__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+
+  .oos-empty__desc {
+    margin: 6px auto 0;
+    max-width: 20rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--slate-400, #94a3b8);
+  }
+</style>
+
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "out_of_stock_title" %}</h1>
+        <p class="page-subtitle">{% t "out_of_stock_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <span class="oos-count">{{ total_count|default:"0" }}&nbsp;{% t "items_suffix" %}</span>
+    </div>
+</header>
+
+{% if page_obj %}
+<!-- ---------- Mobile: one card per product (< md) ---------- -->
+<div class="oos-cards">
+    {% for product in page_obj %}
+    <article class="oos-card-item">
+        <div class="oos-card-item__top">
+            <!-- Hero: zero-stock quantity (current / min) -->
+            <div class="oos-card-item__qty"
+                 title="{% t "current_stock" %} / {% t "min_stock" %}">
+                <span class="oos-card-item__qty-n">{{ product.quantity }}</span>
+                <span class="oos-card-item__qty-min">/ {{ product.min_stock }}{% if product.unit.name %} {{ product.unit.name }}{% else %} {% t "items_suffix" %}{% endif %}</span>
+            </div>
+
+            <div class="oos-card-item__info">
+                <div class="oos-card-item__titlerow">
+                    <h2 class="oos-card-item__name">{{ product.name }}</h2>
+                    <span class="oos-card-item__badge">{% t "out_of_stock" %}</span>
+                </div>
+                <p class="oos-card-item__meta">
+                    {{ product.sku }} &middot; <span class="oos-card-item__meta-muted">{% t "category" %}: {% firstof product.category_fk.name product.category %}-</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="oos-card-item__actions">
+            {% if product.supplier %}
+            <span class="oos-chip"><i class="bi bi-truck"></i> {{ product.supplier }}</span>
+            {% endif %}
+            <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-primary btn-pro-sm">
+                <i class="bi bi-cart-plus"></i> {% t "restock" %}
+            </a>
+            <a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm">
+                <i class="bi bi-eye"></i> {% t "view" %}
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<!-- ---------- Desktop: table (md+) ---------- -->
+<div class="card-pro oos-card oos-desk">
+    <div class="oos-scroll">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product_name" %}</th>
+                    <th>{% t "category" %}</th>
+                    <th>{% t "current_stock" %}</th>
+                    <th>{% t "min_stock" %}</th>
+                    <th>{% t "unit" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in page_obj %}
+                <tr>
+                    <td>
+                        <div class="fw-500">{{ product.name }}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ product.sku }}</div>
+                    </td>
+                    <td>{% firstof product.category_fk.name product.category %}-</td>
+                    <td>
+                        <span class="fw-700" style="color:var(--danger-600)">{{ product.quantity }}</span>
+                    </td>
+                    <td>{{ product.min_stock }}</td>
+                    <td>{{ product.unit.name|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-cart-plus"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="card-pro mt-4">
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- ---------- Empty state ---------- -->
+<div class="oos-empty">
+    <div class="empty-state-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+        </svg>
+    </div>
+    <h2 class="oos-empty__title">{% t "no_out_of_stock" %}</h2>
+    <p class="oos-empty__desc">{% t "all_stock_levels_ok" %}</p>
+</div>
+{% endif %}
+{% endblock %}

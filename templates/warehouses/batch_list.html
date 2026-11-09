@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "batches" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "batches" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "results" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:batch_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_batch" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "warehouse" %}</label>
+            <select name="warehouse" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_warehouses" %}</option>
+                {% for w in warehouses %}<option value="{{ w.pk }}" {% if selected_warehouse == w.pk|stringformat:"d" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "product" %}</label>
+            <select name="product" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_products" %}</option>
+                {% for p in products %}<option value="{{ p.pk }}" {% if selected_product == p.pk|stringformat:"d" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "search" %}</label>
+            <input type="text" name="q" class="input-pro" value="{{ q }}" placeholder="{% t "search_batch" %}">
+        </div>
+    </form>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "batch_number" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "reserved" %}</th>
+                    <th>{% t "available" %}</th>
+                    <th>{% t "receipt_date" %}</th>
+                    <th>{% t "expiry_date" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in page_obj %}
+                <tr>
+                    <td class="fw-500">
+                        <a href="{% url 'warehouses:batch_detail' pk=b.pk %}" style="color:var(--text-primary);text-decoration:none">{{ b.batch_number }}</a>
+                    </td>
+                    <td>{{ b.product.name }}</td>
+                    <td>{{ b.warehouse.name }}</td>
+                    <td>{% if b.location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ b.location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{{ b.quantity }}</td>
+                    <td>{{ b.reserved_quantity }}</td>
+                    <td class="fw-500">{{ b.available_quantity }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ b.receipt_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if b.expiry_date %}
+                            {% if b.is_expired %}
+                            <span style="color:var(--danger-600);font-weight:600">{{ b.expiry_date|date:"d.m.Y" }}</span>
+                            {% elif b.is_expiring_soon %}
+                            <span style="color:var(--warning-600);font-weight:600">{{ b.expiry_date|date:"d.m.Y" }}</span>
+                            {% else %}
+                            <span class="text-pro-sm text-pro-muted">{{ b.expiry_date|date:"d.m.Y" }}</span>
+                            {% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if b.status == 'active' %}
+                            <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+                        {% elif b.status == 'expired' %}
+                            <span class="badge-pro badge-pro-danger">{% t "expired" %}</span>
+                        {% elif b.status == 'quarantine' %}
+                            <span class="badge-pro badge-pro-warning">{% t "quarantine" %}</span>
+                        {% elif b.status == 'consumed' %}
+                            <span class="badge-pro badge-pro-info">{% t "consumed" %}</span>
+                        {% elif b.status == 'damaged' %}
+                            <span class="badge-pro badge-pro-danger">{% t "damaged" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ b.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-upc-scan"></i></div>
+                            <h5 class="empty-state-title">{% t "no_batches" %}</h5>
+                            <p class="empty-state-desc">{% t "no_batches_created" %}</p>
+                            <a href="{% url 'warehouses:batch_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_batch" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&warehouse={{ selected_warehouse }}&product={{ selected_product }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&warehouse={{ selected_warehouse }}&product={{ selected_product }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&warehouse={{ selected_warehouse }}&product={{ selected_product }}&q={{ q }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

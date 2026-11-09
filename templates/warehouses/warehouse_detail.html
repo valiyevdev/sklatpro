@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ warehouse.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ warehouse.name }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ warehouse.name }}</h1>
+            <code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 8px;border-radius:var(--radius-sm)">{{ warehouse.code }}</code>
+            <span class="badge-pro badge-pro-info">{{ warehouse.get_warehouse_type_display }}</span>
+            {% if warehouse.is_active %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "inactive" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {% if warehouse.city %}{{ warehouse.city }}{% endif %}
+            {% if warehouse.city and warehouse.country %}, {% endif %}
+            {% if warehouse.country %}{{ warehouse.country }}{% endif %}
+            {% if warehouse.manager %}
+                <span style="margin-left:var(--sp-3)"><i class="bi bi-person"></i> {{ warehouse.manager.get_full_name|default:warehouse.manager.email }}</span>
+            {% endif %}
+            {% if warehouse.working_hours %}
+                <span style="margin-left:var(--sp-3)"><i class="bi bi-clock"></i> {{ warehouse.working_hours }}</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:warehouse_update' pk=warehouse.pk %}" class="btn-pro btn-pro-secondary"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'warehouses:warehouse_delete' pk=warehouse.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ zones.count }}</div>
+            <div class="stat-card-label">{% t "zones" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-grid-3x3"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ locations.count }}</div>
+            <div class="stat-card-label">{% t "locations" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-geo-alt"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ stock_levels.count }}</div>
+            <div class="stat-card-label">{% t "product_count" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-box-seam"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ total_stock }}</div>
+            <div class="stat-card-label">{% t "total_stock" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-stack"></i></div>
+    </div>
+</div>
+
+{% if warehouse.address or warehouse.phone or warehouse.email %}
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4)">
+            {% if warehouse.address %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-geo-alt"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "address" %}</div>
+                    <div class="text-pro-sm fw-500">{{ warehouse.address|truncatechars:60 }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if warehouse.phone %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-telephone"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "phone" %}</div>
+                    <div class="text-pro-sm fw-500">{{ warehouse.phone }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if warehouse.email %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-envelope"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "email" %}</div>
+                    <div class="text-pro-sm fw-500">{{ warehouse.email }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if warehouse.capacity %}
+            <div class="d-flex align-center gap-3">
+                <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-hdd-stack"></i></div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted">{% t "capacity" %}</div>
+                    <div class="text-pro-sm fw-500">{{ warehouse.capacity }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-grid-3x3" style="color:var(--primary-600)"></i> {% t "zones" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ zones.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "code" %}</th>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "locations" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone in zones %}
+                <tr>
+                    <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ zone.code }}</code></td>
+                    <td class="cell-primary">
+                        <a href="{% url 'warehouses:zone_detail' pk=zone.pk %}" style="color:var(--text-primary);text-decoration:none">{{ zone.name }}</a>
+                    </td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ zone.get_zone_type_display }}</span></td>
+                    <td>{{ zone.locations.count }}</td>
+                    <td>
+                        {% if zone.is_active %}
+                            <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-grid-3x3"></i></div>
+                            <h5 class="empty-state-title">{% t "no_zones" %}</h5>
+                            <p class="empty-state-desc">{% t "create_first_zone" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-geo-alt" style="color:var(--primary-600)"></i> {% t "locations" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ locations.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "code" %}</th>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "zone" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loc in locations %}
+                <tr>
+                    <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ loc.code }}</code></td>
+                    <td class="cell-primary">{{ loc.name }}</td>
+                    <td><span class="badge-pro badge-pro-neutral">{{ loc.get_location_type_display }}</span></td>
+                    <td>{% if loc.zone %}{{ loc.zone.name }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if loc.status == 'available' %}
+                            <span class="badge-pro badge-pro-success">{% t "available" %}</span>
+                        {% elif loc.status == 'occupied' %}
+                            <span class="badge-pro badge-pro-warning">{% t "occupied" %}</span>
+                        {% elif loc.status == 'full' %}
+                            <span class="badge-pro badge-pro-danger">{% t "full" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral">{{ loc.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div>
+                            <h5 class="empty-state-title">{% t "no_locations" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if stock_levels %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-600)"></i> {% t "stock_levels" %}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th style="text-align:right">{% t "quantity_short" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sl in stock_levels %}
+                <tr>
+                    <td class="cell-primary">{{ sl.product.name }}</td>
+                    <td style="text-align:right;font-weight:600">{{ sl.quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media(max-width:1024px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

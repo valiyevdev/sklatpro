@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ title }} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+  .product-form-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: var(--sp-6);
+    align-items: start;
+  }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-4); }
+  .form-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--sp-4); }
+
+  @media (max-width: 767px) {
+    .product-form-layout { grid-template-columns: 1fr; }
+    .form-grid-2, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 640px) and (max-width: 767px) {
+    .form-grid-2 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'product_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ title }}</h1>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="productForm">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger" style="margin-bottom:var(--sp-4)">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div class="product-form-layout">
+        <!-- Left Column: Main Info -->
+        <div>
+            <!-- Product Type -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                        <i class="bi bi-grid" style="color:var(--primary-600);font-size:1.1rem"></i>
+                        <div style="min-width:0">
+                            <div class="input-pro-label" style="margin:0 0 2px">{% t "product_type_label" %}</div>
+                            <div style="font-size:13px;font-weight:600;color:var(--text-primary)" id="ptCurrentType">{{ form.instance.get_product_type_display|default:"Standart / Boshqa" }}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-pro btn-pro-outline" data-product-type-picker data-inline-pt="1" style="height:36px;display:inline-flex;align-items:center;gap:6px">
+                        <i class="bi bi-arrow-repeat"></i> {% t "change_type" %}
+                    </button>
+                </div>
+                <div style="display:none">{{ form.product_type }}</div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "basic_info" %}</h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "product_name" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="input-pro-error">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">SKU {% t "optional" %}</label>
+                            {{ form.sku }}
+                            {% if form.sku.errors %}<div class="input-pro-error">{{ form.sku.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">Barcode {% t "optional" %}</label>
+                            {{ form.barcode }}
+                            {% if form.barcode.errors %}<div class="input-pro-error">{{ form.barcode.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "description" %}</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "status" %}</label>
+                        {{ form.status }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-tags" style="color:var(--primary-600)"></i> {% t "classification" %}</h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="form-grid-3">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "categories" %}</label>
+                            {{ form.category_fk }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "brands" %}</label>
+                            {{ form.brand }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "units" %}</label>
+                            {{ form.unit }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type-specific details (toggled by product type) -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)" id="typeSpecificCard">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-sliders" style="color:var(--primary-600)"></i> {% t "type_specific_info" %} <span style="font-size:var(--text-xs);color:var(--text-muted);font-weight:400">({% t "optional" %})</span></h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="pt-section" data-pt-section="food">
+                        <div class="form-grid-2">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "expiration_date" %}</label>
+                                {{ form.expiration_date }}
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "storage_conditions" %}</label>
+                                {{ form.storage_conditions }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-section" data-pt-section="sweets">
+                        <div class="form-grid-3">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "weight_label_short" %} ({% t "weight_g_kg" %})</label>
+                                {{ form.weight }}
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "weight_unit_label" %}</label>
+                                {{ form.weight_unit }}
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "netto_brutto" %}</label>
+                                {{ form.netto_brutto }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-section" data-pt-section="material">
+                        <div class="form-grid-2">
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "measurement_unit_label" %}</label>
+                                {{ form.measurement_unit }}
+                            </div>
+                            <div class="input-pro-group">
+                                <label class="input-pro-label">{% t "volume_label" %}</label>
+                                {{ form.volume }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing & Stock -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-currency-dollar" style="color:var(--primary-600)"></i> {% t "pricing" %} & {% t "stock_info" %}</h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="form-grid-2">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "purchase_price" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.purchase_price }}
+                            {% if form.purchase_price.errors %}<div class="input-pro-error">{{ form.purchase_price.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "sale_price" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.price }}
+                            {% if form.price.errors %}<div class="input-pro-error">{{ form.price.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "stock" %}</label>
+                            {{ form.quantity }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "min_stock" %}</label>
+                            {{ form.min_stock }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "max_stock" %}</label>
+                            {{ form.max_stock }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dimensions -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-arrows-fullscreen" style="color:var(--primary-600)"></i> {% t "dimensions" %} <span style="font-size:var(--text-xs);color:var(--text-muted);font-weight:400">({% t "optional" %})</span></h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="form-grid-4">
+                        <div class="input-pro-group" id="dimWeightGroup">
+                            <label class="input-pro-label">{% t "weight_kg" %}</label>
+                            {{ form.weight }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "length_cm" %}</label>
+                            {{ form.length }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "width_cm" %}</label>
+                            {{ form.width }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "height_cm" %}</label>
+                            {{ form.height }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location & Batch -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-geo-alt" style="color:var(--primary-600)"></i> {% t "location" %} & {% t "batch_and_expiry" %}</h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div class="form-grid-3">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "shelf" %}</label>
+                            {{ form.shelf }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "rack" %}</label>
+                            {{ form.rack }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "section" %}</label>
+                            {{ form.section }}
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "batch_number" %}</label>
+                            {{ form.batch_number }}
+                        </div>
+                        <div class="input-pro-group" id="batchExpiryGroup">
+                            <label class="input-pro-label">{% t "expiration_date" %}</label>
+                            {{ form.expiration_date }}
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "supplier" %}</label>
+                            {{ form.supplier }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "internal_notes" %}</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Image + Summary -->
+        <div>
+            <!-- Image Upload -->
+            <div class="card-pro" style="margin-bottom:var(--sp-4)">
+                <div style="padding:var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:var(--sp-2)"><i class="bi bi-image" style="color:var(--primary-600)"></i> {% t "product_image" %}</h3>
+                </div>
+                <div style="padding:var(--sp-4)">
+                    <div id="imagePreview" style="margin-bottom:var(--sp-3)">
+                        {% if product and product.image %}
+                        <div style="position:relative">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg)" id="previewImg">
+                            <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px">
+                                <button type="button" data-img-action="retake" title="{% t 'retake_photo' %}" style="height:28px;padding:0 10px;border-radius:var(--radius-full);background:rgba(15,23,42,0.78);color:#fff;border:1px solid rgba(255,255,255,0.25);cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:0.7rem;backdrop-filter:blur(4px)"><i class="bi bi-arrow-repeat"></i> {% t "retake_photo" %}</button>
+                                <button type="button" data-img-action="remove" title="{% t 'remove_image' %}" style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--danger-600);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div style="width:100%;height:200px;border:2px dashed var(--border-default);border-radius:var(--radius-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-2);color:var(--text-muted);transition:border-color var(--transition-fast);padding:var(--sp-3);cursor:pointer" id="dropZone">
+                            <i class="bi bi-cloud-arrow-up" style="font-size:2rem"></i>
+                            <span style="font-size:var(--text-sm);font-weight:500">{% t "drag_drop_or" %}</span>
+                            <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;margin-top:var(--sp-1)">
+                                <button type="button" data-img-action="camera" class="btn-pro btn-pro-outline" style="height:38px;display:inline-flex;align-items:center;gap:6px">
+                                    <i class="bi bi-camera"></i> {% t "take_photo" %}
+                                </button>
+                                <button type="button" data-img-action="file" class="btn-pro btn-pro-primary" style="height:38px;display:inline-flex;align-items:center;gap:6px">
+                                    <i class="bi bi-folder2-open"></i> {% t "choose_file" %}
+                                </button>
+                            </div>
+                            <span style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px">{% t "supported_formats" %}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- Two hidden file inputs. Only ONE of them carries
+                         name="image" at a time, so exactly one file is ever
+                         submitted; JS moves the name to whichever was used. -->
+                    <input type="file" name="image" id="cameraInput" accept="image/*" capture="environment" class="hidden" style="display:none" onchange="previewImage(this)">
+                    <input type="file" name="" id="fileInput" accept="image/jpeg,image/png,image/webp" class="hidden" style="display:none" onchange="previewImage(this)">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card-pro">
+                <div style="padding:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-2)">
+                    <button type="submit" class="btn-pro btn-pro-primary" style="width:100%;height:42px">
+                        <i class="bi bi-check-lg"></i> {% t "save_changes" %}
+                    </button>
+                    <a href="{% url 'product_list' %}" class="btn-pro btn-pro-outline" style="width:100%;height:42px;text-align:center;text-decoration:none">
+                        {% t "cancel" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var MAX_BYTES = 5 * 1024 * 1024;
+    var VALID_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    var VALID_EXT = ['jpg', 'jpeg', 'png', 'webp'];
+
+    // Translations resolved server-side.
+    var T_INVALID = '{% t "invalid_image_format" %}';
+    var T_TOO_LARGE = '{% t "image_too_large" %}';
+    var T_DROP_UNSUPPORTED = '{% t "no_image_selected" %}';
+    var T_RETAKE = '{% t "retake_photo" %}';
+    var T_TAKE = '{% t "take_photo" %}';
+    var T_CHOOSE = '{% t "choose_file" %}';
+    var T_REMOVE = '{% t "remove_image" %}';
+    var T_DRAG = '{% t "drag_drop_or" %}';
+    var T_FORMATS = '{% t "supported_formats" %}';
+
+    // The container never gets replaced, only its innerHTML, so the delegated
+    // listeners below stay bound across every re-render. (The previous code
+    // rebound listeners per-element, so drag & drop died after removeImage().)
+    var container = document.getElementById('imagePreview');
+    if (!container) return;
+
+    function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Validates by MIME type first, then falls back to the file extension.
+    // Camera captures occasionally report an empty MIME type.
+    function isValidImage(file) {
+        if (file.type && VALID_TYPES.indexOf(file.type.toLowerCase()) !== -1) return true;
+        var ext = (file.name || '').split('.').pop().toLowerCase();
+        return VALID_EXT.indexOf(ext) !== -1;
+    }
+
+    // Only ONE input may carry name="image", otherwise the browser would submit
+    // two files under the same field name. Move the name to the active input.
+    function activate(input) {
+        ['cameraInput', 'fileInput'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (el === input) {
+                el.setAttribute('name', 'image');
+            } else {
+                el.setAttribute('name', '');
+                el.value = '';
+            }
+        });
+    }
+
+    function dropZoneHTML() {
+        return '<div id="dropZone" style="width:100%;height:200px;border:2px dashed var(--border-default);' +
+            'border-radius:var(--radius-lg);display:flex;flex-direction:column;align-items:center;' +
+            'justify-content:center;gap:var(--sp-2);color:var(--text-muted);' +
+            'transition:border-color var(--transition-fast);padding:var(--sp-3);cursor:pointer">' +
+            '<i class="bi bi-cloud-arrow-up" style="font-size:2rem"></i>' +
+            '<span style="font-size:var(--text-sm);font-weight:500">' + esc(T_DRAG) + '</span>' +
+            '<div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;margin-top:var(--sp-1)">' +
+              '<button type="button" data-img-action="camera" class="btn-pro btn-pro-outline" ' +
+                'style="height:38px;display:inline-flex;align-items:center;gap:6px">' +
+                '<i class="bi bi-camera"></i> ' + esc(T_TAKE) + '</button>' +
+              '<button type="button" data-img-action="file" class="btn-pro btn-pro-primary" ' +
+                'style="height:38px;display:inline-flex;align-items:center;gap:6px">' +
+                '<i class="bi bi-folder2-open"></i> ' + esc(T_CHOOSE) + '</button>' +
+            '</div>' +
+            '<span style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px">' + esc(T_FORMATS) + '</span>' +
+        '</div>';
+    }
+
+    function previewHTML(src, alt) {
+        return '<div style="position:relative">' +
+            '<img src="' + esc(src) + '" alt="' + esc(alt || 'Preview') + '" ' +
+              'style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg)" id="previewImg">' +
+            '<div style="position:absolute;top:8px;right:8px;display:flex;gap:6px">' +
+              '<button type="button" data-img-action="retake" title="' + esc(T_RETAKE) + '" ' +
+                'style="height:28px;padding:0 10px;border-radius:var(--radius-full);background:rgba(15,23,42,0.78);' +
+                'color:#fff;border:1px solid rgba(255,255,255,0.25);cursor:pointer;display:inline-flex;' +
+                'align-items:center;gap:5px;font-size:0.7rem;backdrop-filter:blur(4px)">' +
+                '<i class="bi bi-arrow-repeat"></i> ' + esc(T_RETAKE) + '</button>' +
+              '<button type="button" data-img-action="remove" title="' + esc(T_REMOVE) + '" ' +
+                'style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--danger-600);' +
+                'color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;' +
+                'font-size:0.75rem"><i class="bi bi-x"></i></button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function showDropZone() {
+        container.innerHTML = dropZoneHTML();
+    }
+
+    function clearInputs() {
+        ['cameraInput', 'fileInput'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.value = ''; el.setAttribute('name', 'image'); }
+        });
+        // default the named input back to the file picker
+        var f = document.getElementById('fileInput');
+        if (f) f.setAttribute('name', 'image');
+        var c = document.getElementById('cameraInput');
+        if (c) c.setAttribute('name', '');
+    }
+
+    // ---- public API (kept global so inline onclick handlers in the template work)
+    window.previewImage = function(input) {
+        if (!input || !input.files || !input.files[0]) return;
+        var file = input.files[0];
+        if (!isValidImage(file)) {
+            alert(T_INVALID);
+            input.value = '';
+            showDropZone();
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            alert(T_TOO_LARGE);
+            input.value = '';
+            showDropZone();
+            return;
+        }
+        activate(input);
+        var reader = new FileReader();
+        reader.onload = function(e) { container.innerHTML = previewHTML(e.target.result); };
+        reader.onerror = function() { alert(T_INVALID); showDropZone(); };
+        reader.readAsDataURL(file);
+    };
+
+    window.removeImage = function() {
+        clearInputs();
+        showDropZone();
+    };
+
+    // Retake = clear, then reopen the camera directly.
+    window.retakeImage = function() {
+        clearInputs();
+        showDropZone();
+        var cam = document.getElementById('cameraInput');
+        if (cam) cam.click();
+    };
+
+    // ---- delegated events (survive innerHTML re-renders) ----
+    container.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-img-action]');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var act = btn.getAttribute('data-img-action');
+            if (act === 'camera') document.getElementById('cameraInput').click();
+            else if (act === 'file') document.getElementById('fileInput').click();
+            else if (act === 'retake') window.retakeImage();
+            else if (act === 'remove') window.removeImage();
+            return;
+        }
+        // clicking bare zone opens the file picker
+        if (e.target.id === 'dropZone') {
+            e.preventDefault();
+            document.getElementById('fileInput').click();
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(function(ev) {
+        container.addEventListener(ev, function(e) {
+            e.preventDefault(); e.stopPropagation();
+            var z = document.getElementById('dropZone');
+            if (z) z.style.borderColor = 'var(--primary-500)';
+        });
+    });
+    container.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        var z = document.getElementById('dropZone');
+        if (z) z.style.borderColor = 'var(--border-default)';
+    });
+    container.addEventListener('drop', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var z = document.getElementById('dropZone');
+        if (z) z.style.borderColor = 'var(--border-default)';
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || !files.length) return;
+        // A dropped file goes through the picker input so the same validation
+        // and name-swap path runs as for a manual selection.
+        if (typeof DataTransfer === 'undefined') { alert(T_DROP_UNSUPPORTED); return; }
+        try {
+            var dt = new DataTransfer();
+            dt.items.add(files[0]);
+            var input = document.getElementById('fileInput');
+            input.files = dt.files;
+            window.previewImage(input);
+        } catch (err) {
+            alert(T_DROP_UNSUPPORTED);
+        }
+    });
+
+    // Re-render the drop zone if the server rendered an existing image instead.
+    if (!document.getElementById('dropZone') && !document.getElementById('previewImg')) {
+        showDropZone();
+    }
+})();
+
+// Product type -> dynamic field visibility
+(function(){
+    var ptSel = document.getElementById('id_product_type');
+    if (!ptSel) return;
+    var currentLabel = document.getElementById('ptCurrentType');
+    function setDisabled(group, disabled) {
+        var controls = group.querySelectorAll('input,select,textarea');
+        for (var i = 0; i < controls.length; i++) {
+            controls[i].disabled = disabled;
+        }
+        group.style.display = disabled ? 'none' : '';
+    }
+    function applyProductType() {
+        var t = ptSel.value || 'general';
+        document.querySelectorAll('.pt-section').forEach(function(sec){
+            setDisabled(sec, sec.getAttribute('data-pt-section') !== t);
+        });
+        var batch = document.getElementById('batchExpiryGroup');
+        if (batch) setDisabled(batch, t === 'food');
+        var dimW = document.getElementById('dimWeightGroup');
+        if (dimW) setDisabled(dimW, t === 'sweets');
+        if (currentLabel) {
+            var opt = ptSel.options[ptSel.selectedIndex];
+            currentLabel.textContent = opt ? opt.text : t;
+        }
+    }
+    ptSel.addEventListener('change', applyProductType);
+    applyProductType();
+})();
+</script>
+{% endblock %}

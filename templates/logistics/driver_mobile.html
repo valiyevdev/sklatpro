@@ -1,0 +1,76 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "driver_mobile" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="page-header"><div class="page-header-content"><h1 class="page-title"><i class="bi bi-phone"></i> {% t "driver_workspace" %}</h1>
+<p class="page-subtitle">{{ driver.full_name }} &middot; {{ today|date:"d.m.Y" }}</p></div></div>
+
+{% if next_stop %}
+<div class="card-pro mb-6" style="border:2px solid var(--color-primary);background:rgba(59,130,246,0.03)">
+    <div class="card-pro-header"><h5 class="card-pro-title" style="color:var(--color-primary)"><i class="bi bi-signpost-split"></i> {% t "next_stop" %}</h5></div>
+    <div class="card-pro-body">
+        <div style="font-size:1.2rem;font-weight:600;margin-bottom:8px">{{ next_stop.customer|default:next_stop.contact_name|default:"-" }}</div>
+        <div class="text-pro-sm mb-2"><i class="bi bi-geo-alt"></i> {{ next_stop.delivery_address|default:"-" }}</div>
+        <div class="text-pro-sm mb-2"><i class="bi bi-telephone"></i> {{ next_stop.contact_phone|default:"-" }}</div>
+        {% if next_stop.delivery_instructions %}
+        <div class="text-pro-sm mb-2" style="padding:8px;background:rgba(14,165,233,0.1);border-radius:6px"><i class="bi bi-info-circle"></i> {{ next_stop.delivery_instructions }}</div>
+        {% endif %}
+        {% if next_stop.shipment %}
+        <div class="text-pro-sm text-pro-muted mb-2"><i class="bi bi-box-seam"></i> {% t "packages" %}: {{ next_stop.shipment.total_packages }}</div>
+        {% endif %}
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <form method="post" action="{% url 'logistics:driver_mobile_update_status' delivery_pk=next_stop.pk %}">{% csrf_token %}
+                <input type="hidden" name="action" value="arrived">
+                <button type="submit" class="btn-pro btn-pro-primary" style="min-height:48px;min-width:120px"><i class="bi bi-pin-map"></i> {% t "arrived" %}</button>
+            </form>
+            <form method="post" action="{% url 'logistics:driver_mobile_update_status' delivery_pk=next_stop.pk %}">{% csrf_token %}
+                <input type="hidden" name="action" value="delivered">
+                <input type="hidden" name="delivered_quantity" value="{{ next_stop.ordered_quantity }}">
+                <button type="submit" class="btn-pro btn-pro-success" style="min-height:48px;min-width:120px"><i class="bi bi-check-circle"></i> {% t "delivered" %}</button>
+            </form>
+            <a href="tel:{{ next_stop.contact_phone }}" class="btn-pro btn-pro-ghost" style="min-height:48px;min-width:80px"><i class="bi bi-telephone"></i> {% t "call" %}</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:140px"><div class="card-pro-body text-center"><div style="font-size:1.5rem;font-weight:700">{{ today_deliveries|length }}</div><div class="text-pro-sm text-pro-muted">{% t "today_stops" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:140px"><div class="card-pro-body text-center"><div style="font-size:1.5rem;font-weight:700;color:var(--color-success)">{{ completed_today }}</div><div class="text-pro-sm text-pro-muted">{% t "completed" %}</div></div></div>
+    <div class="card-pro" style="flex:1;min-width:140px"><div class="card-pro-body text-center"><div style="font-size:1.5rem;font-weight:700;color:var(--color-info)">{{ today_routes|length }}</div><div class="text-pro-sm text-pro-muted">{% t "routes" %}</div></div></div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "today_deliveries" %}</h5></div>
+    <div class="table-responsive"><table class="table-pro"><thead><tr><th>#</th><th>{% t "customer" %}</th><th>{% t "address" %}</th><th>{% t "phone" %}</th><th>{% t "packages" %}</th><th>{% t "status" %}</th><th></th></tr></thead>
+    <tbody>{% for d in today_deliveries %}
+    <tr>
+        <td style="font-weight:600">{{ forloop.counter }}</td>
+        <td>{{ d.customer|default:d.contact_name|default:"-" }}</td>
+        <td>{{ d.delivery_address|truncatewords:5|default:"-" }}</td>
+        <td><a href="tel:{{ d.contact_phone }}">{{ d.contact_phone|default:"-" }}</a></td>
+        <td>{{ d.shipment.total_packages|default:"-" }}</td>
+        <td>{% if d.status == 'delivered' %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "delivered" %}</span>{% elif d.status == 'arrived' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "arrived" %}</span>{% elif d.status == 'failed' %}<span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>{% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{{ d.get_status_display }}</span>{% endif %}</td>
+        <td>
+            {% if d.status != 'delivered' and d.status != 'returned' %}
+            <div class="d-flex gap-1">
+                <a href="{% url 'logistics:delivery_detail' pk=d.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+            </div>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}<tr><td colspan="7"><div class="text-pro-muted text-center p-4">{% t "no_deliveries_today" %}</div></td></tr>{% endfor %}</tbody></table></div>
+</div>
+
+{% if today_routes %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "today_routes" %}</h5></div>
+    {% for r in today_routes %}
+    <div class="d-flex align-center gap-3 card-pro-body" style="border-bottom:1px solid var(--border-color)">
+        <div><div style="font-weight:600"><a href="{% url 'logistics:route_detail' pk=r.pk %}">{{ r.reference }}</a></div><div class="text-pro-sm text-pro-muted">{{ r.vehicle|default:"-" }} &middot; {{ r.total_stops }} {% t "stops" %}</div></div>
+        <div style="margin-left:auto"><span class="badge-pro {% if r.status == 'completed' %}badge-pro-success{% elif r.status == 'in_progress' %}badge-pro-info{% else %}badge-pro-neutral{% endif %}">{{ r.get_status_display }}</span></div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

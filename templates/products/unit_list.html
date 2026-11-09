@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "units" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6)">
+    <div>
+        <h1 style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary);margin-bottom:var(--sp-1)">{% t "units_management" %}</h1>
+        <p style="font-size:var(--text-sm);color:var(--text-muted)">{% t "showing" %} {{ units|length }} {% t "results" %}</p>
+    </div>
+</div>
+<div style="display:grid;grid-template-columns:300px 1fr;gap:var(--sp-6)">
+    <!-- Add Unit Form -->
+    <div class="card-pro" style="padding:var(--sp-4)">
+        <h3 style="font-size:var(--text-base);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-4)">{% t "add_unit" %}</h3>
+        <form method="post" action="{% url 'unit_create' %}">{% csrf_token %}
+            <div class="input-pro-group"><label class="input-pro-label">{% t "unit_name" %} <span style="color:var(--danger-500)">*</span></label><input type="text" name="name" class="input-pro" required></div>
+            <div class="input-pro-group"><label class="input-pro-label">{% t "unit_symbol" %}</label><input type="text" name="symbol" class="input-pro"></div>
+            <button type="submit" class="btn-pro btn-pro-primary" style="width:100%;margin-top:var(--sp-2)"><i class="bi bi-plus-lg"></i> {% t "add_unit" %}</button>
+        </form>
+    </div>
+    <!-- Units List -->
+    <div>
+        {% if units %}
+        <div class="card-pro" style="overflow-x:auto">
+            <table class="table-pro">
+                <thead><tr><th>{% t "unit_name" %}</th><th>{% t "unit_symbol" %}</th><th>{% t "products_count" %}</th><th>{% t "actions" %}</th></tr></thead>
+                <tbody>
+                    {% for u in units %}
+                    <tr>
+                        <td style="font-weight:500">{{ u.name }}</td>
+                        <td><code style="font-size:var(--text-xs)">{{ u.symbol|default:"—" }}</code></td>
+                        <td>{{ u.product_count }}</td>
+                        <td>
+                            <form method="post" action="{% url 'unit_delete' pk=u.pk %}" style="display:inline">{% csrf_token %}<button type="submit" class="btn-pro btn-pro-ghost btn-pro-sm" style="padding:4px 8px;color:var(--danger-600)" onclick="return confirm('{% t "confirm_delete_product" %}')"><i class="bi bi-trash"></i></button></form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-pro" style="text-align:center;padding:var(--sp-10)">
+            <p style="color:var(--text-muted)">{% t "no_units" %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

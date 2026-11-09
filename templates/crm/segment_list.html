@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <nav class="breadcrumb-pro">
+        <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
+        <span class="breadcrumb-pro-separator">/</span>
+        <a href="{% url 'crm:crm_dashboard' %}">{% t "CRM" %}</a>
+        <span class="breadcrumb-pro-separator">/</span>
+        <span>{% t "Segments" %}</span>
+      </nav>
+      <h1 class="page-title">{% t "Segments" %}</h1>
+      <p class="page-subtitle">{% t "Organize customers into segments" %}</p>
+    </div>
+    <div class="page-actions">
+      <form method="post" action="{% url 'crm:segment_create' %}" style="display: flex; gap: var(--spacing-sm); align-items: flex-end;">
+        {% csrf_token %}
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Name" %}</label>
+          <input type="text" name="name" class="input-pro" placeholder="{% t "segment_name" %}" required>
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Slug" %}</label>
+          <input type="text" name="slug" class="input-pro" placeholder="{% t 'slug' %}">
+        </div>
+        <div class="input-pro-group">
+          <label class="input-pro-label">{% t "Color" %}</label>
+          <input type="color" name="color" class="input-pro" value="#3b82f6" style="width: 48px; height: 38px; padding: 2px; cursor: pointer;">
+        </div>
+        <button type="submit" class="btn-pro btn-pro-primary" style="height: 38px;">
+          <i class="fas fa-plus"></i> {% t "Add" %}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card-pro">
+  <div class="card-pro-body">
+    {% if segments %}
+    <div class="table-responsive">
+      <table class="table-pro">
+        <thead>
+          <tr>
+            <th>{% t "Name" %}</th>
+            <th>{% t "Color" %}</th>
+            <th>{% t "Description" %}</th>
+            <th>{% t "Customer Count" %}</th>
+            <th>{% t "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for segment in segments %}
+          <tr>
+            <td class="fw-600">{{ segment.name }}</td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: var(--spacing-sm);">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: {% if segment.color %}{{ segment.color }}{% else %}var(--color-primary){% endif %}; display: inline-block;"></span>
+                <span class="text-pro-sm text-pro-muted">{{ segment.color|default:"#3b82f6" }}</span>
+              </span>
+            </td>
+            <td class="text-pro-sm text-pro-muted">{{ segment.description|default:"-" }}</td>
+            <td>
+              <span class="badge-pro badge-pro-info">{{ segment.customer_count }}</span>
+            </td>
+            <td>
+              <form method="post" action="{% url 'crm:segment_delete' segment.pk %}" onsubmit="return confirm('{% t "Are you sure you want to delete this segment?" %}');" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-pro btn-pro-outline" style="padding: var(--spacing-xs) var(--spacing-sm); font-size: var(--text-xs); color: var(--color-danger); border-color: var(--color-danger);">
+                  <i class="fas fa-trash"></i> {% t "Delete" %}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-layer-group"></i>
+      <h3>{% t "No segments created" %}</h3>
+      <p>{% t "Create your first segment to start organizing customers." %}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

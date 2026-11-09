@@ -1,0 +1,806 @@
+{% extends "base.html" %}
+{% load static i18n_tags %}
+
+{% block title %}{% t "inventory_table_title" %} | SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/filter-panel.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     Header card: title pinned left, item count pinned right.
+     `.page-header` is GLOBAL (used by 277 templates) so the flat
+     slate surface and the truncation rules are scoped under `.invt-`
+     to avoid changing every other page.
+     ============================================================ -->
+<header class="page-header invt-header">
+  <div class="page-header-content invt-header__content">
+    <span class="invt-header__eyebrow">
+      <i class="bi bi-box-seam" aria-hidden="true"></i>
+      {% t "inventory" %}
+    </span>
+    <h1 class="page-title">{% t "inventory_table_title" %}</h1>
+  </div>
+  <div class="page-actions">
+    <span class="invt-count">
+      <span class="invt-count__dot" aria-hidden="true"></span>
+      <strong>{{ total_count|default:"0" }}</strong>
+      <span class="invt-count__label">{% t "items_suffix" %}</span>
+    </span>
+  </div>
+</header>
+
+{% url 'inventory_table' as inventory_table_url %}
+{% include "components/filter_panel.html" with filter_action=inventory_table_url filter_search_value=q filter_status_value=status_filter filter_category_value=category_filter filter_brand_value=brand_filter filter_categories=categories filter_brands=brands filter_total_count=total_count filter_status_options_template="components/filter_status_options.html" %}
+
+{% if page_obj %}
+<!-- ---------- Mobile: one card per product (< lg) ---------- -->
+<div class="invt-cards">
+  {% for product in page_obj %}
+  <article class="invt-card{% if product.quantity <= 0 %} invt-card--danger{% elif product.min_stock and product.quantity <= product.min_stock %} invt-card--warning{% endif %}">
+    <div class="invt-card__top">
+      <div class="invt-card__lead">
+        <h2 class="invt-card__name">{{ product.name }}</h2>
+        <p class="invt-card__sku">{{ product.sku|default:"-" }}</p>
+      </div>
+      {% if product.quantity <= 0 %}
+      <span class="badge-pro badge-pro-danger invt-status invt-status--danger"><span class="invt-status__dot" aria-hidden="true"></span>{% t "out_of_stock" %}</span>
+      {% elif product.min_stock and product.quantity <= product.min_stock %}
+      <span class="badge-pro badge-pro-warning invt-status invt-status--warning"><span class="invt-status__dot" aria-hidden="true"></span>{% t "low_stock" %}</span>
+      {% elif product.max_stock and product.quantity >= product.max_stock %}
+      <span class="badge-pro badge-pro-info invt-status invt-status--info"><span class="invt-status__dot" aria-hidden="true"></span>{% t "overstock" %}</span>
+      {% else %}
+      <span class="badge-pro badge-pro-success invt-status invt-status--success"><span class="invt-status__dot" aria-hidden="true"></span>{% t "in_stock" %}</span>
+      {% endif %}
+    </div>
+
+    <div class="invt-card__stats">
+      <div class="invt-stat">
+        <span class="invt-stat__label">{% t "current_stock" %}</span>
+        <span class="invt-stat__value invt-stat__value--strong">
+          {{ product.quantity|num }}{% if product.unit %}&nbsp;{% t "items_suffix" %}{% endif %}
+        </span>
+      </div>
+      <div class="invt-stat">
+        <span class="invt-stat__label">{% t "min_stock" %} / {% t "max_stock" %}</span>
+        <span class="invt-stat__value">{{ product.min_stock|default:"-" }} / {{ product.max_stock|default:"-" }}</span>
+      </div>
+      <div class="invt-stat">
+        <span class="invt-stat__label">{% t "price" %}</span>
+        <span class="invt-stat__value">{{ product.price|uzs }}</span>
+      </div>
+    </div>
+
+    <div class="invt-card__actions">
+      <a href="{% url 'product_detail' product.pk %}" class="invt-btn invt-btn--ghost">
+        <i class="bi bi-eye"></i> {% t "view_product" %}
+      </a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+<!-- ---------- Desktop: table (lg+) ---------- -->
+<div class="invt-table-card">
+  <div class="table-wrapper table-wrapper--scroll">
+  <table class="table-pro">
+    <thead>
+      <tr>
+        <th class="table-pro__th">{% t "product_name" %}</th>
+        <th class="table-pro__th table-pro__th--hide-mobile invt-col--sku">{% t "sku" %}</th>
+        <th class="table-pro__th invt-col--num">{% t "current_stock" %}</th>
+        <th class="table-pro__th table-pro__th--hide-mobile invt-col--num">{% t "min_stock_label" %}</th>
+        <th class="table-pro__th table-pro__th--hide-mobile invt-col--num">{% t "max_stock_label" %}</th>
+        <th class="table-pro__th table-pro__th--hide-mobile">{% t "unit" %}</th>
+        <th class="table-pro__th table-pro__th--hide-mobile invt-col--num">{% t "price" %}</th>
+        <th class="table-pro__th">{% t "status" %}</th>
+        <th class="table-pro__th table-pro__th--actions">{% t "actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in page_obj %}
+      <tr class="table-pro__row">
+        <td class="table-pro__td">
+          <div class="table-pro__cell-main">{{ product.name }}</div>
+          <small class="table-pro__cell-sub">{{ product.sku }}</small>
+        </td>
+        <td class="table-pro__td table-pro__td--hide-mobile invt-col--sku">{{ product.sku|default:"-" }}</td>
+        <td class="table-pro__td invt-col--num">
+          {% if product.quantity <= 0 %}
+          <strong class="invt-num text--danger">{{ product.quantity|num }}</strong>
+          {% elif product.min_stock and product.quantity <= product.min_stock %}
+          <strong class="invt-num text--warning">{{ product.quantity|num }}</strong>
+          {% else %}
+          <strong class="invt-num text--normal">{{ product.quantity|num }}</strong>
+          {% endif %}
+        </td>
+        <td class="table-pro__td table-pro__td--hide-mobile invt-col--num">{{ product.min_stock|num|default:"-" }}</td>
+        <td class="table-pro__td table-pro__td--hide-mobile invt-col--num">{{ product.max_stock|num|default:"-" }}</td>
+        <td class="table-pro__td table-pro__td--hide-mobile">{{ product.unit|default:"-" }}</td>
+        <td class="table-pro__td table-pro__td--hide-mobile invt-col--num"><span class="invt-price">{{ product.price|uzs }}</span></td>
+        <td class="table-pro__td">
+          {% if product.quantity <= 0 %}
+          <span class="badge-pro badge-pro-danger invt-status invt-status--danger"><span class="invt-status__dot" aria-hidden="true"></span>{% t "out_of_stock" %}</span>
+          {% elif product.min_stock and product.quantity <= product.min_stock %}
+          <span class="badge-pro badge-pro-warning invt-status invt-status--warning"><span class="invt-status__dot" aria-hidden="true"></span>{% t "low_stock" %}</span>
+          {% elif product.max_stock and product.quantity >= product.max_stock %}
+          <span class="badge-pro badge-pro-info invt-status invt-status--info"><span class="invt-status__dot" aria-hidden="true"></span>{% t "overstock" %}</span>
+          {% else %}
+          <span class="badge-pro badge-pro-success invt-status invt-status--success"><span class="invt-status__dot" aria-hidden="true"></span>{% t "in_stock" %}</span>
+          {% endif %}
+        </td>
+        <td class="table-pro__td table-pro__td--actions">
+          <a href="{% url 'product_detail' product.pk %}" class="btn-pro btn-pro-icon btn-pro-ghost invt-action" title="{% t "view_product" %}" aria-label="{% t "view_product" %}">
+            <i class="bi bi-eye" aria-hidden="true"></i>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="invt-pagination" aria-label="{% t "pagination" %}">
+  <div class="pagination-pro">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status_filter }}&category={{ category_filter }}&brand={{ brand_filter }}" class="invt-page-link">
+      &laquo; {% t "previous" %}
+    </a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <span class="active">{{ num }}</span>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+      <a href="?page={{ num }}&q={{ q }}&status={{ status_filter }}&category={{ category_filter }}&brand={{ brand_filter }}">
+        {{ num }}
+      </a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status_filter }}&category={{ category_filter }}&brand={{ brand_filter }}" class="invt-page-link">
+      {% t "next" %} &raquo;
+    </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="card-pro">
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-inbox" aria-hidden="true"></i></div>
+    <p class="empty-state-title">{% t "no_products_found" %}</p>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  /* ==========================================================
+     Scoped styles for inventory_table.html only.
+     Prefixed `.invt-` so the GLOBAL `.page-header` (277 templates),
+     `.table-pro` and `.empty-state` (177 templates) are never modified.
+     ========================================================== */
+
+  /* ---------- 1. Header + item counter ---------- */
+  .invt-header {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.4),
+      0 8px 10px -6px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    backdrop-filter: blur(24px) saturate(140%);
+  }
+
+  @media (max-width: 639px) {
+    .invt-header {
+      flex-direction: row;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+
+  /* Soft indigo bloom keeps the glass card from reading as a flat panel. */
+  .invt-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(520px 150px at 8% -20%, rgba(99, 102, 241, 0.16), transparent 70%),
+      radial-gradient(360px 120px at 100% 120%, rgba(56, 189, 248, 0.08), transparent 70%);
+    pointer-events: none;
+  }
+
+  .invt-header__content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .invt-header__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #818cf8;
+  }
+
+  .invt-header__eyebrow i {
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  .invt-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    padding: 7px 13px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: #c7d2fe;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 9999px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 18px -6px rgba(99, 102, 241, 0.55);
+  }
+
+  .invt-count strong {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #e0e7ff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .invt-count__label {
+    color: #a5b4fc;
+    font-weight: 500;
+  }
+
+  .invt-count__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #818cf8;
+    box-shadow: 0 0 8px rgba(129, 140, 248, 0.9);
+    flex: 0 0 auto;
+  }
+
+  [data-theme="light"] .invt-header {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(226, 232, 240, 0.9);
+    box-shadow:
+      0 20px 25px -5px rgba(15, 23, 42, 0.08),
+      0 8px 10px -6px rgba(15, 23, 42, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  [data-theme="light"] .invt-header__eyebrow { color: #4f46e5; }
+  [data-theme="light"] .invt-count {
+    color: #4338ca;
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  [data-theme="light"] .invt-count strong { color: #3730a3; }
+  [data-theme="light"] .invt-count__label { color: #4f46e5; }
+  [data-theme="light"] .invt-count__dot { background: #4f46e5; }
+
+  /* ---------- 5. Buttons ---------- */
+  .invt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--slate-100, #f1f5f9);
+    background: var(--slate-800, #1e293b);
+    border: 1px solid var(--slate-700, #334155);
+    border-radius: 12px;
+    white-space: nowrap;
+    transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  }
+
+  .invt-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* Card action button: full-width tap target, ghost look. */
+  .invt-btn--ghost {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: var(--slate-700, #334155);
+    color: var(--slate-200, #e2e8f0);
+  }
+
+  .invt-btn--ghost:hover {
+    color: #fff;
+    background: rgba(51, 65, 85, 0.7);
+    border-color: var(--slate-600, #475569);
+  }
+
+  [data-theme="light"] .invt-btn--ghost {
+    color: #334155;
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .invt-btn--ghost:hover {
+    color: #0f172a;
+    background: #fff;
+    border-color: #cbd5e1;
+  }
+
+  /* ---------- 6. Product cards (< lg) ---------- */
+  .invt-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .invt-card {
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-left-width: 3px;
+    border-radius: 16px;
+    box-shadow:
+      0 12px 20px -12px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  [data-theme="light"] .invt-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(226, 232, 240, 0.95);
+    box-shadow: 0 12px 20px -12px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  [data-theme="light"] .invt-card--warning { border-left-color: #f59e0b; }
+  [data-theme="light"] .invt-card--danger { border-left-color: #e11d48; }
+
+  [data-theme="light"] .invt-card__name { color: #0f172a; }
+  [data-theme="light"] .invt-card__stats {
+    background: rgba(248, 250, 252, 0.9);
+    border-color: rgba(226, 232, 240, 0.9);
+  }
+  [data-theme="light"] .invt-stat__value { color: #334155; }
+  [data-theme="light"] .invt-stat__value--strong { color: #0f172a; }
+
+  /* Left edge encodes the stock state without relying on colour alone -
+     the status badge is always present too. */
+  .invt-card--warning {
+    border-left-color: #fbbf24;                    /* amber-400 */
+  }
+
+  .invt-card--danger {
+    border-left-color: #fb7185;                    /* rose-400 */
+  }
+
+  .invt-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* min-width:0 + flex:1 lets the name ellipsis instead of pushing the
+     badge outside the card. */
+  .invt-card__lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .invt-card__name {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #f8fafc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .invt-card__sku {
+    margin: 2px 0 0;
+    font-size: 0.6875rem;
+    color: var(--slate-500, #64748b);
+    overflow-wrap: anywhere;
+  }
+
+  .invt-card__stats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+  }
+
+  /* 2-up once there is room, but the quantity cell keeps the first column. */
+  @media (min-width: 480px) {
+    .invt-card__stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .invt-card__stats .invt-stat:last-child:nth-child(odd) {
+      grid-column: span 2;
+    }
+  }
+
+  .invt-stat {
+    min-width: 0;
+  }
+
+  .invt-stat__label {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--slate-500, #64748b);
+  }
+
+  .invt-stat__value {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--slate-200, #e2e8f0);
+    overflow-wrap: anywhere;
+  }
+
+  .invt-stat__value--strong {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    color: #f8fafc;
+  }
+
+  .invt-card__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* ---------- 8. Visibility swap ---------- */
+  /* The table is desktop-only and its header is pinned off below lg so a
+     bare column-less table can never be rendered. */
+  @media (max-width: 1023px) {
+    .invt-table-card {
+      display: none;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .invt-cards {
+      display: none;
+    }
+  }
+
+  /* ---------- 9. Table (desktop) ---------- */
+  .invt-table-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.35),
+      0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .table-wrapper--scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .invt-table-card .table-pro thead th {
+    background: rgba(15, 23, 42, 0.72);
+    border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+    letter-spacing: 0.06em;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Slightly tighter gutters keep all nine columns inside a 1280 canvas. */
+  .invt-table-card .table-pro th,
+  .invt-table-card .table-pro td {
+    padding: 13px 12px;
+  }
+
+  .invt-table-card .table-pro thead th {
+    height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+  }
+
+  /* The product cell already prints the SKU underneath the name, so the
+     standalone column can fold away before the table starts scrolling. */
+  @media (max-width: 1439px) {
+    .invt-table-card .invt-col--sku {
+      display: none;
+    }
+  }
+
+  .invt-table-card .table-pro__row {
+    transition: background-color 0.2s ease;
+  }
+
+  .invt-table-card .table-pro__row td {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* Scoped hover wins over the global `.table-pro tbody tr:hover td`. */
+  .invt-table-card .table-pro__row:hover td {
+    background: rgba(30, 41, 59, 0.4);
+  }
+
+  .invt-table-card .table-pro__row:hover td:first-child {
+    box-shadow: inset 2px 0 0 rgba(99, 102, 241, 0.55);
+  }
+
+  .invt-table-card .table-pro__row:focus-within td {
+    background: rgba(30, 41, 59, 0.32);
+  }
+
+  .invt-table-card .table-pro tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .table-pro__cell-main {
+    color: var(--color-text-primary, inherit);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .table-pro__cell-sub {
+    color: var(--color-text-tertiary, #999);
+    font-size: var(--font-size-xs, 0.75rem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* `.table-pro th` (class + element) out-specifies a bare `.invt-col--num`,
+     so numeric headers stay right-aligned only with this scoped selector. */
+  .invt-table-card .table-pro th.invt-col--num,
+  .invt-table-card .table-pro td.invt-col--num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .invt-table-card .table-pro th:first-child,
+  .invt-table-card .table-pro td:first-child {
+    padding-left: 16px;
+  }
+
+  .invt-table-card .table-pro th:last-child,
+  .invt-table-card .table-pro td:last-child {
+    padding-right: 16px;
+  }
+
+  .invt-num {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .invt-price {
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-theme="light"] .invt-table-card {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(226, 232, 240, 0.9);
+    box-shadow:
+      0 20px 25px -5px rgba(15, 23, 42, 0.08),
+      0 8px 10px -6px rgba(15, 23, 42, 0.05);
+  }
+
+  [data-theme="light"] .invt-table-card .table-pro thead th {
+    background: rgba(248, 250, 252, 0.9);
+    border-bottom-color: rgba(226, 232, 240, 0.9);
+  }
+
+  [data-theme="light"] .invt-table-card .table-pro__row:hover td {
+    background: rgba(241, 245, 249, 0.9);
+  }
+
+  /* ---------- 9.A Status pills ---------- */
+  .invt-status {
+    gap: 7px;
+    padding: 4px 11px 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 14px -6px currentColor;
+  }
+
+  .invt-status__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04), 0 0 7px currentColor;
+    flex: 0 0 auto;
+  }
+
+  .invt-status--success {
+    border-color: rgba(74, 222, 128, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 14px -5px rgba(74, 222, 128, 0.7);
+  }
+
+  .invt-status--warning {
+    border-color: rgba(251, 191, 36, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 14px -5px rgba(251, 191, 36, 0.7);
+  }
+
+  .invt-status--danger {
+    border-color: rgba(248, 113, 113, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 14px -5px rgba(248, 113, 113, 0.7);
+  }
+
+  .invt-status--info {
+    border-color: rgba(96, 165, 250, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 14px -5px rgba(96, 165, 250, 0.7);
+  }
+
+  [data-theme="light"] .invt-status {
+    box-shadow: none;
+  }
+
+  /* ---------- 9.B Row action ---------- */
+  .invt-table-card .invt-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--slate-400, #94a3b8);
+    transition: all 0.2s ease;
+  }
+
+  .invt-table-card .invt-action:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.24);
+    color: #818cf8;
+    box-shadow: 0 0 18px -8px rgba(99, 102, 241, 0.9);
+  }
+
+  .invt-table-card .invt-action:active {
+    transform: scale(0.94);
+  }
+
+  .invt-table-card .invt-action:focus-visible {
+    outline: none;
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  [data-theme="light"] .invt-table-card .invt-action:hover,
+  [data-theme="light"] .invt-table-card .invt-action:focus-visible {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.28);
+  }
+
+  .text--danger {
+    color: var(--color-danger, #dc3545);
+  }
+
+  .text--warning {
+    color: var(--color-warning, #ffc107);
+  }
+
+  .text--normal {
+    color: var(--color-text-primary, inherit);
+  }
+
+  .invt-table-card .table-pro th.table-pro__th--actions,
+  .invt-table-card .table-pro td.table-pro__td--actions {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .table-pro__th--hide-mobile,
+    .table-pro__td--hide-mobile {
+      display: none;
+    }
+  }
+
+  /* ---------- 10. Pagination ---------- */
+  .invt-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .invt-pagination .pagination-pro {
+    gap: 6px;
+    padding: 5px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .invt-pagination .pagination-pro a,
+  .invt-pagination .pagination-pro span {
+    min-width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border-color: transparent;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+
+  .invt-pagination .pagination-pro a:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(51, 65, 85, 0.8);
+    color: #f1f5f9;
+  }
+
+  .invt-pagination .pagination-pro .active {
+    background: rgba(99, 102, 241, 0.9);
+    border-color: rgba(99, 102, 241, 0.9);
+    color: #fff;
+    box-shadow: 0 0 18px -6px rgba(99, 102, 241, 0.9);
+  }
+
+  .invt-page-link {
+    min-width: auto;
+    padding: 0 var(--sp-3, 12px);
+  }
+
+  [data-theme="light"] .invt-pagination .pagination-pro {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .invt-pagination .pagination-pro a:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+</style>
+{% endblock %}

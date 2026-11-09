@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}No Company - SKLAT PRO{% endblock %}
+{% block content %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-building"></i>
+    </div>
+    <h2 class="empty-state-title">{% t "No Company Assigned" %}</h2>
+    <p class="empty-state-desc">{% t "You are not assigned to any company. Please contact your administrator to get access to E-Commerce features." %}</p>
+    <a href="{% url 'dashboard' %}" class="btn-pro btn-pro-primary">
+        <i class="bi bi-arrow-left"></i> {% t "Back to Dashboard" %}
+    </a>
+</div>
+{% endblock %}

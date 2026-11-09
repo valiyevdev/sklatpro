@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ shipment.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:shipment_list' %}">{% t "shipments" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ shipment.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ shipment.reference }}</h1>
+            {% if shipment.status == 'delivered' %}
+                <span class="badge-pro badge-pro-success">{% t "delivered" %}</span>
+            {% elif shipment.status == 'shipped' %}
+                <span class="badge-pro badge-pro-info">{% t "shipped" %}</span>
+            {% elif shipment.status == 'in_transit' %}
+                <span class="badge-pro badge-pro-info">{% t "in_transit" %}</span>
+            {% elif shipment.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ shipment.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if shipment.status != 'delivered' and shipment.status != 'cancelled' %}
+        <form method="post" action="{% url 'warehouses:shipment_update_status' pk=shipment.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="
+                {% if shipment.status == 'pending' %}shipped
+                {% elif shipment.status == 'shipped' %}in_transit
+                {% elif shipment.status == 'in_transit' %}delivered
+                {% endif %}">
+            <button type="submit" class="btn-pro btn-pro-primary">
+                <i class="bi bi-arrow-right-circle"></i> {% t "advance_status" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ shipment.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.sale %}{{ shipment.sale.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "sale" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-cart"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.carrier %}{{ shipment.carrier }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "carrier" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.driver %}{{ shipment.driver }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "driver" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person-badge"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.tracking_number %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ shipment.tracking_number }}</code>{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "tracking_number" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-upc-scan"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.shipped_date %}{{ shipment.shipped_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "shipped_date" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-calendar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if shipment.delivered_date %}{{ shipment.delivered_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "delivered_date" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-calendar-check"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box" style="color:var(--primary-600)"></i> {% t "packages" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ packages.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "package_number" %}</th>
+                    <th>{% t "barcode" %}</th>
+                    <th>{% t "weight" %}</th>
+                    <th>{% t "dimensions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr>
+                    <td class="cell-primary fw-500">{% if pkg.package_number %}{{ pkg.package_number }}{% else %}—{% endif %}</td>
+                    <td>{% if pkg.barcode %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ pkg.barcode }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if pkg.weight %}{{ pkg.weight }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if pkg.length and pkg.width and pkg.height %}
+                            {{ pkg.length }} x {{ pkg.width }} x {{ pkg.height }}
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box"></i></div>
+                            <h5 class="empty-state-title">{% t "no_packages" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

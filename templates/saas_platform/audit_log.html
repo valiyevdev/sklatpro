@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Audit Log — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-clipboard2-data" style="color:var(--primary-500)"></i> Audit Log</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Track all actions and changes across the platform</p>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Entries</div>
+            <div class="stat-card-value">{{ total_entries }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clipboard2-data"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Today</div>
+            <div class="stat-card-value">{{ today_entries }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-calendar-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">This Week</div>
+            <div class="stat-card-value">{{ week_entries }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-calendar-week"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Unique Users</div>
+            <div class="stat-card-value">{{ unique_users }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-people"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="min-width:150px;margin-bottom:0">
+                <select class="input-pro" name="action">
+                    <option value="">All Actions</option>
+                    <option value="create" {% if action_filter == 'create' %}selected{% endif %}>Create</option>
+                    <option value="update" {% if action_filter == 'update' %}selected{% endif %}>Update</option>
+                    <option value="delete" {% if action_filter == 'delete' %}selected{% endif %}>Delete</option>
+                    <option value="login" {% if action_filter == 'login' %}selected{% endif %}>Login</option>
+                    <option value="export" {% if action_filter == 'export' %}selected{% endif %}>Export</option>
+                    <option value="import" {% if action_filter == 'import' %}selected{% endif %}>Import</option>
+                    <option value="permission_change" {% if action_filter == 'permission_change' %}selected{% endif %}>Permission Change</option>
+                </select>
+            </div>
+            <div class="input-pro-group" style="flex:1;min-width:150px;margin-bottom:0">
+                <input class="input-pro" type="search" name="search" placeholder="{% t "search_by_user_or_description" %}" value="{{ search_query }}">
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i></button>
+            <a href="{% url 'saas_platform:audit_export' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-download"></i> Export</a>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="white-space:nowrap">Time</th>
+                    <th>Action</th>
+                    <th>User</th>
+                    <th>Company</th>
+                    <th>Resource</th>
+                    <th>Description</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in audit_entries %}
+                <tr>
+                    <td style="white-space:nowrap;font-size:var(--text-xs);color:var(--text-muted)">{{ entry.created_at|date:"M d, Y H:i:s" }}</td>
+                    <td>
+                        <span class="badge-pro {% if entry.action_type == 'create' %}badge-pro-success{% elif entry.action_type == 'update' %}badge-pro-warning{% elif entry.action_type == 'delete' %}badge-pro-danger{% elif entry.action_type == 'login' %}badge-pro-info{% else %}badge-pro-primary{% endif %}">
+                            {% if entry.action_type == 'create' %}<i class="bi bi-plus-lg" style="font-size:0.625rem"></i>
+                            {% elif entry.action_type == 'update' %}<i class="bi bi-pencil" style="font-size:0.625rem"></i>
+                            {% elif entry.action_type == 'delete' %}<i class="bi bi-trash" style="font-size:0.625rem"></i>
+                            {% elif entry.action_type == 'login' %}<i class="bi bi-box-arrow-in-right" style="font-size:0.625rem"></i>
+                            {% else %}<i class="bi bi-gear" style="font-size:0.625rem"></i>{% endif %}
+                            {{ entry.action_type|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-center gap-2">
+                            <div style="width:24px;height:24px;border-radius:var(--radius-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:var(--text-xs);flex-shrink:0">
+                                {{ entry.user.get_full_name|default:entry.user.username|first|upper }}
+                            </div>
+                            <span style="font-size:var(--text-sm)">{{ entry.user.get_full_name|default:entry.user.email }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if entry.company %}
+                            {{ entry.company.company_name }}
+                        {% else %}
+                            <span style="color:var(--text-muted)">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if entry.content_type %}
+                            <span class="badge-pro badge-pro-secondary">{{ entry.content_type.model }}</span>
+                            {% if entry.object_id %}<span style="font-size:var(--text-xs);color:var(--text-muted);margin-left:4px">#{{ entry.object_id }}</span>{% endif %}
+                        {% else %}
+                            <span style="color:var(--text-muted)">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-sm);color:var(--text-secondary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ entry.description|default:"-" }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);font-family:monospace">{{ entry.ip_address|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-clipboard2-data"></i></div>
+                            <div class="empty-state-title">No audit log entries found</div>
+                            <div class="empty-state-desc">No entries match your filters.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-between align-center mt-4">
+    <span style="font-size:var(--text-sm);color:var(--text-muted)">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-pro">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

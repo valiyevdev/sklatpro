@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ location.full_code|default:location.code }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'warehouses:warehouse_detail' pk=location.warehouse.pk %}">{{ location.warehouse.name }}</a>
+    <span class="separator">/</span>
+    {% if location.zone %}
+    <a href="{% url 'warehouses:zone_detail' pk=location.zone.pk %}">{{ location.zone.name }}</a>
+    <span class="separator">/</span>
+    {% endif %}
+    <span class="current">{{ location.full_code|default:location.code }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ location.full_code|default:location.code }}</h1>
+            <span class="badge-pro badge-pro-neutral">{{ location.get_location_type_display }}</span>
+            {% if location.status == 'available' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "available" %}</span>
+            {% elif location.status == 'occupied' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "occupied" %}</span>
+            {% elif location.status == 'full' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "full" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ location.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'warehouses:location_update' pk=location.pk %}" class="btn-pro btn-pro-secondary"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'warehouses:location_delete' pk=location.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ location.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{% if location.zone %}{{ location.zone.name }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "zone" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-grid-3x3"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{% if location.capacity_qty %}{{ location.capacity_qty }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "capacity_qty" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-hdd-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{% if location.barcode %}{{ location.barcode }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "barcode" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-upc-scan"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4)">
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "location_type" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.get_location_type_display }}</div>
+            </div>
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "status" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.get_status_display }}</div>
+            </div>
+            {% if location.rack %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "rack" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.rack }}</div>
+            </div>
+            {% endif %}
+            {% if location.shelf %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "shelf" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.shelf }}</div>
+            </div>
+            {% endif %}
+            {% if location.bin_code %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "bin" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.bin_code }}</div>
+            </div>
+            {% endif %}
+            {% if location.aisle %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "aisle" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.aisle }}</div>
+            </div>
+            {% endif %}
+            {% if location.capacity_weight %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "capacity_weight" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.capacity_weight }}</div>
+            </div>
+            {% endif %}
+            {% if location.capacity_volume %}
+            <div>
+                <div class="text-pro-xs text-pro-muted">{% t "capacity_volume" %}</div>
+                <div class="text-pro-sm fw-500">{{ location.capacity_volume }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-left-right" style="color:var(--primary-600)"></i> {% t "stock_at_location" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ stock_levels.count }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th style="text-align:right">{% t "quantity" %}</th>
+                    <th style="text-align:right">{% t "reserved" %}</th>
+                    <th style="text-align:right">{% t "available" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sl in stock_levels %}
+                <tr>
+                    <td class="cell-primary">{{ sl.product.name }}</td>
+                    <td style="text-align:right;font-weight:600">{{ sl.quantity }}</td>
+                    <td style="text-align:right">{{ sl.reserved|default:"0" }}</td>
+                    <td style="text-align:right;font-weight:600;color:var(--success-600)">{{ sl.available|default:sl.quantity }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_stock" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:1024px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

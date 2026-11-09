@@ -1,0 +1,28 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "tracking" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "tracking" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "tracking" %}</h1></div></div>
+<div class="card-pro mb-6"><div class="card-pro-body"><form method="get"><div class="d-flex gap-3">
+    <input class="input-pro" type="text" name="q" placeholder="{% t "search_tracking" %}" value="{{ search }}" style="flex:1">
+    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-search"></i> {% t "search" %}</button>
+</div></form></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro">
+    <thead><tr><th>{% t "reference" %}</th><th>{% t "customer" %}</th><th>{% t "tracking_number" %}</th><th>{% t "carrier" %}</th><th>{% t "status" %}</th><th>{% t "driver" %}</th><th></th></tr></thead>
+    <tbody>{% for s in shipments %}
+    <tr>
+        <td class="cell-primary"><a href="{% url 'logistics:tracking_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.reference }}</a></td>
+        <td>{{ s.customer|default:"-" }}</td>
+        <td>{{ s.tracking_number|default:"-" }}</td>
+        <td>{{ s.carrier|default:"-" }}</td>
+        <td>{% if s.status == 'delivered' %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "delivered" %}</span>{% elif s.status == 'in_transit' or s.status == 'dispatched' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_transit" %}</span>{% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{{ s.get_status_display }}</span>{% endif %}</td>
+        <td>{{ s.driver|default:"-" }}</td>
+        <td><a href="{% url 'logistics:tracking_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-geo-alt"></i></a></td>
+    </tr>
+    {% empty %}<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div><h5 class="empty-state-title">{% t "no_shipments" %}</h5></div></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% if total_pages > 1 %}
+<div class="d-flex justify-between align-center mt-4"><span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page }} / {{ total_pages }}</span><div class="d-flex gap-1">{% if page > 1 %}<a href="?page={{ page|add:'-1' }}&q={{ search }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}{% if page < total_pages %}<a href="?page={{ page|add:'1' }}&q={{ search }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}</div></div>
+{% endif %}
+{% endblock %}

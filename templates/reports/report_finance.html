@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "finance_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "finance_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--success-600)">{{ summary.income|floatformat:0 }}</div><div class="stat-card-label">{% t "income" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-left"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:var(--danger-500)">{{ summary.expense|floatformat:0 }}</div><div class="stat-card-label">{% t "expense" %}</div></div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-right"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="color:{% if summary.profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">{{ summary.profit|floatformat:0 }}</div><div class="stat-card-label">{% t "profit" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.margin|floatformat:1 }}%</div><div class="stat-card-label">{% t "margin" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-percent"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{% if summary.growth > 0 %}+{% endif %}{{ summary.growth|floatformat:1 }}%</div><div class="stat-card-label">{% t "growth" %}</div></div>
+        <div class="stat-card-icon {% if summary.growth >= 0 %}success{% else %}danger{% endif %}"><i class="bi bi-graph-up-arrow"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ summary.total_balance|floatformat:0 }}</div><div class="stat-card-label">{% t "total_balance" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+{% endblock %}

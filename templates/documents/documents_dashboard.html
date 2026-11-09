@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "documents" %} {% t "dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <span class="current">{% t "documents" %}</span>
+    <span class="separator">/</span>
+    <span class="current">{% t "dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "documents_dashboard" %}</h1>
+        <p class="page-subtitle">{{ total }} {% t "total_documents" %} &middot; {{ total_value|floatformat:0 }} {{ currency|default:"UZS" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_document" %}
+        </a>
+        <a href="{% url 'documents:document_template_list' %}" class="btn-pro btn-pro-ghost">
+            <i class="bi bi-file-earmark-text"></i> {% t "view_templates" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-5 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_documents" %}</div>
+            <div class="stat-card-value">{{ total }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-file-earmark-text"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "drafts" %}</div>
+            <div class="stat-card-value">{{ status_counts.draft|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-pencil"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "pending" %}</div>
+            <div class="stat-card-value">{{ status_counts.pending|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-clock-history"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "approved" %}</div>
+            <div class="stat-card-value">{{ status_counts.approved|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "sent" %}</div>
+            <div class="stat-card-value">{{ status_counts.sent|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-send"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-5 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "completed" %}</div>
+            <div class="stat-card-value">{{ status_counts.completed|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check2-all"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "archived" %}</div>
+            <div class="stat-card-value">{{ status_counts.archived|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon"><i class="bi bi-archive"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "cancelled" %}</div>
+            <div class="stat-card-value">{{ status_counts.cancelled|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "rejected" %}</div>
+            <div class="stat-card-value">{{ status_counts.rejected|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-slash-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "received" %}</div>
+            <div class="stat-card-value">{{ status_counts.received|default:0 }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-inbox"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-file-earmark-text" style="color:var(--primary-600)"></i> {% t "recent_documents" %}</span>
+        <a href="{% url 'documents:document_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "view_all" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "document_number" %}</th>
+                    <th>{% t "document_type" %}</th>
+                    <th>{% t "title" %}</th>
+                    <th>{% t "customer" %}</th>
+                    <th>{% t "total_amount" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in recent_docs %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'documents:document_detail' pk=doc.pk %}" style="color:var(--text-primary);text-decoration:none">{{ doc.number }}</a>
+                    </td>
+                    <td>
+                        <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
+                    </td>
+                    <td>{{ doc.title|default:"—" }}</td>
+                    <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
+                    <td class="cell-primary fw-600">{{ doc.total|floatformat:0 }} {{ doc.currency }}</td>
+                    <td>
+                        {% if doc.status == 'draft' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "drafts" %}</span>
+                        {% elif doc.status == 'pending' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "pending" %}</span>
+                        {% elif doc.status == 'approved' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+                        {% elif doc.status == 'sent' %}
+                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "sent" %}</span>
+                        {% elif doc.status == 'completed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                        {% elif doc.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                        {% elif doc.status == 'archived' %}
+                            <span class="badge-pro badge-pro-dot">{% t "archived" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{{ doc.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ doc.date|date:"d.m.Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            <h5 class="empty-state-title">{% t "no_documents" %}</h5>
+                            <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

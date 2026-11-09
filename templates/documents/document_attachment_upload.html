@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "attachment_upload" %} — {{ doc.number }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="breadcrumb-link">{{ doc.number }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "attachment_upload" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "attachment_upload" %}</h1>
+        <p class="page-subtitle">{{ doc.number }} — {{ doc.get_doc_type_display }}</p>
+    </div>
+</div>
+
+<div class="card-pro" style="max-width:600px">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-upload" style="color:var(--primary-600)"></i> {% t "attachment_upload" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group mb-6">
+                <label class="form-label">{% t "choose_file" %}</label>
+                <input type="file" name="file" class="input-pro" required>
+            </div>
+            <div style="display:flex;gap:var(--sp-3);justify-content:flex-end">
+                <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+                <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-upload"></i> {% t "upload" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

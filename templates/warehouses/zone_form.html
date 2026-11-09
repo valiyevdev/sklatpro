@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if zone %}{% t "edit_zone" %}{% else %}{% t "add_zone" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}">{{ warehouse.name }}</a>
+    <span class="separator">/</span>
+    {% if zone %}
+    <a href="{% url 'warehouses:zone_detail' pk=zone.pk %}">{{ zone.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "edit" %}</span>
+    {% else %}
+    <span class="current">{% t "add_zone" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if zone %}{% t "edit_zone" %}: {{ zone.name }}{% else %}{% t "add_zone" %}: {{ warehouse.name }}{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger mb-4">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "basic_info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "zone_name" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="input-pro-error">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "code" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.code }}
+                            {% if form.code.errors %}<div class="input-pro-error">{{ form.code.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "zone_type" %}</label>
+                            {{ form.zone_type }}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "description" %}</label>
+                        {{ form.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "settings" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3 mb-3">
+                            {{ form.temperature_controlled }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "temperature_controlled" %}</label>
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3">
+                            {{ form.is_active }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "active" %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% if zone %}{% url 'warehouses:zone_detail' pk=zone.pk %}{% else %}{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}{% endif %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if zone %}{% t "save_changes" %}{% else %}{% t "create" %}{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

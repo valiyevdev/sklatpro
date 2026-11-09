@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "inventory" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "inventory" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "transactions_total" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'stock_in' %}" class="btn-pro btn-pro-success">
+            <i class="bi bi-arrow-down-circle"></i> {% t "stock_in" %}
+        </a>
+        <a href="{% url 'stock_out' %}" class="btn-pro btn-pro-danger">
+            <i class="bi bi-arrow-up-circle"></i> {% t "stock_out" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{% t "type" %}</th>
+                    <th>{% t "products" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "users" %}</th>
+                    <th>{% t "notes" %}</th>
+                    <th>{% t "date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in page_obj %}
+                <tr>
+                    <td class="cell-muted">{{ forloop.counter }}</td>
+                    <td>
+                        {% if txn.transaction_type == 'IN' %}
+                            <span class="badge-pro badge-pro-dot badge-pro-success">{% t "stock_in" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-dot badge-pro-danger">{% t "stock_out" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-primary">{{ txn.product.name }}</td>
+                    <td class="cell-primary fw-600">{{ txn.quantity }}</td>
+                    <td>{{ txn.user.get_full_name|default:txn.user.email }}</td>
+                    <td class="cell-muted text-pro-sm">{{ txn.notes|default:"-"|truncatechars:40 }}</td>
+                    <td class="cell-muted">{{ txn.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-arrow-left-right"></i></div>
+                            <h5 class="empty-state-title">{% t "no_transactions" %}</h5>
+                            <p class="empty-state-desc">{% t "no_transactions_desc" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

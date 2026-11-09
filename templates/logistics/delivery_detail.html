@@ -1,0 +1,139 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ delivery.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'logistics:delivery_list' %}">{% t "deliveries" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ delivery.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{{ delivery.reference }}</h1>
+        <p class="page-subtitle">
+            {% if delivery.status == 'delivered' %}<span class="badge-pro badge-pro-success">{% t "delivered" %}</span>
+            {% elif delivery.status == 'failed' %}<span class="badge-pro badge-pro-danger">{% t "failed" %}</span>
+            {% else %}<span class="badge-pro badge-pro-neutral">{{ delivery.get_status_display }}</span>{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:2;min-width:300px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "delivery_details" %}</h5></div>
+        <div class="card-pro-body">
+            <div class="d-flex gap-4 flex-wrap">
+                <div style="flex:1;min-width:180px"><div class="text-pro-sm text-pro-muted">{% t "shipment" %}</div><div>{% if delivery.shipment %}<a href="{% url 'logistics:shipment_detail' pk=delivery.shipment.pk %}">{{ delivery.shipment.reference }}</a>{% else %}-{% endif %}</div></div>
+                <div style="flex:1;min-width:180px"><div class="text-pro-sm text-pro-muted">{% t "customer" %}</div><div>{{ delivery.customer|default:delivery.contact_name|default:"-" }}</div></div>
+                <div style="flex:1;min-width:180px"><div class="text-pro-sm text-pro-muted">{% t "driver" %}</div><div>{{ delivery.driver|default:"-" }}</div></div>
+                <div style="flex:1;min-width:180px"><div class="text-pro-sm text-pro-muted">{% t "vehicle" %}</div><div>{{ delivery.vehicle|default:"-" }}</div></div>
+                <div style="flex:1;min-width:180px"><div class="text-pro-sm text-pro-muted">{% t "contact_phone" %}</div><div>{{ delivery.contact_phone|default:"-" }}</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:280px">
+        <div class="card-pro-header"><h5 class="card-pro-title">{% t "quantities" %}</h5></div>
+        <div class="card-pro-body">
+            <div class="d-flex gap-4">
+                <div><div class="text-pro-sm text-pro-muted">{% t "ordered" %}</div><div style="font-weight:600;font-size:1.2rem">{{ delivery.ordered_quantity }}</div></div>
+                <div><div class="text-pro-sm text-pro-muted">{% t "delivered" %}</div><div style="font-weight:600;font-size:1.2rem;color:var(--color-success,#22c55e)">{{ delivery.delivered_quantity }}</div></div>
+                <div><div class="text-pro-sm text-pro-muted">{% t "remaining" %}</div><div style="font-weight:600;font-size:1.2rem;color:var(--color-warning,#f59e0b)">{{ delivery.ordered_quantity|add:"-"|add:delivery.delivered_quantity }}</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "address" %}</h5></div>
+    <div class="card-pro-body">
+        <div>{{ delivery.delivery_address|default:"-" }}</div>
+        {% if delivery.delivery_instructions %}<div class="mt-2" style="padding:8px;background:rgba(14,165,233,0.1);border-radius:6px;font-size:0.85rem"><i class="bi bi-info-circle"></i> {{ delivery.delivery_instructions }}</div>{% endif %}
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "update_status" %}</h5></div>
+    <div class="card-pro-body">
+        <form method="post" action="{% url 'logistics:delivery_update_status' pk=delivery.pk %}">
+            {% csrf_token %}
+            {% if delivery.status != 'delivered' and delivery.status != 'returned' %}
+            <div class="d-flex gap-3 align-center flex-wrap">
+                {% if delivery.status == 'pending' or delivery.status == 'assigned' %}
+                    <button type="submit" name="status" value="dispatched" class="btn-pro btn-pro-primary btn-pro-sm">{% t "dispatch" %}</button>
+                {% endif %}
+                {% if delivery.status == 'dispatched' or delivery.status == 'in_transit' %}
+                    <button type="submit" name="status" value="arrived" class="btn-pro btn-pro-primary btn-pro-sm">{% t "mark_arrived" %}</button>
+                {% endif %}
+                {% if delivery.status == 'arrived' %}
+                    <button type="submit" name="status" value="delivered" class="btn-pro btn-pro-success btn-pro-sm">{% t "mark_delivered" %}</button>
+                    <button type="submit" name="status" value="partially_delivered" class="btn-pro btn-pro-warning btn-pro-sm">{% t "partial_delivery" %}</button>
+                    <button type="submit" name="status" value="failed" class="btn-pro btn-pro-danger btn-pro-sm">{% t "mark_failed" %}</button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if delivery.failure_reason %}
+<div class="card-pro mb-6" style="border:1px solid rgba(239,68,68,0.3)">
+    <div class="card-pro-header"><h5 class="card-pro-title" style="color:var(--color-danger,#ef4444)"><i class="bi bi-exclamation-triangle"></i> {% t "failure_info" %}</h5></div>
+    <div class="card-pro-body">
+        <div><strong>{% t "reason" %}:</strong> {{ delivery.failure_reason }}</div>
+        {% if delivery.failure_notes %}<div class="mt-2">{{ delivery.failure_notes }}</div>{% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="d-flex gap-3 mb-6">
+    <a href="{% url 'logistics:pod_capture' delivery_pk=delivery.pk %}" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-camera"></i> {% t "capture_proof" %}</a>
+    {% if delivery.status != 'returned' %}
+    <a href="{% url 'logistics:delivery_reschedule' pk=delivery.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-calendar"></i> {% t "reschedule" %}</a>
+    <a href="{% url 'logistics:delivery_return' pk=delivery.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-arrow-return-left"></i> {% t "return_to_warehouse" %}</a>
+    {% endif %}
+</div>
+
+{% if events %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "status_history" %}</h5></div>
+    <div class="card-pro-body">
+        {% for e in events %}
+        <div class="d-flex gap-3 align-start mb-3" style="padding-bottom:12px;border-bottom:1px solid var(--border-color)">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--color-primary,#3b82f6);margin-top:6px;flex-shrink:0"></div>
+            <div>
+                <div style="font-weight:500">{{ e.from_status|default:"-" }} → {{ e.to_status }}</div>
+                {% if e.notes %}<div class="text-pro-sm text-pro-muted">{{ e.notes }}</div>{% endif %}
+                <div class="text-pro-sm text-pro-muted">{{ e.timestamp|date:"d.m.Y H:i" }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if proofs %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title">{% t "proofs_of_delivery" %}</h5></div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead><tr><th>{% t "type" %}</th><th>{% t "status" %}</th><th>{% t "recipient" %}</th><th>{% t "captured_at" %}</th></tr></thead>
+            <tbody>
+                {% for p in proofs %}
+                <tr>
+                    <td>{{ p.get_proof_type_display }}</td>
+                    <td><span class="badge-pro {% if p.status == 'verified' %}badge-pro-success{% elif p.status == 'rejected' %}badge-pro-danger{% else %}badge-pro-neutral{% endif %}">{{ p.get_status_display }}</span></td>
+                    <td>{{ p.recipient_name|default:"-" }}</td>
+                    <td class="cell-muted">{{ p.captured_at|date:"d.m.Y H:i"|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

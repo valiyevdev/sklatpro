@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "saved_reports" %}</h1>
+        <a href="{% url 'reports:saved_report_create' %}" class="btn-pro btn-pro-primary">
+            {% t "create_report" %}
+        </a>
+    </div>
+
+    <div class="card-pro">
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "name" %}</th>
+                        <th>{% t "report_type" %}</th>
+                        <th>{% t "visibility" %}</th>
+                        <th>{% t "created_at" %}</th>
+                        <th>{% t "actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td class="fw-semibold">{{ report.name }}</td>
+                        <td>
+                            <span class="badge-pro">{{ report.report_type_display }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-pro badge-pro-{{ report.visibility }}">{{ report.visibility_display }}</span>
+                        </td>
+                        <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'reports:saved_report_run' report.pk %}" class="btn-pro btn-pro-sm btn-pro-success">
+                                    {% t "run" %}
+                                </a>
+                                <form method="post" action="{% url 'reports:saved_report_delete' report.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-pro btn-pro-sm btn-pro-danger" onclick="return confirm('{% t "confirm_delete" %}')">
+                                        {% t "delete" %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-pro-muted">{% t "no_saved_reports" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "suppliers" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "suppliers" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "suppliers_total" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'purchases:supplier_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "add_supplier" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body">
+        <form method="get" class="d-flex gap-2" style="flex-wrap:wrap;align-items:flex-end">
+            <div class="input-pro-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <div style="position:relative">
+                    <i class="bi bi-search" style="position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.875rem;pointer-events:none"></i>
+                    <input class="input-pro" type="search" name="q" placeholder="{% t "search_suppliers_placeholder" %}" value="{{ q }}" style="padding-left:2.25rem">
+                </div>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit"><i class="bi bi-search"></i> {% t "search" %}</button>
+            {% if q %}<a href="{% url 'purchases:supplier_list' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-x"></i> {% t "clear" %}</a>{% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "name" %}</th>
+                    <th>{% t "person" %}</th>
+                    <th>{% t "phone" %}</th>
+                    <th>{% t "email_label" %}</th>
+                    <th style="text-align:center">{% t "purchases_count" %}</th>
+                    <th style="text-align:right">{% t "total_purchases" %}</th>
+                    <th style="text-align:right">{% t "total_unpaid" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td class="cell-primary fw-500">
+                        <a href="{% url 'purchases:supplier_detail' pk=s.pk %}" style="color:var(--primary-600);text-decoration:none">{{ s.name }}</a>
+                    </td>
+                    <td>{{ s.contact_person|default:"-" }}</td>
+                    <td>{{ s.phone|default:"-" }}</td>
+                    <td>{{ s.email|default:"-" }}</td>
+                    <td style="text-align:center">
+                        <span class="badge-pro badge-pro-neutral">{{ s.purchase_count_count|default:s.purchase_count|default:0 }}</span>
+                    </td>
+                    <td style="text-align:right" class="fw-600">${{ s.total_value|default:0|floatformat:0 }}</td>
+                    <td style="text-align:right">
+                        {% with unpaid=s.total_unpaid %}
+                        {% if unpaid > 0 %}
+                            <span class="fw-600" style="color:var(--danger-500)">${{ unpaid|floatformat:0 }}</span>
+                        {% else %}
+                            <span style="color:var(--success-600)">$0</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if s.is_active %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'purchases:supplier_detail' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "view" %}"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'purchases:supplier_update' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "edit" %}"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'purchases:supplier_delete' pk=s.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "delete" %}" style="color:var(--danger-500)"><i class="bi bi-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-building"></i></div>
+                            <h5 class="empty-state-title">{% t "no_suppliers" %}</h5>
+                            <p class="empty-state-desc">{% t "add_first_supplier" %}</p>
+                            <a href="{% url 'purchases:supplier_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_supplier" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

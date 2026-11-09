@@ -1,0 +1,33 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ vehicle.vehicle_number }} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:vehicle_list' %}">{% t "vehicles" %}</a><span class="separator">/</span><span class="current">{{ vehicle.vehicle_number }}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{{ vehicle.vehicle_number }}</h1><p class="page-subtitle">{% if vehicle.status == 'available' %}<span class="badge-pro badge-pro-success">{% t "available" %}</span>{% elif vehicle.status == 'on_route' %}<span class="badge-pro badge-pro-info">{% t "on_route" %}</span>{% elif vehicle.status == 'maintenance' %}<span class="badge-pro badge-pro-warning">{% t "maintenance" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{{ vehicle.get_status_display }}</span>{% endif %}</p></div>
+<div class="page-actions"><a href="{% url 'logistics:vehicle_update' pk=vehicle.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a><a href="{% url 'logistics:vehicle_delete' pk=vehicle.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a></div></div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:250px"><div class="card-pro-header"><h5 class="card-pro-title">{% t "vehicle_info" %}</h5></div><div class="card-pro-body">
+        <div class="text-pro-sm text-pro-muted">{% t "plate_number" %}: {{ vehicle.plate_number|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "type" %}: {{ vehicle.get_vehicle_type_display }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "brand" %}: {{ vehicle.brand|default:"-" }} {{ vehicle.model_name|default:"" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "year" %}: {{ vehicle.year|default:"-" }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "fuel_type" %}: {{ vehicle.get_fuel_type_display }}</div>
+        <div class="text-pro-sm text-pro-muted">{% t "current_driver" %}: {{ vehicle.current_driver|default:"-" }}</div>
+    </div></div>
+    <div class="card-pro" style="flex:1;min-width:250px"><div class="card-pro-header"><h5 class="card-pro-title">{% t "capacity" %}</h5></div><div class="card-pro-body">
+        <div class="d-flex gap-4">
+            <div><div class="text-pro-sm text-pro-muted">{% t "max_weight_kg" %}</div><div style="font-weight:600;font-size:1.2rem">{{ vehicle.max_weight_kg }}</div></div>
+            <div><div class="text-pro-sm text-pro-muted">{% t "max_volume_m3" %}</div><div style="font-weight:600;font-size:1.2rem">{{ vehicle.max_volume_m3 }}</div></div>
+            <div><div class="text-pro-sm text-pro-muted">{% t "max_packages" %}</div><div style="font-weight:600;font-size:1.2rem">{{ vehicle.max_packages }}</div></div>
+        </div>
+    </div></div>
+</div>
+
+{% if routes %}
+<div class="card-pro mb-6"><div class="card-pro-header"><h5 class="card-pro-title">{% t "recent_routes" %}</h5></div>
+<div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "reference" %}</th><th>{% t "date" %}</th><th>{% t "driver" %}</th><th>{% t "status" %}</th></tr></thead>
+<tbody>{% for r in routes %}<tr><td class="cell-primary"><a href="{% url 'logistics:route_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.reference }}</a></td><td>{{ r.route_date|date:"d.m.Y" }}</td><td>{{ r.driver|default:"-" }}</td><td><span class="badge-pro badge-pro-neutral">{{ r.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endif %}
+{% endblock %}

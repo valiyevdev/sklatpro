@@ -1,0 +1,27 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "reschedule" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}">{{ delivery.reference }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "reschedule" %}</span>
+</div>
+
+<div class="card-pro" style="max-width:500px"><div class="card-pro-body">
+    <h5 class="mb-4">{% t "reschedule_delivery" %} {{ delivery.reference }}</h5>
+    <div class="mb-3"><div class="text-pro-sm text-pro-muted">{% t "current_expected" %}: {{ delivery.expected_time|date:"d.m.Y H:i"|default:"-" }}</div></div>
+    <form method="post">{% csrf_token %}
+        <div class="mb-4"><label class="form-label">{% t "new_expected_time" %}</label><input class="input-pro" type="datetime-local" name="new_expected_time" required></div>
+        <div class="mb-4"><label class="form-label">{% t "reason" %}</label><textarea class="input-pro" name="reason" rows="3" required></textarea></div>
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button>
+            <a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a>
+        </div>
+    </form>
+</div></div>
+{% endblock %}

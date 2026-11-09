@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "trace_product" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "trace_product" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "trace_product" %}</h1>
+        <p class="page-subtitle">{% t "enter_identifier" %}</p>
+    </div>
+</div>
+
+<div style="max-width:720px;margin:0 auto">
+    <form method="get">
+        <div class="card-pro mb-4">
+            <div class="card-pro-body">
+                <div class="input-pro-group">
+                    <input type="text" name="code_input" value="{{ search_code }}" class="input-pro" placeholder="{% t "enter_identifier" %}" style="font-size:var(--text-lg);padding:var(--sp-4);text-align:center">
+                </div>
+                <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-search"></i> {% t "search" %}</button>
+            </div>
+        </div>
+    </form>
+
+    {% if timeline %}
+    <div class="card-pro mb-4">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "product_info" %}</span>
+            <a href="{% url 'markings:traceability_timeline' product_id=timeline.product.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-clock-history"></i> {% t "product_trace" %}</a>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4)">
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "product" %}</div>
+                    <div class="fw-600">{{ timeline.product.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "marking_code" %}</div>
+                    <div class="fw-500"><code>{{ timeline.marking_code.code }}</code></div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "status" %}</div>
+                    <span class="badge-pro {% if timeline.marking_code.status == 'sold' %}badge-pro-success{% elif timeline.marking_code.status == 'in_stock' %}badge-pro-info{% elif timeline.marking_code.status == 'quarantined' %}badge-pro-warning{% else %}badge-pro-primary{% endif %}">{{ timeline.marking_code.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if timeline.events %}
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "traceability_timeline" %}</span>
+        </div>
+        <div style="padding:var(--sp-5)">
+            <div style="position:relative;padding-left:var(--sp-8)">
+                <div style="position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--border-subtle)"></div>
+                {% for event in timeline.events %}
+                <div style="position:relative;margin-bottom:var(--sp-5)">
+                    <div style="position:absolute;left:-24px;top:4px;width:10px;height:10px;border-radius:50%;background:{% if event.event_type == 'created' %}var(--success-500){% elif event.event_type == 'verified' %}var(--info-600){% elif event.event_type == 'sold' %}var(--primary-600){% else %}var(--border-color){% endif %};border:2px solid var(--bg-surface)"></div>
+                    <div>
+                        <div class="d-flex align-center gap-2 mb-1">
+                            <span class="badge-pro badge-pro-info" style="font-size:0.7rem">{{ event.event_type }}</span>
+                            <span class="text-pro-xs text-pro-muted">{{ event.performed_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        <div class="text-pro-sm">
+                            <span class="badge-pro badge-pro-secondary">{{ event.from_status }}</span> → <span class="badge-pro badge-pro-primary">{{ event.to_status }}</span>
+                        </div>
+                        {% if event.warehouse %}
+                        <div class="text-pro-xs text-pro-muted mt-1"><i class="bi bi-building"></i> {{ event.warehouse }}</div>
+                        {% endif %}
+                        {% if event.notes %}
+                        <div class="text-pro-xs text-pro-muted mt-1">{{ event.notes }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% elif search_code %}
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-search"></i></div>
+        <h5 class="empty-state-title">{% t "not_found" %}</h5>
+        <p class="empty-state-desc">{% t "no_marking_code_found" %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:700px;margin:0 auto">
+    <nav style="margin-bottom:1rem;font-size:0.875rem;color:var(--text-muted)">
+        <a href="{% url 'integrations:webhook_list' %}" style="color:var(--primary);text-decoration:none">Webhooks</a>
+        <span style="margin:0 0.5rem">/</span>
+        <span>Create</span>
+    </nav>
+    <h2 style="color:var(--text-primary);margin-bottom:1.5rem">Create Webhook Endpoint</h2>
+
+    <form method="post" style="display:flex;flex-direction:column;gap:1.5rem">
+        {% csrf_token %}
+
+        <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:1.5rem">
+            <h3 style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:1rem">Webhook Details</h3>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">Name *</label>
+                    <input type="text" name="name" required style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">URL *</label>
+                    <input type="url" name="url" required placeholder="https://example.com/webhook" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">Direction *</label>
+                    <select name="direction" required style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                        <option value="outgoing">Outgoing</option>
+                        <option value="incoming">Incoming</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">Secret (for signature verification)</label>
+                    <input type="text" name="secret" placeholder="Ixtiyoriy - bo'sh qoldirilsa, avtomatik yaratiladi" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">Event Types (comma-separated)</label>
+                    <input type="text" name="event_types" placeholder="order.created, payment.completed, product.updated" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                    <span style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;display:block">Leave empty to receive all events</span>
+                </div>
+                <div>
+                    <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:0.375rem">Connection (optional)</label>
+                    <select name="connection" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);font-size:0.875rem">
+                        <option value="">None</option>
+                        {% for conn in connections %}
+                        <option value="{{ conn.pk }}">{{ conn.name }} ({{ conn.provider.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end">
+            <a href="{% url 'integrations:webhook_list' %}" style="padding:0.625rem 1.25rem;border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-secondary);text-decoration:none;font-size:0.875rem">Cancel</a>
+            <button type="submit" style="padding:0.625rem 1.5rem;background:var(--primary);color:white;border:none;border-radius:var(--radius);font-size:0.875rem;font-weight:500;cursor:pointer">Create Webhook</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

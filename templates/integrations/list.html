@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "all_integrations" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.intg-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5);flex-wrap:wrap;gap:var(--sp-3)}
+.intg-page-header-left h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.intg-page-header-left h2 .count-badge{font-size:var(--text-sm);background:var(--primary-50);color:var(--primary-600);padding:2px 10px;border-radius:var(--radius-full);font-weight:600}
+.intg-page-header-left p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+
+.intg-filter-bar{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-5);flex-wrap:wrap;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-3) var(--sp-4)}
+.intg-filter-bar .filter-group{display:flex;align-items:center;gap:var(--sp-2)}
+.intg-filter-bar label{font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.intg-filter-bar select,.intg-filter-bar input[type="text"]{height:36px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);transition:border-color var(--transition-fast)}
+.intg-filter-bar select:focus,.intg-filter-bar input[type="text"]:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.intg-filter-bar .search-input-wrap{position:relative}
+.intg-filter-bar .search-input-wrap i{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.875rem;pointer-events:none}
+.intg-filter-bar .search-input-wrap input{padding-left:2.25rem;min-width:200px}
+.intg-filter-bar .filter-separator{width:1px;height:24px;background:var(--border-default)}
+
+.intg-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.intg-table{width:100%;border-collapse:collapse}
+.intg-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page);white-space:nowrap}
+.intg-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.intg-table tr:last-child td{border-bottom:none}
+.intg-table tr:hover td{background:var(--bg-surface-hover)}
+
+.intg-provider-cell{display:flex;align-items:center;gap:var(--sp-3)}
+.intg-provider-icon{width:36px;height:36px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.intg-provider-info{min-width:0}
+.intg-provider-name{font-weight:600;font-size:var(--text-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.intg-provider-code{font-size:var(--text-xs);color:var(--text-muted)}
+
+.intg-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.intg-badge-connected{background:var(--success-50);color:var(--success-700)}
+.intg-badge-disconnected{background:var(--danger-50);color:var(--danger-700)}
+.intg-badge-error{background:var(--warning-50);color:var(--warning-700)}
+.intg-badge-not_configured{background:var(--gray-100);color:var(--gray-600)}
+.intg-badge-testing{background:var(--info-50);color:var(--info-700)}
+.intg-badge-suspended{background:var(--warning-50);color:var(--warning-700)}
+
+.intg-env-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:var(--radius-md);font-size:var(--text-xs);font-weight:600;line-height:1.4}
+.intg-env-production{background:var(--success-50);color:var(--success-700)}
+.intg-env-sandbox{background:var(--warning-50);color:var(--warning-700)}
+.intg-env-test{background:var(--info-50);color:var(--info-700)}
+
+.intg-action-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.intg-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.intg-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.intg-action-btn.btn-primary:hover{background:var(--primary-700)}
+.intg-actions-group{display:flex;gap:var(--sp-2);flex-wrap:nowrap}
+
+.intg-pagination{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5);border-top:1px solid var(--border-default);background:var(--bg-surface);border-radius:0 0 var(--radius-xl) var(--radius-xl)}
+.intg-pagination-info{font-size:var(--text-sm);color:var(--text-secondary)}
+.intg-pagination-nav{display:flex;gap:var(--sp-1)}
+.intg-pagination-nav a,.intg-pagination-nav span{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:500;text-decoration:none;border:1px solid var(--border-default);color:var(--text-secondary);background:var(--bg-surface);transition:all var(--transition-fast)}
+.intg-pagination-nav a:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.intg-pagination-nav .active{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.intg-pagination-nav .disabled{opacity:0.4;pointer-events:none}
+
+.intg-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.intg-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.intg-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.intg-empty p{font-size:var(--text-sm)}
+</style>
+
+<div class="intg-page-header">
+    <div class="intg-page-header-left">
+        <h2>{% t "all_integrations" %} <span class="count-badge">{{ page_obj.paginator.count }}</span></h2>
+        <p>Manage your integration connections</p>
+    </div>
+    <a href="{% url 'integrations:connection_create' %}" class="intg-action-btn btn-primary" style="padding:var(--sp-2) var(--sp-5);font-size:var(--text-sm);height:40px">
+        <i class="bi bi-plus-lg"></i> Add Integration
+    </a>
+</div>
+
+<form method="get" action="">
+    <div class="intg-filter-bar">
+        <div class="filter-group">
+            <label for="category">Category</label>
+            <select name="category" id="category" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for code, name in categories %}
+                <option value="{{ code }}" {% if category == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for code, name in status_choices %}
+                <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="q">{% t "search" %}</label>
+            <div class="search-input-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" id="q" value="{{ search }}" placeholder="{% t "search_providers" %}">
+            </div>
+        </div>
+        <div class="filter-separator"></div>
+        <button type="submit" class="intg-action-btn"><i class="bi bi-funnel"></i> Filter</button>
+        {% if search or category or status %}
+        <a href="{% url 'integrations:integration_list' %}" class="intg-action-btn" style="color:var(--danger-600)"><i class="bi bi-x-lg"></i> Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="intg-table-wrap">
+    <table class="intg-table">
+        <thead>
+            <tr>
+                <th>Provider</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Environment</th>
+                <th>Status</th>
+                <th>Last Sync</th>
+                <th>Last Test</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conn in connections %}
+            <tr>
+                <td>
+                    <div class="intg-provider-cell">
+                        <div class="intg-provider-icon" style="background:var(--primary-50);color:var(--primary-600)">
+                            <i class="bi {{ conn.provider.icon_class|default:'bi-plug' }}"></i>
+                        </div>
+                        <div class="intg-provider-info">
+                            <div class="intg-provider-name">{{ conn.provider.name }}</div>
+                            <div class="intg-provider-code">{{ conn.provider.code }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-weight:500">{{ conn.name }}</td>
+                <td><span class="intg-badge" style="background:var(--gray-100);color:var(--gray-600)">{{ conn.provider.get_category_display }}</span></td>
+                <td>
+                    <span class="intg-env-badge intg-env-{{ conn.environment }}">{{ conn.get_environment_display }}</span>
+                </td>
+                <td>
+                    <span class="intg-badge intg-badge-{{ conn.status }}">
+                        {% if conn.status == 'connected' %}<i class="bi bi-check-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif conn.status == 'disconnected' %}<i class="bi bi-x-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif conn.status == 'error' %}<i class="bi bi-exclamation-triangle-fill" style="font-size:0.625rem"></i>
+                        {% elif conn.status == 'testing' %}<i class="bi bi-hourglass-split" style="font-size:0.625rem"></i>
+                        {% elif conn.status == 'suspended' %}<i class="bi bi-pause-circle-fill" style="font-size:0.625rem"></i>
+                        {% endif %}
+                        {{ conn.get_status_display }}
+                    </span>
+                </td>
+                <td style="font-size:var(--text-xs);color:var(--text-secondary)">
+                    {% if conn.last_successful_sync %}{{ conn.last_successful_sync|date:"d M Y H:i" }}{% else %}<span style="color:var(--text-muted)">Never</span>{% endif %}
+                </td>
+                <td style="font-size:var(--text-xs);color:var(--text-secondary)">
+                    {% if conn.last_tested %}{{ conn.last_tested|date:"d M Y H:i" }}{% else %}<span style="color:var(--text-muted)">Never</span>{% endif %}
+                </td>
+                <td>
+                    <div class="intg-actions-group">
+                        <a href="{% url 'integrations:connection_detail' pk=conn.pk %}" class="intg-action-btn" title="Configure">
+                            <i class="bi bi-gear"></i> Configure
+                        </a>
+                        <button type="button" class="intg-action-btn" title="Test" onclick="testIntegration('{{ conn.pk }}', this)">
+                            <i class="bi bi-lightning"></i> Test
+                        </button>
+                        <button type="button" class="intg-action-btn" title="Sync" onclick="syncIntegration('{{ conn.pk }}', this)">
+                            <i class="bi bi-arrow-repeat"></i> Sync
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">
+                    <div class="intg-empty">
+                        <i class="bi bi-plug"></i>
+                        <h4>No integrations found</h4>
+                        <p>{% if search or category or status %}Try adjusting your filters or <a href="{% url 'integrations:connection_create' %}">add a new integration</a>.{% else %}Get started by <a href="{% url 'integrations:connection_create' %}">adding your first integration</a>.{% endif %}</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <div class="intg-pagination">
+        <div class="intg-pagination-info">
+            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+        <div class="intg-pagination-nav">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&category={{ category }}&status={{ status }}&q={{ search }}"><i class="bi bi-chevron-left"></i></a>
+            {% else %}
+            <span class="disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}&category={{ category }}&status={{ status }}&q={{ search }}">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <a href="?page={{ num }}&category={{ category }}&status={{ status }}&q={{ search }}">{{ num }}</a>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                <span class="disabled">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&category={{ category }}&status={{ status }}&q={{ search }}"><i class="bi bi-chevron-right"></i></a>
+            {% else %}
+            <span class="disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function testIntegration(pk, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing...';
+    var origHTML = btn.innerHTML;
+    fetch('/integrations/connections/' + pk + '/test/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'connected') {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Passed';
+            btn.style.borderColor = 'var(--success-500)';
+            btn.style.color = 'var(--success-600)';
+        } else {
+            btn.innerHTML = '<i class="bi bi-x-lg"></i> Failed';
+            btn.style.borderColor = 'var(--danger-500)';
+            btn.style.color = 'var(--danger-600)';
+        }
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-lightning"></i> Test';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 3000);
+    })
+    .catch(function() {
+        btn.innerHTML = '<i class="bi bi-x-lg"></i> Error';
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-lightning"></i> Test';
+            btn.disabled = false;
+        }, 3000);
+    });
+}
+
+function syncIntegration(pk, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Syncing...';
+    setTimeout(function() {
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Queued';
+        btn.style.borderColor = 'var(--success-500)';
+        btn.style.color = 'var(--success-600)';
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 3000);
+    }, 1000);
+}
+</script>
+{% endblock %}

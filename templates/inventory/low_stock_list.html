@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "low_stock_title" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+  /* Scoped to low_stock_list.html. Prefixed `.lsl-` so the GLOBAL
+     `.card-pro` / `.table-pro` used across the other 177 templates
+     are never modified. */
+  .lsl-card {
+    border-radius: var(--radius-2xl, 1rem);
+    border: 1px solid var(--slate-800, #1e293b);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+
+  /* Horizontal scroll instead of letting the columns collapse. */
+  .lsl-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .lsl-scroll .table-pro {
+    min-width: 600px;
+  }
+
+  .lsl-count {
+    flex: 0 0 auto;
+    padding: 4px var(--sp-3, 0.75rem);
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  /* ---------- Product cards (below md) ----------
+     Single-level surface: no nested inner box. The stock quantity is a
+     hero badge on the left, so the eye lands on the number first. */
+  .lsl-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .lsl-card-item {
+    padding: 14px;
+    background: var(--slate-900, #0f172a);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: var(--radius-2xl, 1rem);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  }
+
+  .lsl-card-item__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Hero stock badge: current qty over "/ min unit". */
+  .lsl-card-item__qty {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl, 0.75rem);
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .lsl-card-item__qty-n {
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lsl-card-item__qty-min {
+    margin-top: 2px;
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    color: rgba(245, 158, 11, 0.8);
+  }
+
+  .lsl-card-item__info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .lsl-card-item__titlerow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .lsl-card-item__name {
+    flex: 0 1 auto;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #fff;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .lsl-card-item__meta {
+    margin: 2px 0 0;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--slate-400, #94a3b8);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .lsl-card-item__meta-muted {
+    color: var(--slate-500, #64748b);
+  }
+
+  .lsl-card-item__badge {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  .lsl-card-item__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .lsl-card-item__actions .btn-pro {
+    flex: 1 1 120px;
+  }
+
+  .lsl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.6875rem;
+    color: var(--slate-300, #cbd5e1);
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--slate-700, #334155);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---------- Visibility swap ---------- */
+  /* The table is desktop-only, and its header is pinned off below md so a
+     bare column-less table can never be rendered. */
+  @media (max-width: 767px) {
+    .lsl-desk {
+      display: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .lsl-cards {
+      display: none;
+    }
+  }
+
+  /* ---------- Empty state ---------- */
+  /* Rendered OUTSIDE .lsl-scroll: inside it the 600px min-width table forced
+     this content off to the right and clipped it on narrow screens. */
+  .lsl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 320px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: var(--radius-2xl, 1rem);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
+  }
+
+  .lsl-empty__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+
+  .lsl-empty__desc {
+    margin: 6px auto 0;
+    max-width: 20rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--slate-400, #94a3b8);
+  }
+</style>
+
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "low_stock_products" %}</h1>
+        <p class="page-subtitle">{% t "low_stock_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <span class="lsl-count">{{ total_count|default:"0" }}&nbsp;{% t "items_suffix" %}</span>
+    </div>
+</header>
+
+{% if page_obj %}
+<!-- ---------- Mobile: one card per product (< md) ---------- -->
+<div class="lsl-cards">
+    {% for product in page_obj %}
+    <article class="lsl-card-item">
+        <div class="lsl-card-item__top">
+            <!-- Hero: stock quantity (current / min) -->
+            <div class="lsl-card-item__qty"
+                 title="{% t "current_stock" %} / {% t "min_stock" %}">
+                <span class="lsl-card-item__qty-n">{{ product.quantity }}</span>
+                <span class="lsl-card-item__qty-min">/ {{ product.min_stock }}{% if product.unit.name %} {{ product.unit.name }}{% else %} {% t "items_suffix" %}{% endif %}</span>
+            </div>
+
+            <div class="lsl-card-item__info">
+                <div class="lsl-card-item__titlerow">
+                    <h2 class="lsl-card-item__name">{{ product.name }}</h2>
+                    <span class="lsl-card-item__badge">{% t "critical_stock" %}</span>
+                </div>
+                <p class="lsl-card-item__meta">
+                    {{ product.sku }} &middot; <span class="lsl-card-item__meta-muted">{% t "category" %}: {% firstof product.category_fk.name product.category %}-</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="lsl-card-item__actions">
+            {% if product.supplier %}
+            <span class="lsl-chip"><i class="bi bi-truck"></i> {{ product.supplier }}</span>
+            {% endif %}
+            <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-primary btn-pro-sm">
+                <i class="bi bi-cart-plus"></i> {% t "restock" %}
+            </a>
+            <a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm">
+                <i class="bi bi-eye"></i> {% t "view" %}
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<!-- ---------- Desktop: table (md+) ---------- -->
+<div class="card-pro lsl-card lsl-desk">
+    <div class="lsl-scroll">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product_name" %}</th>
+                    <th>{% t "category" %}</th>
+                    <th>{% t "current_stock" %}</th>
+                    <th>{% t "min_stock" %}</th>
+                    <th>{% t "unit" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in page_obj %}
+                <tr>
+                    <td>
+                        <div class="fw-500">{{ product.name }}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ product.sku }}</div>
+                    </td>
+                    <td>{% firstof product.category_fk.name product.category %}-</td>
+                    <td>
+                        <span class="fw-700" style="color:var(--warning-600)">{{ product.quantity }}</span>
+                    </td>
+                    <td>{{ product.min_stock }}</td>
+                    <td>{{ product.unit.name|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'product_detail' pk=product.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-cart-plus"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="card-pro mt-4">
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- ---------- Empty state ---------- -->
+<div class="lsl-empty">
+    <div class="empty-state-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+    </div>
+    <h2 class="lsl-empty__title">{% t "no_low_stock_products" %}</h2>
+    <p class="lsl-empty__desc">{% t "all_stock_levels_ok" %}</p>
+</div>
+{% endif %}
+{% endblock %}

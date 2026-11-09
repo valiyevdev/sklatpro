@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "scanner" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div style="background-color: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: var(--glass-shadow); backdrop-filter: blur(8px);">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+            <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% t "scanner" %}</h1>
+            <span style="font-size: 12px; font-weight: 500; color: var(--glass-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% t "scanner_desc" %}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <form method="post" class="d-flex gap-3 align-end">
+            {% csrf_token %}
+            <div class="input-pro-group flex-1" style="margin-bottom:0">
+                <label class="input-pro-label">{% t "barcode_or_qr" %}</label>
+                <input class="input-pro" type="text" name="barcode" value="{{ barcode|default:'' }}" placeholder="{% t "scan_or_enter_placeholder" %}" autofocus>
+            </div>
+            <button class="btn-pro btn-pro-primary" type="submit">
+                <i class="bi bi-search"></i> {% t "search" %}
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if product %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title"><i class="bi bi-check-circle" style="color:var(--success-500)"></i> {% t "product_found" %}</div>
+    </div>
+    <div class="card-pro-body">
+        <div class="grid grid-2 gap-6">
+            <div>
+                <div class="mb-4">
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "product_name" %}</div>
+                    <div class="fw-600">{{ product.name }}</div>
+                </div>
+                <div class="mb-4">
+                    <div class="text-pro-sm text-pro-muted mb-1">SKU</div>
+                    <div class="text-pro-mono fw-500">{{ product.sku }}</div>
+                </div>
+                <div class="mb-4">
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "category" %}</div>
+                    <span class="badge-pro badge-pro-info">{{ product.get_category_display }}</span>
+                </div>
+            </div>
+            <div>
+                <div class="mb-4">
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "stock_status_label" %}</div>
+                    <div class="fw-600">{{ product.quantity }} {% t "pcs" %} — {{ product.stock_status_display }}</div>
+                </div>
+                <div class="mb-4">
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "price" %}</div>
+                    <div class="fw-600">${{ product.price|floatformat:0 }}</div>
+                </div>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="{% url 'product_update' pk=product.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+                    <a href="{% url 'stock_in' pk=product.pk %}" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-arrow-down-circle"></i> {% t "stock_in" %}</a>
+                    <a href="{% url 'stock_out' pk=product.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-arrow-up-circle"></i> {% t "stock_out" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif barcode %}
+<div class="card-pro mb-6">
+    <div class="card-pro-body">
+        <div class="empty-state" style="padding:var(--sp-8)">
+            <div class="empty-state-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-search"></i></div>
+            <h5 class="empty-state-title">{% t "product_not_found" %}</h5>
+            <p class="empty-state-desc">"{{ barcode }}" {% t "no_product_for_code" %}</p>
+            <a href="{% url 'product_create' %}" data-spa-ignore data-product-type-picker class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "add_product" %}</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if recent_scans %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "recent_transactions" %}</div>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "product_name" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in recent_scans %}
+                <tr>
+                    <td class="cell-muted">{{ s.scanned_at|date:"d.m.Y H:i" }}</td>
+                    <td class="text-pro-mono cell-primary">{{ s.barcode }}</td>
+                    <td>{% if s.product %}{{ s.product.name }}{% else %}<span class="cell-muted">{% t "not_found" %}</span>{% endif %}</td>
+                    <td>{% if s.product %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "found" %}</span>{% else %}<span class="badge-pro badge-pro-danger badge-pro-dot">{% t "not_found" %}</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

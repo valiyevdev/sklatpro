@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ doc.number }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ doc.number }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{{ doc.number }}</h1>
+        <p class="page-subtitle">{{ doc.get_doc_type_display }} &middot; {{ doc.date|date:"d.m.Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'documents:document_preview' pk=doc.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm">
+            <i class="bi bi-eye"></i> {% t "document_preview" %}
+        </a>
+        <a href="{% url 'documents:document_print' pk=doc.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm" target="_blank">
+            <i class="bi bi-printer"></i> {% t "print_document" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6" style="gap:var(--sp-4)">
+    <div class="card-pro">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-3)">
+            <div class="stat-card-icon primary"><i class="bi bi-file-earmark-text"></i></div>
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm)">{% t "document_type" %}</div>
+                <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-3)">
+            {% if doc.status == 'draft' %}
+            <div class="stat-card-icon warning"><i class="bi bi-pencil"></i></div>
+            {% elif doc.status == 'approved' or doc.status == 'completed' %}
+            <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+            {% elif doc.status == 'cancelled' %}
+            <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
+            {% else %}
+            <div class="stat-card-icon info"><i class="bi bi-clock-history"></i></div>
+            {% endif %}
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm)">{% t "status" %}</div>
+                {% if doc.status == 'draft' %}
+                    <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "drafts" %}</span>
+                {% elif doc.status == 'pending' %}
+                    <span class="badge-pro badge-pro-info badge-pro-dot">{% t "pending" %}</span>
+                {% elif doc.status == 'approved' %}
+                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+                {% elif doc.status == 'sent' %}
+                    <span class="badge-pro badge-pro-info badge-pro-dot">{% t "sent" %}</span>
+                {% elif doc.status == 'completed' %}
+                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                {% elif doc.status == 'cancelled' %}
+                    <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                {% elif doc.status == 'archived' %}
+                    <span class="badge-pro badge-pro-dot">{% t "archived" %}</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-warning badge-pro-dot">{{ doc.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="display:flex;align-items:center;gap:var(--sp-3)">
+            <div class="stat-card-icon success"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm)">{% t "total_amount" %}</div>
+                <div class="fw-600" style="font-size:var(--text-lg)">{{ doc.total|floatformat:0 }} {{ doc.currency }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6" style="gap:var(--sp-4)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-person" style="color:var(--primary-600)"></i> {% t "document_info" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "date" %}</span>
+                    <span>{{ doc.date|date:"d.m.Y" }}</span>
+                </div>
+                {% if doc.due_date %}
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "due_date" %}</span>
+                    <span>{{ doc.due_date|date:"d.m.Y" }}</span>
+                </div>
+                {% endif %}
+                {% if doc.customer %}
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "customer" %}</span>
+                    <span>{{ doc.customer.name }}</span>
+                </div>
+                {% endif %}
+                {% if doc.supplier %}
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "supplier" %}</span>
+                    <span>{{ doc.supplier.name }}</span>
+                </div>
+                {% endif %}
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "created_by" %}</span>
+                    <span>{{ doc.created_by|default:"—" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-calculator" style="color:var(--primary-600)"></i> {% t "total_amount" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "subtotal" %}</span>
+                    <span>{{ doc.subtotal|floatformat:2 }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "tax" %}</span>
+                    <span>{{ doc.tax|floatformat:2 }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                    <span class="cell-muted">{% t "discount" %}</span>
+                    <span>{{ doc.discount|floatformat:2 }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding-top:var(--sp-2);border-top:1px solid var(--border)">
+                    <span class="fw-600">{% t "total_amount" %}</span>
+                    <span class="fw-600 cell-primary">{{ doc.total|floatformat:2 }} {{ doc.currency }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-list-ul" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{% t "description" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "unit_price" %}</th>
+                    <th>{% t "discount" %}</th>
+                    <th>{% t "tax" %}</th>
+                    <th>{% t "line_total" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-muted">{{ forloop.counter }}</td>
+                    <td>{{ item.description|default:"—" }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price|floatformat:2 }}</td>
+                    <td>{{ item.discount|floatformat:2 }}</td>
+                    <td>{{ item.tax|floatformat:2 }}</td>
+                    <td class="cell-primary fw-600">{{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-4)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if doc.notes %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-chat-left-text" style="color:var(--primary-600)"></i> {% t "notes" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <p>{{ doc.notes|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if attachments %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-paperclip" style="color:var(--primary-600)"></i> {% t "attachments" %}</span>
+        <a href="{% url 'documents:document_attachment_upload' pk=doc.pk %}" class="btn-pro btn-pro-sm btn-pro-ghost"><i class="bi bi-upload"></i> {% t "upload_attachment" %}</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "filename" %}</th>
+                    <th>{% t "size" %}</th>
+                    <th>{% t "uploaded_by" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for att in attachments %}
+                <tr>
+                    <td class="cell-primary">{{ att.filename }}</td>
+                    <td class="cell-muted">{{ att.file_size|filesizeformat }}</td>
+                    <td>{{ att.uploaded_by|default:"—" }}</td>
+                    <td class="cell-muted">{{ att.uploaded_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'documents:document_download' att_pk=att.pk %}" class="btn-pro btn-pro-sm btn-pro-ghost"><i class="bi bi-download"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if versions %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "versions" %}</span>
+        <a href="{% url 'documents:document_versions' pk=doc.pk %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "version_history" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "version" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "total_amount" %}</th>
+                    <th>{% t "created_by" %}</th>
+                    <th>{% t "date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in versions %}
+                <tr>
+                    <td class="cell-primary">v{{ v.version_number }}</td>
+                    <td><span class="badge-pro badge-pro-info">{{ v.status }}</span></td>
+                    <td>{{ v.total|floatformat:2 }}</td>
+                    <td>{{ v.created_by|default:"—" }}</td>
+                    <td class="cell-muted">{{ v.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if signatures %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-pen" style="color:var(--primary-600)"></i> {% t "signatures" %}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "signer" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sig in signatures %}
+                <tr>
+                    <td>{{ sig.signer|default:"—" }}</td>
+                    <td>
+                        {% if sig.status == 'signed' %}
+                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "signed" %}</span>
+                        {% elif sig.status == 'pending' %}
+                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger badge-pro-dot">{{ sig.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-muted">{{ sig.signed_at|date:"d.m.Y H:i"|default:sig.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if doc.is_electronic %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-usb-symbol" style="color:var(--primary-600)"></i> {% t "edo_status" %}</span>
+        <form method="post" action="{% url 'documents:edo_status' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-sm btn-pro-ghost"><i class="bi bi-arrow-clockwise"></i> {% t "refresh" %}</button>
+        </form>
+    </div>
+    <div class="card-pro-body">
+        <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+            <div style="display:flex;justify-content:space-between">
+                <span class="cell-muted">{% t "external_status" %}</span>
+                <span>{{ doc.get_external_status_display|default:doc.external_status }}</span>
+            </div>
+            {% if doc.external_submitted_at %}
+            <div style="display:flex;justify-content:space-between">
+                <span class="cell-muted">{% t "submitted_at" %}</span>
+                <span>{{ doc.external_submitted_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro">
+    <div class="card-pro-body" style="display:flex;gap:var(--sp-3);flex-wrap:wrap;justify-content:flex-end">
+        {% if doc.status == 'draft' %}
+        <a href="{% url 'documents:document_edit' pk=doc.pk %}" class="btn-pro btn-pro-ghost">
+            <i class="bi bi-pencil"></i> {% t "edit_document" %}
+        </a>
+        <form method="post" action="{% url 'documents:document_approve' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "approve_document" %}</button>
+        </form>
+        <form method="post" action="{% url 'documents:document_cancel' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-ghost" style="color:var(--danger-600)"><i class="bi bi-x-circle"></i> {% t "cancel_document" %}</button>
+        </form>
+        {% endif %}
+        {% if doc.status != 'archived' and doc.status != 'cancelled' %}
+        <form method="post" action="{% url 'documents:document_archive' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-ghost"><i class="bi bi-archive"></i> {% t "archive_document" %}</button>
+        </form>
+        {% endif %}
+        {% if doc.status == 'approved' %}
+        <form method="post" action="{% url 'documents:document_signature_request' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-ghost"><i class="bi bi-pen"></i> {% t "request_signature" %}</button>
+        </form>
+        <form method="post" action="{% url 'documents:edo_send' pk=doc.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn-pro btn-pro-ghost"><i class="bi bi-send"></i> {% t "send_edo" %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

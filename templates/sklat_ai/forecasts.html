@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "ai_forecasts" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-page-header{margin-bottom:var(--sp-6)}
+.ai-page-header h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-1)}
+.ai-page-header p{color:var(--text-secondary);font-size:var(--text-sm)}
+
+.ai-section{margin-bottom:var(--sp-6)}
+.ai-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.ai-section-header h3{font-size:var(--text-xl);font-weight:600;display:flex;align-items:center;gap:var(--sp-2)}
+.ai-section-header .badge-count{font-size:var(--text-xs);background:var(--danger-50);color:var(--danger-600);padding:2px 8px;border-radius:var(--radius-full);font-weight:600}
+
+.ai-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ai-table{width:100%;border-collapse:collapse}
+.ai-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page);white-space:nowrap}
+.ai-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.ai-table tr:last-child td{border-bottom:none}
+.ai-table tr:hover td{background:var(--bg-surface-hover)}
+
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.ai-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.ai-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.ai-badge-success{background:var(--success-50);color:var(--success-700)}
+.ai-badge-info{background:var(--info-50);color:var(--info-700)}
+.ai-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-confidence-bar{width:100%;height:6px;border-radius:var(--radius-full);background:var(--gray-100);overflow:hidden}
+.ai-confidence-fill{height:100%;border-radius:var(--radius-full);transition:width var(--transition-base)}
+
+.ai-stockout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4)}
+.ai-stockout-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5);border-left:3px solid var(--danger-500);transition:all var(--transition-fast)}
+.ai-stockout-card:hover{box-shadow:var(--shadow-md)}
+.ai-stockout-card.urgent{border-left-color:var(--danger-600);background:var(--danger-50)}
+.ai-stockout-card.warning{border-left-color:var(--warning-500)}
+.ai-stockout-card.caution{border-left-color:var(--warning-300)}
+
+.ai-stockout-name{font-weight:600;font-size:var(--text-sm);color:var(--text-primary);margin-bottom:var(--sp-2)}
+.ai-stockout-detail{display:flex;align-items:center;justify-content:space-between;font-size:var(--text-xs);color:var(--text-secondary);margin-bottom:var(--sp-1)}
+.ai-stockout-detail span:last-child{font-weight:600;color:var(--text-primary)}
+
+.ai-trend-chart{display:flex;align-items:flex-end;gap:var(--sp-2);height:120px;padding:var(--sp-3) 0}
+.ai-trend-bar{flex:1;border-radius:var(--radius-md) var(--radius-md) 0 0;transition:height var(--transition-base);position:relative;min-width:20px;cursor:default}
+.ai-trend-bar:hover{opacity:0.85}
+.ai-trend-bar-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-muted);white-space:nowrap}
+.ai-trend-bar-value{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);white-space:nowrap}
+
+.ai-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.ai-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-empty p{font-size:var(--text-sm)}
+</style>
+
+<div class="ai-page-header">
+    <h2><i class="bi bi-graph-up-arrow" style="color:var(--info-600)"></i> {% t "ai_forecasts" %}</h2>
+    <p>{% t "ai_forecasts_desc" %}</p>
+</div>
+
+{% if stockout_warnings %}
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-exclamation-triangle" style="color:var(--danger-500)"></i> {% t "stockout_warnings" %}</h3>
+        <span class="badge-count">{{ stockout_warnings|length }} {% t "at_risk" %}</span>
+    </div>
+    <div class="ai-stockout-grid">
+        {% for warning in stockout_warnings %}
+        <div class="ai-stockout-card {% if warning.days_until_stockout <= 3 %}urgent{% elif warning.days_until_stockout <= 7 %}warning{% else %}caution{% endif %}">
+            <div class="ai-stockout-name">{{ warning.product_name|default:warning.product.name }}</div>
+            <div class="ai-stockout-detail">
+                <span>{% t "current_stock" %}</span>
+                <span>{{ warning.current_stock }}</span>
+            </div>
+            <div class="ai-stockout-detail">
+                <span>{% t "days_until_stockout" %}</span>
+                <span style="{% if warning.days_until_stockout <= 3 %}color:var(--danger-600){% elif warning.days_until_stockout <= 7 %}color:var(--warning-600){% endif %}">{{ warning.days_until_stockout }}d</span>
+            </div>
+            <div style="margin-top:var(--sp-2)">
+                {% if warning.days_until_stockout <= 3 %}
+                <span class="ai-badge ai-badge-danger"><i class="bi bi-exclamation-octagon" style="font-size:0.625rem"></i> {% t "critical" %}</span>
+                {% elif warning.days_until_stockout <= 7 %}
+                <span class="ai-badge ai-badge-warning"><i class="bi bi-exclamation-triangle" style="font-size:0.625rem"></i> {% t "urgent" %}</span>
+                {% else %}
+                <span class="ai-badge ai-badge-info">{% t "caution" %}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if forecasts %}
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-graph-up" style="color:var(--primary-600)"></i> {% t "demand_forecasts" %}</h3>
+        <span class="badge-count">{{ forecasts|length }} {% t "forecasts" %}</span>
+    </div>
+    <div class="ai-table-wrap">
+        <table class="ai-table">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "horizon" %}</th>
+                    <th>{% t "predicted_demand" %}</th>
+                    <th>{% t "confidence" %}</th>
+                    <th>{% t "data_days" %}</th>
+                    <th>{% t "trend" %}</th>
+                    <th>{% t "avg_daily" %}</th>
+                    <th>{% t "method" %}</th>
+                    <th>{% t "forecast_date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in forecasts %}
+                <tr>
+                    <td style="font-weight:500">{{ f.product_name|default:f.product.name }}</td>
+                    <td>
+                        <span class="ai-badge ai-badge-info">{{ f.horizon_days }}d</span>
+                    </td>
+                    <td style="font-weight:600;font-variant-numeric:tabular-nums">{{ f.predicted_demand }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:var(--sp-2);min-width:100px">
+                            <div class="ai-confidence-bar" style="flex:1">
+                                <div class="ai-confidence-fill" style="width:{{ f.confidence }}%;background:{% if f.confidence >= 80 %}var(--success-500){% elif f.confidence >= 50 %}var(--warning-500){% else %}var(--danger-500){% endif %}"></div>
+                            </div>
+                            <span style="font-size:var(--text-xs);font-weight:600;color:var(--text-muted);min-width:28px;text-align:right">{{ f.confidence }}%</span>
+                        </div>
+                    </td>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">{{ f.data_days_used|default:f.training_days|default:"—" }}</td>
+                    <td>
+                        {% if f.trend == 'growing' or f.trend_direction == 'growing' %}
+                        <span class="ai-badge ai-badge-success"><i class="bi bi-arrow-up-right" style="font-size:0.625rem"></i> {% t "growing" %}</span>
+                        {% elif f.trend == 'declining' or f.trend_direction == 'declining' %}
+                        <span class="ai-badge ai-badge-danger"><i class="bi bi-arrow-down-right" style="font-size:0.625rem"></i> {% t "declining" %}</span>
+                        {% else %}
+                        <span class="ai-badge ai-badge-gray"><i class="bi bi-dash" style="font-size:0.625rem"></i> {% t "stable" %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary)">{{ f.avg_daily_demand|floatformat:1|default:"—" }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted)">{{ f.method|default:"—" }}</td>
+                    <td style="font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap">{{ f.forecast_date|date:"d M Y"|default:f.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if products_with_demand %}
+<div class="ai-section">
+    <div class="ai-section-header">
+        <h3><i class="bi bi-bar-chart-line" style="color:var(--primary-600)"></i> {% t "demand_trends" %}</h3>
+    </div>
+    <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-5)">
+        <div class="ai-trend-chart" style="position:relative;padding-bottom:24px">
+            {% for item in products_with_demand %}
+            {% widthratio item.demand 100 1 as bar_height %}
+            <div class="ai-trend-bar" style="height:{{ bar_height|default:10 }}%;background:{% if item.trend == 'growing' %}var(--success-500){% elif item.trend == 'declining' %}var(--danger-500){% else %}var(--primary-500){% endif %};opacity:0.8" title="{{ item.product_name|default:item.product.name }}: {{ item.demand }}">
+                <div class="ai-trend-bar-value">{{ item.demand }}</div>
+                <div class="ai-trend-bar-label">{{ item.product_name|default:item.product.name|truncatechars:12 }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="ai-empty">
+    <i class="bi bi-graph-up-arrow"></i>
+    <h4>{% t "no_forecasts" %}</h4>
+    <p>{% t "no_forecasts_desc" %}</p>
+</div>
+{% endif %}
+{% endblock %}

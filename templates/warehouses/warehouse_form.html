@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if form_type == 'create' %}{% t "add_warehouse" %}{% else %}{% t "edit_warehouse" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:warehouse_list' %}">{% t "warehouses" %}</a>
+    <span class="separator">/</span>
+    {% if form_type == 'create' %}
+    <span class="current">{% t "add_warehouse" %}</span>
+    {% else %}
+    <a href="{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}">{{ warehouse.name }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "edit" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% if form_type == 'create' %}{% t "add_warehouse" %}{% else %}{% t "edit_warehouse" %}: {{ warehouse.name }}{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert-pro alert-pro-danger mb-4">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);align-items:start">
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "basic_info" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "warehouse_name" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="input-pro-error">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "code" %} <span style="color:var(--danger-500)">*</span></label>
+                            {{ form.code }}
+                            {% if form.code.errors %}<div class="input-pro-error">{{ form.code.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "warehouse_type" %}</label>
+                            {{ form.warehouse_type }}
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "description" %}</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "manager" %}</label>
+                        {{ form.manager }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-geo-alt" style="color:var(--primary-600)"></i> {% t "location" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "address" %}</label>
+                        {{ form.address }}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "city" %}</label>
+                            {{ form.city }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "country" %}</label>
+                            {{ form.country }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-telephone" style="color:var(--primary-600)"></i> {% t "contact" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "phone" %}</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="input-pro-group">
+                            <label class="input-pro-label">{% t "email" %}</label>
+                            {{ form.email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card-pro mb-4">
+                <div class="card-pro-header">
+                    <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "settings" %}</span>
+                </div>
+                <div class="card-pro-body">
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3 mb-3">
+                            {{ form.is_active }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "active" %}</label>
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <div class="d-flex align-center gap-3">
+                            {{ form.is_main }}
+                            <label class="input-pro-label" style="margin-bottom:0">{% t "main_warehouse" %}</label>
+                        </div>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "capacity" %}</label>
+                        {{ form.capacity }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "working_hours" %}</label>
+                        {{ form.working_hours }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-pro">
+                <div class="card-pro-body">
+                    <div class="d-flex justify-between">
+                        <a href="{% if warehouse %}{% url 'warehouses:warehouse_detail' pk=warehouse.pk %}{% else %}{% url 'warehouses:warehouse_list' %}{% endif %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if form_type == 'create' %}{% t "create" %}{% else %}{% t "save_changes" %}{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

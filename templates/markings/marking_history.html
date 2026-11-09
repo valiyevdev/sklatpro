@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "marking_history" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:marking_list' %}">{% t "marking_list" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:marking_detail' pk=code.pk %}">{{ code.code|truncatechars:25 }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "marking_history" %}</span>
+</div>
+
+<div class="page-head">
+    <a href="{% url 'markings:marking_detail' pk=code.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "marking_history" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px"><code>{{ code.code }}</code> — {{ code.product.name }}</p>
+    </div>
+</div>
+
+{% if page_obj %}
+<div class="card-pro mb-4">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "performed_at" %}</th>
+                    <th>{% t "from_status" %}</th>
+                    <th>{% t "to_status" %}</th>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "performed_by" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in page_obj %}
+                <tr>
+                    <td class="text-pro-sm">{{ entry.performed_at|date:"d M Y H:i" }}</td>
+                    <td>{% if entry.from_status %}<span class="badge-pro badge-pro-secondary">{{ entry.from_status }}</span>{% else %}—{% endif %}</td>
+                    <td><span class="badge-pro badge-pro-primary">{{ entry.to_status }}</span></td>
+                    <td><span class="badge-pro badge-pro-info">{{ entry.event_type }}</span></td>
+                    <td class="text-pro-sm text-pro-muted">{{ entry.performed_by.get_full_name|default:entry.performed_by.email|truncatechars:20 }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ entry.notes|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" class="btn-pro btn-pro-outline btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn-pro btn-pro-outline btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-outline btn-pro-sm disabled"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+    <h5 class="empty-state-title">{% t "no_history_entries" %}</h5>
+</div>
+{% endif %}
+{% endblock %}

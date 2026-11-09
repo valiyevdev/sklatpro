@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "sales_by_customer" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "sales_by_customer" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'reports:export_sales_csv' %}?{{ request.GET.urlencode }}" class="btn-pro btn-pro-ghost"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+{% if by_customer %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "sales_by_customer" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>#</th><th>{% t "customer" %}</th><th>{% t "revenue" %}</th><th>{% t "units" %}</th><th>{% t "orders" %}</th></tr></thead>
+            <tbody>
+                {% for item in by_customer %}
+                <tr>
+                    <td><span class="badge-pro badge-pro-primary">{{ forloop.counter }}</span></td>
+                    <td class="fw-500">{{ item.sale__customer__name|default:"Walk-in" }}</td>
+                    <td class="fw-600">{{ item.total_amount|floatformat:0 }}</td>
+                    <td>{{ item.total_qty|floatformat:0 }}</td>
+                    <td>{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-pro">
+    <div class="card-pro-body text-center" style="padding:2rem">
+        <p class="text-pro-muted">{% t "no_data" %}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

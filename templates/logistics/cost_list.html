@@ -1,0 +1,30 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "delivery_costs" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "delivery_costs" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "delivery_costs" %}</h1><p class="page-subtitle">{% t "total" %}: {{ total_amount|floatformat:0 }} UZS</p></div>
+<div class="page-actions"><a href="{% url 'logistics:cost_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_cost" %}</a></div></div>
+<div class="card-pro mb-6"><div class="card-pro-body"><form method="get"><div class="d-flex gap-3">
+    <select class="input-pro" name="category" style="width:auto"><option value="">{% t "all_categories" %}</option>{% for val, label in category_choices %}<option value="{{ val }}" {% if category == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i></button>
+    <a href="{% url 'logistics:cost_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-circle"></i></a>
+</div></form></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro">
+    <thead><tr><th>{% t "category" %}</th><th>{% t "amount" %}</th><th>{% t "date" %}</th><th>{% t "shipment" %}</th><th>{% t "route" %}</th><th>{% t "description" %}</th><th style="text-align:right">{% t "actions" %}</th></tr></thead>
+    <tbody>{% for c in costs %}
+    <tr>
+        <td>{{ c.get_category_display }}</td>
+        <td class="cell-primary">{{ c.amount|floatformat:0 }} {{ c.currency }}</td>
+        <td class="cell-muted">{{ c.cost_date|date:"d.m.Y" }}</td>
+        <td>{% if c.shipment %}<a href="{% url 'logistics:shipment_detail' pk=c.shipment.pk %}">{{ c.shipment.reference }}</a>{% else %}-{% endif %}</td>
+        <td>{% if c.route %}<a href="{% url 'logistics:route_detail' pk=c.route.pk %}">{{ c.route.reference }}</a>{% else %}-{% endif %}</td>
+        <td>{{ c.description|default:"-"|truncatewords:10 }}</td>
+        <td><div class="actions"><a href="{% url 'logistics:cost_delete' pk=c.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-trash"></i></a></div></td>
+    </tr>
+    {% empty %}<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-cash-stack"></i></div><h5 class="empty-state-title">{% t "no_costs" %}</h5></div></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% if total_pages > 1 %}
+<div class="d-flex justify-between align-center mt-4"><span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page }} / {{ total_pages }}</span><div class="d-flex gap-1">{% if page > 1 %}<a href="?page={{ page|add:'-1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}{% if page < total_pages %}<a href="?page={{ page|add:'1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}</div></div>
+{% endif %}
+{% endblock %}

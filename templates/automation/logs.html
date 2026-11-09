@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "automation_logs" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'automation:dashboard' %}">{% t "automation" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "automation_logs" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-journal-text" style="color:var(--primary-500)"></i> {% t "automation_logs" %}</h1>
+        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "entries" %}</p>
+    </div>
+</div>
+
+<div class="card-pro mb-4" style="padding:var(--sp-4)">
+    <form method="get" style="display:flex;gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+            <label class="input-pro-label">{% t "rule" %}</label>
+            <select name="rule" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_rules" %}</option>
+                {% for rule in rules %}
+                <option value="{{ rule.pk }}" {% if rule_filter == rule.pk|stringformat:"s" %}selected{% endif %}>{{ rule.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:140px">
+            <label class="input-pro-label">{% t "event_type" %}</label>
+            <input type="text" name="event_type" class="input-pro" value="{{ event_type|default:'' }}" placeholder="{% t 'filter_by_event_type' %}">
+        </div>
+        <div style="flex:1;min-width:140px">
+            <label class="input-pro-label">{% t "status" %}</label>
+            <select name="status" class="input-pro" onchange="this.form.submit()">
+                <option value="">{% t "all_statuses" %}</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "date_from" %}</label>
+            <input type="date" name="date_from" class="input-pro" value="{{ date_from|default:'' }}">
+        </div>
+        <div style="flex:1;min-width:150px">
+            <label class="input-pro-label">{% t "date_to" %}</label>
+            <input type="date" name="date_to" class="input-pro" value="{{ date_to|default:'' }}">
+        </div>
+        <div style="display:flex;gap:var(--sp-2)">
+            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm" style="height:38px"><i class="bi bi-funnel"></i> {% t "filter" %}</button>
+            <a href="{% url 'automation:logs' %}" class="btn-pro btn-pro-secondary btn-pro-sm" style="height:38px"><i class="bi bi-x-lg"></i> {% t "clear" %}</a>
+        </div>
+    </form>
+</div>
+
+{% if logs %}
+<div class="card-pro mb-4">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="width:30px"></th>
+                    <th>{% t "time" %}</th>
+                    <th>{% t "rule" %}</th>
+                    <th>{% t "event_type" %}</th>
+                    <th>{% t "object" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "duration_ms" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="log-expand-row" data-log-id="{{ log.pk }}" onclick="toggleLogDetail({{ log.pk }})" style="cursor:pointer">
+                    <td style="width:30px;text-align:center"><i class="bi bi-chevron-right" id="logChevron{{ log.pk }}" style="font-size:var(--text-xs);color:var(--text-muted);transition:transform 0.2s"></i></td>
+                    <td style="white-space:nowrap;font-size:var(--text-xs);color:var(--text-muted)">{{ log.created_at|date:"d M Y H:i:s" }}</td>
+                    <td>
+                        <a href="{% url 'automation:rule_detail' pk=log.rule.pk %}" style="color:var(--primary-600);font-weight:500;font-size:var(--text-sm);text-decoration:none">
+                            {{ log.rule.name }}
+                        </a>
+                    </td>
+                    <td style="font-size:var(--text-sm)">{{ log.event_type }}</td>
+                    <td style="font-size:var(--text-sm)">
+                        {% if log.object_type %}
+                        <span style="color:var(--text-secondary)">{{ log.object_type }}</span>
+                        <code style="font-size:var(--text-xs);color:var(--text-muted);margin-left:4px">{{ log.object_id|truncatechars:10 }}</code>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if log.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                        {% elif log.status == 'failed' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                        {% elif log.status == 'running' %}
+                        <span class="badge-pro badge-pro-info badge-pro-dot" style="gap:6px">
+                            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;font-size:0.65rem"></i>
+                            {% t "running" %}
+                        </span>
+                        {% elif log.status == 'pending' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "pending" %}</span>
+                        {% elif log.status == 'partial' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "partial" %}</span>
+                        {% elif log.status == 'skipped' %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{% t "skipped" %}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ log.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);font-variant-numeric:tabular-nums;color:var(--text-secondary)">
+                        {% if log.duration_ms %}{{ log.duration_ms }}ms{% else %}—{% endif %}
+                    </td>
+                    <td style="font-size:var(--text-xs);color:var(--text-secondary)">
+                        {% if log.actions_total > 0 %}{{ log.actions_succeeded }}/{{ log.actions_total }}{% if log.actions_failed > 0 %} <span style="color:var(--danger-600)">({{ log.actions_failed }}f)</span>{% endif %}{% else %}—{% endif %}
+                    </td>
+                </tr>
+                <tr id="logDetail{{ log.pk }}" style="display:none">
+                    <td colspan="8" style="padding:0;background:var(--bg-page);border-top:1px solid var(--border-subtle)">
+                        <div style="padding:var(--sp-4)">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                                <div>
+                                    <label class="input-pro-label">{% t "execution_id" %}</label>
+                                    <code style="font-size:var(--text-xs);background:var(--bg-surface);padding:4px 8px;border-radius:var(--radius-sm);font-family:'SF Mono',Consolas,monospace;display:block;margin-top:var(--sp-1)">{{ log.pk }}</code>
+                                </div>
+                                <div>
+                                    <label class="input-pro-label">{% t "event_id" %}</label>
+                                    <code style="font-size:var(--text-xs);background:var(--bg-surface);padding:4px 8px;border-radius:var(--radius-sm);font-family:'SF Mono',Consolas,monospace;display:block;margin-top:var(--sp-1)">{{ log.event_id|default:"—" }}</code>
+                                </div>
+                            </div>
+                            {% if log.action_results %}
+                            <div style="margin-top:var(--sp-4)">
+                                <label class="input-pro-label">{% t "action_results" %}</label>
+                                <pre style="font-size:var(--text-xs);background:var(--bg-surface);padding:var(--sp-3);border-radius:var(--radius-md);margin:var(--sp-1) 0 0 0;white-space:pre-wrap;word-break:break-all;border:1px solid var(--border-default);max-height:200px;overflow-y:auto;font-family:'SF Mono',Consolas,monospace;color:var(--text-primary)">{{ log.action_results|pprint }}</pre>
+                            </div>
+                            {% endif %}
+                            {% if log.error_message %}
+                            <div style="margin-top:var(--sp-4)">
+                                <label class="input-pro-label" style="color:var(--danger-600)">{% t "error" %}</label>
+                                <div style="background:var(--danger-50);border:1px solid var(--danger-200);border-radius:var(--radius-lg);padding:var(--sp-3);font-family:monospace;font-size:var(--text-xs);color:var(--danger-700);white-space:pre-wrap;word-break:break-all;margin-top:var(--sp-1)">{{ log.error_message }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-pro justify-center mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&rule={{ rule_filter }}&event_type={{ event_type }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-left"></i></span>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-pro btn-pro-primary btn-pro-sm" style="pointer-events:none">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}&rule={{ rule_filter }}&event_type={{ event_type }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-pro btn-pro-secondary btn-pro-sm">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&rule={{ rule_filter }}&event_type={{ event_type }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <span class="btn-pro btn-pro-secondary btn-pro-sm" style="pointer-events:none;opacity:0.4"><i class="bi bi-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-journal-text"></i></div>
+    <h5 class="empty-state-title">{% t "no_logs_found" %}</h5>
+    <p class="empty-state-desc">{% t "no_automation_logs_desc" %}</p>
+</div>
+{% endif %}
+
+<script>
+function toggleLogDetail(id){
+    var detail=document.getElementById('logDetail'+id);
+    var chevron=document.getElementById('logChevron'+id);
+    if(detail.style.display==='none'){
+        detail.style.display='';
+        chevron.style.transform='rotate(90deg)';
+    } else {
+        detail.style.display='none';
+        chevron.style.transform='';
+    }
+}
+</script>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+{% endblock %}

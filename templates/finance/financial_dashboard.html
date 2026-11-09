@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "finance_title" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "finance_title" %}</h1>
+        <p class="page-subtitle">{% t "finance_subtitle" %}</p>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "view_customer_debts" %}</div>
+            <div class="stat-card-value">${{ total_customer_outstanding|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-person-dash"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "view_supplier_debts" %}</div>
+            <div class="stat-card-value">${{ total_supplier_outstanding|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "overdue" %}</div>
+            <div class="stat-card-value">{{ total_overdue }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "today_payments_label" %}</div>
+            <div class="stat-card-value">${{ today_payments|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-4 mb-6">
+    <a href="{% url 'finance:customer_debt_create' %}" class="btn-pro btn-pro-primary" style="justify-content:center">
+        <i class="bi bi-plus-lg"></i> {% t "create_customer_debt_btn" %}
+    </a>
+    <a href="{% url 'finance:supplier_debt_create' %}" class="btn-pro btn-pro-secondary" style="justify-content:center">
+        <i class="bi bi-plus-lg"></i> {% t "create_supplier_debt_btn" %}
+    </a>
+    <a href="{% url 'finance:customer_debt_list' %}" class="btn-pro btn-pro-ghost" style="justify-content:center">
+        <i class="bi bi-list"></i> {% t "view_customer_debts" %}
+    </a>
+    <a href="{% url 'finance:supplier_debt_list' %}" class="btn-pro btn-pro-ghost" style="justify-content:center">
+        <i class="bi bi-list"></i> {% t "view_supplier_debts" %}
+    </a>
+</div>
+
+<!-- Debt Tables -->
+<div class="grid grid-2 gap-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <div class="card-pro-title">{% t "recent_customer_debts_title" %}</div>
+            <a href="{% url 'finance:customer_debt_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %}</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "debt_th" %}</th>
+                        <th>{% t "paid_th" %}</th>
+                        <th>{% t "status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in recent_customer_debts %}
+                    <tr>
+                        <td class="cell-primary">{{ d.customer_name }}</td>
+                        <td>${{ d.debt_amount|floatformat:0 }}</td>
+                        <td>${{ d.paid_amount|floatformat:0 }}</td>
+                        <td><span class="badge-pro badge-pro-{% if d.payment_status == 'paid' %}success{% elif d.payment_status == 'partial' %}warning{% else %}danger{% endif %}">{{ d.get_payment_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_debts" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <div class="card-pro-title">{% t "recent_supplier_debts_title" %}</div>
+            <a href="{% url 'finance:supplier_debt_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %}</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "supplier" %}</th>
+                        <th>{% t "debt_th" %}</th>
+                        <th>{% t "paid_th" %}</th>
+                        <th>{% t "status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in recent_supplier_debts %}
+                    <tr>
+                        <td class="cell-primary">{{ d.supplier_name }}</td>
+                        <td>${{ d.amount_owed|floatformat:0 }}</td>
+                        <td>${{ d.paid_amount|floatformat:0 }}</td>
+                        <td><span class="badge-pro badge-pro-{% if d.payment_status == 'paid' %}success{% elif d.payment_status == 'partial' %}warning{% else %}danger{% endif %}">{{ d.get_payment_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_debts" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if recent_payments %}
+<div class="card-pro mt-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "recent_payments_title" %}</div>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "type_th" %}</th>
+                    <th>{% t "debtor_th" %}</th>
+                    <th>{% t "amount_th" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "note_th" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_payments %}
+                <tr>
+                    <td>{% if p.payment_type == 'customer' %}<span class="badge-pro badge-pro-info">{% t "customer" %}</span>{% else %}<span class="badge-pro badge-pro-warning">{% t "supplier" %}</span>{% endif %}</td>
+                    <td>{% if p.customer_debt %}{{ p.customer_debt.customer_name }}{% elif p.supplier_debt %}{{ p.supplier_debt.supplier_name }}{% endif %}</td>
+                    <td class="cell-primary fw-600 text-pro-success">${{ p.amount|floatformat:0 }}</td>
+                    <td class="cell-muted">{{ p.payment_date|date:"d.m.Y H:i" }}</td>
+                    <td class="cell-muted text-pro-sm">{{ p.notes|default:"-"|truncatechars:30 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Phase 12: Financial Overview -->
+<div class="grid grid-3 mb-6 mt-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_income" %}</div>
+            <div class="stat-card-value" style="color:var(--success-600)">${{ total_income|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_expenses" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-500)">${{ total_expense|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_net_profit" %}</div>
+            <div class="stat-card-value" style="color:{% if net_profit >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ net_profit|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-graph-up"></i></div>
+    </div>
+</div>
+
+<!-- Financial Accounts -->
+{% if accounts %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_accounts" %}</div>
+        <a href="{% url 'finance:account_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %}</a>
+    </div>
+    <div class="card-pro-body">
+        <div class="grid grid-3 gap-4">
+            {% for acc in accounts %}
+            <a href="{% url 'finance:account_detail' pk=acc.pk %}" style="text-decoration:none">
+                <div class="card-pro" style="transition:transform 0.15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+                    <div class="card-pro-body">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <div class="fw-600" style="color:var(--text-primary)">{{ acc.name }}</div>
+                            <span class="badge-pro badge-pro-info">{{ acc.get_account_type_display }}</span>
+                        </div>
+                        <div class="fw-700" style="font-size:var(--text-xl);color:{% if acc.current_balance >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ acc.current_balance|floatformat:0 }}</div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Transactions -->
+{% if recent_transactions %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_recent_transactions" %}</div>
+        <a href="{% url 'finance:transaction_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %}</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "fin_type" %}</th>
+                    <th>{% t "fin_direction" %}</th>
+                    <th>{% t "amount_th" %}</th>
+                    <th>{% t "fin_account" %}</th>
+                    <th>{% t "description" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_transactions %}
+                <tr>
+                    <td class="cell-muted">{{ txn.date|date:"d.m.Y" }}</td>
+                    <td>{{ txn.get_txn_type_display }}</td>
+                    <td>
+                        {% if txn.direction == 'income' %}
+                            <span class="badge-pro badge-pro-success">{% t "fin_direction_income" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "fin_direction_expense" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-primary fw-600">{{ txn.currency }} {{ txn.amount|floatformat:0 }}</td>
+                    <td>{{ txn.account|default:"-" }}</td>
+                    <td class="cell-muted text-pro-sm">{{ txn.description|truncatechars:30|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_quick_actions" %}</div>
+    </div>
+    <div class="card-pro-body">
+        <div class="grid grid-4 gap-4">
+            <a href="{% url 'finance:transaction_create' %}" class="btn-pro btn-pro-primary" style="justify-content:center"><i class="bi bi-plus-lg"></i> {% t "fin_new_transaction" %}</a>
+            <a href="{% url 'finance:expense_create' %}" class="btn-pro btn-pro-danger" style="justify-content:center"><i class="bi bi-arrow-up-circle"></i> {% t "fin_new_expense" %}</a>
+            <a href="{% url 'finance:income_create' %}" class="btn-pro btn-pro-success" style="justify-content:center"><i class="bi bi-arrow-down-circle"></i> {% t "fin_new_income" %}</a>
+            <a href="{% url 'finance:transfer_create' %}" class="btn-pro btn-pro-secondary" style="justify-content:center"><i class="bi bi-arrow-left-right"></i> {% t "fin_new_transfer" %}</a>
+        </div>
+        <div class="grid grid-3 gap-4 mt-4">
+            <a href="{% url 'finance:reports_hub' %}" class="btn-pro btn-pro-ghost" style="justify-content:center"><i class="bi bi-bar-chart"></i> {% t "fin_reports" %}</a>
+            <a href="{% url 'finance:budget_list' %}" class="btn-pro btn-pro-ghost" style="justify-content:center"><i class="bi bi-pie-chart"></i> {% t "fin_budgets" %}</a>
+            <a href="{% url 'finance:account_list' %}" class="btn-pro btn-pro-ghost" style="justify-content:center"><i class="bi bi-wallet2"></i> {% t "fin_accounts" %}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

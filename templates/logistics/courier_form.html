@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% if courier %}{% t "edit_courier" %}{% else %}{% t "new_courier" %}{% endif %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:courier_list' %}">{% t "couriers" %}</a><span class="separator">/</span><span class="current">{% if courier %}{% t "edit" %}{% else %}{% t "new" %}{% endif %}</span></div>
+<div class="card-pro" style="max-width:600px"><div class="card-pro-body"><form method="post">{% csrf_token %}
+    {% if form.errors %}<div class="mb-4" style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px"><strong style="color:var(--color-danger)">{% t "fix_errors" %}</strong>{{ form.errors }}</div>{% endif %}
+    <div class="d-flex gap-4 flex-wrap mb-4"><div style="flex:1;min-width:200px"><label class="form-label">{% t "name" %}</label>{{ form.name }}</div><div style="flex:1;min-width:150px"><label class="form-label">{% t "code" %}</label>{{ form.code }}</div></div>
+    <div class="mb-4"><label class="form-label">{% t "api_url" %}</label>{{ form.api_url }}</div>
+    <div class="mb-4"><label class="form-label">{% t "api_key" %}</label>{{ form.api_key }}</div>
+    <div class="mb-4"><label class="form-label">{% t "active" %}</label> {{ form.is_active }}</div>
+    <div class="mb-4"><label class="form-label">{% t "notes" %}</label>{{ form.notes }}</div>
+    <div class="d-flex gap-3"><button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-lg"></i> {% t "save" %}</button><a href="{% url 'logistics:courier_list' %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a></div>
+</form></div></div>
+{% endblock %}

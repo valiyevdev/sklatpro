@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "report_damage" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:damaged_list' %}">{% t "damaged_stock" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "report_damage" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "report_damage" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:720px">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "damage_info" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert-pro alert-pro-danger mb-4">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+                </div>
+                {% endif %}
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "product" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.product }}
+                        {% if form.product.errors %}<div class="input-pro-error">{{ form.product.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "warehouse" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.warehouse }}
+                        {% if form.warehouse.errors %}<div class="input-pro-error">{{ form.warehouse.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "location" %}</label>
+                        {{ form.location }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "quantity" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.quantity }}
+                        {% if form.quantity.errors %}<div class="input-pro-error">{{ form.quantity.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "reason" %} <span style="color:var(--danger-500)">*</span></label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}<div class="input-pro-error">{{ form.reason.errors.0 }}</div>{% endif %}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "reference_type" %}</label>
+                        {{ form.reference_type }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "reference_id" %}</label>
+                        {{ form.reference_id }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-between mt-6">
+                    <a href="{% url 'warehouses:damaged_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "submit" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

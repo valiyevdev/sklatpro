@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}AI Settings - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.ai-page-header{margin-bottom:var(--sp-6)}
+.ai-page-header h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.ai-page-header p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6)}
+@media(max-width:960px){.ai-grid{grid-template-columns:1fr}}
+
+.ai-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow:hidden}
+.ai-card-header{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border-default)}
+.ai-card-header h3{font-size:var(--text-lg);font-weight:600;display:flex;align-items:center;gap:var(--sp-2)}
+.ai-card-body{padding:var(--sp-5)}
+
+.ai-provider-info{display:flex;flex-direction:column;gap:var(--sp-4)}
+.ai-provider-row{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0;border-bottom:1px solid var(--border-subtle)}
+.ai-provider-row:last-child{border-bottom:none}
+.ai-provider-label{font-size:var(--text-sm);color:var(--text-muted);font-weight:500}
+.ai-provider-value{font-size:var(--text-sm);font-weight:600;color:var(--text-primary);text-align:right}
+
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.ai-badge-success{background:var(--success-50);color:var(--success-700)}
+.ai-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.ai-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.ai-badge-info{background:var(--info-50);color:var(--info-700)}
+.ai-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+
+.ai-form-group{margin-bottom:var(--sp-4)}
+.ai-form-group:last-child{margin-bottom:0}
+.ai-form-label{display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-2)}
+.ai-form-hint{font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--sp-1)}
+.ai-form-input{width:100%;height:40px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);transition:border-color var(--transition-fast)}
+.ai-form-input:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.ai-form-input::placeholder{color:var(--text-muted)}
+.ai-form-select{width:100%;height:40px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);transition:border-color var(--transition-fast);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.ai-form-select:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.ai-form-textarea{width:100%;min-height:80px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);resize:vertical;transition:border-color var(--transition-fast)}
+.ai-form-textarea:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+
+.ai-form-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@media(max-width:600px){.ai-form-row{grid-template-columns:1fr}}
+
+.ai-password-wrap{position:relative}
+.ai-password-wrap input{padding-right:40px}
+.ai-password-toggle{position:absolute;right:var(--sp-3);top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:var(--sp-1);font-size:1rem}
+.ai-password-toggle:hover{color:var(--text-primary)}
+
+.ai-range-wrap{display:flex;align-items:center;gap:var(--sp-3)}
+.ai-range-wrap input[type="range"]{flex:1;height:6px;-webkit-appearance:none;background:var(--border-default);border-radius:var(--radius-full);outline:none}
+.ai-range-wrap input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary-600);cursor:pointer;box-shadow:var(--shadow-sm)}
+.ai-range-value{font-size:var(--text-sm);font-weight:600;color:var(--text-primary);min-width:32px;text-align:center}
+
+.ai-toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0;border-bottom:1px solid var(--border-subtle)}
+.ai-toggle-wrap:last-child{border-bottom:none}
+.ai-toggle-info{flex:1}
+.ai-toggle-label{font-size:var(--text-sm);font-weight:600;color:var(--text-primary)}
+.ai-toggle-desc{font-size:var(--text-xs);color:var(--text-muted);margin-top:2px}
+.ai-toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.ai-toggle input{opacity:0;width:0;height:0}
+.ai-toggle-slider{position:absolute;inset:0;background:var(--border-default);border-radius:var(--radius-full);cursor:pointer;transition:background var(--transition-fast)}
+.ai-toggle-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:3px;transition:transform var(--transition-fast);box-shadow:var(--shadow-xs)}
+.ai-toggle input:checked + .ai-toggle-slider{background:var(--primary-600)}
+.ai-toggle input:checked + .ai-toggle-slider::before{transform:translateX(20px)}
+
+.ai-action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.ai-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.ai-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600);padding:var(--sp-2) var(--sp-5);font-size:var(--text-sm);height:40px}
+.ai-action-btn.btn-primary:hover{background:var(--primary-700)}
+.ai-action-btn.btn-test{background:var(--info-600);color:#fff;border-color:var(--info-600)}
+.ai-action-btn.btn-test:hover{background:var(--info-700)}
+
+.ai-test-result{margin-top:var(--sp-4);padding:var(--sp-4);border-radius:var(--radius-lg);display:none;align-items:center;gap:var(--sp-3);font-size:var(--text-sm)}
+.ai-test-result.show{display:flex}
+.ai-test-result.success{background:var(--success-50);color:var(--success-700);border:1px solid var(--success-200)}
+.ai-test-result.error{background:var(--danger-50);color:var(--danger-700);border:1px solid var(--danger-200)}
+.ai-test-result i{font-size:1.25rem;flex-shrink:0}
+
+.ai-section{margin-bottom:var(--sp-6)}
+.ai-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+.ai-section-header h3{font-size:var(--text-xl);font-weight:600}
+
+.ai-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.ai-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.ai-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.ai-empty p{font-size:var(--text-sm)}
+
+.ai-limit-row{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0;border-bottom:1px solid var(--border-subtle)}
+.ai-limit-row:last-child{border-bottom:none}
+.ai-limit-label{font-size:var(--text-sm);color:var(--text-secondary)}
+.ai-limit-input{width:120px;height:36px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);text-align:right;font-variant-numeric:tabular-nums}
+.ai-limit-input:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+</style>
+
+<div class="ai-page-header">
+    <h2><i class="bi bi-gear" style="color:var(--text-muted)"></i> AI Settings</h2>
+    <p>Configure your AI provider, models, and feature settings</p>
+</div>
+
+<div class="ai-grid">
+    <div class="ai-card">
+        <div class="ai-card-header">
+            <h3><i class="bi bi-cpu" style="color:var(--primary-500)"></i> Current Provider</h3>
+            {% if current_config %}
+            {% if current_config.is_active %}
+            <span class="ai-badge ai-badge-success"><i class="bi bi-check-circle-fill" style="font-size:0.625rem"></i> Active</span>
+            {% else %}
+            <span class="ai-badge ai-badge-gray">Inactive</span>
+            {% endif %}
+            {% endif %}
+        </div>
+        <div class="ai-card-body">
+            {% if current_config %}
+            <div class="ai-provider-info">
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Provider</span>
+                    <span class="ai-provider-value">{{ current_config.provider_name|default:"Not configured" }}</span>
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Model</span>
+                    <span class="ai-provider-value">{{ current_config.model_name|default:"Not set" }}</span>
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">API Key</span>
+                    {% if current_config.api_key_set %}
+                    <span class="ai-badge ai-badge-success"><i class="bi bi-shield-lock-fill" style="font-size:0.625rem"></i> Configured</span>
+                    {% else %}
+                    <span class="ai-badge ai-badge-danger"><i class="bi bi-shield-x-fill" style="font-size:0.625rem"></i> Not Set</span>
+                    {% endif %}
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Monthly Budget</span>
+                    <span class="ai-provider-value">${{ current_config.monthly_budget|default:"0.00" }}</span>
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Temperature</span>
+                    <span class="ai-provider-value">{{ current_config.temperature|default:"0.7" }}</span>
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Max Tokens</span>
+                    <span class="ai-provider-value">{{ current_config.max_tokens|default:"4096" }}</span>
+                </div>
+                <div class="ai-provider-row">
+                    <span class="ai-provider-label">Last Updated</span>
+                    <span class="ai-provider-value" style="font-size:var(--text-xs);color:var(--text-secondary)">{{ current_config.updated_at|date:"d M Y H:i"|default:"Never" }}</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="ai-empty">
+                <i class="bi bi-cpu"></i>
+                <h4>No provider configured</h4>
+                <p>Set up an AI provider below to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ai-card">
+        <div class="ai-card-header">
+            <h3><i class="bi bi-plug" style="color:var(--info-500)"></i> Provider Configuration</h3>
+        </div>
+        <div class="ai-card-body">
+            <form method="post" action="{% url 'sklat_ai:config' %}" id="configForm">
+                {% csrf_token %}
+                <div class="ai-form-group">
+                    <label class="ai-form-label" for="provider">Provider</label>
+                    <select class="ai-form-select" id="provider" name="provider">
+                        <option value="">Select a provider...</option>
+                        {% for p in providers %}
+                        <option value="{{ p.value }}" {% if current_config and current_config.provider == p.value %}selected{% endif %}>{{ p.label }}</option>
+                        {% endfor %}
+                        <option value="openai" {% if current_config and current_config.provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                        <option value="anthropic" {% if current_config and current_config.provider == 'anthropic' %}selected{% endif %}>Anthropic</option>
+                        <option value="local" {% if current_config and current_config.provider == 'local' %}selected{% endif %}>Local Model</option>
+                        <option value="custom" {% if current_config and current_config.provider == 'custom' %}selected{% endif %}>Custom Endpoint</option>
+                    </select>
+                </div>
+
+                <div class="ai-form-group">
+                    <label class="ai-form-label" for="model_name">Model Name</label>
+                    <input type="text" class="ai-form-input" id="model_name" name="model_name" value="{{ current_config.model_name|default:'' }}" placeholder="Masalan, gpt-4, claude-3-opus">
+                    <div class="ai-form-hint">The specific model to use for AI requests</div>
+                </div>
+
+                <div class="ai-form-group">
+                    <label class="ai-form-label" for="api_base_url">API Base URL</label>
+                    <input type="url" class="ai-form-input" id="api_base_url" name="api_base_url" value="{{ current_config.api_base_url|default:'' }}" placeholder="https://api.openai.com/v1">
+                    <div class="ai-form-hint">Leave empty for default provider endpoint</div>
+                </div>
+
+                <div class="ai-form-group">
+                    <label class="ai-form-label" for="api_key">API Key</label>
+                    <div class="ai-password-wrap">
+                        <input type="password" class="ai-form-input" id="api_key" name="api_key" value="" placeholder="sk-...">
+                        <button type="button" class="ai-password-toggle" onclick="togglePassword('api_key', this)"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <div class="ai-form-hint">Your API key is stored encrypted and never displayed in full</div>
+                </div>
+
+                <div class="ai-form-row">
+                    <div class="ai-form-group">
+                        <label class="ai-form-label" for="temperature">Temperature</label>
+                        <div class="ai-range-wrap">
+                            <input type="range" id="temperature" name="temperature" min="0" max="1" step="0.1" value="{{ current_config.temperature|default:'0.7' }}" oninput="document.getElementById('tempVal').textContent = this.value">
+                            <span class="ai-range-value" id="tempVal">{{ current_config.temperature|default:'0.7' }}</span>
+                        </div>
+                    </div>
+                    <div class="ai-form-group">
+                        <label class="ai-form-label" for="max_tokens">Max Tokens</label>
+                        <input type="number" class="ai-form-input" id="max_tokens" name="max_tokens" value="{{ current_config.max_tokens|default:'4096' }}" min="1" max="128000" step="1">
+                    </div>
+                </div>
+
+                <div class="ai-form-row">
+                    <div class="ai-form-group">
+                        <label class="ai-form-label" for="timeout">Timeout (seconds)</label>
+                        <input type="number" class="ai-form-input" id="timeout" name="timeout" value="{{ current_config.timeout|default:'30' }}" min="5" max="300" step="5">
+                    </div>
+                    <div class="ai-form-group">
+                        <label class="ai-form-label" for="monthly_budget">Monthly Budget ($)</label>
+                        <input type="number" class="ai-form-input" id="monthly_budget" name="monthly_budget" value="{{ current_config.monthly_budget|default:'0' }}" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="ai-form-group" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0">
+                    <div>
+                        <div class="ai-form-label" style="margin-bottom:0">Enable AI Provider</div>
+                        <div class="ai-form-hint" style="margin-top:2px">Toggle to activate or deactivate this provider</div>
+                    </div>
+                    <label class="ai-toggle">
+                        <input type="checkbox" name="is_active" value="1" {% if not current_config or current_config.is_active %}checked{% endif %}>
+                        <span class="ai-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">
+                    <button type="submit" class="ai-action-btn btn-primary"><i class="bi bi-check-lg"></i> Save Configuration</button>
+                    <button type="button" class="ai-action-btn btn-test" onclick="testConnection()"><i class="bi bi-lightning"></i> Test Connection</button>
+                </div>
+
+                <div class="ai-test-result" id="testResult"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="ai-section" style="margin-top:var(--sp-6)">
+    <div class="ai-card">
+        <div class="ai-card-header">
+            <h3><i class="bi bi-speedometer2" style="color:var(--warning-500)"></i> Usage Limits</h3>
+        </div>
+        <div class="ai-card-body">
+            <div class="ai-limit-row">
+                <span class="ai-limit-label">Max requests per minute</span>
+                <input type="number" class="ai-limit-input" name="rate_limit_rpm" value="{{ current_config.rate_limit_rpm|default:'60' }}" min="1" max="1000">
+            </div>
+            <div class="ai-limit-row">
+                <span class="ai-limit-label">Max tokens per request</span>
+                <input type="number" class="ai-limit-input" name="rate_limit_tokens" value="{{ current_config.rate_limit_tokens|default:'4096' }}" min="100" max="128000" step="100">
+            </div>
+            <div class="ai-limit-row">
+                <span class="ai-limit-label">Daily cost limit ($)</span>
+                <input type="number" class="ai-limit-input" name="daily_cost_limit" value="{{ current_config.daily_cost_limit|default:'10' }}" min="0" step="0.01">
+            </div>
+            <div class="ai-limit-row">
+                <span class="ai-limit-label">Monthly cost limit ($)</span>
+                <input type="number" class="ai-limit-input" name="monthly_cost_limit" value="{{ current_config.monthly_cost_limit|default:'300' }}" min="0" step="0.01">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-card">
+        <div class="ai-card-header">
+            <h3><i class="bi bi-toggle2-on" style="color:var(--success-500)"></i> Feature Toggles</h3>
+        </div>
+        <div class="ai-card-body">
+            <div class="ai-toggle-wrap">
+                <div class="ai-toggle-info">
+                    <div class="ai-toggle-label">Business Summaries</div>
+                    <div class="ai-toggle-desc">Generate AI-powered daily, weekly, and monthly business summaries</div>
+                </div>
+                <label class="ai-toggle">
+                    <input type="checkbox" name="feature_summaries" value="1" {% if current_config.feature_summaries|default_if_none:True %}checked{% endif %}>
+                    <span class="ai-toggle-slider"></span>
+                </label>
+            </div>
+            <div class="ai-toggle-wrap">
+                <div class="ai-toggle-info">
+                    <div class="ai-toggle-label">Anomaly Detection</div>
+                    <div class="ai-toggle-desc">Automatically detect unusual patterns in sales, inventory, and finances</div>
+                </div>
+                <label class="ai-toggle">
+                    <input type="checkbox" name="feature_anomalies" value="1" {% if current_config.feature_anomalies|default_if_none:True %}checked{% endif %}>
+                    <span class="ai-toggle-slider"></span>
+                </label>
+            </div>
+            <div class="ai-toggle-wrap">
+                <div class="ai-toggle-info">
+                    <div class="ai-toggle-label">Smart Recommendations</div>
+                    <div class="ai-toggle-desc">AI-driven recommendations for restocking, pricing, and customer engagement</div>
+                </div>
+                <label class="ai-toggle">
+                    <input type="checkbox" name="feature_recommendations" value="1" {% if current_config.feature_recommendations|default_if_none:True %}checked{% endif %}>
+                    <span class="ai-toggle-slider"></span>
+                </label>
+            </div>
+            <div class="ai-toggle-wrap">
+                <div class="ai-toggle-info">
+                    <div class="ai-toggle-label">Usage Analytics</div>
+                    <div class="ai-toggle-desc">Track AI usage, costs, and performance metrics</div>
+                </div>
+                <label class="ai-toggle">
+                    <input type="checkbox" name="feature_analytics" value="1" {% if current_config.feature_analytics|default_if_none:True %}checked{% endif %}>
+                    <span class="ai-toggle-slider"></span>
+                </label>
+            </div>
+            <div class="ai-toggle-wrap">
+                <div class="ai-toggle-info">
+                    <div class="ai-toggle-label">Auto-Execute Actions</div>
+                    <div class="ai-toggle-desc">Allow AI to automatically execute low-risk actions (drafts only)</div>
+                </div>
+                <label class="ai-toggle">
+                    <input type="checkbox" name="feature_auto_execute" value="1" {% if current_config.feature_auto_execute|default_if_none:False %}checked{% endif %}>
+                    <span class="ai-toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+function testConnection() {
+    var result = document.getElementById('testResult');
+    result.className = 'ai-test-result show';
+    result.style.background = 'var(--info-50)';
+    result.style.color = 'var(--info-700)';
+    result.style.border = '1px solid var(--info-200)';
+    result.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing connection...';
+
+    var formData = new FormData(document.getElementById('configForm'));
+    formData.append('test_only', '1');
+
+    fetch("{% url 'sklat_ai:config' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            result.className = 'ai-test-result show success';
+            result.innerHTML = '<i class="bi bi-check-circle-fill"></i> <div><strong>Connection successful!</strong> Response time: ' + (data.latency || 'N/A') + 'ms</div>';
+        } else {
+            result.className = 'ai-test-result show error';
+            result.innerHTML = '<i class="bi bi-x-circle-fill"></i> <div><strong>Connection failed:</strong> ' + (data.error || 'Unknown error') + '</div>';
+        }
+    })
+    .catch(function() {
+        result.className = 'ai-test-result show error';
+        result.innerHTML = '<i class="bi bi-x-circle-fill"></i> <div><strong>Connection failed:</strong> Network error or server unreachable.</div>';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "task_dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "task_dashboard" %}</h1>
+        <p class="page-subtitle">{% t "dashboard_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:workspace' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-house"></i> {% t "my_workspace" %}</a>
+        <a href="{% url 'spiskalar:task_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "task_create" %}</a>
+    </div>
+</div>
+
+<div class="grid gap-4 mb-6" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+    <a href="{% url 'spiskalar:task_list' %}" class="card-pro" style="text-decoration:none">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-list-task" style="font-size:1.2rem;color:var(--primary-500)"></i><span class="text-pro-sm text-pro-muted">{% t "total_tasks" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--text-primary)">{{ total_tasks }}</div>
+        </div>
+    </a>
+    <div class="card-pro">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-person" style="font-size:1.2rem;color:var(--info-500)"></i><span class="text-pro-sm text-pro-muted">{% t "my_tasks" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--text-primary)">{{ my_total }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-check-circle" style="font-size:1.2rem;color:var(--success-500)"></i><span class="text-pro-sm text-pro-muted">{% t "completed_tasks" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--success-600)">{{ completed }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-arrow-repeat" style="font-size:1.2rem;color:var(--info-500)"></i><span class="text-pro-sm text-pro-muted">{% t "in_progress_count" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--info-600)">{{ in_progress }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-exclamation-triangle" style="font-size:1.2rem;color:var(--danger-500)"></i><span class="text-pro-sm text-pro-muted">{% t "overdue_count" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--danger-600)">{{ overdue }}</div>
+        </div>
+    </div>
+    <div class="card-pro">
+        <div class="card-pro-body" style="padding:1.25rem">
+            <div class="d-flex align-center gap-2 mb-2"><i class="bi bi-graph-up" style="font-size:1.2rem;color:var(--primary-500)"></i><span class="text-pro-sm text-pro-muted">{% t "completion_rate" %}</span></div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--text-primary)">{{ completion_rate }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-4" style="flex-wrap:wrap">
+    <div style="flex:2;min-width:300px">
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title">{% t "my_tasks" %}</span>
+                <a href="{% url 'spiskalar:task_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm">{% t "all_tasks" %} <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="table-pro">
+                    <thead><tr><th>{% t "task_title" %}</th><th>{% t "task_status" %}</th><th>{% t "task_priority" %}</th><th>{% t "task_due_date" %}</th></tr></thead>
+                    <tbody>
+                        {% for task in recent_tasks %}
+                        <tr style="cursor:pointer" onclick="window.location='{% url 'spiskalar:task_detail' pk=task.pk %}'">
+                            <td class="fw-500">{{ task.title|truncatechars:50 }}</td>
+                            <td>
+                                {% if task.status == 'completed' %}<span class="badge-pro badge-pro-success">{% t "task_completed_status" %}</span>
+                                {% elif task.status == 'in_progress' %}<span class="badge-pro badge-pro-info">{% t "task_in_progress" %}</span>
+                                {% elif task.status == 'blocked' %}<span class="badge-pro badge-pro-danger">{% t "task_blocked" %}</span>
+                                {% elif task.status == 'waiting' %}<span class="badge-pro badge-pro-warning">{% t "task_waiting" %}</span>
+                                {% else %}<span class="badge-pro badge-pro-neutral">{% t "task_pending" %}</span>{% endif %}
+                            </td>
+                            <td>
+                                {% if task.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "priority_urgent" %}</span>
+                                {% elif task.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "priority_high" %}</span>
+                                {% elif task.priority == 'normal' %}<span class="badge-pro badge-pro-info">{% t "priority_normal" %}</span>
+                                {% else %}<span class="badge-pro badge-pro-neutral">{% t "priority_low" %}</span>{% endif %}
+                            </td>
+                            <td class="text-pro-sm {% if task.is_overdue %}text-pro-danger fw-600{% else %}text-pro-muted{% endif %}">
+                                {% if task.due_date %}{{ task.due_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4"><div class="empty-state"><p class="text-pro-muted">{% t "no_tasks" %}</p></div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div style="flex:1;min-width:280px">
+        {% if overdue_tasks %}
+        <div class="card-pro mb-4" style="border-left:3px solid var(--danger-500)">
+            <div class="card-pro-header"><span class="card-pro-title" style="color:var(--danger-600)">{% t "overdue_tasks" %}</span></div>
+            <div class="card-pro-body" style="padding:0.75rem">
+                {% for task in overdue_tasks %}
+                <a href="{% url 'spiskalar:task_detail' pk=task.pk %}" class="d-flex align-center gap-2 mb-2" style="text-decoration:none;padding:0.5rem;border-radius:var(--radius-md);background:var(--danger-50)">
+                    <i class="bi bi-exclamation-circle" style="color:var(--danger-500)"></i>
+                    <span class="text-pro-sm fw-500" style="color:var(--text-primary)">{{ task.title|truncatechars:30 }}</span>
+                    <span class="text-pro-xs text-pro-danger ms-auto">{{ task.due_date|date:"d.m" }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title">{% t "task_templates" %}</span>
+                <a href="{% url 'spiskalar:template_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm">{% t "task_templates" %}</a>
+            </div>
+            <div class="card-pro-body">
+                <a href="{% url 'spiskalar:task_kanban' %}" class="d-flex align-center gap-3 mb-3" style="text-decoration:none;padding:0.75rem;border-radius:var(--radius-md);background:var(--bg-secondary)">
+                    <i class="bi bi-kanban" style="font-size:1.2rem;color:var(--primary-500)"></i>
+                    <div><div class="fw-500 text-pro-sm">{% t "kanban_view" %}</div><div class="text-pro-xs text-pro-muted">{% t "filter_tasks" %}</div></div>
+                </a>
+                <a href="{% url 'spiskalar:task_calendar' %}" class="d-flex align-center gap-3 mb-3" style="text-decoration:none;padding:0.75rem;border-radius:var(--radius-md);background:var(--bg-secondary)">
+                    <i class="bi bi-calendar3" style="font-size:1.2rem;color:var(--info-500)"></i>
+                    <div><div class="fw-500 text-pro-sm">{% t "calendar_view" %}</div><div class="text-pro-xs text-pro-muted">{% t "task_due_date" %}</div></div>
+                </a>
+                <a href="{% url 'spiskalar:template_list' %}" class="d-flex align-center gap-3" style="text-decoration:none;padding:0.75rem;border-radius:var(--radius-md);background:var(--bg-secondary)">
+                    <i class="bi bi-file-earmark" style="font-size:1.2rem;color:var(--warning-500)"></i>
+                    <div><div class="fw-500 text-pro-sm">{% t "task_templates" %}</div><div class="text-pro-xs text-pro-muted">{% t "create_template" %}</div></div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

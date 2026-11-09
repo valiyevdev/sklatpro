@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "lists" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "lists_title" %}</h1>
+        <p class="page-subtitle">{% t "lists_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'spiskalar:list_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "create_list_btn" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid gap-6" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">
+    {% for l in lists %}
+    <a href="{% url 'spiskalar:list_detail' pk=l.pk %}" class="card-pro" style="text-decoration:none;transition:box-shadow var(--transition-fast)">
+        <div class="card-pro-body">
+            <div class="d-flex align-center justify-between mb-2">
+                <div class="fw-600" style="font-size:var(--text-lg);color:var(--text-primary)">{{ l.name }}</div>
+                {% if l.status == 'completed' %}
+                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+                {% elif l.status == 'in_progress' %}
+                    <span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_progress_badge" %}</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending" %}</span>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2 mb-3">
+                <span class="badge-pro badge-pro-neutral">{{ l.get_type_display }}</span>
+                {% if l.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "urgent_priority" %}</span>
+                {% elif l.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+                {% elif l.priority == 'medium' %}<span class="badge-pro badge-pro-info">{% t "medium" %}</span>
+                {% else %}<span class="badge-pro badge-pro-neutral">{% t "low" %}</span>{% endif %}
+            </div>
+            {% if l.assigned_to %}
+            <div class="d-flex align-center gap-2 mb-2">
+                <i class="bi bi-person text-pro-muted" style="font-size:0.8rem"></i>
+                <span class="text-pro-sm text-pro-muted">{{ l.assigned_to.get_full_name }}</span>
+            </div>
+            {% endif %}
+            {% if l.due_date %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-calendar text-pro-muted" style="font-size:0.8rem"></i>
+                <span class="text-pro-sm text-pro-muted">{{ l.due_date|date:"d.m.Y" }}</span>
+            </div>
+            {% endif %}
+            <div class="d-flex justify-between align-center">
+                <span class="text-pro-sm text-pro-muted">{{ l.progress_display }} {% t "completed_item" %}</span>
+                <div class="progress-pro" style="width:120px">
+                    <div class="progress-pro-bar {% if l.progress == 100 %}success{% elif l.progress > 50 %}{% else %}warning{% endif %}" style="width:{{ l.progress }}%"></div>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon"><i class="bi bi-list-task"></i></div>
+        <h5 class="empty-state-title">{% t "no_lists" %}</h5>
+        <p class="empty-state-desc">{% t "create_first_list" %}</p>
+        <a href="{% url 'spiskalar:list_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_list_btn" %}</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

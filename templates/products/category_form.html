@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{{ title }} — SKLAT PRO{% endblock %}
+{% block extra_css %}
+<style>
+  .diamond-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  }
+  .diamond-card .input-pro {
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #f1f5f9;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .diamond-card .input-pro:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 1px #6366f1;
+    outline: none;
+  }
+  .diamond-card .input-pro-label {
+    color: #94a3b8;
+  }
+
+  .diamond-card input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border-radius: 4px;
+    background-color: #4f46e5;
+    border: 1px solid #334155;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: inline-block;
+    position: relative;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .diamond-card input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .diamond-card input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+  }
+
+  .diamond-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 20px;
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .diamond-file input {
+    position: absolute;
+    opacity: 0;
+    width: 0.1px;
+    height: 0.1px;
+    overflow: hidden;
+    z-index: -1;
+  }
+  .diamond-file-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 20px;
+    border: 2px dashed rgba(30, 41, 59, 0.8);
+    border-radius: 12px;
+    background: rgba(2, 6, 23, 0.4);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .diamond-file-box:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(30, 41, 59, 0.4);
+  }
+  .diamond-file-icon {
+    width: 32px;
+    height: 32px;
+    transform: rotate(45deg);
+    border-radius: 8px;
+    background: rgba(79, 70, 229, 0.2);
+    color: #818cf8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .diamond-file-icon i {
+    transform: rotate(-45deg);
+    font-size: 18px;
+  }
+  .diamond-file-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+  .diamond-file-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .diamond-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    background: #4f46e5;
+    cursor: pointer;
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2), 0 4px 6px -4px rgba(79, 70, 229, 0.2);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .diamond-save:hover { background: #4338ca; box-shadow: 0 12px 18px -4px rgba(79, 70, 229, 0.3); }
+  .diamond-save svg { width: 16px; height: 16px; }
+
+  .diamond-cancel {
+    display: inline-flex;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .diamond-cancel:hover { color: #ffffff; }
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:640px;margin:0 auto">
+    <div class="page-head">
+        <a href="{% url 'category_list' %}" class="back-btn" aria-label="Orqaga" data-back-href="{% url 'category_list' %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </a>
+        <h1 style="font-size:var(--text-2xl);font-weight:700;color:var(--text-primary);margin:0">{{ title }}</h1>
+    </div>
+
+    <div class="diamond-card">
+        <form method="post" enctype="multipart/form-data">{% csrf_token %}
+            {% if form.errors %}
+            <div class="alert-pro alert-pro-danger" style="margin-bottom:var(--sp-4)"><i class="bi bi-exclamation-circle-fill"></i> {% for f in form %}{% for e in f.errors %}{{ e }} {% endfor %}{% endfor %}</div>
+            {% endif %}
+            <div style="display:flex;flex-direction:column;gap:20px">
+                <div class="input-pro-group"><label class="input-pro-label">{% t "category_name" %} <span style="color:var(--danger-500)">*</span></label>{{ form.name }}</div>
+                <div class="input-pro-group"><label class="input-pro-label">{% t "description" %}</label>{{ form.description }}</div>
+                <div class="input-pro-group"><label class="input-pro-label">{% t "parent_category" %}</label>{{ form.parent }}</div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "product_image" %}</label>
+                    <div class="diamond-file" style="margin-top:var(--sp-2)">
+                        {{ form.image }}
+                        <label for="id_image" class="diamond-file-box">
+                            <span class="diamond-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                            <span class="diamond-file-title">{% t "browse_files" %}<span class="diamond-file-sub">{% t "drag_drop_or" %}</span></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="input-pro-group"><label class="input-pro-label">{% t "sort_order" %}</label>{{ form.sort_order }}</div>
+                <div><label class="diamond-check">{{ form.is_active }} <span>{% t "active" %}</span></label></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:8px;padding-top:16px;border-top:1px solid rgba(30,41,59,0.8)">
+                <a href="{% url 'category_list' %}" class="diamond-cancel">{% t "cancel" %}</a>
+                <button type="submit" class="diamond-save"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> {% t "save_changes" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

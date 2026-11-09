@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos_close_shift" %} {{ shift.shift_number }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pos:pos_dashboard' %}">{% t "pos" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:shift_list' %}">{% t "pos_shifts" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pos:shift_detail' pk=shift.pk %}">{{ shift.shift_number }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "pos_close" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-door-closed" style="color:var(--warning-600)"></i> {% t "pos_close_shift" %}</h1>
+        <p class="page-subtitle">{{ shift.shift_number }} &middot; {{ shift.terminal.name }}</p>
+    </div>
+</div>
+
+<div style="max-width:600px;margin:0 auto">
+    <div class="card-pro mb-6">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-calculator" style="color:var(--primary-600)"></i> {% t "pos_expected_vs_counted" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-4)">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_opening_cash" %}</div>
+                    <div class="fw-600" style="font-size:1.25rem">{{ shift.opening_amount|floatformat:0 }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "pos_expected_cash" %}</div>
+                    <div class="fw-600" style="font-size:1.25rem">{{ expected_cash|floatformat:0 }}</div>
+                </div>
+            </div>
+
+            {% if cash_in_total or cash_out_total %}
+            <div style="padding:var(--sp-3);background:var(--bg-page);border-radius:var(--radius-lg);margin-bottom:var(--sp-4)">
+                <div class="d-flex justify-between mb-2">
+                    <span class="text-pro-sm text-pro-muted">{% t "pos_cash_in" %}</span>
+                    <span class="fw-600" style="color:var(--success-600)">+{{ cash_in_total|floatformat:0 }}</span>
+                </div>
+                <div class="d-flex justify-between mb-2">
+                    <span class="text-pro-sm text-pro-muted">{% t "pos_cash_out" %}</span>
+                    <span class="fw-600" style="color:var(--danger-600)">-{{ cash_out_total|floatformat:0 }}</span>
+                </div>
+                <div class="d-flex justify-between" style="border-top:1px solid var(--border-default);padding-top:var(--sp-2)">
+                    <span class="text-pro-sm fw-600">{% t "pos_expected" %}</span>
+                    <span class="fw-700">{{ expected_cash|floatformat:0 }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="alert-pro alert-pro-info" style="margin-bottom:var(--sp-4)">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>{% t "pos_expected_cash_explanation" %}</span>
+            </div>
+
+            <form method="post" id="closeShiftForm">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "pos_counted_cash" %} <span style="color:var(--danger-500)">*</span></label>
+                    <input type="number" class="input-pro" name="closing_amount" id="closing-amount" step="0.01" min="0" required placeholder="0" style="font-size:1.5rem;text-align:center;font-weight:700" oninput="calcDifference()">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "pos_difference" %}</label>
+                    <div id="difference-display" class="fw-700" style="font-size:1.5rem;text-align:center;padding:var(--sp-3)">0</div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "pos_notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="2" placeholder="{% t "pos_notes_placeholder" %}..."></textarea>
+                </div>
+
+                <div class="d-flex justify-between mt-4">
+                    <a href="{% url 'pos:shift_detail' pk=shift.pk %}" class="btn-pro btn-pro-secondary">{% t "pos_cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-danger" id="close-btn"><i class="bi bi-door-closed"></i> {% t "pos_close_shift" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+const EXPECTED = {{ expected_cash|floatformat:2 }};
+function calcDifference() {
+    const counted = parseFloat(document.getElementById('closing-amount').value) || 0;
+    const diff = counted - EXPECTED;
+    const el = document.getElementById('difference-display');
+    el.textContent = (diff >= 0 ? '+' : '') + diff.toLocaleString();
+    if (diff === 0) {
+        el.style.color = 'var(--success-600)';
+    } else if (diff > 0) {
+        el.style.color = 'var(--info-600)';
+    } else {
+        el.style.color = 'var(--danger-600)';
+    }
+}
+calcDifference();
+</script>
+{% endblock %}
+{% endblock %}

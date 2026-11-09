@@ -1,0 +1,40 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}{{ category.name }} - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section">
+    <nav style="font-size:0.875rem;color:var(--text-muted);margin-bottom:1rem">
+        <a href="{% url 'storefront:home' %}" style="color:var(--primary);text-decoration:none">Home</a> /
+        <a href="{% url 'storefront:catalog' %}" style="color:var(--primary);text-decoration:none">Catalog</a> /
+        <span>{{ category.name }}</span>
+    </nav>
+    <h1 class="store-section-title">{{ category.name }}</h1>
+    {% if subcategories %}
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+        {% for sub in subcategories %}
+        <a href="{% url 'storefront:category' slug=sub.slug %}" class="btn-store-outline" style="text-decoration:none;font-size:0.8125rem;padding:0.375rem 0.875rem">{{ sub.name }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if products %}
+    <div class="products-grid">
+        {% for product in products %}
+        <a href="{% url 'storefront:product_detail' slug=product.slug %}" class="product-card">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+            {% else %}
+            <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+            {% endif %}
+            <div class="product-card-body">
+                <div class="product-card-name">{{ product.name }}</div>
+                <div class="product-card-price">{{ product.price|floatformat:0 }} so'm</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:4rem 1rem;color:var(--text-muted)">
+        <p style="font-size:1.125rem">No products in this category yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

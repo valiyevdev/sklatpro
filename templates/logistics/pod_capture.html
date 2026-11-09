@@ -1,0 +1,16 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "capture_proof" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}">{{ delivery.reference }}</a><span class="separator">/</span><span class="current">{% t "capture_proof" %}</span></div>
+<div class="card-pro" style="max-width:500px"><div class="card-pro-body">
+    <h5 class="mb-4">{% t "proof_of_delivery" %} — {{ delivery.reference }}</h5>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        {% if form.errors %}<div class="mb-4" style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px"><strong style="color:var(--color-danger)">{% t "fix_errors" %}</strong>{{ form.errors }}</div>{% endif %}
+        <div class="mb-4"><label class="form-label">{% t "proof_type" %}</label>{{ form.proof_type }}</div>
+        <div class="mb-4"><label class="form-label">{% t "recipient_name" %}</label>{{ form.recipient_name }}</div>
+        <div class="mb-4"><label class="form-label">{% t "notes" %}</label>{{ form.notes }}</div>
+        <div class="d-flex gap-3"><button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-camera"></i> {% t "capture" %}</button><a href="{% url 'logistics:delivery_detail' pk=delivery.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a></div>
+    </form>
+</div></div>
+{% endblock %}

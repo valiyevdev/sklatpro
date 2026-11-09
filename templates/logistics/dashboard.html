@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "logistics_dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <span class="current">{% t "logistics_dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "logistics_dashboard" %}</h1>
+        <p class="page-subtitle">{% t "today" %}: {{ today|date:"d.m.Y" }}</p>
+    </div>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--text-primary)">{{ today_shipments }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "today_shipments" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-info,#0ea5e9)">{{ in_transit }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "in_transit" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-success,#22c55e)">{{ delivered_today }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "delivered_today" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-danger,#ef4444)">{{ failed_today }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "failed" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-warning,#f59e0b)">{{ unassigned }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "unassigned" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--text-primary)">{{ active_routes }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "active_routes" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-success,#22c55e)">{{ available_drivers }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "available_drivers" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--color-success,#22c55e)">{{ available_vehicles }}</div>
+            <div class="text-pro-sm text-pro-muted">{% t "available_vehicles" %}</div>
+        </div>
+    </div>
+    <div class="card-pro" style="flex:1;min-width:140px">
+        <div class="card-pro-body text-center">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--text-primary)">{{ on_time_rate }}%</div>
+            <div class="text-pro-sm text-pro-muted">{% t "on_time_rate" %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-6">
+    <div class="card-pro" style="flex:1;min-width:300px">
+        <div class="card-pro-header">
+            <h5 class="card-pro-title">{% t "recent_shipments" %}</h5>
+            <a href="{% url 'logistics:shipment_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm">{% t "view_all" %}</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "priority" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_shipments %}
+                    <tr>
+                        <td class="cell-primary"><a href="{% url 'logistics:shipment_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.reference }}</a></td>
+                        <td>{{ s.customer|default:"-" }}</td>
+                        <td>
+                            {% if s.status == 'delivered' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "delivered" %}</span>
+                            {% elif s.status == 'failed' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "failed" %}</span>
+                            {% elif s.status == 'in_transit' or s.status == 'dispatched' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_transit" %}</span>
+                            {% elif s.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ s.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.priority == 'urgent' %}
+                                <span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>
+                            {% elif s.priority == 'high' %}
+                                <span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral">{{ s.get_priority_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4"><div class="text-pro-muted text-center p-4">{% t "no_shipments" %}</div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro" style="flex:1;min-width:300px">
+        <div class="card-pro-header">
+            <h5 class="card-pro-title">{% t "active_deliveries" %}</h5>
+            <a href="{% url 'logistics:delivery_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm">{% t "view_all" %}</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "driver" %}</th>
+                        <th>{% t "status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in active_deliveries %}
+                    <tr>
+                        <td class="cell-primary"><a href="{% url 'logistics:delivery_detail' pk=d.pk %}" style="color:var(--text-primary);text-decoration:none">{{ d.reference }}</a></td>
+                        <td>{{ d.customer|default:d.contact_name|default:"-" }}</td>
+                        <td>{{ d.driver|default:"-" }}</td>
+                        <td>
+                            {% if d.status == 'arrived' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "arrived" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ d.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4"><div class="text-pro-muted text-center p-4">{% t "no_active_deliveries" %}</div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if delayed %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <h5 class="card-pro-title" style="color:var(--color-danger,#ef4444)"><i class="bi bi-exclamation-triangle"></i> {% t "delayed_deliveries" %}</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "customer" %}</th>
+                    <th>{% t "driver" %}</th>
+                    <th>{% t "expected_time" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in delayed %}
+                <tr>
+                    <td class="cell-primary"><a href="{% url 'logistics:delivery_detail' pk=d.pk %}" style="color:var(--text-primary);text-decoration:none">{{ d.reference }}</a></td>
+                    <td>{{ d.customer|default:d.contact_name|default:"-" }}</td>
+                    <td>{{ d.driver|default:"-" }}</td>
+                    <td>{{ d.expected_time|date:"d.m.Y H:i" }}</td>
+                    <td><span class="badge-pro badge-pro-danger badge-pro-dot">{{ d.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "api_keys" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:var(--sp-3)">
+    <div>
+        <div class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "api_keys" %}</span>
+        </div>
+        <h1 class="page-title">{% t "api_keys" %} <span style="font-size:var(--text-lg);font-weight:400;color:var(--text-muted)">({{ api_keys.count }})</span></h1>
+    </div>
+    <a href="{% url 'integrations:api_key_create' %}" class="btn-pro btn-pro-primary">
+        <i class="bi bi-plus-lg"></i> {% t "create_api_key" %}
+    </a>
+</div>
+
+<div class="alert-pro alert-pro-warning" style="margin-bottom:var(--sp-4)">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{% t "api_key_warning_once" %}</span>
+</div>
+
+{% if api_keys %}
+<div class="card-pro" style="overflow-x:auto">
+    <table class="table-pro" style="min-width:900px">
+        <thead>
+            <tr>
+                <th>{% t "name" %}</th>
+                <th>{% t "key_prefix" %}</th>
+                <th>{% t "scopes" %}</th>
+                <th>{% t "status" %}</th>
+                <th>{% t "last_used" %}</th>
+                <th>{% t "expires" %}</th>
+                <th style="width:120px">{% t "actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in api_keys %}
+            <tr>
+                <td class="cell-primary">{{ key.name }}</td>
+                <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 8px;border-radius:var(--radius-sm);font-family:'SF Mono',Consolas,monospace">{{ key.key_prefix }}...</code></td>
+                <td>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px">
+                        {% for scope in key.scopes %}
+                        <span class="badge-pro badge-pro-info" style="font-size:10px">{{ scope }}</span>
+                        {% endfor %}
+                        {% if not key.scopes %}
+                        <span style="font-size:var(--text-xs);color:var(--text-muted)">—</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if key.is_active and not key.is_expired %}
+                    <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+                    {% elif not key.is_active %}
+                    <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "revoked" %}</span>
+                    {% elif key.is_expired %}
+                    <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "expired" %}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if key.last_used %}
+                    <span style="font-size:var(--text-sm)">{{ key.last_used|date:"d M Y H:i" }}</span>
+                    {% else %}
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if key.expires_at %}
+                    <span style="font-size:var(--text-sm)">{{ key.expires_at|date:"d M Y" }}</span>
+                    {% else %}
+                    <span style="font-size:var(--text-sm);color:var(--text-muted)">{% t "never" %}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex;gap:4px">
+                        {% if key.is_active %}
+                        <form method="post" action="{% url 'integrations:api_key_revoke' pk=key.pk %}" style="display:inline" onsubmit="return confirm('{% t "confirm_revoke_key" %}')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-pro btn-pro-outline-danger btn-pro-sm" style="padding:4px 8px" title="{% t "revoke" %}">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card-pro" style="text-align:center;padding:var(--sp-16)">
+    <div class="empty-state-icon"><i class="bi bi-key"></i></div>
+    <h3 class="empty-state-title">{% t "no_api_keys" %}</h3>
+    <p class="empty-state-desc">{% t "create_first_api_key" %}</p>
+    <a href="{% url 'integrations:api_key_create' %}" class="btn-pro btn-pro-primary">
+        <i class="bi bi-plus-lg"></i> {% t "create_api_key" %}
+    </a>
+</div>
+{% endif %}
+{% endblock %}

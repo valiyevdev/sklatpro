@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "scanner" %} {% t "results" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     Header. `.page-head` is GLOBAL (many templates) so only the
+     `.sres-` additions are scoped here.
+     ============================================================ -->
+<div class="page-head sres-head">
+    <a href="{% url 'scanner:scanner_view' %}" class="back-btn" aria-label="{% t "scanner" %}">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "scanner" %} {% t "results" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">
+            {% t "search_for" %}: <span class="sres-query">"{{ query }}"</span>
+        </p>
+    </div>
+    {% if total_count %}
+    <span class="badge-pro sres-head__badge">{{ total_count }}&nbsp;{% t "items_suffix" %}</span>
+    {% endif %}
+</div>
+
+{% if products %}
+<!-- ============================================================
+     MOBILE: one card per scanned item (< 768px).
+     The old layout squeezed six columns into a phone viewport, which
+     clipped the "Zaxira holati" header and forced horizontal
+     scrolling to read a product name.
+     ============================================================ -->
+<div class="sres-cards">
+    {% for p in products %}
+    <div class="sres-card sres-card--{{ p.stock_status }}">
+        <div class="sres-card__lead">
+            <!-- Status tile: shape + colour encode the stock state
+                 without relying on colour alone (the count below
+                 repeats it as text). -->
+            <span class="sres-card__icon" aria-hidden="true">
+                {% if p.stock_status == "out_of_stock" %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                {% elif p.stock_status == "low_stock" %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path></svg>
+                {% elif p.stock_status == "overstock" %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                {% else %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                {% endif %}
+            </span>
+
+            <div class="sres-card__body">
+                <div class="sres-card__top">
+                    <h4 class="sres-card__name">{{ p.name }}</h4>
+                    <span class="sres-card__tag">
+                        {% if p.get_category_display %}{{ p.get_category_display }}{% else %}{% t "others" %}{% endif %}
+                    </span>
+                </div>
+                <div class="sres-card__meta">
+                    <span class="sres-card__sku">{{ p.sku }}</span>
+                    <span class="sres-card__sep" aria-hidden="true">&bull;</span>
+                    <span class="sres-card__status sres-card__status--{{ p.stock_status }}">{% t "stock" %}: {{ p.quantity }}{% if p.unit %}&nbsp;{{ p.unit.symbol|default:p.unit.name }}{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <a href="{% url 'product_detail' pk=p.pk %}" class="sres-card__go" aria-label="{{ p.name }} - {% t "view" %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ============================================================
+     DESKTOP (>= 768px): the table keeps its horizontal room, so the
+     full column set stays available.
+     ============================================================ -->
+<div class="sres-table">
+    <div class="card-pro">
+        <div style="overflow-x:auto">
+            <table class="table-pro">
+                <thead><tr><th>{% t "product_name" %}</th><th>SKU</th><th>{% t "category" %}</th><th>{% t "stock_status_label" %}</th><th>{% t "price" %}</th><th>{% t "actions" %}</th></tr></thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="fw-500">{{ p.name }}</td>
+                        <td class="text-pro-mono">{{ p.sku }}</td>
+                        <td>
+                            <span class="badge-pro badge-pro-info">
+                                {% if p.get_category_display %}{{ p.get_category_display }}{% else %}{% t "others" %}{% endif %}
+                            </span>
+                        </td>
+                        <td class="fw-500 sres-cell sres-cell--{{ p.stock_status }}">{{ p.quantity }}</td>
+                        <td class="fw-600">${{ p.price|floatformat:0 }}</td>
+                        <td>
+                            <a href="{% url 'product_update' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Shared empty state. It lives OUTSIDE the table on purpose: the
+     for-loop's "empty" branch it replaces sat inside <tbody>, so hiding
+     the table on mobile also hid the "no results" message. -->
+<div class="empty-state sres-empty">
+    <div class="empty-state-icon"><i class="bi bi-search" aria-hidden="true"></i></div>
+    <h5 class="empty-state-title">{% t "no_results_found" %}</h5>
+    <p class="empty-state-desc">"{{ query }}" {% t "no_results_found_desc" %}</p>
+    <a href="{% url 'scanner:scanner_view' %}" class="btn-pro btn-pro-primary"><i class="bi bi-arrow-left"></i> {% t "scanner" %}</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ==========================================================
+     Scoped styles for scanner_results.html only. Prefixed `.sres-`
+     so the GLOBAL `.page-head`, `.table-pro`, `.empty-state` and
+     `.badge-pro` are never modified.
+
+     The Tailwind breakpoints in the design spec map to plain media
+     queries here: < 768px shows the card list, >= 768px shows the
+     table. Both are rendered in the HTML and toggled with `display`,
+     so the split needs no JavaScript.
+     ========================================================== */
+
+  /* ---------- 1. Header ---------- */
+  .sres-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .sres-head .page-header-content {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .sres-query {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--text-primary, #f1f5f9);
+    word-break: break-word;
+  }
+
+  .sres-head__badge {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #818cf8;                                   /* indigo-400 */
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
+
+  /* ---------- 2. Viewport switch ---------- */
+  .sres-cards {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  /* The card list is a phone layout; hide it once the table has room. */
+  @media (min-width: 768px) {
+    .sres-cards {
+      display: none;
+    }
+  }
+
+  /* And the table is the reverse: the squished six-column layout is
+     exactly what we are replacing below `md`. */
+  @media (max-width: 767px) {
+    .sres-table {
+      display: none;
+    }
+  }
+
+  /* ---------- 3. Result card ---------- */
+  .sres-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.9);                /* slate-900 */
+    border: 1px solid var(--slate-800, #1e293b);
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.12s ease, border-color 0.18s ease;
+  }
+
+  .sres-card:active {
+    transform: scale(0.99);
+  }
+
+  /* Left edge carries the stock state at a glance. */
+  .sres-card--out_of_stock { border-left: 3px solid #fb7185; }  /* rose-400 */
+  .sres-card--low_stock    { border-left: 3px solid #fbbf24; }  /* amber-400 */
+  .sres-card--overstock    { border-left: 3px solid #38bdf8; }  /* sky-400 */
+  .sres-card--in_stock     { border-left: 3px solid #34d399; }  /* emerald-400 */
+
+  .sres-card__lead {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;                                     /* let the name ellipsis */
+  }
+
+  .sres-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+  }
+
+  .sres-card__icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Tint the tile to match the state; the left border above is the
+     second, non-colour cue. */
+  .sres-card--out_of_stock .sres-card__icon {
+    background: rgba(244, 63, 94, 0.1);
+    border-color: rgba(244, 63, 94, 0.2);
+    color: #fb7185;
+  }
+
+  .sres-card--low_stock .sres-card__icon {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+
+  .sres-card--overstock .sres-card__icon {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+  }
+
+  .sres-card--in_stock .sres-card__icon {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+  }
+
+  .sres-card__body {
+    min-width: 0;
+  }
+
+  .sres-card__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .sres-card__name {
+    margin: 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sres-card__tag {
+    flex: 0 0 auto;
+    max-width: 40%;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-300, #cbd5e1);
+    background: var(--slate-800, #1e293b);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sres-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--slate-400, #94a3b8);
+    min-width: 0;
+  }
+
+  .sres-card__sku {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--slate-300, #cbd5e1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sres-card__sep {
+    flex: 0 0 auto;
+    color: var(--slate-600, #475569);
+  }
+
+  .sres-card__status {
+    flex: 0 0 auto;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .sres-card__status--out_of_stock { color: #fb7185; }  /* rose-400 */
+  .sres-card__status--low_stock    { color: #fbbf24; }  /* amber-400 */
+  .sres-card__status--overstock    { color: #38bdf8; }  /* sky-400 */
+  .sres-card__status--in_stock     { color: #34d399; }  /* emerald-400 */
+
+  .sres-card__go {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 10px;
+    color: #fff;
+    background: var(--primary-600, #4f46e5);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+    transition: background 0.18s ease, transform 0.12s ease;
+  }
+
+  .sres-card__go:hover {
+    background: var(--indigo-500, #6366f1);
+  }
+
+  .sres-card__go:active {
+    transform: scale(0.95);
+  }
+
+  .sres-card__go svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ---------- 4. Table ---------- */
+  .sres-cell--out_of_stock { color: #fb7185; }
+  .sres-cell--low_stock    { color: #fbbf24; }
+  .sres-cell--overstock    { color: #38bdf8; }
+  .sres-cell--in_stock     { color: #34d399; }
+
+  /* ---------- 5. Empty state ---------- */
+  .sres-empty .btn-pro {
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}

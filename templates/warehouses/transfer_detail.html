@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ transfer.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:transfer_list' %}">{% t "transfers" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ transfer.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ transfer.reference }}</h1>
+            {% if transfer.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif transfer.status == 'received' %}
+                <span class="badge-pro badge-pro-success">{% t "received" %}</span>
+            {% elif transfer.status == 'shipped' or transfer.status == 'in_transit' %}
+                <span class="badge-pro badge-pro-info">{% t "in_transit" %}</span>
+            {% elif transfer.status == 'approved' or transfer.status == 'picking' %}
+                <span class="badge-pro badge-pro-info">{% t "approved" %}</span>
+            {% elif transfer.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ transfer.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if transfer.status == 'draft' %}
+        <form method="post" action="{% url 'warehouses:transfer_update_status' pk=transfer.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="pending">
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-send"></i> {% t "submit_for_approval" %}</button>
+        </form>
+        {% elif transfer.status == 'pending' %}
+        <form method="post" action="{% url 'warehouses:transfer_update_status' pk=transfer.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="approved">
+            <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "approve" %}</button>
+        </form>
+        {% elif transfer.status == 'approved' or transfer.status == 'picking' %}
+        <form method="post" action="{% url 'warehouses:transfer_update_status' pk=transfer.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="shipped">
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-truck"></i> {% t "ship" %}</button>
+        </form>
+        {% elif transfer.status == 'shipped' or transfer.status == 'in_transit' %}
+        <form method="post" action="{% url 'warehouses:transfer_update_status' pk=transfer.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="received">
+            <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "receive" %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ transfer.from_warehouse.name }}</div>
+            <div class="stat-card-label">{% t "from_warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-box-arrow-left"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)"><i class="bi bi-arrow-right" style="color:var(--gray-400)"></i> {{ transfer.to_warehouse.name }}</div>
+            <div class="stat-card-label">{% t "to_warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-box-arrow-right"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">
+                {% if transfer.priority == 'urgent' %}
+                    <span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>
+                {% elif transfer.priority == 'high' %}
+                    <span class="badge-pro badge-pro-warning">{% t "high" %}</span>
+                {% elif transfer.priority == 'normal' %}
+                    <span class="badge-pro badge-pro-info">{% t "normal" %}</span>
+                {% else %}
+                    <span class="badge-pro badge-pro-neutral">{% t "low" %}</span>
+                {% endif %}
+            </div>
+            <div class="stat-card-label">{% t "priority" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-flag"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if transfer.created_by %}{{ transfer.created_by.get_full_name|default:transfer.created_by.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "created_by" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if transfer.shipped_by %}{{ transfer.shipped_by.get_full_name|default:transfer.shipped_by.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "shipped_by" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if transfer.received_by %}{{ transfer.received_by.get_full_name|default:transfer.received_by.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "received_by" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if transfer.shipped_at %}{{ transfer.shipped_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "shipped_date" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-calendar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if transfer.received_at %}{{ transfer.received_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "received_date" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-calendar-check"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "shipped_qty" %}</th>
+                    <th>{% t "received_qty" %}</th>
+                    <th>{% t "from_location" %}</th>
+                    <th>{% t "to_location" %}</th>
+                    <th>{% t "batch" %}</th>
+                    <th>{% t "notes" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{% if item.shipped_quantity > 0 %}<span style="color:var(--primary-600);font-weight:600">{{ item.shipped_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.received_quantity > 0 %}<span style="color:var(--success-600);font-weight:600">{{ item.received_quantity }}</span>{% else %}0{% endif %}</td>
+                    <td>{% if item.from_location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.from_location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if item.to_location %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.to_location.code }}</code>{% else %}—{% endif %}</td>
+                    <td>{% if item.batch %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.batch.batch_number }}</code>{% else %}—{% endif %}</td>
+                    <td class="text-pro-sm text-pro-muted">{% if item.notes %}{{ item.notes|truncatechars:40 }}{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ supplier.name }} - {% t "supplier" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'purchases:supplier_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ supplier.name }}</h1>
+        {% if supplier.contact_person %}<p class="page-subtitle" style="margin-top:4px"><i class="bi bi-person"></i> {{ supplier.contact_person }}</p>{% endif %}
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'purchases:supplier_update' pk=supplier.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        <a href="{% url 'purchases:supplier_delete' pk=supplier.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ purchase_count }}</div>
+            <div class="stat-card-label">{% t "purchases" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cart-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ total_purchases|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_amount" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ total_paid|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "paid_amount_label" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ total_unpaid|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "unpaid" %}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-person-lines-fill"></i> {% t "contact_info" %}</span></div>
+        <div class="card-pro-body">
+            {% if supplier.contact_person %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-person text-pro-muted"></i>
+                <div>
+                    <span class="text-pro-sm text-pro-muted">{% t "person" %}</span>
+                    <p class="fw-500 mb-0">{{ supplier.contact_person }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if supplier.phone %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-telephone text-pro-muted"></i>
+                <div>
+                    <span class="text-pro-sm text-pro-muted">{% t "phone" %}</span>
+                    <p class="fw-500 mb-0">{{ supplier.phone }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if supplier.email %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-envelope text-pro-muted"></i>
+                <div>
+                    <span class="text-pro-sm text-pro-muted">{% t "email_label" %}</span>
+                    <p class="fw-500 mb-0">{{ supplier.email }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if supplier.telegram %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-telegram text-pro-muted"></i>
+                <div>
+                    <span class="text-pro-sm text-pro-muted">Telegram</span>
+                    <p class="fw-500 mb-0">{{ supplier.telegram }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if supplier.address %}
+            <div class="d-flex align-center gap-2 mb-3">
+                <i class="bi bi-geo-alt text-pro-muted"></i>
+                <div>
+                    <span class="text-pro-sm text-pro-muted">{% t "address" %}</span>
+                    <p class="fw-500 mb-0">{{ supplier.address }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if not supplier.contact_person and not supplier.phone and not supplier.email and not supplier.telegram and not supplier.address %}
+            <p class="text-pro-muted text-pro-sm" style="text-align:center;padding:1rem 0">{% t "no_contact_info" %}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% if supplier.notes %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title"><i class="bi bi-journal-text"></i> {% t "notes" %}</span></div>
+        <div class="card-pro-body">
+            <p class="text-pro-sm">{{ supplier.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-cart-plus"></i> {% t "recent_purchases" %}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "total_amount" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "payment_status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                <tr>
+                    <td>
+                        <a href="{% url 'purchases:purchase_detail' pk=purchase.pk %}" class="fw-500" style="color:var(--primary-600);text-decoration:none">{{ purchase.reference }}</a>
+                    </td>
+                    <td>{{ purchase.created_at|date:"d.m.Y" }}</td>
+                    <td class="fw-600">${{ purchase.total|floatformat:0 }}</td>
+                    <td>
+                        {% if purchase.status == 'received' %}
+                            <span class="badge-pro badge-pro-success">{% t "received" %}</span>
+                        {% elif purchase.status == 'cancelled' %}
+                            <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                        {% elif purchase.status == 'approved' %}
+                            <span class="badge-pro badge-pro-info">{% t "approved" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{{ purchase.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if purchase.payment_status == 'paid' %}
+                            <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+                        {% elif purchase.payment_status == 'partial' %}
+                            <span class="badge-pro badge-pro-warning">{% t "partially_received" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-cart-plus"></i></div>
+                            <h5 class="empty-state-title">{% t "no_purchases" %}</h5>
+                            <p class="empty-state-desc">{% t "no_purchases_desc" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if recent_payments %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-cash"></i> {% t "recent_payments" %}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "amount_th" %}</th>
+                    <th>{% t "note_th" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in recent_payments %}
+                <tr>
+                    <td>{{ payment.payment_date|date:"d.m.Y" }}</td>
+                    <td class="fw-600" style="color:var(--success-600)">${{ payment.amount|floatformat:0 }}</td>
+                    <td>{{ payment.notes|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

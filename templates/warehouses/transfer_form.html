@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_transfer" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:transfer_list' %}">{% t "transfers" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "new_transfer" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "create_transfer" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:800px">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "transfer_info" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert-pro alert-pro-danger mb-4">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+                </div>
+                {% endif %}
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "from_warehouse" %} <span style="color:var(--danger-500)">*</span></label>
+                        <select class="input-pro" name="from_warehouse" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for w in warehouses %}<option value="{{ w.pk }}">{{ w.name }} ({{ w.code }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "to_warehouse" %} <span style="color:var(--danger-500)">*</span></label>
+                        <select class="input-pro" name="to_warehouse" required>
+                            <option value="">{% t "select" %}...</option>
+                            {% for w in warehouses %}<option value="{{ w.pk }}">{{ w.name }} ({{ w.code }})</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        <select class="input-pro" name="priority">
+                            <option value="low">{% t "low" %}</option>
+                            <option value="normal" selected>{% t "normal" %}</option>
+                            <option value="high">{% t "high" %}</option>
+                            <option value="urgent">{% t "urgent" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "notes" %}</label>
+                        <input class="input-pro" type="text" name="notes" placeholder="{% t "notes" %}">
+                    </div>
+                </div>
+
+                <h4 class="fw-600 mb-3 mt-4" style="font-size:0.9rem;color:var(--gray-700)"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "products" %}</h4>
+                <div id="items-container">
+                    <div class="d-flex gap-2 mb-2 align-center" style="flex-wrap:wrap">
+                        <select class="input-pro" name="products" style="flex:2" required>
+                            <option value="">{% t "select_product" %}</option>
+                            {% for p in products %}<option value="{{ p.pk }}">{{ p.name }} ({{ p.sku }})</option>{% endfor %}
+                        </select>
+                        <input class="input-pro" type="number" name="quantities" placeholder="{% t "qty" %}" min="1" style="flex:1" required>
+                        <select class="input-pro" name="from_locations" style="flex:1">
+                            <option value="">{% t "from_location" %}</option>
+                            {% for l in locations %}<option value="{{ l.pk }}">{{ l.code }}</option>{% endfor %}
+                        </select>
+                        <select class="input-pro" name="to_locations" style="flex:1">
+                            <option value="">{% t "to_location" %}</option>
+                            {% for l in locations %}<option value="{{ l.pk }}">{{ l.code }}</option>{% endfor %}
+                        </select>
+                        <button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+                <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm mb-4" onclick="addItem()"><i class="bi bi-plus"></i> {% t "add_product" %}</button>
+
+                <div class="d-flex justify-between mt-4">
+                    <a href="{% url 'warehouses:transfer_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "create" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addItem() {
+    var container = document.getElementById('items-container');
+    var first = container.children[0].cloneNode(true);
+    first.querySelectorAll('select,input').forEach(function(el){el.value=''});
+    container.appendChild(first);
+}
+</script>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

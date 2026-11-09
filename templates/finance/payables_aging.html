@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_payables_aging" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_payables_aging" %}</h1>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_current" %} (0-30)</div>
+            <div class="stat-card-value">${{ total_current|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">31-60 {% t "fin_days" %}</div>
+            <div class="stat-card-value" style="color:var(--warning-600)">${{ total_31_60|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-clock"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">61-90 {% t "fin_days" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-500)">${{ total_61_90|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">90+ {% t "fin_days" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-600)">${{ total_90_plus|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-diamond"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_payables_by_supplier" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "supplier" %}</th>
+                    <th>{% t "fin_total_outstanding" %}</th>
+                    <th>{% t "fin_current" %} (0-30)</th>
+                    <th>31-60</th>
+                    <th>61-90</th>
+                    <th>90+</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in aging_data %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.supplier_name }}</td>
+                    <td class="fw-600">${{ item.total|floatformat:2 }}</td>
+                    <td>${{ item.current|floatformat:2 }}</td>
+                    <td style="color:{% if item.days_31_60 > 0 %}var(--warning-600){% else %}inherit{% endif %}">${{ item.days_31_60|floatformat:2 }}</td>
+                    <td style="color:{% if item.days_61_90 > 0 %}var(--danger-500){% else %}inherit{% endif %}">${{ item.days_61_90|floatformat:2 }}</td>
+                    <td style="color:{% if item.days_90_plus > 0 %}var(--danger-600){% else %}inherit{% endif %}">${{ item.days_90_plus|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_payables" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

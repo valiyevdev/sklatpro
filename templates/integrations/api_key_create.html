@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_api_key" %} вЂ” SKLAT PRO{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:var(--sp-3)">
+    <div>
+        <div class="breadcrumb-pro">
+            <a href="{% url 'dashboard' %}">{% t "dashboard" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'integrations:dashboard' %}">{% t "integrations_hub" %}</a>
+            <span class="separator">/</span>
+            <a href="{% url 'integrations:api_key_list' %}">{% t "api_keys" %}</a>
+            <span class="separator">/</span>
+            <span class="current">{% t "create" %}</span>
+        </div>
+        <h1 class="page-title"><i class="bi bi-key" style="color:var(--primary-500)"></i> {% t "create_api_key" %}</h1>
+    </div>
+</div>
+
+{% if new_key %}
+<div class="card-pro mb-4" style="border:2px solid var(--success-500);background:var(--success-50)">
+    <div class="card-pro-header" style="background:var(--success-50)">
+        <span class="card-pro-title"><i class="bi bi-check-circle-fill" style="color:var(--success-600)"></i> {% t "api_key_created" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div style="margin-bottom:var(--sp-3)">
+            <label class="input-pro-label" style="font-weight:600;color:var(--success-700)">{% t "your_new_api_key" %}</label>
+            <div style="display:flex;gap:var(--sp-2);align-items:center">
+                <code id="newKeyDisplay" style="flex:1;font-size:var(--text-sm);background:var(--bg-page);padding:var(--sp-3);border-radius:var(--radius-md);font-family:'SF Mono',Consolas,monospace;word-break:break-all;border:1px solid var(--border-default);color:var(--text-primary)">{{ new_key }}</code>
+                <button type="button" class="btn-pro btn-pro-secondary btn-pro-sm" onclick="copyKey()" style="flex-shrink:0;height:38px">
+                    <i class="bi bi-clipboard" id="copyIcon"></i> {% t "copy" %}
+                </button>
+            </div>
+        </div>
+        <div class="alert-pro alert-pro-warning" style="margin:0">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span><strong>{% t "save_this_key_now" %}</strong> {% t "key_will_not_be_shown_again" %}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-key" style="color:var(--primary-600)"></i> {% t "api_key_details" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "name" %} <span style="color:var(--danger-500)">*</span></label>
+                <input class="input-pro" type="text" name="name" required placeholder="Masalan, ishlab chiqarish API kaliti">
+            </div>
+
+            <div class="input-pro-group">
+                <label class="input-pro-label">{% t "scopes" %}</label>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--sp-3);padding:var(--sp-3);background:var(--bg-page);border-radius:var(--radius-md);border:1px solid var(--border-default)">
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="products.read" style="accent-color:var(--primary-500)"> products.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="products.write" style="accent-color:var(--primary-500)"> products.write
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="inventory.read" style="accent-color:var(--primary-500)"> inventory.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="inventory.write" style="accent-color:var(--primary-500)"> inventory.write
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="orders.read" style="accent-color:var(--primary-500)"> orders.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="orders.write" style="accent-color:var(--primary-500)"> orders.write
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="customers.read" style="accent-color:var(--primary-500)"> customers.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="customers.write" style="accent-color:var(--primary-500)"> customers.write
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="sales.read" style="accent-color:var(--primary-500)"> sales.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="sales.write" style="accent-color:var(--primary-500)"> sales.write
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="reports.read" style="accent-color:var(--primary-500)"> reports.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="webhooks.manage" style="accent-color:var(--primary-500)"> webhooks.manage
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="integrations.manage" style="accent-color:var(--primary-500)"> integrations.manage
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="finance.read" style="accent-color:var(--primary-500)"> finance.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="documents.read" style="accent-color:var(--primary-500)"> documents.read
+                    </label>
+                    <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);color:var(--text-primary);cursor:pointer">
+                        <input type="checkbox" name="scopes" value="documents.write" style="accent-color:var(--primary-500)"> documents.write
+                    </label>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "expires_at" %}</label>
+                    <input class="input-pro" type="date" name="expires_at">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "rate_limit" %}</label>
+                    <input class="input-pro" type="number" name="rate_limit" value="60" min="1" max="10000">
+                </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:var(--sp-3);margin-top:var(--sp-5)">
+                <a href="{% url 'integrations:api_key_list' %}" class="btn-pro btn-pro-secondary">
+                    <i class="bi bi-arrow-left"></i> {% t "cancel" %}
+                </a>
+                <button type="submit" class="btn-pro btn-pro-primary">
+                    <i class="bi bi-plus-lg"></i> {% t "create_api_key" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function sklatCopyText(text){
+    if(navigator.clipboard&&window.isSecureContext){
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve,reject){
+        var ta=document.createElement('textarea');
+        ta.value=text;
+        ta.style.position='fixed';
+        ta.style.opacity='0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try{
+            if(document.execCommand('copy')){resolve();}
+            else{reject(new Error('copy failed'));}
+        }catch(err){reject(err);}
+        finally{document.body.removeChild(ta);}
+    });
+}
+function copyKey(){
+    var key=document.getElementById('newKeyDisplay').textContent;
+    sklatCopyText(key).then(function(){
+        var icon=document.getElementById('copyIcon');
+        icon.className='bi bi-check-lg';
+        setTimeout(function(){icon.className='bi bi-clipboard'},2000);
+    }).catch(function(){
+        var icon=document.getElementById('copyIcon');
+        icon.className='bi bi-x-lg';
+        setTimeout(function(){icon.className='bi bi-clipboard'},2000);
+    });
+}
+</script>
+{% endblock %}

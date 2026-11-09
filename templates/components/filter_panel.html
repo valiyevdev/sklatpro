@@ -1,0 +1,258 @@
+{% load i18n_tags %}
+{% comment %}
+Reusable list-page filter panel.
+
+Context (all optional unless noted):
+  filter_action             form action URL (required)
+  filter_search_name        query-string key for search, default "q"
+  filter_search_value       current search term
+  filter_search_placeholder custom search placeholder
+  filter_status_value       current status value
+  filter_category_value     current category id
+  filter_brand_value        current brand id
+  filter_categories         iterable of (id, name) pairs
+  filter_brands             iterable of (id, name) pairs
+  filter_total_count        number of matching rows
+  filter_status_options     iterable of objects with value/label (optional)
+  filter_status_options_template  template with <option> tags (optional)
+  filter_state_key          localStorage key for the open/closed state
+
+The panel is fully usable without JavaScript: the controls are visible by
+default and the whole thing is a normal GET form. JavaScript only adds the
+collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
+{% endcomment %}
+<div
+  class="fp-panel"
+  data-fp
+  data-fp-state-key="{{ filter_state_key|default:'sklat-filter-panel-open' }}"
+>
+  <form
+    method="GET"
+    action="{{ filter_action }}"
+    class="fp-form"
+    data-fp-form
+    role="search"
+  >
+    <input type="hidden" name="page" value="1">
+
+    <div class="fp-row fp-row--top">
+      <div class="fp-search">
+        <svg class="fp-search__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <label class="fp-sr-only" for="fp-search-input">{% t "search" %}</label>
+        <input
+          type="text"
+          id="fp-search-input"
+          name="{{ filter_search_name|default:'q' }}"
+          value="{{ filter_search_value }}"
+          class="fp-search__input"
+          autocomplete="off"
+          aria-keyshortcuts="Control+K Meta+K"
+          placeholder="{% if filter_search_placeholder %}{{ filter_search_placeholder }}{% else %}{% t 'search_inventory_placeholder' %}{% endif %}"
+          data-fp-search
+        >
+        <kbd class="fp-kbd" aria-hidden="true">Ctrl K</kbd>
+      </div>
+
+      <button
+        type="button"
+        class="fp-toggle"
+        data-fp-toggle
+        aria-expanded="true"
+        aria-controls="fp-filter-controls"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <span>{% t "filters" %}</span>
+        {% if filter_status_value or filter_category_value or filter_brand_value %}
+        <span class="fp-toggle__badge" aria-hidden="true">{% if filter_status_value and filter_category_value and filter_brand_value %}3{% elif filter_status_value and filter_category_value or filter_status_value and filter_brand_value or filter_category_value and filter_brand_value %}2{% else %}1{% endif %}</span>
+        {% endif %}
+      </button>
+    </div>
+
+    <div class="fp-controls" id="fp-filter-controls" data-fp-controls>
+      <div class="fp-row fp-row--fields">
+        <div class="fp-field">
+          <label class="fp-label" for="fp-status-filter">{% t "status" %}</label>
+          <div class="fp-select">
+            <select id="fp-status-filter" name="status" class="fp-select__control">
+              <option value="">{% t "all_statuses" %}</option>
+              {% if filter_status_options %}
+                {% for option in filter_status_options %}
+                <option value="{{ option.value }}" {% if filter_status_value == option.value|stringformat:"s" %}selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+              {% else %}
+                {% include filter_status_options_template|default:"components/filter_status_options.html" %}
+              {% endif %}
+            </select>
+            <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="fp-field">
+          <label class="fp-label" for="fp-category-filter">{% t "category" %}</label>
+          <div class="fp-select">
+            <select id="fp-category-filter" name="category" class="fp-select__control">
+              <option value="">{% t "all" %}</option>
+              {% for category_id, category_name in filter_categories %}
+              <option value="{{ category_id }}" {% if filter_category_value == category_id|stringformat:"s" %}selected{% endif %}>{{ category_name }}</option>
+              {% endfor %}
+            </select>
+            <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="fp-field">
+          <label class="fp-label" for="fp-brand-filter">{% t "brand" %}</label>
+          <div class="fp-select">
+            <select id="fp-brand-filter" name="brand" class="fp-select__control">
+              <option value="">{% t "all" %}</option>
+              {% for brand_id, brand_name in filter_brands %}
+              <option value="{{ brand_id }}" {% if filter_brand_value == brand_id|stringformat:"s" %}selected{% endif %}>{{ brand_name }}</option>
+              {% endfor %}
+            </select>
+            <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="fp-actions">
+          <a href="{{ filter_action }}" class="fp-btn fp-btn--outline">{% t "clear_filters" %}</a>
+          <button type="submit" class="fp-btn fp-btn--primary">{% t "apply" %}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fp-row fp-row--active">
+      <div class="fp-chips">
+        {% if filter_status_value %}
+        <span class="fp-chip">
+          <span class="fp-chip__label" data-allow-truncate>{% t "status" %}: {% t filter_status_value %}</span>
+          <a
+            class="fp-chip__remove"
+            href="?{% if filter_search_value %}q={{ filter_search_value|urlencode }}&amp;{% endif %}{% if filter_category_value %}category={{ filter_category_value|urlencode }}&amp;{% endif %}{% if filter_brand_value %}brand={{ filter_brand_value|urlencode }}&amp;{% endif %}page=1"
+            aria-label="{% t 'remove_filter' %}"
+            title="{% t 'remove_filter' %}"
+          ><span aria-hidden="true">&times;</span></a>
+        </span>
+        {% endif %}
+
+        {% if filter_category_value %}
+        <span class="fp-chip">
+          <span class="fp-chip__label" data-allow-truncate>{% t "category" %}: {% for category_id, category_name in filter_categories %}{% if filter_category_value == category_id|stringformat:"s" %}{{ category_name }}{% endif %}{% endfor %}</span>
+          <a
+            class="fp-chip__remove"
+            href="?{% if filter_search_value %}q={{ filter_search_value|urlencode }}&amp;{% endif %}{% if filter_status_value %}status={{ filter_status_value|urlencode }}&amp;{% endif %}{% if filter_brand_value %}brand={{ filter_brand_value|urlencode }}&amp;{% endif %}page=1"
+            aria-label="{% t 'remove_filter' %}"
+            title="{% t 'remove_filter' %}"
+          ><span aria-hidden="true">&times;</span></a>
+        </span>
+        {% endif %}
+
+        {% if filter_brand_value %}
+        <span class="fp-chip">
+          <span class="fp-chip__label" data-allow-truncate>{% t "brand" %}: {% for brand_id, brand_name in filter_brands %}{% if filter_brand_value == brand_id|stringformat:"s" %}{{ brand_name }}{% endif %}{% endfor %}</span>
+          <a
+            class="fp-chip__remove"
+            href="?{% if filter_search_value %}q={{ filter_search_value|urlencode }}&amp;{% endif %}{% if filter_status_value %}status={{ filter_status_value|urlencode }}&amp;{% endif %}{% if filter_category_value %}category={{ filter_category_value|urlencode }}&amp;{% endif %}page=1"
+            aria-label="{% t 'remove_filter' %}"
+            title="{% t 'remove_filter' %}"
+          ><span aria-hidden="true">&times;</span></a>
+        </span>
+        {% endif %}
+      </div>
+
+      <p class="fp-result">
+        <b>{{ filter_total_count|default:"0" }}</b> {% t "products_found_suffix" %}
+      </p>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    var panel = document.currentScript && document.currentScript.previousElementSibling;
+    if (!panel || !panel.matches('[data-fp]')) {
+      panel = document.querySelector('.fp-panel[data-fp]');
+    }
+    if (!panel || panel.dataset.fpReady === '1') return;
+    panel.dataset.fpReady = '1';
+
+    var form = panel.querySelector('[data-fp-form]');
+    var search = panel.querySelector('[data-fp-search]');
+    var toggle = panel.querySelector('[data-fp-toggle]');
+    var controls = panel.querySelector('[data-fp-controls]');
+    var stateKey = panel.getAttribute('data-fp-state-key') || 'sklat-filter-panel-open';
+
+    if (search) {
+      window.__sklatFilterSearch = search;
+    }
+
+    function setOpen(open, persist) {
+      if (!toggle || !controls) return;
+      panel.classList.toggle('is-collapsed', !open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (persist) {
+        try {
+          window.localStorage.setItem(stateKey, open ? '1' : '0');
+        } catch (error) {}
+      }
+    }
+
+    if (toggle && controls) {
+      var stored = null;
+      try {
+        stored = window.localStorage.getItem(stateKey);
+      } catch (error) {}
+      setOpen(stored === null ? true : stored === '1', false);
+      toggle.addEventListener('click', function () {
+        setOpen(toggle.getAttribute('aria-expanded') !== 'true', true);
+      });
+    }
+
+    if (form && search) {
+      var timer = null;
+      var submitForm = function () {
+        window.clearTimeout(timer);
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      };
+
+      search.addEventListener('input', function (event) {
+        if (event.isComposing) return;
+        window.clearTimeout(timer);
+        timer = window.setTimeout(submitForm, 300);
+      });
+
+      form.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' || event.isComposing) return;
+        var target = event.target;
+        if (!target || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON' || target.tagName === 'A') return;
+        event.preventDefault();
+        submitForm();
+      });
+    }
+
+    if (!window.__sklatFilterShortcutBound) {
+      window.__sklatFilterShortcutBound = true;
+      document.addEventListener('keydown', function (event) {
+        if (!(event.ctrlKey || event.metaKey) || String(event.key).toLowerCase() !== 'k') return;
+        var input = window.__sklatFilterSearch;
+        if (!input || !document.contains(input)) return;
+        event.preventDefault();
+        input.focus();
+        input.select();
+      });
+    }
+  })();
+</script>

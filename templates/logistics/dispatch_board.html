@@ -1,0 +1,91 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "dispatch" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "dispatch" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "dispatch_board" %}</h1></div></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px" class="mb-6">
+    <div style="grid-column:1/-1">
+        <div class="card-pro mb-6">
+            <div class="card-pro-header"><h5 class="card-pro-title"><i class="bi bi-inbox"></i> {% t "unassigned_shipments" %} ({{ unassigned_shipments|length }})</h5></div>
+            {% if unassigned_shipments %}
+            <div class="table-responsive"><table class="table-pro">
+                <thead><tr><th>{% t "reference" %}</th><th>{% t "customer" %}</th><th>{% t "city" %}</th><th>{% t "weight_kg" %}</th><th>{% t "priority" %}</th><th>{% t "assign" %}</th></tr></thead>
+                <tbody>
+                {% for s in unassigned_shipments %}
+                <tr>
+                    <td class="cell-primary">{{ s.reference }}</td>
+                    <td>{{ s.customer|default:"-" }}</td>
+                    <td>{{ s.delivery_city|default:"-" }}</td>
+                    <td>{{ s.total_weight_kg }}</td>
+                    <td>{% if s.priority == 'urgent' %}<span class="badge-pro badge-pro-danger">{% t "urgent" %}</span>{% elif s.priority == 'high' %}<span class="badge-pro badge-pro-warning">{% t "high" %}</span>{% else %}<span class="badge-pro badge-pro-neutral">{{ s.get_priority_display }}</span>{% endif %}</td>
+                    <td>
+                        <form method="post" action="{% url 'logistics:dispatch_assign' %}" class="d-flex gap-2 align-center">{% csrf_token %}
+                            <input type="hidden" name="shipment_id" value="{{ s.pk }}">
+                            <select class="input-pro" name="driver_id" style="width:auto;font-size:0.85rem"><option value="">{% t "select_driver" %}</option>{% for d in available_drivers %}<option value="{{ d.pk }}">{{ d.full_name }}</option>{% endfor %}</select>
+                            <select class="input-pro" name="vehicle_id" style="width:auto;font-size:0.85rem"><option value="">{% t "select_vehicle" %}</option>{% for v in available_vehicles %}<option value="{{ v.pk }}">{{ v.vehicle_number }}</option>{% endfor %}</select>
+                            <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm">{% t "assign" %}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+            {% else %}<div class="card-pro-body text-pro-muted text-center p-4"><i class="bi bi-check-circle"></i> {% t "all_shipments_assigned" %}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header"><h5 class="card-pro-title"><i class="bi bi-person-badge"></i> {% t "available_drivers" %} ({{ available_drivers|length }})</h5></div>
+        <div class="card-pro-body">
+            {% for d in available_drivers %}
+            <div class="d-flex align-center gap-3 mb-2" style="padding:8px;border-radius:6px;background:rgba(34,197,94,0.05)">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></div>
+                <div><div style="font-weight:500">{{ d.full_name }}</div><div class="text-pro-sm text-pro-muted">{{ d.phone|default:"" }}</div></div>
+            </div>
+            {% empty %}<div class="text-pro-muted text-center p-4">{% t "no_available_drivers" %}</div>{% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header"><h5 class="card-pro-title"><i class="bi bi-car-front"></i> {% t "available_vehicles" %} ({{ available_vehicles|length }})</h5></div>
+        <div class="card-pro-body">
+            {% for v in available_vehicles %}
+            <div class="d-flex align-center gap-3 mb-2" style="padding:8px;border-radius:6px;background:rgba(34,197,94,0.05)">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></div>
+                <div><div style="font-weight:500">{{ v.vehicle_number }}</div><div class="text-pro-sm text-pro-muted">{{ v.plate_number|default:"" }} &middot; {{ v.get_vehicle_type_display }}</div></div>
+            </div>
+            {% empty %}<div class="text-pro-muted text-center p-4">{% t "no_available_vehicles" %}</div>{% endfor %}
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header"><h5 class="card-pro-title"><i class="bi bi-signpost-split"></i> {% t "active_routes" %} ({{ active_routes|length }})</h5></div>
+        <div class="card-pro-body">
+            {% for r in active_routes %}
+            <div class="d-flex align-center gap-3 mb-2" style="padding:8px;border-radius:6px;background:rgba(14,165,233,0.05)">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--color-info)"></div>
+                <div><div style="font-weight:500"><a href="{% url 'logistics:route_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.reference }}</a></div><div class="text-pro-sm text-pro-muted">{{ r.driver|default:"-" }} &middot; {{ r.vehicle|default:"-" }}</div></div>
+            </div>
+            {% empty %}<div class="text-pro-muted text-center p-4">{% t "no_active_routes" %}</div>{% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if delayed_deliveries %}
+<div class="card-pro mb-6" style="border:1px solid rgba(239,68,68,0.3)">
+    <div class="card-pro-header"><h5 class="card-pro-title" style="color:var(--color-danger)"><i class="bi bi-exclamation-triangle"></i> {% t "delayed_deliveries" %} ({{ delayed_deliveries|length }})</h5></div>
+    <div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "reference" %}</th><th>{% t "customer" %}</th><th>{% t "driver" %}</th><th>{% t "expected" %}</th></tr></thead>
+    <tbody>{% for d in delayed_deliveries %}<tr><td class="cell-primary"><a href="{% url 'logistics:delivery_detail' pk=d.pk %}" style="color:var(--text-primary);text-decoration:none">{{ d.reference }}</a></td><td>{{ d.customer|default:d.contact_name|default:"-" }}</td><td>{{ d.driver|default:"-" }}</td><td>{{ d.expected_time|date:"d.m.Y H:i" }}</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+
+{% if failed_deliveries %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header"><h5 class="card-pro-title"><i class="bi bi-x-circle"></i> {% t "failed_deliveries" %}</h5></div>
+    <div class="table-responsive"><table class="table-pro"><thead><tr><th>{% t "reference" %}</th><th>{% t "customer" %}</th><th>{% t "reason" %}</th><th>{% t "driver" %}</th></tr></thead>
+    <tbody>{% for d in failed_deliveries %}<tr><td class="cell-primary"><a href="{% url 'logistics:delivery_detail' pk=d.pk %}" style="color:var(--text-primary);text-decoration:none">{{ d.reference }}</a></td><td>{{ d.customer|default:d.contact_name|default:"-" }}</td><td>{{ d.failure_reason|default:"-" }}</td><td>{{ d.driver|default:"-" }}</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

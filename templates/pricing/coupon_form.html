@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% if coupon %}{% t "edit" %} {% t "coupon" %}{% else %}{% t "create_coupon" %}{% endif %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'pricing:pricing_dashboard' %}">{% t "pricing" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'pricing:coupon_list' %}">{% t "coupons" %}</a>
+    <span class="separator">/</span>
+    {% if coupon %}
+        <a href="{% url 'pricing:coupon_edit' pk=coupon.pk %}">{{ coupon.code }}</a>
+        <span class="separator">/</span>
+        <span class="current">{% t "edit" %}</span>
+    {% else %}
+        <span class="current">{% t "create_coupon" %}</span>
+    {% endif %}
+</div>
+
+<div class="page-head">
+    <a href="{% url 'pricing:coupon_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% if coupon %}{% t "edit_coupon" %}: {{ coupon.code }}{% else %}{% t "create_coupon" %}{% endif %}</h1>
+    </div>
+</div>
+
+<div style="max-width:900px">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-ticket-perforated" style="color:var(--primary-600)"></i> {% t "coupon_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "code" %} <span class="required">*</span></label>
+                        <input class="input-pro" type="text" name="code" value="{% if coupon %}{{ coupon.code }}{% endif %}" required maxlength="50" placeholder="{% t "coupon_code" %}" style="text-transform:uppercase">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "name" %} <span class="required">*</span></label>
+                        <input class="input-pro" type="text" name="name" value="{% if coupon %}{{ coupon.name }}{% endif %}" required maxlength="200" placeholder="{% t "coupon_name" %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-percent" style="color:var(--primary-600)"></i> {% t "discount_settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "discount_type" %} <span class="required">*</span></label>
+                        <select class="input-pro" name="discount_type">
+                            <option value="percentage" {% if coupon and coupon.discount_type == 'percentage' %}selected{% endif %}>{% t "percentage" %}</option>
+                            <option value="fixed" {% if coupon and coupon.discount_type == 'fixed' %}selected{% endif %}>{% t "fixed_amount" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "discount_value" %} <span class="required">*</span></label>
+                        <input class="input-pro" type="number" name="discount_value" step="0.01" min="0" value="{% if coupon %}{{ coupon.discount_value }}{% endif %}" required>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_discount_amount" %}</label>
+                        <input class="input-pro" type="number" name="max_discount_amount" step="0.01" min="0" value="{% if coupon and coupon.max_discount_amount %}{{ coupon.max_discount_amount }}{% endif %}" placeholder="{% t "optional" %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-gear" style="color:var(--primary-600)"></i> {% t "coupon_settings" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_per_customer" %}</label>
+                        <input class="input-pro" type="number" name="max_per_customer" min="1" value="{% if coupon %}{{ coupon.max_per_customer }}{% else %}1{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "min_order_total" %}</label>
+                        <input class="input-pro" type="number" name="min_order_total" step="0.01" min="0" value="{% if coupon %}{{ coupon.min_order_total|default:0 }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "max_total_uses" %}</label>
+                        <input class="input-pro" type="number" name="max_total_uses" min="1" value="{% if coupon and coupon.max_total_uses %}{{ coupon.max_total_uses }}{% endif %}" placeholder="{% t "unlimited" %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "active" %}</label>
+                        <label style="display:flex;align-items:center;gap:var(--sp-2);cursor:pointer">
+                            <input type="checkbox" name="is_active" value="true" {% if not coupon or coupon.is_active %}checked{% endif %} style="width:auto">
+                            <span class="text-pro-sm">{% t "coupon_active" %}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-pro mb-6">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-calendar-range" style="color:var(--primary-600)"></i> {% t "validity_period" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "start_date" %}</label>
+                        <input class="input-pro" type="date" name="start_date" value="{% if coupon and coupon.start_date %}{{ coupon.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "end_date" %}</label>
+                        <input class="input-pro" type="date" name="end_date" value="{% if coupon and coupon.end_date %}{{ coupon.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-between">
+            <a href="{% url 'pricing:coupon_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+            <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% if coupon %}{% t "save_changes" %}{% else %}{% t "create" %}{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

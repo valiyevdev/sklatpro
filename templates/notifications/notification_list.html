@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "notifications" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "notifications" %}</h1>
+        <p class="page-subtitle">{{ unread_count }} {% t "unread_count" %}</p>
+    </div>
+    <div class="page-actions">
+        {% if notifications %}
+        <a href="{% url 'notifications:notification_mark_all_read' %}" class="btn-pro btn-pro-ghost">
+            <i class="bi bi-check-all"></i> {% t "mark_all_read" %}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th style="width:24px"></th>
+                    <th>{% t "title" %}</th>
+                    <th>{% t "message" %}</th>
+                    <th>{% t "type_th" %}</th>
+                    <th>{% t "date" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for n in notifications %}
+                <tr class="{% if not n.read %}selected{% endif %}">
+                    <td>
+                        {% if not n.read %}
+                        <span style="width:8px;height:8px;border-radius:50%;background:var(--primary-500);display:inline-block"></span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-primary">{{ n.title }}</td>
+                    <td class="cell-muted text-pro-sm" style="max-width:300px">{{ n.message|truncatechars:80 }}</td>
+                    <td>
+                        <span class="badge-pro badge-pro-{% if n.type == 'info' %}info{% elif n.type == 'success' %}success{% elif n.type == 'warning' %}warning{% elif n.type == 'error' %}danger{% else %}info{% endif %}">{{ n.get_type_display }}</span>
+                    </td>
+                    <td class="cell-muted">{{ n.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <div class="actions">
+                            {% if not n.read %}
+                            <a href="{% url 'notifications:notification_read' pk=n.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" title="{% t "mark_read" %}"><i class="bi bi-check-lg"></i></a>
+                            {% endif %}
+                            <form method="post" action="{% url 'notifications:notification_delete' pk=n.pk %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" style="color:var(--danger-500)" title="{% t "delete" %}"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-bell-slash"></i></div>
+                            <h5 class="empty-state-title">{% t "no_notifications" %}</h5>
+                            <p class="empty-state-desc">{% t "no_notifications_desc" %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-footer">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

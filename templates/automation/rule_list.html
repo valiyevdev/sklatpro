@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "automation_rules" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+.auto-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5);flex-wrap:wrap;gap:var(--sp-3)}
+.auto-page-header-left h2{font-size:var(--text-3xl);font-weight:700;display:flex;align-items:center;gap:var(--sp-3)}
+.auto-page-header-left h2 .count-badge{font-size:var(--text-sm);background:var(--primary-50);color:var(--primary-600);padding:2px 10px;border-radius:var(--radius-full);font-weight:600}
+.auto-page-header-left p{color:var(--text-secondary);font-size:var(--text-sm);margin-top:var(--sp-1)}
+
+.auto-filter-bar{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-5);flex-wrap:wrap;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);padding:var(--sp-3) var(--sp-4)}
+.auto-filter-bar .filter-group{display:flex;align-items:center;gap:var(--sp-2)}
+.auto-filter-bar label{font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.auto-filter-bar select,.auto-filter-bar input[type="text"]{height:36px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);transition:border-color var(--transition-fast)}
+.auto-filter-bar select:focus,.auto-filter-bar input[type="text"]:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.auto-filter-bar .search-input-wrap{position:relative}
+.auto-filter-bar .search-input-wrap i{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.875rem;pointer-events:none}
+.auto-filter-bar .search-input-wrap input{padding-left:2.25rem;min-width:200px}
+.auto-filter-bar .filter-separator{width:1px;height:24px;background:var(--border-default)}
+
+.auto-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.auto-table{width:100%;border-collapse:collapse}
+.auto-table th{text-align:left;padding:var(--sp-3) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border-default);background:var(--bg-page);white-space:nowrap}
+.auto-table td{padding:var(--sp-3) var(--sp-4);font-size:var(--text-sm);color:var(--text-primary);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.auto-table tr:last-child td{border-bottom:none}
+.auto-table tr:hover td{background:var(--bg-surface-hover)}
+
+.auto-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;line-height:1.6;white-space:nowrap}
+.auto-badge-success{background:var(--success-50);color:var(--success-700)}
+.auto-badge-danger{background:var(--danger-50);color:var(--danger-700)}
+.auto-badge-warning{background:var(--warning-50);color:var(--warning-700)}
+.auto-badge-info{background:var(--info-50);color:var(--info-700)}
+.auto-badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.auto-badge-purple{background:var(--primary-50);color:var(--primary-700)}
+
+.auto-action-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius-lg);font-size:var(--text-xs);font-weight:500;text-decoration:none;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all var(--transition-fast);white-space:nowrap;font-family:var(--font-sans)}
+.auto-action-btn:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.auto-action-btn.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.auto-action-btn.btn-primary:hover{background:var(--primary-700)}
+.auto-action-btn.btn-danger{color:var(--danger-600);border-color:var(--danger-200)}
+.auto-action-btn.btn-danger:hover{border-color:var(--danger-400);background:var(--danger-50)}
+.auto-actions-group{display:flex;gap:var(--sp-2);flex-wrap:nowrap}
+
+.auto-pagination{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5);border-top:1px solid var(--border-default);background:var(--bg-surface);border-radius:0 0 var(--radius-xl) var(--radius-xl)}
+.auto-pagination-info{font-size:var(--text-sm);color:var(--text-secondary)}
+.auto-pagination-nav{display:flex;gap:var(--sp-1)}
+.auto-pagination-nav a,.auto-pagination-nav span{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border-radius:var(--radius-lg);font-size:var(--text-sm);font-weight:500;text-decoration:none;border:1px solid var(--border-default);color:var(--text-secondary);background:var(--bg-surface);transition:all var(--transition-fast)}
+.auto-pagination-nav a:hover{border-color:var(--primary-400);color:var(--primary-600);background:var(--primary-50)}
+.auto-pagination-nav .active{background:var(--primary-600);color:#fff;border-color:var(--primary-600)}
+.auto-pagination-nav .disabled{opacity:0.4;pointer-events:none}
+
+.auto-empty{text-align:center;padding:var(--sp-12) var(--sp-4);color:var(--text-muted)}
+.auto-empty i{font-size:2.5rem;margin-bottom:var(--sp-3);display:block}
+.auto-empty h4{font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--sp-2)}
+.auto-empty p{font-size:var(--text-sm)}
+
+.auto-health-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.auto-health-dot.healthy{background:var(--success-500)}
+.auto-health-dot.warning{background:var(--warning-500)}
+.auto-health-dot.error{background:var(--danger-500)}
+.auto-health-dot.default{background:var(--text-muted)}
+</style>
+
+<header class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "automation_rules" %} <span class="count-badge">{{ page_obj.paginator.count }}</span></h1>
+        <p class="page-subtitle">Manage your automation rules and triggers</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'automation:rule_create' %}" class="auto-action-btn btn-primary" style="padding:var(--sp-2) var(--sp-5);font-size:var(--text-sm);height:40px">
+            <i class="bi bi-plus-lg"></i> Create Rule
+        </a>
+    </div>
+</header>
+
+<form method="get" action="">
+    <div class="auto-filter-bar">
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for code, name in status_choices %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="module">Category</label>
+            <select name="module" id="module" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for cat_key, cat_data in trigger_categories.items %}
+                <option value="{{ cat_key }}" {% if module_filter == cat_key %}selected{% endif %}>{{ cat_data.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="trigger">Trigger</label>
+            <select name="trigger" id="trigger" onchange="this.form.submit()">
+                <option value="">All Triggers</option>
+                {% for code, name in trigger_choices %}
+                <option value="{{ code }}" {% if trigger_filter == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="priority">Priority</label>
+            <select name="priority" id="priority" onchange="this.form.submit()">
+                <option value="">All Priorities</option>
+                {% for code, name in priority_choices %}
+                <option value="{{ code }}" {% if priority_filter == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-separator"></div>
+        <div class="filter-group">
+            <label for="q">Search</label>
+            <div class="search-input-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" id="q" value="{{ search }}" placeholder="{% t "search_rules" %}">
+            </div>
+        </div>
+        <div class="filter-separator"></div>
+        <button type="submit" class="auto-action-btn"><i class="bi bi-funnel"></i> Filter</button>
+        {% if search or status_filter or module_filter or trigger_filter or priority_filter %}
+        <a href="{% url 'automation:rule_list' %}" class="auto-action-btn" style="color:var(--danger-600)"><i class="bi bi-x-lg"></i> Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="auto-table-wrap">
+    <table class="auto-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Trigger</th>
+                <th>Actions</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Executions</th>
+                <th>Last Executed</th>
+                <th>Health</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rule in rules %}
+            <tr>
+                <td>
+                    <a href="{% url 'automation:rule_detail' pk=rule.pk %}" style="font-weight:600;color:var(--text-primary);text-decoration:none">{{ rule.name }}</a>
+                    {% if rule.description %}
+                    <span style="color:var(--text-muted);font-size:var(--text-xs);display:block;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rule.description }}</span>
+                    {% endif %}
+                </td>
+                <td><span class="auto-badge auto-badge-gray">{{ rule.get_trigger_display }}</span></td>
+                <td><span class="auto-badge auto-badge-purple">{{ rule.action_count }}</span></td>
+                <td>
+                    <span class="auto-badge auto-badge-{% if rule.status == 'active' %}success{% elif rule.status == 'paused' %}warning{% elif rule.status == 'disabled' %}gray{% elif rule.status == 'draft' %}info{% elif rule.status == 'error' %}danger{% else %}gray{% endif %}">
+                        {% if rule.status == 'active' %}<i class="bi bi-check-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif rule.status == 'paused' %}<i class="bi bi-pause-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif rule.status == 'disabled' %}<i class="bi bi-x-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif rule.status == 'draft' %}<i class="bi bi-pencil-square" style="font-size:0.625rem"></i>
+                        {% elif rule.status == 'error' %}<i class="bi bi-exclamation-triangle-fill" style="font-size:0.625rem"></i>
+                        {% endif %}
+                        {{ rule.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <span class="auto-badge auto-badge-{% if rule.priority == 'critical' %}danger{% elif rule.priority == 'high' %}warning{% elif rule.priority == 'normal' %}info{% else %}gray{% endif %}">
+                        {% if rule.priority == 'critical' %}<i class="bi bi-arrow-up-circle-fill" style="font-size:0.625rem"></i>
+                        {% elif rule.priority == 'high' %}<i class="bi bi-arrow-up" style="font-size:0.625rem"></i>
+                        {% elif rule.priority == 'low' %}<i class="bi bi-arrow-down" style="font-size:0.625rem"></i>
+                        {% endif %}
+                        {{ rule.get_priority_display }}
+                    </span>
+                </td>
+                <td style="font-variant-numeric:tabular-nums;font-weight:600">{{ rule.execution_count }}</td>
+                <td style="font-size:var(--text-xs);color:var(--text-secondary)">
+                    {% if rule.last_executed %}{{ rule.last_executed|date:"d M Y H:i" }}{% else %}<span style="color:var(--text-muted)">Never</span>{% endif %}
+                </td>
+                <td>
+                    <span class="auto-health-dot {{ rule.health_status }}"></span>
+                </td>
+                <td>
+                    <div class="auto-actions-group">
+                        <a href="{% url 'automation:rule_edit' pk=rule.pk %}" class="auto-action-btn" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="post" action="{% url 'automation:rule_duplicate' pk=rule.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <button type="submit" class="auto-action-btn" title="Duplicate"><i class="bi bi-copy"></i></button>
+                        </form>
+                        <form method="post" action="{% url 'automation:rule_toggle' pk=rule.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            {% if rule.status == 'active' %}
+                            <input type="hidden" name="status" value="pause">
+                            <button type="submit" class="auto-action-btn" title="Pause"><i class="bi bi-pause"></i></button>
+                            {% elif rule.status == 'disabled' %}
+                            <input type="hidden" name="status" value="activate">
+                            <button type="submit" class="auto-action-btn" title="Activate"><i class="bi bi-play"></i></button>
+                            {% elif rule.status == 'paused' %}
+                            <input type="hidden" name="status" value="activate">
+                            <button type="submit" class="auto-action-btn" title="Activate"><i class="bi bi-play"></i></button>
+                            {% elif rule.status == 'draft' %}
+                            <input type="hidden" name="status" value="activate">
+                            <button type="submit" class="auto-action-btn" title="Activate"><i class="bi bi-play"></i></button>
+                            {% endif %}
+                        </form>
+                        <form method="post" action="{% url 'automation:rule_delete' pk=rule.pk %}" style="display:inline" onsubmit="return confirm('{% t "delete_rule" %}')">
+                            {% csrf_token %}
+                            <button type="submit" class="auto-action-btn btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">
+                    <div class="auto-empty">
+                        <i class="bi bi-gear"></i>
+                        <h4>No automation rules found</h4>
+                        <p>{% if search or status_filter or module_filter or trigger_filter or priority_filter %}Try adjusting your filters or <a href="{% url 'automation:rule_create' %}">create a new rule</a>.{% else %}Get started by <a href="{% url 'automation:rule_create' %}">creating your first automation rule</a>.{% endif %}</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <div class="auto-pagination">
+        <div class="auto-pagination-info">
+            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+        <div class="auto-pagination-nav">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&module={{ module_filter }}&trigger={{ trigger_filter }}&priority={{ priority_filter }}&q={{ search }}"><i class="bi bi-chevron-left"></i></a>
+            {% else %}
+            <span class="disabled"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}&status={{ status_filter }}&module={{ module_filter }}&trigger={{ trigger_filter }}&priority={{ priority_filter }}&q={{ search }}">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <a href="?page={{ num }}&status={{ status_filter }}&module={{ module_filter }}&trigger={{ trigger_filter }}&priority={{ priority_filter }}&q={{ search }}">{{ num }}</a>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                <span class="disabled">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&module={{ module_filter }}&trigger={{ trigger_filter }}&priority={{ priority_filter }}&q={{ search }}"><i class="bi bi-chevron-right"></i></a>
+            {% else %}
+            <span class="disabled"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}Subscription Plans — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title"><i class="bi bi-credit-card" style="color:var(--primary-500)"></i> Subscription Plans</h1>
+        <p style="color:var(--text-secondary);margin:var(--sp-1) 0 0;font-size:var(--text-sm)">Create and manage subscription plans for the platform</p>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Plans</div>
+            <div class="stat-card-value">{{ plans.count }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-credit-card"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Active Plans</div>
+            <div class="stat-card-value">{{ active_plans_count }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total Subscribers</div>
+            <div class="stat-card-value">{{ total_subscribers }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Monthly Revenue</div>
+            <div class="stat-card-value" style="font-size:var(--text-xl)">${{ monthly_revenue|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-cash-stack"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-plus-circle" style="color:var(--success-500)"></i> Create New Plan</h3>
+    </div>
+    <div class="card-pro-body">
+        <form method="post" action="{% url 'saas_platform:plan_create' %}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-3);align-items:end">
+            {% csrf_token %}
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Plan Name</label>
+                <input class="input-pro" type="text" name="name" placeholder="Masalan, Starter" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Slug</label>
+                <input class="input-pro" type="text" name="slug" placeholder="Masalan, starter" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Monthly Price ($)</label>
+                <input class="input-pro" type="number" name="price" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Max Employees</label>
+                <input class="input-pro" type="number" name="max_employees" min="1" placeholder="Masalan, 10" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Max Products</label>
+                <input class="input-pro" type="number" name="max_products" min="1" placeholder="Masalan, 500" required>
+            </div>
+            <div class="input-pro-group" style="margin-bottom:0">
+                <label style="font-size:var(--text-sm);font-weight:500;color:var(--text-secondary);display:block;margin-bottom:var(--sp-1)">Status</label>
+                <select class="input-pro" name="is_active">
+                    <option value="true" selected>Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+            <div style="margin-bottom:0">
+                <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-plus-lg"></i> Create Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <h3 class="card-pro-title"><i class="bi bi-list-check" style="color:var(--primary-500)"></i> All Plans</h3>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>Plan</th>
+                    <th>Slug</th>
+                    <th>Price</th>
+                    <th>Max Employees</th>
+                    <th>Max Products</th>
+                    <th>Subscribers</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                <tr>
+                    <td class="cell-primary fw-500">
+                        <div class="d-flex align-center gap-2">
+                            <div style="width:32px;height:32px;border-radius:var(--radius-lg);background:{% if plan.slug == 'enterprise' %}var(--warning-50){% elif plan.slug == 'professional' %}var(--primary-50){% elif plan.slug == 'basic' %}var(--info-50){% else %}var(--gray-100){% endif %};color:{% if plan.slug == 'enterprise' %}var(--warning-600){% elif plan.slug == 'professional' %}var(--primary-600){% elif plan.slug == 'basic' %}var(--info-600){% else %}var(--gray-600){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0">
+                                <i class="bi {% if plan.slug == 'enterprise' %}bi-rocket-takeoff{% elif plan.slug == 'professional' %}bi-star{% elif plan.slug == 'basic' %}bi-box{% else %}bi-gift{% endif %}"></i>
+                            </div>
+                            {{ plan.name }}
+                        </div>
+                    </td>
+                    <td><code style="background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm);font-size:var(--text-xs)">{{ plan.slug }}</code></td>
+                    <td style="font-weight:600;color:var(--success-600)">${{ plan.price|floatformat:2 }}/mo</td>
+                    <td style="font-size:var(--text-sm)">{{ plan.max_employees|default:"Unlimited" }}</td>
+                    <td style="font-size:var(--text-sm)">{{ plan.max_products|default:"Unlimited" }}</td>
+                    <td><span class="badge-pro badge-pro-primary">{{ plan.subscriber_count|default:0 }}</span></td>
+                    <td>
+                        {% if plan.is_active %}
+                            <span class="badge-pro badge-pro-success">Active</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'saas_platform:plan_update' plan_id=plan.pk %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-pencil"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-credit-card"></i></div>
+                            <div class="empty-state-title">No plans created</div>
+                            <div class="empty-state-desc">Create your first subscription plan above.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

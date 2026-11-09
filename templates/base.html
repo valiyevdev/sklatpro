@@ -1,0 +1,1610 @@
+{% load static i18n_tags %}<!DOCTYPE html>
+<html lang="{% lang_attrs %}" data-theme="dark" style="background-color:var(--bg-page,#0f172a);color-scheme:var(--scheme,dark)">
+<head>
+    <script>try{var t=localStorage.getItem('theme')||localStorage.getItem('sklat-theme');t=(t==='light')?'light':'dark';var d=document.documentElement;d.setAttribute('data-theme',t);if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){var d=document.documentElement;d.setAttribute('data-theme','dark');d.classList.add('dark');}/* Layout stability: suppress transitions until the persisted sidebar state has been applied, so the content column never slides sideways after the first paint. */
+    document.documentElement.classList.add('sk-boot');</script>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="background-color" content="#0f172a">
+    <meta name="color-scheme" content="dark">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SKLAT PRO{% endblock %}</title>
+    <style>
+        /* ===================== TOP PROGRESS BAR ===================== */
+        #sk-progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--primary-500,#6366f1),var(--primary-300,#a5b4fc));z-index:999999;transition:width .25s ease,opacity .3s ease;opacity:0;pointer-events:none}
+        #sk-progress-bar.active{opacity:1}
+        #sk-progress-bar.done{width:100%!important;opacity:1;transition:width .15s ease}
+        @media(prefers-reduced-motion:reduce){#sk-progress-bar{transition:none}}
+        /* ===================== SKELETON SYSTEM ===================== */
+        .skt-skeleton{position:relative;overflow:hidden;background:var(--bg-surface-hover,rgba(51,65,85,.3));border-radius:var(--radius-lg,.5rem)}
+        .skt-skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.04) 50%,transparent 100%);animation:sktShimmer 1.5s infinite}
+        [data-theme="light"] .skt-skeleton::after{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.6) 50%,transparent 100%)}
+        .skt-skeleton-line{height:12px;border-radius:6px;margin-bottom:8px}
+        .skt-skeleton-line.w-40{width:40%}
+        .skt-skeleton-line.w-60{width:60%}
+        .skt-skeleton-line.w-80{width:80%}
+        .skt-skeleton-line.w-full{width:100%}
+        .skt-skeleton-line.h-20{height:20px}
+        .skt-skeleton-line.h-32{height:32px}
+        .skt-skeleton-card{padding:var(--sp-5,1.25rem);border:1px solid var(--border-subtle,rgba(255,255,255,.04));border-radius:var(--radius-xl,.75rem);background:var(--bg-surface,#1e293b)}
+        .skt-skeleton-stat{display:flex;align-items:center;gap:var(--sp-4,1rem);padding:var(--sp-5,1.25rem);border:1px solid var(--border-subtle,rgba(255,255,255,.04));border-radius:var(--radius-xl,.75rem);background:var(--bg-surface,#1e293b)}
+        .skt-skeleton-circle{width:48px;height:48px;border-radius:50%;flex-shrink:0}
+        .skt-skeleton-table-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:var(--sp-4,1rem);padding:var(--sp-3,.75rem) 0;border-bottom:1px solid var(--border-subtle,rgba(255,255,255,.04))}
+        @keyframes sktShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        @media(prefers-reduced-motion:reduce){.skt-skeleton::after{animation:none}}
+        /* ===================== MOBILE BACK BUTTON ===================== */
+        .sk-back-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:var(--pill-bg,#1e293b);border:1px solid var(--pill-border,#334155);box-shadow:0 1px 2px 0 rgba(0,0,0,.4);color:var(--pill-text,#94a3b8);cursor:pointer;flex-shrink:0;transition:background .15s,border-color .15s,color .15s;padding:0;margin:0}
+        .sk-back-btn:hover{background:var(--pill-bg,#334155);color:var(--pill-text-hover,#f1f5f9);border-color:var(--primary-500,#6366f1)}
+        .sk-back-btn:active{background:var(--primary-500,#6366f1);border-color:var(--primary-500,#6366f1);color:#fff;transform:scale(.96)}
+        .sk-back-btn svg{width:20px;height:20px;pointer-events:none}
+        @media(max-width:639px){
+            .page-header{display:flex!important;flex-direction:column!important;align-items:stretch;flex-wrap:wrap;gap:var(--sp-3);padding:var(--sp-4)}
+            .page-header-content{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0;flex:1;overflow:visible}
+            .page-title{margin:0;font-size:var(--text-xl);white-space:normal;overflow:visible;line-height:1.25}
+            .page-subtitle{margin:0;font-size:var(--text-xs);white-space:normal;flex-shrink:1;line-height:1.35;display:block}
+            .page-actions{width:100%;flex-shrink:1;flex-wrap:wrap;overflow:visible}
+        }
+    </style>
+    <!-- ============================================================
+         WEBFONT (parallel, non-blocking)
+         Loaded with <link> + preconnect instead of a CSS @import so the
+         font request runs in PARALLEL with design-system.css. A CSS
+         @import is serialized behind the stylesheet that contains it and
+         delays first paint, which produced a FOUT/reflow on cold loads.
+         `display=swap` keeps text visible while the font arrives.
+         ============================================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/design-system.css' %}" rel="stylesheet">
+    <style>
+        /* ===================== OVERFLOW FIX ===================== */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100%;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        img, video, canvas, svg {
+            max-width: 100%;
+            height: auto;
+        }
+    /* ===================== LAYOUT STABILITY =====================
+       Guarantees the shell has its final geometry on the FIRST paint:
+       - every flex/grid child is allowed to shrink (min-width:0), so a
+         wide table/filter cannot force the page to re-flow
+       - the sidebar gutter is reserved up-front, so the content column
+         never jumps when a scrollbar appears/disappears
+       - the sidebar collapse transition is suppressed while the app
+         bootstraps (the persisted state is applied by a script), which
+         used to make the whole content area slide sideways after paint
+       ============================================================ */
+    .app-shell, .app-main, .app-content, .app-sidebar {
+        min-width: 0;
+    }
+    .app-content > *, .app-main > * {
+        min-width: 0;
+    }
+    html {
+        scrollbar-gutter: stable;
+    }
+    /* Applied by the bootstrap script until the sidebar has settled.
+       Only TRANSITIONS are suppressed — animations (e.g. the empty
+       state icons) must keep running so they never "pop" on boot. */
+    html.sk-boot *,
+    html.sk-boot *::before,
+    html.sk-boot *::after {
+        transition: none !important;
+    }
+    /* ===================== SHELL ===================== */
+    .skip-link{position:absolute;top:-100%;left:0;z-index:9999;padding:0.5rem 1rem;background:var(--primary-600);color:#fff;font-size:var(--text-sm);border-radius:0 0 var(--radius-md) 0;transition:top .15s}
+    .skip-link:focus{top:0}
+    .app-shell{display:flex;min-height:100vh;background:var(--bg-page)}
+    /* ===================== SIDEBAR ===================== */
+    .app-sidebar{width:var(--sidebar-width);background:var(--sidebar-bg,#0f172a);border-right:1px solid var(--sidebar-border,rgba(255,255,255,0.06));position:fixed;top:0;left:0;bottom:0;z-index:calc(var(--z-sticky) + 5);display:flex;flex-direction:column;transition:width var(--transition-slow),transform var(--transition-slow);overflow:hidden}
+    .app-sidebar.collapsed{width:var(--sidebar-collapsed-width)}
+    .sidebar-brand-bar{display:flex;align-items:center;height:var(--topbar-height);padding:0 var(--sp-4);border-bottom:1px solid var(--sidebar-border);gap:var(--sp-3);flex-shrink:0}
+    .sidebar-logo{width:32px;height:32px;border-radius:var(--radius-lg);background:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:var(--text-sm);color:#fff;flex-shrink:0}
+    .sidebar-brand-text{font-weight:700;font-size:var(--text-lg);color:#fff;white-space:nowrap;overflow:hidden;transition:opacity var(--transition-fast)}
+    .sidebar-brand-text span{color:var(--primary-400)}
+    .collapsed .sidebar-brand-text{opacity:0;width:0}
+    .sidebar-company{padding:var(--sp-2) var(--sp-3);margin:var(--sp-2) var(--sp-2) 0;border-radius:var(--radius-lg);cursor:pointer;display:flex;align-items:center;gap:var(--sp-2);transition:background var(--transition-fast);overflow:hidden;min-height:40px}
+    .sidebar-company:hover{background:var(--sidebar-hover)}
+    .sidebar-company-avatar{width:28px;height:28px;border-radius:var(--radius-md);background:var(--primary-700);display:flex;align-items:center;justify-content:center;color:var(--primary-200);font-weight:700;font-size:var(--text-xs);flex-shrink:0}
+    .sidebar-company-info{overflow:hidden;white-space:nowrap}
+    .sidebar-company-name{font-size:var(--text-sm);color:#fff;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+    .sidebar-company-role{font-size:var(--text-xs);color:var(--sidebar-text)}
+    .collapsed .sidebar-company-info{opacity:0;width:0}
+    .sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:var(--sp-2) 0}
+    .sidebar-scroll::-webkit-scrollbar{width:4px}
+    .sidebar-scroll::-webkit-scrollbar-thumb{background:var(--sidebar-hover);border-radius:4px}
+    .sidebar-nav-section{padding:var(--sp-3) var(--sp-4) var(--sp-1);font-size:var(--text-xs);font-weight:600;color:var(--sidebar-text);text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;overflow:hidden;transition:opacity var(--transition-fast)}
+    .collapsed .sidebar-nav-section{text-align:center;padding:var(--sp-3) 0 var(--sp-1);font-size:0}
+    .collapsed .sidebar-nav-section::after{content:'\2022';font-size:var(--text-xs)}
+    .sidebar-nav-link{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-4);margin:1px var(--sp-2);border-radius:var(--radius-lg);color:var(--sidebar-text);text-decoration:none;font-size:var(--text-sm);font-weight:500;transition:all var(--transition-fast);white-space:nowrap;overflow:hidden;min-height:36px}
+    .sidebar-nav-link:hover{background:var(--sidebar-hover);color:var(--sidebar-text-active)}
+    .sidebar-nav-link.active{background:var(--sidebar-active-bg);color:var(--sidebar-text-active);font-weight:600;border-left:4px solid var(--primary-400,#a5b4fc)}
+    .sidebar-nav-link i{font-size:1.125rem;width:20px;text-align:center;flex-shrink:0}
+    .sidebar-nav-link .nav-label{overflow:hidden;transition:opacity var(--transition-fast)}
+    .collapsed .sidebar-nav-link{justify-content:center;padding:var(--sp-2)}
+    .collapsed .sidebar-nav-link .nav-label{opacity:0;width:0}
+    .collapsed .sidebar-nav-link{position:relative}
+    .collapsed .sidebar-nav-link:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);background:var(--gray-800);color:#fff;padding:4px 8px;border-radius:var(--radius-md);font-size:var(--text-xs);white-space:nowrap;z-index:var(--z-tooltip);pointer-events:none}
+    .sidebar-footer{border-top:1px solid var(--sidebar-border);padding:var(--sp-2);flex-shrink:0}
+    .sidebar-collapse-btn{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);margin:0 var(--sp-1);border-radius:var(--radius-lg);color:var(--sidebar-text);text-decoration:none;font-size:var(--text-sm);transition:background var(--transition-fast);cursor:pointer;border:none;background:none;width:calc(100% - var(--sp-2))}
+    .sidebar-collapse-btn:hover{background:var(--sidebar-hover);color:var(--sidebar-text-active)}
+    .sidebar-collapse-btn i{width:20px;text-align:center;transition:transform var(--transition-fast)}
+    .collapsed .sidebar-collapse-btn i{transform:rotate(180deg)}
+    .sidebar-collapse-btn .collapse-label{overflow:hidden;white-space:nowrap;transition:opacity var(--transition-fast)}
+    .collapsed .sidebar-collapse-btn .collapse-label{opacity:0;width:0}
+    /* ===================== MAIN AREA ===================== */
+    .app-main{flex:1;margin-left:var(--sidebar-width);transition:margin-left var(--transition-slow);display:flex;flex-direction:column;min-height:100vh;min-width:0;overflow-x:hidden;box-sizing:border-box}
+    @supports not (overflow:clip){.app-main{overflow-x:hidden}}
+    .app-sidebar.collapsed ~ .app-main{margin-left:var(--sidebar-collapsed-width)}
+    /* ===================== TOPBAR ===================== */
+    .app-topbar{height:var(--topbar-height);background:var(--bg-surface);border-bottom:1px solid var(--border-default);display:flex;align-items:center;padding:0 var(--sp-5);gap:var(--sp-4);position:sticky;top:0;z-index:var(--z-sticky);flex-shrink:0;width:100%;box-sizing:border-box;min-width:0}
+    /* --- Sticky header hardening: -webkit- prefix for iOS Safari + backdrop blur --- */
+    .app-topbar{position:-webkit-sticky;position:sticky;top:0;z-index:50;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);-webkit-background-clip:padding-box;background-clip:padding-box;background:rgba(30,41,59,.82);border-bottom:1px solid rgba(51,65,85,.8);transition:background var(--transition-fast),box-shadow var(--transition-fast),border-color var(--transition-fast)}
+    [data-theme="light"] .app-topbar{background:rgba(255,255,255,.82);border-bottom-color:rgba(226,232,240,.9)}
+    .app-topbar.is-scrolled{background:rgba(15,23,42,.95);box-shadow:0 4px 16px -6px rgba(0,0,0,.45)}
+    [data-theme="light"] .app-topbar.is-scrolled{background:rgba(255,255,255,.95);box-shadow:0 4px 16px -8px rgba(15,23,42,.25)}
+    .app-topbar *{backdrop-filter:none}
+    .app-topbar .dropdown-panel{-webkit-backdrop-filter:none;backdrop-filter:none}
+    .topbar-hamburger{display:none;background:none;border:none;color:var(--text-secondary);font-size:1.25rem;cursor:pointer;padding:var(--sp-1);border-radius:var(--radius-md)}
+    .topbar-hamburger:hover{background:var(--bg-surface-hover);color:var(--text-primary)}
+    .topbar-left{display:flex;align-items:center;gap:var(--sp-3);flex:1;min-width:0}
+    .topbar-breadcrumb{font-size:var(--text-sm);color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar-search{position:relative;max-width:400px;flex:1}
+    .topbar-search i{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.875rem;pointer-events:none}
+    .topbar-search input{width:100%;height:36px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3) 0 2.25rem;font-size:var(--text-sm);color:var(--text-primary);background:var(--bg-page);transition:all var(--transition-fast);font-family:var(--font-sans)}
+    .topbar-search input:focus{outline:none;border-color:var(--primary-500);box-shadow:var(--shadow-focus);background:var(--bg-surface)}
+    .topbar-search input::placeholder{color:var(--text-muted)}
+    .topbar-search-kbd{position:absolute;right:var(--sp-2);top:50%;transform:translateY(-50%);font-size:var(--text-xs);color:var(--text-muted);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-sm);padding:1px 5px;font-family:var(--font-sans);pointer-events:none}
+    .topbar-right{display:flex;align-items:center;gap:var(--sp-1);flex-shrink:0;min-width:0}
+    .topbar-action{position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-lg);color:var(--text-secondary);cursor:pointer;border:none;background:none;transition:all var(--transition-fast)}
+    .topbar-action:hover{background:var(--bg-surface-hover);color:var(--text-primary)}
+    .topbar-action.active{background:var(--primary-50);color:var(--primary-600)}
+    .topbar-action .badge-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger-500);border-radius:50%;border:2px solid var(--bg-surface)}
+    .topbar-action .badge-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:var(--radius-full);background:var(--danger-500);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-surface)}
+    .topbar-divider{width:1px;height:24px;background:var(--border-default);margin:0 var(--sp-1)}
+    /* Language Switcher */
+    .lang-switcher{display:flex;gap:2px;background:var(--bg-page);border-radius:var(--radius-lg);padding:2px}
+    .lang-btn{padding:4px 8px;border:none;background:none;color:var(--text-muted);font-size:var(--text-xs);font-weight:600;border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);font-family:var(--font-sans)}
+    .lang-btn:hover{color:var(--text-primary)}
+    .lang-btn.active{background:var(--bg-surface);color:var(--primary-600);box-shadow:var(--shadow-xs)}
+    /* User Menu */
+    .topbar-user-btn{display:flex;align-items:center;gap:var(--sp-2);padding:4px;border-radius:var(--radius-lg);cursor:pointer;border:none;background:none;transition:background var(--transition-fast)}
+    .topbar-user-btn:hover{background:var(--bg-surface-hover)}
+    .topbar-avatar{width:32px;height:32px;border-radius:var(--radius-lg);background:var(--primary-100);color:var(--primary-700);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--text-sm);flex-shrink:0}
+    .topbar-user-name{font-size:var(--text-sm);font-weight:500;color:var(--text-primary);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* ===================== DROPDOWN ===================== */
+    .dropdown-panel{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);min-width:240px;z-index:var(--z-dropdown);opacity:0;visibility:hidden;transform:translateY(-4px);transition:all var(--transition-fast);overflow:hidden}
+    .dropdown-panel.show{opacity:1;visibility:visible;transform:translateY(0)}
+    .dropdown-header{padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between}
+    .dropdown-header-title{font-size:var(--text-sm);font-weight:600;color:var(--text-primary)}
+    .dropdown-item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-4);font-size:var(--text-sm);color:var(--text-secondary);text-decoration:none;transition:all var(--transition-fast);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font-sans)}
+    .dropdown-item:hover{background:var(--bg-surface-hover);color:var(--text-primary)}
+    .dropdown-item i{width:16px;text-align:center;font-size:0.875rem;flex-shrink:0}
+    .dropdown-item.danger{color:var(--danger-600)}
+    .dropdown-item.danger:hover{background:var(--danger-50);color:var(--danger-700)}
+    .dropdown-divider{height:1px;background:var(--border-subtle);margin:var(--sp-1) 0}
+    .dropdown-footer{padding:var(--sp-2) var(--sp-4);border-top:1px solid var(--border-subtle)}
+    /* ===================== CONTENT ===================== */
+    .app-content{flex:1;padding:var(--sp-6);max-width:var(--content-max-width);width:100%;margin:0 auto;min-width:0;overflow-x:hidden;box-sizing:border-box}
+    @supports not (overflow:clip){.app-content{overflow-x:hidden}}
+    .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+    /* ===================== NOTIFICATION PANEL ===================== */
+    .notif-panel{width:360px;max-height:480px;overflow-y:auto}
+    .notif-item{display:flex;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);transition:background var(--transition-fast);cursor:pointer}
+    .notif-item:hover{background:var(--bg-surface-hover)}
+    .notif-item.unread{background:var(--primary-50)}
+    .notif-icon{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0}
+    .notif-icon.success{background:var(--success-50);color:var(--success-600)}
+    .notif-icon.warning{background:var(--warning-50);color:var(--warning-600)}
+    .notif-icon.danger{background:var(--danger-50);color:var(--danger-600)}
+    .notif-icon.info{background:var(--info-50);color:var(--info-600)}
+    .notif-text{font-size:var(--text-sm);color:var(--text-primary);line-height:var(--leading-normal)}
+    .notif-time{font-size:var(--text-xs);color:var(--text-muted);margin-top:2px}
+    .notif-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px;text-align:center}
+    .notif-empty-icon{width:48px;height:48px;border-radius:16px;background:rgba(30,41,59,0.6);border:1px solid rgba(51,65,85,0.5);display:flex;align-items:center;justify-content:center;color:#94a3b8;margin-bottom:12px;flex-shrink:0}
+    .notif-empty-icon i{font-size:1.25rem;margin:0;display:block}
+    .notif-empty-title{font-size:14px;font-weight:500;color:#cbd5e1}
+    .notif-empty-sub{font-size:12px;color:#64748b;margin-top:4px}
+    .notif-header{background:rgba(2,6,23,0.4);border-bottom-color:rgba(30,41,59,0.8)}
+    .notif-header-title{display:flex;align-items:center;gap:8px;color:#ffffff}
+    .notif-header-title i{width:auto;text-align:center;font-size:0.875rem}
+    .notif-mark-read{font-size:12px;font-weight:500;color:#818cf8;transition:color .15s ease;cursor:pointer}
+    .notif-mark-read:hover{color:#a5b4fc;background:none}
+    .notif-footer{padding:12px;background:rgba(2,6,23,0.6);border-top:1px solid rgba(30,41,59,0.8);text-align:center}
+    .notif-footer-link{display:block;width:100%;padding:6px 0;font-size:12px;font-weight:500;color:var(--text-link);text-decoration:none;cursor:pointer;border-radius:2px;border-bottom:2px solid transparent;transition:color .2s ease-in-out,border-color .2s ease-in-out,box-shadow .2s ease-in-out}
+    .notif-footer-link:hover,.notif-footer-link:active{color:var(--text-link-hover);border-bottom-color:var(--text-link-border)}
+    .notif-footer-link:focus-visible{outline:none;box-shadow:0 0 0 2px var(--text-link-ring)}
+    .notif-footer-link:visited{color:var(--text-link)}
+    .notif-handle{display:none}
+    .notif-backdrop{display:none}
+    /* ===================== QUICK ACTIONS ===================== */
+    .qa-panel{width:280px}
+    .qa-item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-4)}
+    .qa-icon{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:0.875rem;flex-shrink:0}
+    /* ===================== SEARCH PANEL ===================== */
+    .search-panel{width:480px;max-height:400px;padding:0}
+    .search-panel input{width:100%;padding:var(--sp-3) var(--sp-4);border:none;border-bottom:1px solid var(--border-subtle);font-size:var(--text-base);color:var(--text-primary);background:transparent;outline:none;font-family:var(--font-sans)}
+    .search-results{max-height:320px;overflow-y:auto;padding:var(--sp-2) 0}
+    .search-section-title{padding:var(--sp-2) var(--sp-4);font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
+    .search-item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-4);cursor:pointer;transition:background var(--transition-fast)}
+    .search-item:hover{background:var(--bg-surface-hover)}
+    .search-item i{color:var(--text-muted);width:16px;text-align:center}
+    .search-item span{font-size:var(--text-sm);color:var(--text-primary)}
+    .search-empty{text-align:center;padding:var(--sp-8) var(--sp-4);color:var(--text-muted)}
+    .search-empty i{font-size:2rem;margin-bottom:var(--sp-2);display:block}
+    /* ===================== MOBILE OVERLAY ===================== */
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(2px);z-index:calc(var(--z-sticky) - 1);opacity:0;transition:opacity var(--transition-base);cursor:pointer}
+    .sidebar-overlay.show{display:block;opacity:1}
+    /* ===================== RESPONSIVE ===================== */
+    @media(max-width:1024px){
+        .app-sidebar{transform:translateX(-100%);width:280px!important}
+        .app-sidebar.mobile-open{transform:translateX(0)}
+        .app-main{margin-left:0!important}
+        .topbar-hamburger{display:flex}
+        .topbar-search{max-width:200px}
+        .topbar-user-name{display:none}
+    }
+    /* ===================== MOBILE SEARCH BAR ===================== */
+    .mobile-search-btn{display:none}
+    .desktop-only-topbar{display:block}
+    .mobile-search-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:calc(var(--z-sticky) + 1);background:var(--bg-surface);border-bottom:1px solid var(--border-default);padding:var(--sp-2) var(--sp-3);gap:var(--sp-2);align-items:center}
+    .mobile-search-bar.show{display:flex}
+    .mobile-search-bar input{flex:1;height:40px;border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:0 var(--sp-3);font-size:var(--text-base);color:var(--text-primary);background:var(--bg-page);font-family:var(--font-sans);outline:none}
+    .mobile-search-bar input:focus{border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+    .mobile-search-bar input::placeholder{color:var(--text-muted)}
+    .mobile-search-close{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--text-secondary);font-size:1.25rem;cursor:pointer;border-radius:var(--radius-md);flex-shrink:0}
+    .mobile-search-close:hover{background:var(--bg-surface-hover);color:var(--text-primary)}
+    /* ===================== MOBILE LANG DROPDOWN ===================== */
+    .mobile-lang-btn{display:none;position:relative}
+    .mobile-lang-toggle{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:var(--radius-md);background:var(--bg-page);border:1px solid var(--border-default);color:var(--text-secondary);font-size:var(--text-xs);font-weight:700;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast);line-height:1}
+    .mobile-lang-toggle:hover{background:var(--bg-surface-hover);color:var(--text-primary);border-color:var(--gray-300)}
+    .mobile-lang-panel{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);min-width:140px;z-index:var(--z-dropdown);opacity:0;visibility:hidden;transform:translateY(-4px);transition:all var(--transition-fast);overflow:hidden}
+    .mobile-lang-panel.show{opacity:1;visibility:visible;transform:translateY(0)}
+    .mobile-lang-option{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);font-size:var(--text-sm);color:var(--text-secondary);border:none;background:none;width:100%;text-align:left;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast)}
+    .mobile-lang-option:hover{background:var(--bg-surface-hover);color:var(--text-primary)}
+    .mobile-lang-option.active{color:var(--primary-600);font-weight:600;background:var(--primary-50)}
+    @media(max-width:768px){
+        .app-content{padding:var(--sp-4)}
+        .app-topbar{padding:0 var(--sp-2);gap:var(--sp-1);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+        .topbar-search{display:none}
+        .lang-switcher{display:none}
+        .desktop-only-topbar{display:none!important}
+        .topbar-right{gap:0}
+        .topbar-divider-desktop{display:none}
+        .mobile-search-btn{display:flex}
+        .mobile-lang-btn{display:block}
+        .sidebar-collapse-btn{display:none!important}
+        .sidebar-footer{display:none!important}
+        .notif-panel{width:calc(100vw - 16px);max-width:360px;z-index:calc(var(--z-sticky) + 2)}
+        .search-panel{width:calc(100vw - 16px);max-width:480px;z-index:calc(var(--z-sticky) + 2)}
+        .qa-panel{width:calc(100vw - 16px);max-width:280px;z-index:calc(var(--z-sticky) + 2)}
+    }
+    @media(max-width:480px){
+        .app-content{padding:var(--sp-3)}
+        .topbar-right{gap:0}
+        .topbar-divider{display:none}
+        .dropdown-panel{position:fixed;top:auto;bottom:0;left:0;right:0;border-radius:var(--radius-xl) var(--radius-xl) 0 0;max-height:70vh;overflow-y:auto;transform:translateY(100%);z-index:calc(var(--z-sticky) + 3)}
+        .dropdown-panel.show{transform:translateY(0)}
+        .mobile-lang-panel{position:fixed;top:auto;bottom:0;left:0;right:0;border-radius:var(--radius-xl) var(--radius-xl) 0 0;max-height:50vh;overflow-y:auto;transform:translateY(100%);z-index:calc(var(--z-sticky) + 3)}
+        .mobile-lang-panel.show{transform:translateY(0)}
+    }
+    /* ===================== NOTIFICATION MOBILE BOTTOM SHEET (< 768px) ===================== */
+    @media(max-width:767px){
+        .notif-panel{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;max-width:100%;max-height:80vh;z-index:calc(var(--z-sticky) + 3);background:#0f172a;border:none;border-top:1px solid #1e293b;border-radius:24px 24px 0 0;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);padding:16px;overflow:hidden;transform:translateY(100%);transition:transform .3s cubic-bezier(0.16,1,0.3,1),opacity .3s ease;
+        }
+        .notif-panel.show{transform:translateY(0)}
+        .notif-panel #notifList{max-height:calc(80vh - 180px);overflow-y:auto}
+        .notif-backdrop{display:block;position:fixed;inset:0;background:rgba(2,6,23,0.8);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:calc(var(--z-sticky) + 2);opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;cursor:pointer}
+        .notif-panel.show + .notif-backdrop{opacity:1;visibility:visible}
+        .notif-handle{display:block;width:48px;height:6px;background:rgba(51,65,85,0.8);border-radius:999px;margin:0 auto 16px}
+        .notif-panel .notif-header{background:transparent;padding:0 0 12px;align-items:center;justify-content:space-between}
+        .notif-panel .notif-header-title{font-size:16px;font-weight:700;color:#ffffff;display:flex;align-items:center;gap:8px}
+        .notif-empty{padding:32px 16px;gap:8px}
+        .notif-empty-icon{width:56px;height:56px;background:rgba(30,41,59,0.8);border:1px solid rgba(51,65,85,0.6);margin-bottom:0}
+        .notif-empty-title{font-size:14px;font-weight:600;color:#e2e8f0}
+        .notif-empty-sub{font-size:12px;color:#64748b;margin-top:0}
+        .notif-footer{background:transparent;padding:0;border-top:none;margin-top:12px}
+        .notif-footer-link{display:block;width:100%;text-align:center;padding:12px 0;margin-top:12px;font-size:12px;font-weight:600;color:var(--text-link);border-top:1px solid rgba(30,41,59,0.8)}
+    }
+    </style>
+    <!--SK-PAGE-CSS-START-->
+    {% block extra_css %}{% endblock %}
+    <!--SK-PAGE-CSS-END-->
+</head>
+<body style="background-color:var(--bg-page,#0f172a);color:var(--text-primary,#e2e8f0)"
+      data-nav-active="{{ nav_active }}"
+      data-section-root="{{ is_section_root|yesno:'1,0' }}"
+      data-back-url="{{ back_url }}">
+    <div id="sk-progress-bar" style="position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--primary-500,#6366f1),var(--primary-300,#a5b4fc));z-index:999999;transition:width .25s ease,opacity .3s ease;opacity:0;pointer-events:none"></div>
+    <a href="#main-content" class="skip-link">{% t "skip_to_content" %}</a>
+    <!-- Mobile Search Overlay -->
+    <div class="mobile-search-bar" id="mobileSearchBar">
+        <button class="mobile-search-close" onclick="closeMobileSearch()" aria-label="Close search">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <input type="text" placeholder="{% t "search" %}..." id="mobileSearchInput" aria-label="{% t "search" %}">
+    </div>
+    <div class="app-shell">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-brand-bar">
+                <div class="sidebar-logo">S</div>
+                <div class="sidebar-brand-text">SKLAT <span>PRO</span></div>
+            </div>
+
+            {% if user.is_authenticated %}
+            <!-- Company Switcher -->
+            {% if user.company %}
+            <div class="sidebar-company" onclick="toggleDropdown('companyDropdown')" title="{{ user.company.company_name }}">
+                <div class="sidebar-company-avatar">{{ user.company.company_name|first|upper }}</div>
+                <div class="sidebar-company-info">
+                    <div class="sidebar-company-name">{{ user.company.company_name }}</div>
+                    <div class="sidebar-company-role">{{ user.get_role_display }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Navigation -->
+            <nav class="sidebar-scroll">
+                <div class="sidebar-nav-section">{% t "dashboard" %}</div>
+                <a href="{% url 'dashboard' %}" class="sidebar-nav-link {% if nav_active == 'dashboard' %}active{% endif %}" data-nav-key="dashboard" data-tooltip="{% t "dashboard" %}">
+                    <i class="bi bi-grid-1x2"></i> <span class="nav-label">{% t "dashboard" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section" style="display:flex;align-items:center;justify-content:space-between">
+                    {% t "pos_workspace" %}
+                    <a href="{% url 'pos:workspace' %}" target="_blank" class="btn-pro btn-pro-sm btn-pro-primary" style="padding:2px 8px;font-size:11px;text-decoration:none"><i class="bi bi-box-arrow-up-right"></i></a>
+                </div>
+                <a href="{% url 'pos:pos_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'pos' %}active{% endif %}" data-nav-key="pos" data-tooltip="{% t "pos_dashboard" %}">
+                    <i class="bi bi-upc-scan"></i> <span class="nav-label">{% t "pos_dashboard" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">Mahsulotlar</div>
+                <a href="{% url 'product_list' %}" class="sidebar-nav-link {% if nav_active == 'products' %}active{% endif %}" data-nav-key="products" data-tooltip="Mahsulotlar">
+                    <i class="bi bi-box-seam"></i> <span class="nav-label">Mahsulotlar</span>
+                </a>
+                <a href="{% url 'scanner:scanner_view' %}" class="sidebar-nav-link {% if nav_active == 'scanner' %}active{% endif %}" data-nav-key="scanner" data-tooltip="{% t "scanner" %}">
+                    <i class="bi bi-upc-scan"></i> <span class="nav-label">{% t "scanner" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "inventory" %}</div>
+                <a href="{% url 'inventory_overview' %}" class="sidebar-nav-link {% if nav_active == 'inv_overview' %}active{% endif %}" data-nav-key="inv_overview" data-tooltip="{% t "nav_inventory_overview" %}">
+                    <i class="bi bi-clipboard-data"></i> <span class="nav-label">{% t "nav_inventory_overview" %}</span>
+                </a>
+                <a href="{% url 'inventory_table' %}" class="sidebar-nav-link {% if nav_active == 'inv_table' %}active{% endif %}" data-nav-key="inv_table" data-tooltip="{% t "nav_inventory_table" %}">
+                    <i class="bi bi-table"></i> <span class="nav-label">{% t "nav_inventory_table" %}</span>
+                </a>
+                <a href="{% url 'low_stock_list' %}" class="sidebar-nav-link {% if nav_active == 'low_stock' %}active{% endif %}" data-nav-key="low_stock" data-tooltip="{% t "nav_low_stock" %}">
+                    <i class="bi bi-exclamation-triangle"></i> <span class="nav-label">{% t "nav_low_stock" %}</span>
+                </a>
+                <a href="{% url 'out_of_stock_list' %}" class="sidebar-nav-link {% if nav_active == 'out_stock' %}active{% endif %}" data-nav-key="out_stock" data-tooltip="{% t "nav_out_of_stock" %}">
+                    <i class="bi bi-x-octagon"></i> <span class="nav-label">{% t "nav_out_of_stock" %}</span>
+                </a>
+                <a href="{% url 'movement_history' %}" class="sidebar-nav-link {% if nav_active == 'movements' %}active{% endif %}" data-nav-key="movements" data-tooltip="{% t "nav_movements" %}">
+                    <i class="bi bi-arrow-left-right"></i> <span class="nav-label">{% t "nav_movements" %}</span>
+                </a>
+                <a href="{% url 'transaction_list' %}" class="sidebar-nav-link {% if nav_active == 'stock_io' %}active{% endif %}" data-nav-key="stock_io" data-tooltip="{% t "stock_in" %} / {% t "stock_out" %}">
+                    <i class="bi bi-arrow-down-up"></i> <span class="nav-label">{% t "stock_in" %} / {% t "stock_out" %}</span>
+                </a>
+                <a href="{% url 'adjustment_list' %}" class="sidebar-nav-link {% if nav_active == 'adjustments' %}active{% endif %}" data-nav-key="adjustments" data-tooltip="{% t "nav_adjustments" %}">
+                    <i class="bi bi-sliders"></i> <span class="nav-label">{% t "nav_adjustments" %}</span>
+                </a>
+                <a href="{% url 'count_list' %}" class="sidebar-nav-link {% if nav_active == 'counts' %}active{% endif %}" data-nav-key="counts" data-tooltip="{% t "nav_counts" %}">
+                    <i class="bi bi-clipboard-check"></i> <span class="nav-label">{% t "nav_counts" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "operations" %}</div>
+                <a href="{% url 'purchases:purchase_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'purch_dashboard' %}active{% endif %}" data-nav-key="purch_dashboard" data-tooltip="{% t "purchase_dashboard" %}">
+                    <i class="bi bi-speedometer2"></i> <span class="nav-label">{% t "purchase_dashboard" %}</span>
+                </a>
+                <a href="{% url 'purchases:purchase_list' %}" class="sidebar-nav-link {% if nav_active == 'purchases' %}active{% endif %}" data-nav-key="purchases" data-tooltip="{% t "purchases" %}">
+                    <i class="bi bi-cart-plus"></i> <span class="nav-label">{% t "purchases" %}</span>
+                </a>
+                <a href="{% url 'purchases:supplier_list' %}" class="sidebar-nav-link {% if nav_active == 'suppliers' %}active{% endif %}" data-nav-key="suppliers" data-tooltip="{% t "suppliers" %}">
+                    <i class="bi bi-truck"></i> <span class="nav-label">{% t "suppliers" %}</span>
+                </a>
+                <a href="{% url 'sales:sale_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'sale_dashboard' %}active{% endif %}" data-nav-key="sale_dashboard" data-tooltip="{% t "sale_dashboard" %}">
+                    <i class="bi bi-graph-up"></i> <span class="nav-label">{% t "sale_dashboard" %}</span>
+                </a>
+                <a href="{% url 'sales:sale_list' %}" class="sidebar-nav-link {% if nav_active == 'sales' %}active{% endif %}" data-nav-key="sales" data-tooltip="{% t "sales" %}">
+                    <i class="bi bi-cart-check"></i> <span class="nav-label">{% t "sales" %}</span>
+                </a>
+                <a href="{% url 'sales:customer_list' %}" class="sidebar-nav-link {% if nav_active == 'customers' %}active{% endif %}" data-nav-key="customers" data-tooltip="{% t "customers" %}">
+                    <i class="bi bi-people"></i> <span class="nav-label">{% t "customers" %}</span>
+                </a>
+                <a href="{% url 'orders:order_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'order_dashboard' %}active{% endif %}" data-nav-key="order_dashboard" data-tooltip="{% t "order_dashboard" %}">
+                    <i class="bi bi-graph-up"></i> <span class="nav-label">{% t "order_dashboard" %}</span>
+                </a>
+                <a href="{% url 'orders:order_list' %}" class="sidebar-nav-link {% if nav_active == 'orders' %}active{% endif %}" data-nav-key="orders" data-tooltip="{% t "orders" %}">
+                    <i class="bi bi-receipt"></i> <span class="nav-label">{% t "orders" %}</span>
+                </a>
+                <div class="sidebar-nav-section">{% t "tasks" %}</div>
+                <a href="{% url 'spiskalar:workspace' %}" class="sidebar-nav-link {% if nav_active == 'task_workspace' %}active{% endif %}" data-nav-key="task_workspace" data-tooltip="{% t "my_workspace" %}">
+                    <i class="bi bi-house-door"></i> <span class="nav-label">{% t "my_workspace" %}</span>
+                </a>
+                <a href="{% url 'spiskalar:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'task_dashboard' %}active{% endif %}" data-nav-key="task_dashboard" data-tooltip="{% t "task_dashboard" %}">
+                    <i class="bi bi-kanban"></i> <span class="nav-label">{% t "task_dashboard" %}</span>
+                </a>
+                <a href="{% url 'spiskalar:task_list' %}" class="sidebar-nav-link {% if nav_active == 'tasks' %}active{% endif %}" data-nav-key="tasks" data-tooltip="{% t "all_tasks" %}">
+                    <i class="bi bi-list-task"></i> <span class="nav-label">{% t "all_tasks" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "contacts" %}</div>
+                <a href="{% url 'crm:crm_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'crm' %}active{% endif %}" data-nav-key="crm" data-tooltip="{% t "crm" %}">
+                    <i class="bi bi-person-lines-fill"></i> <span class="nav-label">{% t "crm" %}</span>
+                </a>
+                <a href="{% url 'crm:customer_crm_list' %}" class="sidebar-nav-link {% if nav_active == 'crm_customers' %}active{% endif %}" data-nav-key="crm_customers" data-tooltip="{% t "customer_directory" %}">
+                    <i class="bi bi-people"></i> <span class="nav-label">{% t "customer_directory" %}</span>
+                </a>
+                <a href="{% url 'crm:segment_list' %}" class="sidebar-nav-link {% if nav_active == 'crm_segments' %}active{% endif %}" data-nav-key="crm_segments" data-tooltip="{% t "segments" %}">
+                    <i class="bi bi-diagram-3"></i> <span class="nav-label">{% t "segments" %}</span>
+                </a>
+                <a href="{% url 'crm:tag_list' %}" class="sidebar-nav-link {% if nav_active == 'crm_tags' %}active{% endif %}" data-nav-key="crm_tags" data-tooltip="{% t "tags" %}">
+                    <i class="bi bi-tags"></i> <span class="nav-label">{% t "tags" %}</span>
+                </a>
+                <a href="{% url 'crm:rfm_analyze' %}" class="sidebar-nav-link {% if nav_active == 'crm_rfm' %}active{% endif %}" data-nav-key="crm_rfm" data-tooltip="{% t "rfm" %}">
+                    <i class="bi bi-graph-up-arrow"></i> <span class="nav-label">{% t "rfm" %}</span>
+                </a>
+                <a href="{% url 'contacts:contact_list' %}" class="sidebar-nav-link {% if nav_active == 'contacts' %}active{% endif %}" data-nav-key="contacts" data-tooltip="{% t "contacts" %}">
+                    <i class="bi bi-journal-bookmark"></i> <span class="nav-label">{% t "contacts" %}</span>
+                </a>
+                <a href="{% url 'warehouses:warehouse_list' %}" class="sidebar-nav-link {% if nav_active == 'warehouses_nav' %}active{% endif %}" data-nav-key="warehouses_nav" data-tooltip="{% t "warehouses" %}">
+                    <i class="bi bi-building"></i> <span class="nav-label">{% t "warehouses" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "pricing" %}</div>
+                <a href="{% url 'pricing:pricing_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'pricing_engine' %}active{% endif %}" data-nav-key="pricing_engine" data-tooltip="{% t "pricing_engine" %}">
+                    <i class="bi bi-calculator"></i> <span class="nav-label">{% t "pricing_engine" %}</span>
+                </a>
+                <a href="{% url 'pricing:price_list_list' %}" class="sidebar-nav-link {% if nav_active == 'price_lists' %}active{% endif %}" data-nav-key="price_lists" data-tooltip="{% t "price_lists" %}">
+                    <i class="bi bi-list-check"></i> <span class="nav-label">{% t "price_lists" %}</span>
+                </a>
+                <a href="{% url 'pricing:promotion_list' %}" class="sidebar-nav-link {% if nav_active == 'promotions' %}active{% endif %}" data-nav-key="promotions" data-tooltip="{% t "promotions" %}">
+                    <i class="bi bi-megaphone"></i> <span class="nav-label">{% t "promotions" %}</span>
+                </a>
+                <a href="{% url 'pricing:coupon_list' %}" class="sidebar-nav-link {% if nav_active == 'coupons' %}active{% endif %}" data-nav-key="coupons" data-tooltip="{% t "coupons" %}">
+                    <i class="bi bi-ticket-perforated"></i> <span class="nav-label">{% t "coupons" %}</span>
+                </a>
+                <a href="{% url 'pricing:pricing_simulator' %}" class="sidebar-nav-link {% if nav_active == 'pricing_simulator' %}active{% endif %}" data-nav-key="pricing_simulator" data-tooltip="{% t "pricing_simulator" %}">
+                    <i class="bi bi-play-circle"></i> <span class="nav-label">{% t "pricing_simulator" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "wms_dashboard" %}</div>
+                <a href="{% url 'warehouses:wms_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'wms' %}active{% endif %}" data-nav-key="wms" data-tooltip="{% t "wms_dashboard" %}">
+                    <i class="bi bi-clipboard-data"></i> <span class="nav-label">{% t "wms_dashboard" %}</span>
+                </a>
+                <a href="{% url 'warehouses:receiving_list' %}" class="sidebar-nav-link {% if nav_active == 'wms_receiving' %}active{% endif %}" data-nav-key="wms_receiving" data-tooltip="{% t "receiving_title" %}">
+                    <i class="bi bi-truck"></i> <span class="nav-label">{% t "receiving_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:putaway_list' %}" class="sidebar-nav-link {% if nav_active == 'putaway' %}active{% endif %}" data-nav-key="putaway" data-tooltip="{% t "putaway_title" %}">
+                    <i class="bi bi-arrow-down-circle"></i> <span class="nav-label">{% t "putaway_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:picking_list' %}" class="sidebar-nav-link {% if nav_active == 'picking' %}active{% endif %}" data-nav-key="picking" data-tooltip="{% t "picking_title" %}">
+                    <i class="bi bi-list-task"></i> <span class="nav-label">{% t "picking_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:packing_list' %}" class="sidebar-nav-link {% if nav_active == 'packing' %}active{% endif %}" data-nav-key="packing" data-tooltip="{% t "packing_title" %}">
+                    <i class="bi bi-box"></i> <span class="nav-label">{% t "packing_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:shipment_list' %}" class="sidebar-nav-link {% if nav_active == 'wms_shipments' %}active{% endif %}" data-nav-key="wms_shipments" data-tooltip="{% t "shipping_title" %}">
+                    <i class="bi bi-send"></i> <span class="nav-label">{% t "shipping_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:transfer_list' %}" class="sidebar-nav-link {% if nav_active == 'transfers' %}active{% endif %}" data-nav-key="transfers" data-tooltip="{% t "transfers" %}">
+                    <i class="bi bi-arrow-left-right"></i> <span class="nav-label">{% t "transfers" %}</span>
+                </a>
+                <a href="{% url 'warehouses:task_list' %}" class="sidebar-nav-link {% if nav_active == 'wms_tasks' %}active{% endif %}" data-nav-key="wms_tasks" data-tooltip="{% t "tasks_title" %}">
+                    <i class="bi bi-clipboard-check"></i> <span class="nav-label">{% t "tasks_title" %}</span>
+                </a>
+                <a href="{% url 'warehouses:batch_list' %}" class="sidebar-nav-link {% if nav_active == 'batches' %}active{% endif %}" data-nav-key="batches" data-tooltip="{% t "batches_title" %}">
+                    <i class="bi bi-layers"></i> <span class="nav-label">{% t "batches_title" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "logistics" %}</div>
+                <a href="{% url 'logistics:logistics_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'log_dashboard' %}active{% endif %}" data-nav-key="log_dashboard" data-tooltip="{% t "logistics_dashboard" %}">
+                    <i class="bi bi-speedometer2"></i> <span class="nav-label">{% t "logistics_dashboard" %}</span>
+                </a>
+                <a href="{% url 'logistics:shipment_list' %}" class="sidebar-nav-link {% if nav_active == 'log_shipments' %}active{% endif %}" data-nav-key="log_shipments" data-tooltip="{% t "shipments" %}">
+                    <i class="bi bi-box-seam"></i> <span class="nav-label">{% t "shipments" %}</span>
+                </a>
+                <a href="{% url 'logistics:delivery_list' %}" class="sidebar-nav-link {% if nav_active == 'deliveries' %}active{% endif %}" data-nav-key="deliveries" data-tooltip="{% t "deliveries" %}">
+                    <i class="bi bi-truck"></i> <span class="nav-label">{% t "deliveries" %}</span>
+                </a>
+                <a href="{% url 'logistics:dispatch_board' %}" class="sidebar-nav-link {% if nav_active == 'dispatch' %}active{% endif %}" data-nav-key="dispatch" data-tooltip="{% t "dispatch" %}">
+                    <i class="bi bi-clipboard-data"></i> <span class="nav-label">{% t "dispatch" %}</span>
+                </a>
+                <a href="{% url 'logistics:route_list' %}" class="sidebar-nav-link {% if nav_active == 'routes_log' %}active{% endif %}" data-nav-key="routes_log" data-tooltip="{% t "routes" %}">
+                    <i class="bi bi-signpost-split"></i> <span class="nav-label">{% t "routes" %}</span>
+                </a>
+                <a href="{% url 'logistics:driver_list' %}" class="sidebar-nav-link {% if nav_active == 'drivers' %}active{% endif %}" data-nav-key="drivers" data-tooltip="{% t "drivers" %}">
+                    <i class="bi bi-person-badge"></i> <span class="nav-label">{% t "drivers" %}</span>
+                </a>
+                <a href="{% url 'logistics:vehicle_list' %}" class="sidebar-nav-link {% if nav_active == 'vehicles' %}active{% endif %}" data-nav-key="vehicles" data-tooltip="{% t "vehicles" %}">
+                    <i class="bi bi-car-front"></i> <span class="nav-label">{% t "vehicles" %}</span>
+                </a>
+                <a href="{% url 'logistics:tracking_list' %}" class="sidebar-nav-link {% if nav_active == 'tracking' %}active{% endif %}" data-nav-key="tracking" data-tooltip="{% t "tracking" %}">
+                    <i class="bi bi-geo-alt"></i> <span class="nav-label">{% t "tracking" %}</span>
+                </a>
+                <a href="{% url 'logistics:cost_list' %}" class="sidebar-nav-link {% if nav_active == 'costs' %}active{% endif %}" data-nav-key="costs" data-tooltip="{% t "delivery_costs" %}">
+                    <i class="bi bi-cash-stack"></i> <span class="nav-label">{% t "delivery_costs" %}</span>
+                </a>
+                <a href="{% url 'logistics:logistics_reports' %}" class="sidebar-nav-link {% if nav_active == 'log_reports' %}active{% endif %}" data-nav-key="log_reports" data-tooltip="{% t "logistics_reports" %}">
+                    <i class="bi bi-bar-chart-line"></i> <span class="nav-label">{% t "logistics_reports" %}</span>
+                </a>
+                <a href="{% url 'logistics:driver_mobile' %}" class="sidebar-nav-link {% if nav_active == 'driver_mobile' %}active{% endif %}" data-nav-key="driver_mobile" data-tooltip="{% t "driver_mobile" %}">
+                    <i class="bi bi-phone"></i> <span class="nav-label">{% t "driver_mobile" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "finance" %}</div>
+                <a href="{% url 'finance:financial_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'fin_dash' %}active{% endif %}" data-nav-key="fin_dash" data-tooltip="{% t "finance" %}">
+                    <i class="bi bi-wallet2"></i> <span class="nav-label">{% t "finance" %}</span>
+                </a>
+                <a href="{% url 'finance:account_list' %}" class="sidebar-nav-link {% if nav_active == 'fin_accounts' %}active{% endif %}" data-nav-key="fin_accounts" data-tooltip="{% t "fin_accounts" %}">
+                    <i class="bi bi-bank"></i> <span class="nav-label">{% t "fin_accounts" %}</span>
+                </a>
+                <a href="{% url 'finance:transaction_list' %}" class="sidebar-nav-link {% if nav_active == 'fin_transactions' %}active{% endif %}" data-nav-key="fin_transactions" data-tooltip="{% t "fin_transactions" %}">
+                    <i class="bi bi-receipt"></i> <span class="nav-label">{% t "fin_transactions" %}</span>
+                </a>
+                <a href="{% url 'finance:expense_list' %}" class="sidebar-nav-link {% if nav_active == 'fin_expenses' %}active{% endif %}" data-nav-key="fin_expenses" data-tooltip="{% t "fin_expenses" %}">
+                    <i class="bi bi-cash-stack"></i> <span class="nav-label">{% t "fin_expenses" %}</span>
+                </a>
+                <a href="{% url 'finance:income_list' %}" class="sidebar-nav-link {% if nav_active == 'fin_income' %}active{% endif %}" data-nav-key="fin_income" data-tooltip="{% t "fin_income" %}">
+                    <i class="bi bi-cash-coin"></i> <span class="nav-label">{% t "fin_income" %}</span>
+                </a>
+                <a href="{% url 'finance:budget_list' %}" class="sidebar-nav-link {% if nav_active == 'fin_budgets' %}active{% endif %}" data-nav-key="fin_budgets" data-tooltip="{% t "fin_budgets" %}">
+                    <i class="bi bi-pie-chart"></i> <span class="nav-label">{% t "fin_budgets" %}</span>
+                </a>
+                <a href="{% url 'finance:reports_hub' %}" class="sidebar-nav-link {% if nav_active == 'fin_reports' %}active{% endif %}" data-nav-key="fin_reports" data-tooltip="{% t "fin_reports" %}">
+                    <i class="bi bi-graph-up-arrow"></i> <span class="nav-label">{% t "fin_reports" %}</span>
+                </a>
+                <a href="{% url 'finance:customer_debt_list' %}" class="sidebar-nav-link {% if nav_active == 'cust_debts' %}active{% endif %}" data-nav-key="cust_debts" data-tooltip="{% t "view_customer_debts" %}">
+                    <i class="bi bi-person-dash"></i> <span class="nav-label">{% t "view_customer_debts" %}</span>
+                </a>
+                <a href="{% url 'finance:supplier_debt_list' %}" class="sidebar-nav-link {% if nav_active == 'supp_debts' %}active{% endif %}" data-nav-key="supp_debts" data-tooltip="{% t "view_supplier_debts" %}">
+                    <i class="bi bi-building"></i> <span class="nav-label">{% t "view_supplier_debts" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "reports" %}</div>
+                <a href="{% url 'reports:reports_index' %}" class="sidebar-nav-link {% if nav_active == 'reports_index' %}active{% endif %}" data-nav-key="reports_index" data-tooltip="{% t "reports" %}">
+                    <i class="bi bi-bar-chart-line"></i> <span class="nav-label">{% t "reports" %}</span>
+                </a>
+                <a href="{% url 'reports:report_kpi' %}" class="sidebar-nav-link {% if nav_active == 'report_kpi' %}active{% endif %}" data-nav-key="report_kpi" data-tooltip="{% t "kpi_dashboard" %}">
+                    <i class="bi bi-speedometer2"></i> <span class="nav-label">{% t "kpi_dashboard" %}</span>
+                </a>
+                <a href="{% url 'reports:saved_report_list' %}" class="sidebar-nav-link {% if nav_active == 'saved_reports' %}active{% endif %}" data-nav-key="saved_reports" data-tooltip="{% t "saved_reports" %}">
+                    <i class="bi bi-bookmark"></i> <span class="nav-label">{% t "saved_reports" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "markings" %}</div>
+                <a href="{% url 'markings:marking_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'marking_dash' %}active{% endif %}" data-nav-key="marking_dash" data-tooltip="{% t "markings" %}">
+                    <i class="bi bi-upc-scan"></i> <span class="nav-label">{% t "markings" %}</span>
+                </a>
+                <a href="{% url 'markings:gtin_list' %}" class="sidebar-nav-link {% if nav_active == 'gtin' %}active{% endif %}" data-nav-key="gtin" data-tooltip="{% t "gtin_list" %}">
+                    <i class="bi bi-upc"></i> <span class="nav-label">{% t "gtin_list" %}</span>
+                </a>
+                <a href="{% url 'markings:marking_list' %}" class="sidebar-nav-link {% if nav_active == 'marking_codes' %}active{% endif %}" data-nav-key="marking_codes" data-tooltip="{% t "marking_codes" %}">
+                    <i class="bi bi-qr-code"></i> <span class="nav-label">{% t "marking_codes" %}</span>
+                </a>
+                <a href="{% url 'markings:code_validate' %}" class="sidebar-nav-link {% if nav_active == 'validate_code' %}active{% endif %}" data-nav-key="validate_code" data-tooltip="{% t "validate_code" %}">
+                    <i class="bi bi-shield-check"></i> <span class="nav-label">{% t "validate_code" %}</span>
+                </a>
+                <a href="{% url 'markings:trace_product' %}" class="sidebar-nav-link {% if nav_active == 'trace' %}active{% endif %}" data-nav-key="trace" data-tooltip="{% t "trace_product" %}">
+                    <i class="bi bi-diagram-3"></i> <span class="nav-label">{% t "trace_product" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "documents" %}</div>
+                <a href="{% url 'documents:documents_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'documents_dash' %}active{% endif %}" data-nav-key="documents_dash" data-tooltip="{% t "documents" %}">
+                    <i class="bi bi-file-earmark-text"></i> <span class="nav-label">{% t "documents" %}</span>
+                </a>
+                <a href="{% url 'documents:document_list' %}" class="sidebar-nav-link {% if nav_active == 'document_list_nav' %}active{% endif %}" data-nav-key="document_list_nav" data-tooltip="{% t "document_list" %}">
+                    <i class="bi bi-files"></i> <span class="nav-label">{% t "document_list" %}</span>
+                </a>
+                <a href="{% url 'documents:document_template_list' %}" class="sidebar-nav-link {% if nav_active == 'doc_templates' %}active{% endif %}" data-nav-key="doc_templates" data-tooltip="{% t "document_templates" %}">
+                    <i class="bi bi-file-earmark-code"></i> <span class="nav-label">{% t "document_templates" %}</span>
+                </a>
+                <a href="{% url 'documents:edo_dashboard' %}" class="sidebar-nav-link {% if nav_active == 'edo' %}active{% endif %}" data-nav-key="edo" data-tooltip="{% t "edo_dashboard" %}">
+                    <i class="bi bi-cloud-arrow-up"></i> <span class="nav-label">{% t "edo_dashboard" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "ecommerce" %}</div>
+                <a href="{% url 'ecommerce:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'ecom_dash' %}active{% endif %}" data-nav-key="ecom_dash" data-tooltip="{% t "ecommerce_dashboard" %}">
+                    <i class="bi bi-broadcast"></i> <span class="nav-label">{% t "ecommerce_dashboard" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:channel_list' %}" class="sidebar-nav-link {% if nav_active == 'channels' %}active{% endif %}" data-nav-key="channels" data-tooltip="{% t "sales_channels" %}">
+                    <i class="bi bi-broadcast"></i> <span class="nav-label">{% t "sales_channels" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:integration_list' %}" class="sidebar-nav-link {% if nav_active == 'ecom_integrations' %}active{% endif %}" data-nav-key="ecom_integrations" data-tooltip="{% t "integrations" %}">
+                    <i class="bi bi-plug"></i> <span class="nav-label">{% t "integrations" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:payment_providers' %}" class="sidebar-nav-link {% if nav_active == 'payments' %}active{% endif %}" data-nav-key="payments" data-tooltip="{% t "payment_providers" %}">
+                    <i class="bi bi-credit-card"></i> <span class="nav-label">{% t "payment_providers" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:shipping_methods' %}" class="sidebar-nav-link {% if nav_active == 'shipping_methods' %}active{% endif %}" data-nav-key="shipping_methods" data-tooltip="{% t "shipping_methods" %}">
+                    <i class="bi bi-truck"></i> <span class="nav-label">{% t "shipping_methods" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:sync_jobs' %}" class="sidebar-nav-link {% if nav_active == 'sync_jobs' %}active{% endif %}" data-nav-key="sync_jobs" data-tooltip="{% t "sync_engine" %}">
+                    <i class="bi bi-arrow-repeat"></i> <span class="nav-label">{% t "sync_engine" %}</span>
+                </a>
+                <a href="{% url 'ecommerce:integration_logs' %}" class="sidebar-nav-link {% if nav_active == 'integration_logs' %}active{% endif %}" data-nav-key="integration_logs" data-tooltip="{% t "integration_logs" %}">
+                    <i class="bi bi-journal-text"></i> <span class="nav-label">{% t "integration_logs" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "sklat_ai" %}</div>
+                <a href="{% url 'sklat_ai:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'ai_dash' %}active{% endif %}" data-nav-key="ai_dash" data-tooltip="{% t "ai_dashboard" %}">
+                    <i class="bi bi-stars"></i> <span class="nav-label">{% t "ai_dashboard" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:chat' %}" class="sidebar-nav-link {% if nav_active == 'ai_chat' %}active{% endif %}" data-nav-key="ai_chat" data-tooltip="{% t "ai_chat" %}">
+                    <i class="bi bi-chat-dots"></i> <span class="nav-label">{% t "ai_chat" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:insights' %}" class="sidebar-nav-link {% if nav_active == 'ai_insights' %}active{% endif %}" data-nav-key="ai_insights" data-tooltip="{% t "ai_insights" %}">
+                    <i class="bi bi-lightbulb"></i> <span class="nav-label">{% t "ai_insights" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:forecasts' %}" class="sidebar-nav-link {% if nav_active == 'ai_forecasts' %}active{% endif %}" data-nav-key="ai_forecasts" data-tooltip="{% t "ai_forecasts" %}">
+                    <i class="bi bi-graph-up-arrow"></i> <span class="nav-label">{% t "ai_forecasts" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:recommendations' %}" class="sidebar-nav-link {% if nav_active == 'ai_recommendations' %}active{% endif %}" data-nav-key="ai_recommendations" data-tooltip="{% t "ai_recommendations" %}">
+                    <i class="bi bi-check2-square"></i> <span class="nav-label">{% t "ai_recommendations" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:action_center' %}" class="sidebar-nav-link {% if nav_active == 'ai_action_center' %}active{% endif %}" data-nav-key="ai_action_center" data-tooltip="{% t "ai_action_center" %}">
+                    <i class="bi bi-bolt"></i> <span class="nav-label">{% t "ai_action_center" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:anomalies' %}" class="sidebar-nav-link {% if nav_active == 'ai_anomalies' %}active{% endif %}" data-nav-key="ai_anomalies" data-tooltip="{% t "ai_anomalies" %}">
+                    <i class="bi bi-exclamation-octagon"></i> <span class="nav-label">{% t "ai_anomalies" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:analytics' %}" class="sidebar-nav-link {% if nav_active == 'ai_analytics' %}active{% endif %}" data-nav-key="ai_analytics" data-tooltip="{% t "ai_analytics" %}">
+                    <i class="bi bi-bar-chart-line"></i> <span class="nav-label">{% t "ai_analytics" %}</span>
+                </a>
+                <a href="{% url 'sklat_ai:config' %}" class="sidebar-nav-link {% if nav_active == 'ai_config' %}active{% endif %}" data-nav-key="ai_config" data-tooltip="{% t "ai_settings" %}">
+                    <i class="bi bi-gear"></i> <span class="nav-label">{% t "ai_settings" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "automation" %}</div>
+                <a href="{% url 'automation:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'auto_dash' %}active{% endif %}" data-nav-key="auto_dash" data-tooltip="{% t "automation_dashboard" %}">
+                    <i class="bi bi-cpu"></i> <span class="nav-label">{% t "automation_dashboard" %}</span>
+                </a>
+                <a href="{% url 'automation:rule_list' %}" class="sidebar-nav-link {% if nav_active == 'rules' %}active{% endif %}" data-nav-key="rules" data-tooltip="{% t "automation_rules" %}">
+                    <i class="bi bi-lightning"></i> <span class="nav-label">{% t "automation_rules" %}</span>
+                </a>
+                <a href="{% url 'automation:execution_list' %}" class="sidebar-nav-link {% if nav_active == 'executions' %}active{% endif %}" data-nav-key="executions" data-tooltip="{% t "executions" %}">
+                    <i class="bi bi-play-circle"></i> <span class="nav-label">{% t "executions" %}</span>
+                </a>
+                <a href="{% url 'automation:logs' %}" class="sidebar-nav-link {% if nav_active == 'auto_logs' %}active{% endif %}" data-nav-key="auto_logs" data-tooltip="{% t "automation_logs" %}">
+                    <i class="bi bi-journal-text"></i> <span class="nav-label">{% t "automation_logs" %}</span>
+                </a>
+                <a href="{% url 'automation:templates' %}" class="sidebar-nav-link {% if nav_active == 'templates_auto' %}active{% endif %}" data-nav-key="templates_auto" data-tooltip="{% t "automation_templates" %}">
+                    <i class="bi bi-collection"></i> <span class="nav-label">{% t "automation_templates" %}</span>
+                </a>
+                <a href="{% url 'automation:analytics' %}" class="sidebar-nav-link {% if nav_active == 'auto_analytics' %}active{% endif %}" data-nav-key="auto_analytics" data-tooltip="{% t "analytics" %}">
+                    <i class="bi bi-graph-up"></i> <span class="nav-label">{% t "analytics" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "integrations_hub" %}</div>
+                <a href="{% url 'integrations:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'intg_dash' %}active{% endif %}" data-nav-key="intg_dash" data-tooltip="{% t "integrations_dashboard" %}">
+                    <i class="bi bi-hub"></i> <span class="nav-label">{% t "integrations_dashboard" %}</span>
+                </a>
+                <a href="{% url 'integrations:integration_list' %}" class="sidebar-nav-link {% if nav_active == 'all_integrations' %}active{% endif %}" data-nav-key="all_integrations" data-tooltip="{% t "all_integrations" %}">
+                    <i class="bi bi-plug"></i> <span class="nav-label">{% t "all_integrations" %}</span>
+                </a>
+                <a href="{% url 'integrations:provider_list' %}" class="sidebar-nav-link {% if nav_active == 'providers' %}active{% endif %}" data-nav-key="providers" data-tooltip="{% t "providers" %}">
+                    <i class="bi bi-box-seam"></i> <span class="nav-label">{% t "providers" %}</span>
+                </a>
+                <a href="{% url 'integrations:webhook_list' %}" class="sidebar-nav-link {% if nav_active == 'webhooks' %}active{% endif %}" data-nav-key="webhooks" data-tooltip="{% t "webhooks" %}">
+                    <i class="bi bi-arrow-left-right"></i> <span class="nav-label">{% t "webhooks" %}</span>
+                </a>
+                <a href="{% url 'integrations:api_key_list' %}" class="sidebar-nav-link {% if nav_active == 'api_keys' %}active{% endif %}" data-nav-key="api_keys" data-tooltip="{% t "api_keys" %}">
+                    <i class="bi bi-key"></i> <span class="nav-label">{% t "api_keys" %}</span>
+                </a>
+                <a href="{% url 'integrations:logs' %}" class="sidebar-nav-link {% if nav_active == 'intg_logs' %}active{% endif %}" data-nav-key="intg_logs" data-tooltip="{% t "integration_logs" %}">
+                    <i class="bi bi-journal-text"></i> <span class="nav-label">{% t "integration_logs" %}</span>
+                </a>
+                <a href="{% url 'integrations:errors' %}" class="sidebar-nav-link {% if nav_active == 'error_center' %}active{% endif %}" data-nav-key="error_center" data-tooltip="{% t "error_center" %}">
+                    <i class="bi bi-exclamation-triangle"></i> <span class="nav-label">{% t "error_center" %}</span>
+                </a>
+                <a href="{% url 'integrations:sync_jobs' %}" class="sidebar-nav-link {% if nav_active == 'sync_center' %}active{% endif %}" data-nav-key="sync_center" data-tooltip="{% t "sync_center" %}">
+                    <i class="bi bi-arrow-repeat"></i> <span class="nav-label">{% t "sync_center" %}</span>
+                </a>
+
+                <div class="sidebar-nav-section">{% t "system" %}</div>
+                <a href="{% url 'notifications:notification_list' %}" class="sidebar-nav-link {% if nav_active == 'notifications' %}active{% endif %}" data-nav-key="notifications" data-tooltip="{% t "notifications" %}">
+                    <i class="bi bi-bell"></i> <span class="nav-label">{% t "notifications" %}</span>
+                </a>
+                <a href="{% url 'activity:activity_timeline' %}" class="sidebar-nav-link {% if nav_active == 'activity' %}active{% endif %}" data-nav-key="activity" data-tooltip="{% t "activity_log" %}">
+                    <i class="bi bi-clock-history"></i> <span class="nav-label">{% t "activity_log" %}</span>
+                </a>
+                <a href="{% url 'users:employee_list' %}" class="sidebar-nav-link {% if nav_active == 'users_nav' %}active{% endif %}" data-nav-key="users_nav" data-tooltip="{% t "users" %}">
+                    <i class="bi bi-person-gear"></i> <span class="nav-label">{% t "users" %}</span>
+                </a>
+
+                {% if user.is_superuser and user.role == 'SUPER_ADMIN' %}
+                <div class="sidebar-nav-section">Platform</div>
+                <a href="{% url 'saas_platform:dashboard' %}" class="sidebar-nav-link {% if nav_active == 'platform_dash' %}active{% endif %}" data-nav-key="platform_dash" data-tooltip="Platform Dashboard">
+                    <i class="bi bi-speedometer2"></i> <span class="nav-label">Platform</span>
+                </a>
+                <a href="{% url 'saas_platform:company_list' %}" class="sidebar-nav-link {% if nav_active == 'companies' %}active{% endif %}" data-nav-key="companies" data-tooltip="Companies">
+                    <i class="bi bi-buildings"></i> <span class="nav-label">Companies</span>
+                </a>
+                <a href="{% url 'saas_platform:subscription_plans' %}" class="sidebar-nav-link {% if nav_active == 'plans' %}active{% endif %}" data-nav-key="plans" data-tooltip="Plans">
+                    <i class="bi bi-credit-card"></i> <span class="nav-label">Plans</span>
+                </a>
+                <a href="{% url 'saas_platform:user_list' %}" class="sidebar-nav-link {% if nav_active == 'platform_users' %}active{% endif %}" data-nav-key="platform_users" data-tooltip="All Users">
+                    <i class="bi bi-people"></i> <span class="nav-label">All Users</span>
+                </a>
+                <a href="{% url 'saas_platform:role_list' %}" class="sidebar-nav-link {% if nav_active == 'roles' %}active{% endif %}" data-nav-key="roles" data-tooltip="Roles">
+                    <i class="bi bi-shield-lock"></i> <span class="nav-label">Roles</span>
+                </a>
+                <a href="{% url 'saas_platform:audit_log' %}" class="sidebar-nav-link {% if nav_active == 'audit_platform' %}active{% endif %}" data-nav-key="audit_platform" data-tooltip="Audit Log">
+                    <i class="bi bi-clipboard2-data"></i> <span class="nav-label">Audit Log</span>
+                </a>
+                <a href="{% url 'saas_platform:feature_flags' %}" class="sidebar-nav-link {% if nav_active == 'flags' %}active{% endif %}" data-nav-key="flags" data-tooltip="Feature Flags">
+                    <i class="bi bi-toggle2-on"></i> <span class="nav-label">Feature Flags</span>
+                </a>
+                <a href="{% url 'saas_platform:health_check' %}" class="sidebar-nav-link {% if nav_active == 'health' %}active{% endif %}" data-nav-key="health" data-tooltip="System Health">
+                    <i class="bi bi-heart-pulse"></i> <span class="nav-label">Health</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="{% t "collapse_sidebar" %}">
+                    <i class="bi bi-chevron-left"></i>
+                    <span class="collapse-label">{% t "collapse_sidebar" %}</span>
+                </button>
+            </div>
+            {% endif %}
+        </aside>
+
+        <!-- Main Area -->
+        <div class="app-main">
+            {% if user.is_authenticated %}
+            <!-- Topbar -->
+            <header class="app-topbar sticky top-0 z-50 w-full bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 transition-all" data-sticky-header>
+                <button class="topbar-hamburger" onclick="openMobileSidebar()" aria-label="{% t "toggle_navigation" %}">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="topbar-left">
+                    {% if user.company %}
+                    <span class="topbar-breadcrumb">{{ user.company.company_name }}</span>
+                    {% endif %}
+                    <div class="topbar-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" placeholder="{% t "search" %}..." id="globalSearchInput" aria-label="{% t "search" %}">
+                        <span class="topbar-search-kbd">Ctrl+K</span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Mobile Search Icon (visible < 768px, hidden on desktop) -->
+                    <button class="topbar-action mobile-search-btn" onclick="openMobileSearch()" title="{% t "search" %}" aria-label="{% t "search" %}">
+                        <i class="bi bi-search"></i>
+                    </button>
+
+                    <!-- Quick Actions (hidden on mobile) -->
+                    <div style="position:relative" class="desktop-only-topbar">
+                        <button class="topbar-action" onclick="togglePanel('qaPanel')" title="{% t "quick_actions" %}" aria-label="{% t "quick_actions" %}">
+                            <i class="bi bi-lightning-charge"></i>
+                        </button>
+                        <div class="dropdown-panel qa-panel" id="qaPanel">
+                            <div class="dropdown-header">
+                                <span class="dropdown-header-title">{% t "quick_actions" %}</span>
+                            </div>
+                            <a href="{% url 'product_create' %}" data-spa-ignore data-product-type-picker class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="bi bi-plus-lg"></i></div> {% t "new_product" %}</a>
+                            <a href="{% url 'purchases:purchase_create' %}" class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-plus-lg"></i></div> {% t "new_purchase" %}</a>
+                            <a href="{% url 'sales:sale_create' %}" class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--info-50);color:var(--info-600)"><i class="bi bi-plus-lg"></i></div> {% t "new_sale" %}</a>
+                            <a href="{% url 'orders:order_create' %}" class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="bi bi-plus-lg"></i></div> {% t "new_order" %}</a>
+                            <a href="{% url 'contacts:contact_list' %}" class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--success-50);color:var(--success-600)"><i class="bi bi-person-plus"></i></div> {% t "add_contact" %}</a>
+                            <a href="{% url 'warehouses:warehouse_create' %}" class="qa-item dropdown-item"><div class="qa-icon" style="background:var(--gray-100);color:var(--gray-600)"><i class="bi bi-building"></i></div> {% t "add_warehouse" %}</a>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div style="position:relative">
+                        <button class="topbar-action" onclick="togglePanel('notifPanel')" title="{% t "notifications" %}" aria-label="{% t "notifications" %}">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge-count" id="notifCount" style="display:none">0</span>
+                        </button>
+                        <div class="dropdown-panel notif-panel" id="notifPanel">
+                            <div class="notif-handle"></div>
+                            <div class="dropdown-header notif-header">
+                                <span class="dropdown-header-title notif-header-title"><i class="bi bi-bell"></i> {% t "notifications" %}</span>
+                                <button class="dropdown-item notif-mark-read" style="padding:0;width:auto" onclick="markAllRead()">{% t "mark_all_as_read" %}</button>
+                            </div>
+                            <div id="notifList">
+                                <div class="notif-empty">
+                                    <div class="notif-empty-icon"><i class="bi bi-bell"></i></div>
+                                    <div class="notif-empty-title">{% t "notifications_empty" %}</div>
+                                    <div class="notif-empty-sub">{% t "notifications_empty_hint" %}</div>
+                                </div>
+                            </div>
+                            <div class="notif-footer">
+                                <a href="{% url 'notifications:notification_list' %}" class="notif-footer-link">{% t "view_all" %}</a>
+                            </div>
+                        </div>
+                        <div class="notif-backdrop" onclick="document.getElementById('notifPanel').classList.remove('show')" aria-hidden="true"></div>
+                    </div>
+
+                    <div class="topbar-divider topbar-divider-desktop"></div>
+
+                    <!-- Language (desktop: full switcher) -->
+                    <div class="lang-switcher">
+                        {% for lang in supported_languages %}
+                        <button class="lang-btn {% if lang.code == current_language %}active{% endif %}" onclick="switchLanguage('{{ lang.code }}')" title="{{ lang.name }}">{{ lang.label }}</button>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Language (mobile: compact dropdown) -->
+                    <div class="mobile-lang-btn">
+                        <button class="mobile-lang-toggle" onclick="togglePanel('mobileLangPanel')" aria-label="Language">
+                            {% for lang in supported_languages %}{% if lang.code == current_language %}{{ lang.label }}{% endif %}{% endfor %}
+                        </button>
+                        <div class="mobile-lang-panel" id="mobileLangPanel">
+                            {% for lang in supported_languages %}
+                            <button class="mobile-lang-option {% if lang.code == current_language %}active{% endif %}" onclick="switchLanguage('{{ lang.code }}')">
+                                {{ lang.name }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Theme (visible on all viewports) -->
+                    <button class="topbar-action" id="themeToggleBtn" onclick="toggleTheme()" title="{% t "dark_mode" %}" aria-label="{% t "dark_mode" %}">
+                        <i class="bi bi-moon" id="themeIcon"></i>
+                    </button>
+
+                    <div class="topbar-divider topbar-divider-desktop"></div>
+
+                    <!-- User Profile -->
+                    <div style="position:relative">
+                        <button class="topbar-user-btn" onclick="togglePanel('userPanel')" aria-label="User menu">
+                            <div class="topbar-avatar">{{ user.first_name.0|default:user.email.0|upper }}{{ user.last_name.0|default:"" }}</div>
+                            <span class="topbar-user-name">{{ user.get_full_name|default:user.email }}</span>
+                            <i class="bi bi-chevron-down" style="font-size:0.625rem;color:var(--text-muted)"></i>
+                        </button>
+                        <div class="dropdown-panel" id="userPanel" style="min-width:220px">
+                            <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)">
+                                <div style="font-size:var(--text-sm);font-weight:600;color:var(--text-primary)">{{ user.get_full_name|default:user.email }}</div>
+                                <div style="font-size:var(--text-xs);color:var(--text-muted)">{{ user.get_role_display }}</div>
+                            </div>
+                            <a href="{% url 'users:profile' %}" class="dropdown-item"><i class="bi bi-person"></i> {% t "profile" %}</a>
+                            <a href="{% url 'users:change_password' %}" class="dropdown-item"><i class="bi bi-key"></i> {% t "change_password" %}</a>
+                            <a href="{% url 'users:password_reset' %}" class="dropdown-item"><i class="bi bi-shield-lock"></i> {% t "account_settings" %}</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{% url 'logout' %}" class="dropdown-item danger"><i class="bi bi-box-arrow-right"></i> {% t "logout" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            {% endif %}
+
+            <!-- Content -->
+            <main class="app-content" id="main-content">
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert-pro alert-pro-{{ message.tags }}" role="alert" style="margin-bottom:var(--sp-4)">
+                    <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'danger' %}bi-exclamation-circle-fill{% elif message.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                    <span>{{ message }}</span>
+                    <button class="alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="bi bi-x"></i></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+    /* ========== Sidebar ========== */
+    function toggleSidebarCollapse(){
+        if(window.innerWidth<768)return;
+        var s=document.getElementById('appSidebar');
+        s.classList.toggle('collapsed');
+        localStorage.setItem('sklat-sidebar',s.classList.contains('collapsed')?'collapsed':'expanded');
+    }
+    (function(){
+        var s=document.getElementById('appSidebar');
+        if(s){
+            if(window.innerWidth<768){
+                s.classList.remove('collapsed');
+            }else{
+                var saved=localStorage.getItem('sklat-sidebar');
+                if(saved==='collapsed')s.classList.add('collapsed');
+            }
+        }
+        /* The persisted state is now applied -> the shell has its final
+           geometry. Release the boot lock so transitions work again.
+           Runs unconditionally (even without a sidebar) so the page can
+           never be left stuck in the no-transition state. */
+        requestAnimationFrame(function(){
+            requestAnimationFrame(function(){
+                document.documentElement.classList.remove('sk-boot');
+            });
+        });
+    })();
+
+    /* ========== Sidebar Scroll Persistence ========== */
+    (function(){
+        var scrollEl=document.querySelector('.sidebar-scroll');
+        if(!scrollEl)return;
+        var KEY='sklat-sidebar-scroll';
+        var savedPos=localStorage.getItem(KEY)||'0';
+        var restoring=false;
+        function restore(){
+            var pos=parseInt(localStorage.getItem(KEY)||savedPos,10);
+            if(!pos)return;
+            restoring=true;
+            var max=scrollEl.scrollHeight-scrollEl.clientHeight;
+            scrollEl.scrollTop=Math.min(Math.max(pos,0),Math.max(max,0));
+            requestAnimationFrame(function(){restoring=false});
+        }
+        restore();
+        if(document.fonts&&document.fonts.ready){document.fonts.ready.then(restore);}
+        window.addEventListener('load',restore);
+        scrollEl.addEventListener('scroll',function(){
+            if(restoring)return;
+            localStorage.setItem(KEY,scrollEl.scrollTop);
+        },{passive:true});
+        scrollEl.addEventListener('click',function(e){
+            if(e.target.closest('.sidebar-nav-link'))localStorage.setItem(KEY,scrollEl.scrollTop);
+        });
+        var active=scrollEl.querySelector('.sidebar-nav-link.active');
+        if(active){
+            var r=active.getBoundingClientRect(),c=scrollEl.getBoundingClientRect();
+            if(r.top<c.top||r.bottom>c.bottom)active.scrollIntoView({block:'nearest'});
+        }
+    })();
+
+    /* ========== Sticky topbar scroll state ========== */
+    (function(){
+        var h=document.querySelector('[data-sticky-header],.app-topbar');
+        if(!h)return;
+        var ticking=false;
+        function update(){
+            var y=window.pageYOffset||document.documentElement.scrollTop||0;
+            h.classList.toggle('is-scrolled',y>8);
+            ticking=false;
+        }
+        window.addEventListener('scroll',function(){
+            if(!ticking){ticking=true;requestAnimationFrame(update);}
+        },{passive:true});
+        update();
+    })();
+
+    /* ========== Mobile Sidebar ========== */
+    function openMobileSidebar(){
+        document.getElementById('appSidebar').classList.add('mobile-open');
+        document.getElementById('sidebarOverlay').classList.add('show');
+        document.body.style.overflow='hidden';
+    }
+    function closeMobileSidebar(){
+        document.getElementById('appSidebar').classList.remove('mobile-open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+        document.body.style.overflow='';
+    }
+    function toggleMobileSidebar(){
+        var s=document.getElementById('appSidebar');
+        if(!s)return;
+        if(s.classList.contains('mobile-open')){
+            closeMobileSidebar();
+        }else{
+            openMobileSidebar();
+        }
+    }
+
+    /* ========== Auto-close sidebar on any nav link click ========== */
+    // Capture phase: runs BEFORE the SPA navigation handler (which calls
+    // stopImmediatePropagation), so the drawer always closes on link click.
+    document.addEventListener('click',function(e){
+        var sidebar=document.getElementById('appSidebar');
+        if(!sidebar)return;
+        var link=e.target.closest('#appSidebar a, #appSidebar a *');
+        if(link&&window.innerWidth<1024){
+            closeMobileSidebar();
+        }
+    },true);
+
+    /* ========== Theme (light/dark toggle) ========== */
+    function toggleTheme(){
+        var h=document.documentElement;
+        var c=h.getAttribute('data-theme')||'dark';
+        var n=c==='light'?'dark':'light';
+        h.setAttribute('data-theme',n);
+        if(n==='dark'){h.classList.add('dark');}else{h.classList.remove('dark');}
+        try{localStorage.setItem('sklat-theme',n);localStorage.setItem('theme',n);}catch(e){}
+        var icon=document.getElementById('themeIcon');
+        if(icon)icon.className=n==='dark'?'bi bi-sun':'bi bi-moon';
+        var btn=document.getElementById('themeToggleBtn');
+        if(btn)btn.title=n==='dark'?'{% t "light_mode" %}':'{% t "dark_mode" %}';
+    }
+    (function(){
+        var saved;
+        try{saved=localStorage.getItem('theme')||localStorage.getItem('sklat-theme');}catch(e){}
+        if(saved!=='light'&&saved!=='dark'){saved='dark';}
+        document.documentElement.setAttribute('data-theme',saved);
+        if(saved==='dark'){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}
+        var icon=document.getElementById('themeIcon');
+        if(icon)icon.className=saved==='dark'?'bi bi-sun':'bi bi-moon';
+        var btn=document.getElementById('themeToggleBtn');
+        if(btn)btn.title=saved==='dark'?'{% t "light_mode" %}':'{% t "dark_mode" %}';
+    })();
+
+    /* ========== Language ========== */
+    function switchLanguage(lang){
+        fetch('/set-language/',{
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token }}'},
+            body:'language='+encodeURIComponent(lang)
+        }).then(function(){window.location.reload()});
+    }
+
+    /* ========== Panels/Dropdowns ========== */
+    var openPanelId=null;
+    function togglePanel(id){
+        var panel=document.getElementById(id);
+        if(!panel)return;
+        if(openPanelId&&openPanelId!==id){
+            document.getElementById(openPanelId).classList.remove('show');
+        }
+        panel.classList.toggle('show');
+        openPanelId=panel.classList.contains('show')?id:null;
+    }
+    document.addEventListener('click',function(e){
+        if(openPanelId){
+            var panel=document.getElementById(openPanelId);
+            if(panel&&!panel.contains(e.target)&&!e.target.closest('.topbar-action')&&!e.target.closest('.topbar-user-btn')&&!e.target.closest('.mobile-lang-btn')){
+                panel.classList.remove('show');
+                openPanelId=null;
+            }
+        }
+    });
+
+    /* ========== Global Search ========== */
+    var searchInput=document.getElementById('globalSearchInput');
+    if(searchInput){
+        searchInput.addEventListener('keydown',function(e){
+            if(e.key==='Escape'){searchInput.blur();searchInput.value='';}
+            if(e.key==='Enter'){
+                var q=searchInput.value.trim();
+                if(q)window.location.href='/scanner/search/?q='+encodeURIComponent(q);
+            }
+        });
+    }
+
+    /* ========== Mobile Search ========== */
+    function openMobileSearch(){
+        var bar=document.getElementById('mobileSearchBar');
+        var inp=document.getElementById('mobileSearchInput');
+        if(bar){bar.classList.add('show');}
+        if(inp){setTimeout(function(){inp.focus();},100);}
+    }
+    function closeMobileSearch(){
+        var bar=document.getElementById('mobileSearchBar');
+        var inp=document.getElementById('mobileSearchInput');
+        if(bar)bar.classList.remove('show');
+        if(inp){inp.value='';inp.blur();}
+    }
+    var mobileSearchInput=document.getElementById('mobileSearchInput');
+    if(mobileSearchInput){
+        mobileSearchInput.addEventListener('keydown',function(e){
+            if(e.key==='Escape')closeMobileSearch();
+            if(e.key==='Enter'){
+                var q=mobileSearchInput.value.trim();
+                if(q)window.location.href='/scanner/search/?q='+encodeURIComponent(q);
+            }
+        });
+    }
+
+    /* ========== Keyboard Shortcuts ========== */
+    document.addEventListener('keydown',function(e){
+        if((e.ctrlKey||e.metaKey)&&e.key==='k'){
+            e.preventDefault();
+            if(window.innerWidth<768){
+                openMobileSearch();
+            }else if(searchInput){
+                searchInput.focus();
+            }
+        }
+        if(e.key==='Escape'){
+            var msb=document.getElementById('mobileSearchBar');
+            if(msb&&msb.classList.contains('show')){closeMobileSearch();return;}
+            var sb=document.getElementById('appSidebar');
+            if(sb&&sb.classList.contains('mobile-open'))closeMobileSidebar();
+        }
+    });
+
+    /* ========== Notifications ========== */
+    function markAllRead(){
+        document.querySelectorAll('.notif-item.unread').forEach(function(el){el.classList.remove('unread')});
+        var badge=document.getElementById('notifCount');
+        if(badge)badge.style.display='none';
+    }
+
+    /* ===================================================================
+       BACK BUTTON — visibility driven by the server, not the viewport.
+       The server resolves each route to a nav key and reports whether the
+       page is that section's own landing page (`data-section-root`). Landing
+       pages get no arrow; nested views get one that targets the parent
+       section URL (`data-back-url`).
+       =================================================================== */
+    window.skSyncNavState=function(doc){
+        var src=doc&&doc.body?doc.body:document.body;
+        ['nav-active','section-root','back-url'].forEach(function(a){
+            var v=src.getAttribute('data-'+a);
+            if(v!==null)document.body.setAttribute('data-'+a,v);
+        });
+        window.skSyncBackButtons();
+    };
+
+    window.skSyncBackButtons=function(){
+        var isRoot=document.body.getAttribute('data-section-root')==='1';
+        var backUrl=document.body.getAttribute('data-back-url')||'';
+        document.querySelectorAll('.page-header, .page-head').forEach(function(header){
+            var existing=header.querySelector('.sk-back-btn, .back-btn, .detail-back, [data-action="back"], [aria-label="Orqaga"]');
+            if(isRoot||!backUrl){
+                // Section landing page: never show the arrow.
+                if(existing)existing.style.display='none';
+                return;
+            }
+            if(existing)return; // template already renders its own back control
+            var btn=document.createElement('button');
+            btn.type='button';
+            btn.className='sk-back-btn';
+            btn.setAttribute('data-action','back');
+            btn.setAttribute('data-back-href',backUrl);
+            btn.setAttribute('aria-label','Orqaga');
+            btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="pointer-events:none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>';
+            // Some headers wrap the title in their own flex row (e.g. POS cards),
+            // so the arrow has to sit inside that row to stay next to the title.
+            var host=header.querySelector('.page-header-content');
+            if(!host){
+                var lead=header.firstElementChild;
+                if(lead&&lead!==header&&lead.querySelector('h1,.page-title,.invt-header__title'))host=lead;
+            }
+            if(!host)host=header;
+            host.insertBefore(btn,host.firstChild);
+        });
+    };
+    window.skSyncBackButtons();
+
+    /* ========== Global Back Button (delegated, capture) ========== */
+    // Capture phase (true) so it fires before the SPA transition handler.
+    // Priority: the control's own explicit target, then the server-resolved
+    // parent section URL (so a deep link with no usable history still lands on
+    // the parent view instead of leaving the app), then history.back().
+    function skUsableBackTarget(btn){
+        var candidates=[btn.getAttribute('data-back-href'),btn.getAttribute('href'),document.body.getAttribute('data-back-url')];
+        for(var i=0;i<candidates.length;i++){
+            var v=(candidates[i]||'').trim();
+            if(!v||v==='#'||v.indexOf('javascript:')===0)continue;
+            return v;
+        }
+        return '';
+    }
+    document.addEventListener('click',function(e){
+        var backBtn=e.target.closest('[data-action="back"], .btn-back, .back-btn, .detail-back, [aria-label="Orqaga"]');
+        if(!backBtn||backBtn.style.display==='none')return;
+        e.preventDefault();
+        e.stopPropagation();
+        var target=skUsableBackTarget(backBtn);
+        if(target){
+            window.location.href=target;
+        }else if(window.history.length>1){
+            window.history.back();
+        }else{
+            window.location.href='/';
+        }
+    },true);
+
+    /* ========== Suppress loader on bfcache back/forward ========== */
+    window.addEventListener('pageshow',function(e){
+        if(e.persisted){
+            var bar=document.getElementById('sk-progress-bar');
+            if(bar){bar.style.opacity='0';bar.style.width='0%';bar.classList.remove('active','done');}
+        }
+    });
+
+    /* ========== Alerts Auto-dismiss ========== */
+    setTimeout(function(){
+        document.querySelectorAll('.alert-pro').forEach(function(el){
+            el.style.transition='opacity 0.3s';
+            el.style.opacity='0';
+            setTimeout(function(){el.remove()},300);
+        });
+    },5000);
+    </script>
+    <script>
+    /* ================================================================
+       SKLAT PRO — SPA-LIKE AJAX PAGE TRANSITIONS
+       Zero-white-flash: browser never unmounts the dark DOM canvas.
+       ================================================================ */
+    (function(){
+        var progressBar=document.getElementById('sk-progress-bar');
+        if(!progressBar)return;
+        var isNavigating=false;
+        var animFrame=0;
+        var prefersReduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+        function isInternalLink(a){
+            if(!a||!a.href)return false;
+            var href=a.getAttribute('href');
+            if(!href)return false;
+            if(href.charAt(0)==='#')return false;
+            if(href.indexOf('javascript:')===0)return false;
+            if(a.target&&a.target!=='_self')return false;
+            if(a.protocol!=='http:'&&a.protocol!=='https:')return false;
+            if(a.hostname!==location.hostname)return false;
+            if(a.hasAttribute('download'))return false;
+            if(a.closest('[data-spa-ignore]'))return false;
+            return true;
+        }
+
+        function showBar(){
+            progressBar.style.width='0%';
+            progressBar.style.opacity='1';
+            progressBar.classList.add('active');
+            progressBar.classList.remove('done');
+            var start=Date.now();
+            function tick(){
+                if(!isNavigating)return;
+                var elapsed=Date.now()-start;
+                var pct;
+                if(elapsed<200)pct=30+elapsed/200*40;
+                else if(elapsed<600)pct=70+(elapsed-200)/400*20;
+                else pct=90+(elapsed-600)/600*7;
+                progressBar.style.width=Math.min(pct,97)+'%';
+                if(pct<97)animFrame=requestAnimationFrame(tick);
+            }
+            if(!prefersReduced)animFrame=requestAnimationFrame(tick);
+            else progressBar.style.width='80%';
+        }
+
+        function hideBar(){
+            cancelAnimationFrame(animFrame);
+            progressBar.style.width='100%';
+            progressBar.classList.add('done');
+            setTimeout(function(){
+                progressBar.style.opacity='0';
+                progressBar.classList.remove('active','done');
+                progressBar.style.width='0%';
+            },250);
+        }
+
+        /* ------------------------------------------------------------
+           PAGE <head> STYLE SYNC  (layout-stability fix)
+           ------------------------------------------------------------
+           The SPA swaps only #main-content. Any stylesheet that a page
+           contributes through its page-level extra_css block lives in
+           <head>, so without this sync a page reached by an in-app link
+           renders with the PREVIOUS page's CSS (or none at all) -> the
+           layout collapses, and only an F5 (full document load) fixes it.
+
+           The page-owned region of <head> is delimited by the
+           SK-PAGE-CSS-START / SK-PAGE-CSS-END comment markers. We copy
+           the nodes in that region from the fetched document into the
+           live <head> BEFORE the new markup is swapped in, so the very
+           first paint of the new page already has the right styles.
+           ------------------------------------------------------------ */
+        var CSS_START='SK-PAGE-CSS-START';
+        var CSS_END='SK-PAGE-CSS-END';
+
+        function findMarkers(root){
+            var start=null,end=null;
+            if(!root)return null;
+            var walker=root.ownerDocument.createTreeWalker(root,NodeFilter.SHOW_COMMENT,null,false);
+            var node;
+            while((node=walker.nextNode())){
+                var d=node.data||'';
+                if(d.indexOf(CSS_START)!==-1)start=node;
+                else if(d.indexOf(CSS_END)!==-1)end=node;
+            }
+            return (start&&end)?{start:start,end:end}:null;
+        }
+
+        function collectBetween(start,end){
+            var out=[],node=start.nextSibling;
+            while(node&&node!==end){out.push(node);node=node.nextSibling;}
+            return out;
+        }
+
+        function applyPageStyles(doc){
+            var live=findMarkers(document.head);
+            var incoming=findMarkers(doc&&doc.head);
+            if(!live||!incoming)return false;
+
+            // 1) drop the outgoing page's styles
+            var stale=collectBetween(live.start,live.end);
+            for(var i=0;i<stale.length;i++){
+                if(stale[i].parentNode)stale[i].parentNode.removeChild(stale[i]);
+            }
+            // 2) import the incoming page's styles before the end marker
+            var fresh=collectBetween(incoming.start,incoming.end);
+            for(var j=0;j<fresh.length;j++){
+                var imported=document.importNode(fresh[j],true);
+                document.head.insertBefore(imported,live.end);
+            }
+            return true;
+        }
+
+        /* Re-executes the scripts that came with the swapped markup.
+           Returns a Promise that settles only once EVERY external
+           script has finished loading, so `DOMContentLoaded` is never
+           dispatched while a dependency is still in flight. */
+        function extractScripts(container){
+            var scripts=Array.prototype.slice.call(container.querySelectorAll('script'));
+            var pending=[];
+            scripts.forEach(function(old){
+                var s=document.createElement('script');
+                if(old.src){
+                    s.src=old.src;
+                    pending.push(new Promise(function(resolve){
+                        s.onload=s.onerror=function(){resolve();};
+                    }));
+                }else{
+                    s.textContent=old.textContent;
+                }
+                old.parentNode.replaceChild(s,old);
+            });
+            return Promise.all(pending);
+        }
+
+        /* Fires the page's init hooks. Dispatched on `document` with
+           `bubbles:true` so BOTH document-level and window-level
+           DOMContentLoaded listeners run (the previous implementation
+           dispatched on `window` only, so `document.addEventListener(
+           'DOMContentLoaded', ...)` handlers never fired on SPA
+           navigation). */
+        function fireDomReady(){
+            document.dispatchEvent(new Event('DOMContentLoaded',{bubbles:true}));
+        }
+
+        // Sidebar highlight is driven by the server-resolved nav key
+        // (namespace + url_name -> single canonical key), read straight off
+        // the freshly fetched document. Matching on `data-nav-key` rather
+        // than the href means a sub-route like /pos/terminals/ keeps the
+        // parent "POS" item lit, and only one item can ever be active.
+        function updateSidebarActive(doc){
+            var key=(doc&&doc.body&&doc.body.getAttribute('data-nav-active'))||'';
+            document.querySelectorAll('.sidebar-nav-link').forEach(function(link){
+                if(link.getAttribute('data-nav-key')===key&&key!==''){
+                    link.classList.add('active');
+                }else{
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        document.addEventListener('click',function(e){
+            if(isNavigating)return;
+            var a=e.target.closest('a[href]');
+            if(!isInternalLink(a))return;
+            if(a.closest('form[method="post"]'))return;
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var url=a.href;
+            isNavigating=true;
+            showBar();
+
+            fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'})
+                .then(function(r){
+                    if(!r.ok)throw new Error(r.status);
+                    return r.text();
+                })
+                .then(function(html){
+                    var doc=new DOMParser().parseFromString(html,'text/html');
+                    var newContent=doc.querySelector('#main-content');
+                    var currentContent=document.querySelector('#main-content');
+
+                    if(!newContent||!currentContent){
+                        window.location.href=url;
+                        return;
+                    }
+
+                    document.title=doc.title||document.title;
+
+                    /* Swap the page's <head> styles BEFORE the markup so the
+                       first paint of the new page already has its CSS. */
+                    applyPageStyles(doc);
+
+                    currentContent.innerHTML=newContent.innerHTML;
+                    history.pushState({url:url},'',url);
+                    updateSidebarActive(doc);
+                    window.skSyncNavState(doc);
+                    window.scrollTo(0,0);
+
+                    /* Wait for every injected script to finish loading before
+                       announcing DOMContentLoaded — no more "renders first,
+                       re-measures later" reflow. */
+                    return extractScripts(currentContent).then(function(){
+                        fireDomReady();
+                    });
+                })
+                .then(function(){
+                    isNavigating=false;
+                    hideBar();
+                })
+                .catch(function(){
+                    isNavigating=false;
+                    hideBar();
+                    window.location.href=url;
+                });
+        },true);
+
+        window.addEventListener('popstate',function(e){
+            if(e.state&&e.state.url){
+                isNavigating=true;
+                showBar();
+                fetch(e.state.url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'})
+                    .then(function(r){return r.text();})
+                    .then(function(html){
+                        var doc=new DOMParser().parseFromString(html,'text/html');
+                        var newContent=doc.querySelector('#main-content');
+                        var currentContent=document.querySelector('#main-content');
+                        if(newContent&&currentContent){
+                            document.title=doc.title||document.title;
+                            applyPageStyles(doc);
+                            currentContent.innerHTML=newContent.innerHTML;
+                            updateSidebarActive(doc);
+                            window.skSyncNavState(doc);
+                            window.scrollTo(0,0);
+                            return extractScripts(currentContent).then(function(){
+                                fireDomReady();
+                            });
+                        }
+                        return null;
+                    })
+                    .then(function(){
+                        isNavigating=false;
+                        hideBar();
+                    })
+                    .catch(function(){
+                        isNavigating=false;
+                        hideBar();
+                        window.location.reload();
+                    });
+            }else{
+                window.location.reload();
+            }
+        });
+
+        window.addEventListener('load',function(){
+            history.replaceState({url:location.href},'',location.href);
+        });
+    })();
+    </script>
+    <script>
+    window.SKLAT_LANG='{{ current_language|default:"uz" }}';
+    window.SKLAT_T={{ translations_json|safe }};
+    window.t=function(key,fallback){return(window.SKLAT_T&&window.SKLAT_T[key])||fallback||key};
+    </script>
+
+    <style>
+      #ptModalOverlay{position:fixed;inset:0;z-index:12000;background:var(--bg-overlay,#0f172a);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:24px;overflow-y:auto}
+      .ptm-card{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:16px;border-radius:16px;border:1px solid var(--border-default,#334155);background:var(--bg-surface,#1e293b);color:var(--text-primary);cursor:pointer;font-family:var(--font-sans);transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease}
+      .ptm-card:hover{border-color:var(--primary-500);transform:translateY(-2px);box-shadow:0 8px 24px rgba(2,6,23,.35)}
+      .ptm-card:focus-visible{outline:2px solid var(--primary-500);outline-offset:2px}
+      .ptm-icon{flex-shrink:0;width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.15rem}
+      .ptm-name{display:block;font-size:14px;font-weight:600;color:var(--text-primary)}
+      .ptm-desc{display:block;margin-top:3px;font-size:12px;line-height:1.45;color:var(--text-secondary)}
+      @media (max-width:520px){#ptTypeGrid{grid-template-columns:1fr!important}}
+    </style>
+
+    <div id="ptModalOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="ptModalTitle">
+      <div style="max-width:600px;width:100%;margin:5vh auto 24px;background:var(--bg-surface-elevated,#0f172a);border:1px solid var(--border-default,#334155);border-radius:20px;box-shadow:0 24px 80px rgba(2,6,23,.65);overflow:hidden">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px 0">
+          <div style="min-width:0">
+            <h2 id="ptModalTitle" style="margin:0;font-size:19px;font-weight:700;color:var(--text-primary);letter-spacing:-0.01em">{% t "select_product_type" %}</h2>
+            <p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:var(--text-secondary)">{% t "select_product_type_hint" %}</p>
+          </div>
+          <button type="button" data-pt-close aria-label="{% t "close" %}" style="flex-shrink:0;width:32px;height:32px;border-radius:10px;border:1px solid var(--border-default,#334155);background:var(--bg-surface,#1e293b);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div id="ptTypeGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:18px 22px 22px">
+          <button type="button" class="ptm-card" data-pt="food" data-pt-title="{% t "type_food" %}">
+            <span class="ptm-icon" style="background:var(--primary-100,rgba(99,102,241,.15));color:var(--primary-500,#6366f1)"><i class="bi bi-basket"></i></span>
+            <span>
+              <span class="ptm-name">{% t "type_food" %}</span>
+              <span class="ptm-desc">{% t "type_food_desc" %}</span>
+            </span>
+          </button>
+          <button type="button" class="ptm-card" data-pt="sweets" data-pt-title="{% t "type_sweets" %}">
+            <span class="ptm-icon" style="background:rgba(236,72,153,.15);color:#ec4899"><i class="bi bi-cake"></i></span>
+            <span>
+              <span class="ptm-name">{% t "type_sweets" %}</span>
+              <span class="ptm-desc">{% t "type_sweets_desc" %}</span>
+            </span>
+          </button>
+          <button type="button" class="ptm-card" data-pt="material" data-pt-title="{% t "type_material" %}">
+            <span class="ptm-icon" style="background:var(--warning-100,rgba(245,158,11,.15));color:var(--warning-500,#f59e0b)"><i class="bi bi-hammer"></i></span>
+            <span>
+              <span class="ptm-name">{% t "type_material" %}</span>
+              <span class="ptm-desc">{% t "type_material_desc" %}</span>
+            </span>
+          </button>
+          <button type="button" class="ptm-card" data-pt="general" data-pt-title="{% t "type_general" %}">
+            <span class="ptm-icon" style="background:var(--gray-100,#1e293b);color:var(--text-secondary,#94a3b8)"><i class="bi bi-box-seam"></i></span>
+            <span>
+              <span class="ptm-name">{% t "type_general" %}</span>
+              <span class="ptm-desc">{% t "type_general_desc" %}</span>
+            </span>
+          </button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border-subtle,#1e293b);background:var(--bg-surface,#1e293b)">
+          <button type="button" class="btn-pro btn-pro-outline" data-pt-close>{% t "cancel" %}</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      var overlay=document.getElementById('ptModalOverlay');
+      if(!overlay)return;
+      var pendingHref=null, inlineSel=null;
+      function closeModal(){
+        overlay.style.display='none';
+        document.body.style.overflow='';
+        pendingHref=null; inlineSel=null;
+      }
+      function openModal(href, sel){
+        pendingHref=href||null;
+        inlineSel=sel||null;
+        overlay.style.display='block';
+        document.body.style.overflow='hidden';
+      }
+      overlay.addEventListener('click',function(e){
+        if(e.target===overlay)closeModal();
+      });
+      overlay.querySelectorAll('[data-pt-close]').forEach(function(b){
+        b.addEventListener('click',closeModal);
+      });
+      overlay.querySelectorAll('.ptm-card').forEach(function(card){
+        card.addEventListener('click',function(){
+          var val=card.getAttribute('data-pt');
+          if(inlineSel){
+            inlineSel.value=val;
+            inlineSel.dispatchEvent(new Event('change',{bubbles:true}));
+            closeModal();
+          }else if(pendingHref){
+            var sep=pendingHref.indexOf('?')===-1?'?':'&';
+            window.location.href=pendingHref+sep+'type='+val;
+          }
+        });
+      });
+      document.addEventListener('click',function(e){
+        var t=e.target.closest('[data-product-type-picker]');
+        if(!t)return;
+        e.preventDefault();
+        var inline=t.hasAttribute('data-inline-pt');
+        var href=(inline)?null:(t.getAttribute('href')||null);
+        var sel=(inline)?document.getElementById('id_product_type'):null;
+        openModal(href,sel);
+      },true);
+      document.addEventListener('keydown',function(e){
+        if(e.key==='Escape'&&overlay.style.display!=='none')closeModal();
+      });
+      window.openProductTypeModal=openModal;
+      window.closeProductTypeModal=closeModal;
+    })();
+    </script>
+
+    {% comment %}
+    ===== Onboarding tour modal — GUESTS ONLY, EVERY REFRESH (F5) =====
+    Wrapped in an auth guard so the markup AND its trigger script are
+    completely excluded from the layout for any authenticated user.
+    {% endcomment %}
+    {% if not request.user.is_authenticated %}{% include "welcome/_onboarding_modal.html" %}{% endif %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

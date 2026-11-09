@@ -1,0 +1,80 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}Shopping Cart - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section" style="max-width:900px">
+    <h1 class="store-section-title"><i class="bi bi-bag"></i> Shopping Cart</h1>
+    {% if cart_items %}
+    <div style="overflow-x:auto">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td>
+                        <div style="display:flex;gap:1rem;align-items:center">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="cart-item-img">
+                            {% else %}
+                            <div class="cart-item-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted)"><i class="bi bi-box"></i></div>
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'storefront:product_detail' slug=item.product.slug %}" style="font-weight:600;color:var(--text);text-decoration:none">{{ item.product.name }}</a>
+                                {% if item.variant %}<div style="font-size:0.8125rem;color:var(--text-muted)">{{ item.variant.name }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="white-space:nowrap">{{ item.unit_price|floatformat:0 }} so'm</td>
+                    <td>
+                        <form action="{% url 'storefront:update_cart_item' item_id=item.pk %}" method="post" style="display:inline">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.available_quantity }}" class="cart-qty-input" onchange="this.form.submit()">
+                            <input type="hidden" name="action" value="update">
+                        </form>
+                    </td>
+                    <td style="font-weight:600;white-space:nowrap">{{ item.line_total|floatformat:0 }} so'm</td>
+                    <td>
+                        <form action="{% url 'storefront:update_cart_item' item_id=item.pk %}" method="post" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove">
+                            <button type="submit" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.25rem" title="Remove"><i class="bi bi-x-lg"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:2rem">
+        <form action="{% url 'storefront:apply_coupon' %}" method="post" style="display:flex;gap:0.5rem;max-width:400px">
+            {% csrf_token %}
+            <input type="text" name="coupon_code" placeholder="Coupon code" value="{{ cart.coupon_code }}" class="form-control" style="border-radius:var(--radius-sm)">
+            <button type="submit" class="btn-store-outline" style="white-space:nowrap">Apply</button>
+        </form>
+    </div>
+
+    <div class="checkout-summary" style="margin-top:2rem;max-width:400px;margin-left:auto">
+        <div class="checkout-summary-row"><span>Subtotal</span><span>{{ subtotal|floatformat:0 }} so'm</span></div>
+        {% if coupon_discount %}
+        <div class="checkout-summary-row" style="color:#16a34a"><span>Coupon Discount</span><span>-{{ coupon_discount|floatformat:0 }} so'm</span></div>
+        {% endif %}
+        <div class="checkout-summary-row total"><span>Total</span><span>{{ total|floatformat:0 }} so'm</span></div>
+        <a href="{% url 'storefront:checkout' %}" class="btn-store-primary" style="display:block;text-align:center;margin-top:1rem;text-decoration:none">Proceed to Checkout</a>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:4rem 1rem;color:var(--text-muted)">
+        <i class="bi bi-bag" style="font-size:4rem;margin-bottom:1rem;display:block;opacity:0.5"></i>
+        <p style="font-size:1.125rem;margin-bottom:1.5rem">Your cart is empty</p>
+        <a href="{% url 'storefront:catalog' %}" class="btn-store-primary" style="text-decoration:none">Browse Catalog</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

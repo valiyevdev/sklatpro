@@ -1,0 +1,12 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "delete_vehicle" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><a href="{% url 'logistics:vehicle_list' %}">{% t "vehicles" %}</a><span class="separator">/</span><span class="current">{% t "delete" %}</span></div>
+<div class="card-pro" style="max-width:500px"><div class="card-pro-body text-center">
+    <div class="empty-state-icon" style="color:var(--color-danger)"><i class="bi bi-exclamation-triangle" style="font-size:2.5rem"></i></div>
+    <h5 class="empty-state-title">{% t "delete_vehicle" %}?</h5>
+    <p class="empty-state-desc">{{ vehicle.vehicle_number }}</p>
+    <form method="post" class="d-flex gap-3 justify-center mt-4">{% csrf_token %}<button type="submit" class="btn-pro btn-pro-danger"><i class="bi bi-trash"></i> {% t "delete" %}</button><a href="{% url 'logistics:vehicle_detail' pk=vehicle.pk %}" class="btn-pro btn-pro-ghost">{% t "cancel" %}</a></form>
+</div></div>
+{% endblock %}

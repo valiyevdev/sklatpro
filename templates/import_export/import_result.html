@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "import" %} {% t "results" %} - SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'import_export:import_export_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "import" %} {% t "results" %}</h1>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-body" style="text-align:center;padding:3rem 2rem">
+        <div class="empty-state-icon" style="background:var(--success-50);color:var(--success-600);margin:0 auto 1.5rem"><i class="bi bi-check-circle"></i></div>
+        <h3 class="fw-600 mb-2" style="color:var(--gray-900)">Import muvaffaqiyatli yakunlandi!</h3>
+        <div class="d-flex gap-3" style="justify-content:center;margin-top:1.5rem">
+            <div class="stat-card" style="min-width:150px">
+                <div><div class="stat-card-value">{{ imported }}</div><div class="stat-card-label">{% t "imported_label" %}</div></div>
+            </div>
+            <div class="stat-card" style="min-width:150px">
+                <div><div class="stat-card-value">{{ updated|default:0 }}</div><div class="stat-card-label">{% t "updated_label" %}</div></div>
+            </div>
+            {% if errors %}
+            <div class="stat-card" style="min-width:150px">
+                <div><div class="stat-card-value" style="color:var(--danger-500)">{{ errors|length }}</div><div class="stat-card-label">{% t "error" %}</div></div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="d-flex gap-2" style="justify-content:center;margin-top:1.5rem">
+            <a href="{% url 'import_export:import_products' %}" class="btn-pro btn-pro-secondary"><i class="bi bi-upload"></i> {% t "import" %}</a>
+            <a href="{% url 'product_list' %}" class="btn-pro btn-pro-primary"><i class="bi bi-box-seam"></i> {% t "products" %}</a>
+        </div>
+    </div>
+</div>
+
+{% if errors %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title" style="color:var(--danger-500)">{% t "errors" %}</span></div>
+    <div class="card-pro-body">
+        <ul style="margin:0;padding-left:1.2rem">
+            {% for error in errors %}
+            <li class="text-pro-sm text-pro-muted mb-1">{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

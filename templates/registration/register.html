@@ -1,0 +1,1105 @@
+{% load static i18n_tags %}<!DOCTYPE html>
+<html lang="{% lang_attrs %}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% t "register" %} — SKLAT PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link href="{% static 'css/design-system.css' %}" rel="stylesheet">
+    <style>
+        html, body { background: #020617; color: #e2e8f0; min-height: 100%; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: radial-gradient(1100px 480px at 20% -10%, rgba(99,102,241,0.18), transparent 60%), radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.14), transparent 55%), #020617; }
+
+        /* ===== Centered brand block =====
+           Sits ABOVE the card (transparent, no border) so the stepper can
+           use the full max-w-2xl band without inheriting the card's padding. */
+        .rg-brand { text-align: center; padding: 0 4px 20px; }
+        .rg-logo { font-size: 24px; font-weight: 900; background: linear-gradient(90deg, #818cf8, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 8px; }
+        .rg-logo i { font-size: 26px; color: #818cf8; background: none; -webkit-text-fill-color: #818cf8; }
+        .rg-subtitle { font-size: 12.5px; color: #94a3b8; margin-top: 6px; font-weight: 500; }
+
+        /* ===== Modern responsive stepper =====
+           Mobile (< 768px): centered numbered badges (1/2/3) on an
+           animated connecting progress line; the active step's full
+           title renders below. ≥ 768px (md): horizontal pills with
+           icon + number + unclipped title. */
+        .rg-steps {
+            position: relative;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 0; width: 100%; margin-bottom: 14px;
+        }
+        .rg-step {
+            position: relative; min-width: 0;
+            display: flex; flex-direction: column; gap: 6px;
+            background: transparent; border: none; border-radius: 0;
+            padding: 0;
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+        }
+        .rg-step-top { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+        .rg-step-icon { display: none; font-size: 15px; line-height: 1; }
+        .rg-step-fulltitle { display: none; }
+        .rg-step-badge {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: #1e293b; border: 1px solid #334155;
+            color: #94a3b8; font-size: 14px; font-weight: 700; line-height: 1;
+            transition: all 0.3s ease;
+        }
+        .rg-step-badge .rg-step-num { display: block; }
+        .rg-step-badge .rg-step-check { display: none; }
+        /* Active step */
+        .rg-step.is-active .rg-step-badge {
+            background: #4f46e5; border-color: transparent; color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
+        }
+        /* Completed step */
+        .rg-step.is-complete .rg-step-badge {
+            background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.4); color: #34d399;
+        }
+        .rg-step.is-complete .rg-step-num { display: none; }
+        .rg-step.is-complete .rg-step-check { display: flex; font-size: 15px; line-height: 1; }
+        .rg-step-title { display: none; min-width: 0; }
+        /* Animated progress line — continuous across the row on mobile */
+        .rg-step-track {
+            width: 100%; height: 4px; border-radius: 999px; margin-top: 6px;
+            background: #1e293b; overflow: hidden;
+        }
+        .rg-step-fill {
+            height: 100%; width: 0%; border-radius: 999px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            transition: width 0.45s ease-out;
+        }
+        .rg-step.is-complete .rg-step-fill { background: #10b981; }
+        .rg-step:not(.is-active):not(.is-complete) .rg-step-fill { opacity: 0.35; }
+        /* Active-step full title shown under the badges on mobile */
+        .rg-step-caption {
+            display: block; text-align: center; margin: 2px 0 22px;
+            min-height: 18px; font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+            color: #cbd5e1; transition: opacity 0.25s ease;
+        }
+
+        /* ≥ 768px (md): horizontal pills — icon + number + title.
+           Equivalent of `whitespace-nowrap flex-1 flex items-center
+           justify-center gap-2 py-3 px-4 rounded-xl font-medium
+           transition-all`. The pills live in a full-width (max-w-2xl)
+           band and share it 1/1/1, which is what stops the titles from
+           being squeezed into two cramped lines ("Kompa-niya").
+           768px (not 640px) is deliberate: it leaves >=123px of title
+           room per pill, enough for the longest string
+           ("Безопасность") with slack for wider fallback fonts. */
+        @media (min-width: 768px) {
+            .rg-steps {
+                display: flex; flex-wrap: nowrap; gap: 10px;
+                margin-bottom: 22px;
+            }
+            .rg-step {
+                flex: 1 1 0; min-width: 0;
+                flex-direction: row; align-items: center; justify-content: center;
+                gap: 8px; padding: 12px 14px; border-radius: 12px;
+                background: rgba(30,41,59,0.6); border: 1px solid rgba(51,65,85,0.6);
+                color: #94a3b8;
+            }
+            .rg-step:not(.is-active):not(.is-complete):hover { background: #1e293b; }
+            .rg-step.is-active {
+                background: #4f46e5; border-color: transparent; color: #ffffff;
+                box-shadow: 0 10px 15px -3px rgba(79,70,229,0.30), 0 4px 6px -4px rgba(79,70,229,0.30);
+            }
+            .rg-step.is-complete {
+                background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.3); color: #34d399;
+            }
+            .rg-step-top { justify-content: center; gap: 8px; flex: 0 1 auto; min-width: 0; }
+            .rg-step-icon { display: inline-flex; }
+            .rg-step-badge {
+                width: 24px; height: 24px; font-size: 12px;
+                background: rgba(15,23,42,0.6); border-color: rgba(51,65,85,0.7); color: inherit;
+                box-shadow: none;
+            }
+            .rg-step.is-active .rg-step-badge { background: rgba(255,255,255,0.18); color: #ffffff; box-shadow: none; }
+            .rg-step.is-complete .rg-step-badge { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.4); color: #34d399; }
+            .rg-step.is-complete .rg-step-check { font-size: 12px; }
+            .rg-step-title {
+                display: block; font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+                color: inherit; line-height: 1.2; flex: 0 0 auto;
+                white-space: nowrap;          /* never wrap: "Kompa-niya" / "Xavfsizli-k" */
+                overflow: visible; min-width: 0;
+            }
+            .rg-step.is-active .rg-step-title { color: #ffffff; font-weight: 700; }
+            .rg-step.is-complete .rg-step-title { color: #34d399; }
+            .rg-step-track { display: none; }
+            .rg-step-caption { display: none; }
+        }
+
+        /* ===== Main Shell =====
+           The shell is the wide (max-w-2xl) canvas that hosts BOTH the
+           full-bleed stepper band and the narrower form card, so the
+           stepper is never constrained by the card's 520px column. */
+        .rg-shell { max-width: 672px; margin: 0 auto; padding: 24px 16px 40px; }
+        .rg-stepper-wrap { width: 100%; max-width: 672px; margin: 0 auto; }
+        .rg-card {
+            max-width: 520px; margin: 0 auto 24px;
+            background: rgba(15,23,42,0.6); border: 1px solid rgba(30,41,59,0.8);
+            border-radius: 24px; padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .rg-body { padding-top: 0; }
+
+        /* ===== Section Cards ===== */
+        .rg-section {
+            margin-bottom: 16px; padding: 24px;
+            border-radius: 24px; background: rgba(15,23,42,0.7);
+            border: 1px solid rgba(30,41,59,0.8);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 8px 10px -6px rgba(0,0,0,0.2);
+        }
+        .rg-section:last-of-type { margin-bottom: 20px; }
+        .rg-section-header { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+        .rg-section-icon {
+            width: 44px; height: 44px; border-radius: 16px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #a5b4fc;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+            border: 1px solid rgba(148,163,184,0.15);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .rg-section-title {
+            font-size: 15px; font-weight: 700; line-height: 1.25; margin: 0;
+            background: linear-gradient(90deg, #f8fafc, #c7d2fe);
+            -webkit-background-clip: text; background-clip: text; color: #ffffff;
+        }
+        .rg-section-subtitle { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+        .rg-section-header .rg-section-head { min-width: 0; }
+        .rg-group { margin-bottom: 14px; }
+        .rg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 480px) { .rg-row { grid-template-columns: 1fr; } }
+
+        /* ===== Labels ===== */
+        .rg-label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+        .rg-label .required { color: #fb7185; }
+
+        /* ===== Inputs: deep contrast, kill any browser default grey boxes =====
+           Equivalent of `w-full px-4 py-3 bg-slate-950/60 border
+           border-slate-800 rounded-xl text-white placeholder-slate-500
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+           transition-all`. */
+        .rg-body .form-control,
+        .rg-body select.form-control {
+            width: 100%; background-color: rgba(2,6,23,0.6); border: 1px solid #1e293b; border-radius: 12px;
+            padding: 12px 16px; font-size: 14px; line-height: 1.5; color: #ffffff; height: auto;
+            box-shadow: none; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        .rg-body .form-control::placeholder { color: #64748b; opacity: 1; }
+        .rg-body .form-control:hover { border-color: #334155; }
+        .rg-body .form-control:focus {
+            outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+            background-color: rgba(2,6,23,0.6); color: #ffffff;
+        }
+        .rg-body textarea.form-control { border-radius: 12px; resize: none; min-height: 90px; line-height: 1.6; }
+        .rg-body select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+        .rg-body select.form-control option { background-color: #0f172a; color: #e2e8f0; }
+        /* Chrome autofill override */
+        .rg-body .form-control:-webkit-autofill,
+        .rg-body .form-control:-webkit-autofill:hover,
+        .rg-body .form-control:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px #0f172a inset; box-shadow: 0 0 0 1000px #0f172a inset;
+            -webkit-text-fill-color: #ffffff; caret-color: #ffffff; transition: background-color 9999s ease-in-out 0s;
+        }
+        .rg-error { color: #fb7185; font-size: 12px; margin-top: 6px; }
+        .rg-hint { color: #64748b; font-size: 12px; margin-top: 6px; }
+
+        /* ===== Password Error Card (full-width, left-aligned) ===== */
+        .rg-error-card {
+            display: flex; align-items: flex-start; gap: 12px; width: 100%;
+            font-size: 12px; font-weight: 500; color: #fb7185;
+            background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
+            border-radius: 16px; padding: 14px; box-sizing: border-box;
+            margin-top: 8px; animation: rg-fadein 0.2s ease;
+        }
+        .rg-error-card-icon { font-size: 14px; color: #fb7185; flex-shrink: 0; margin-top: 2px; line-height: 1; }
+        .rg-error-card-body { flex: 1; min-width: 0; letter-spacing: 0.1px; }
+        .rg-error-card-body span { display: block; line-height: 1.4; }
+        .rg-error-text { display: block; line-height: 1.4; }
+        .rg-body ul.errorlist { list-style: none; margin: 0; padding: 0; }
+        .rg-body ul.errorlist li {
+            font-size: 12px; color: #fb7185; font-weight: 500;
+            background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.15);
+            border-radius: 12px; padding: 8px 12px; margin-top: 6px;
+            animation: rg-fadein 0.2s ease;
+        }
+        @keyframes rg-fadein { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+
+        /* ===== Password fields ===== */
+        .rg-input-wrap { position: relative; }
+        .rg-input-wrap input { padding-right: 46px; }
+        .rg-pw-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 16px; }
+        .rg-pw-toggle:hover { color: #e2e8f0; background: rgba(30,41,59,0.6); }
+        .rg-pw-strength { margin-top: 8px; }
+        .rg-pw-strength-bar { height: 5px; border-radius: 999px; background: #1e293b; overflow: hidden; }
+        .rg-pw-strength-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--danger-500, #f43f5e); transition: width 0.25s ease; }
+        .rg-pw-strength-text { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .rg-pw-reqs { margin-top: 12px; padding: 12px 14px; background: rgba(30,41,59,0.4); border: 1px solid rgba(30,41,59,0.8); border-radius: 16px; }
+        .rg-pw-reqs h4 { font-size: 12px; font-weight: 700; color: #94a3b8; margin: 0 0 8px; }
+        .rg-pw-reqs h4 i { color: #6366f1; }
+        .rg-pw-reqs ul { list-style: none; margin: 0; padding: 0; }
+        .rg-pw-reqs li { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .rg-pw-reqs li i { font-size: 8px; color: #475569; }
+        .rg-pw-reqs li.met { color: #34d399; }
+        .rg-pw-reqs li.met i { color: #34d399; }
+
+        /* ===== Submit CTA =====
+           Equivalent of `w-full py-3.5 bg-indigo-600 hover:bg-indigo-500
+           text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30
+           active:scale-[0.99] transition-all`. */
+        .rg-btn {
+            width: 100%; padding: 14px 24px; border-radius: 12px; border: none; cursor: pointer;
+            background: #4f46e5; color: #ffffff; font-weight: 600; font-size: 14px;
+            box-shadow: 0 10px 15px -3px rgba(79,70,229,0.30), 0 4px 6px -4px rgba(79,70,229,0.30);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .rg-btn:hover { background: #6366f1; }
+        .rg-btn:active { transform: scale(0.99); }
+        .rg-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .rg-btn .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #ffffff; border-radius: 50%; animation: rg-spin 0.6s linear infinite; }
+        .rg-btn.loading .spinner { display: inline-block; }
+        .rg-btn.loading .btn-text { display: none; }
+        @keyframes rg-spin { to { transform: rotate(360deg); } }
+
+        /* ===== Footer =====
+           Contrast fix: the base sentence is slate-400 and the action link
+           is indigo-400 (≈7:1 on the dark card) instead of a dark blue that
+           disappeared into the background. */
+        /* Palette comes from the GLOBAL TEXT LINK SYSTEM tokens in
+           design-system.css, so this page can never drift from the
+           platform-wide link treatment. */
+        .rg-footer-link { text-align: center; margin-top: 20px; font-size: 13px; font-weight: 400; color: var(--text-link-helper); }
+        .rg-footer-link a {
+            color: var(--text-link); font-weight: 500; text-decoration: none; margin-left: 6px;
+            border-radius: 2px; cursor: pointer;
+            /* transparent border reserves the 2px -> no layout shift on hover */
+            border-bottom: 2px solid transparent; padding-bottom: 2px;
+            transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .rg-footer-link a:hover,
+        .rg-footer-link a:active {
+            color: var(--text-link-hover);
+            border-bottom-color: var(--text-link-border);
+        }
+        .rg-footer-link a:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--text-link-ring); }
+        .rg-footer-link a:visited { color: var(--text-link); }
+
+        /* ===== Misc ===== */
+        .rg-alert { margin-bottom: 20px; }
+        /* ===== Theme toggle — high-contrast icon =====
+           Dark mode: amber Sun. Light mode: indigo Moon. */
+        .auth-theme-toggle {
+            position: fixed; top: 16px; right: 16px; z-index: 50;
+            width: 42px; height: 42px; padding: 10px; border-radius: 12px;
+            background: rgba(30,41,59,0.8); border: 1px solid rgba(51,65,85,0.6);
+            color: #f59e0b;                                  /* text-amber-500 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+        }
+        .auth-theme-toggle i { font-size: 18px; line-height: 1; color: inherit; }
+        .auth-theme-toggle:hover { background: rgba(51,65,85,0.9); color: #fbbf24; }
+        [data-theme="light"] .auth-theme-toggle {
+            background: #f1f5f9; border-color: #e2e8f0;
+            color: #4f46e5;                                  /* text-indigo-600 */
+            box-shadow: 0 1px 2px rgba(15,23,42,0.08);
+        }
+        [data-theme="light"] .auth-theme-toggle:hover { background: #e2e8f0; color: #4338ca; }
+        .rg-lang {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; margin-top: 24px; padding-bottom: 24px;  /* mt-6 pb-6 */
+            position: relative; z-index: 10;
+        }
+        /* Language pills — scoped to the register footer so they remain
+           visible on every breakpoint (design-system.css hides the generic
+           .lang-switcher below 768px) and match the login page styling. */
+        .rg-lang .lang-switcher {
+            display: flex !important; gap: 2px;
+            background: #0f172a; border: 1px solid #1e293b;
+            border-radius: 12px; padding: 3px;
+        }
+        [data-theme="light"] .rg-lang .lang-switcher { background: #ffffff; border-color: #e2e8f0; }
+        .rg-lang .lang-btn {
+            border: none; cursor: pointer; font-weight: 600; font-size: 11px;
+            color: #94a3b8; padding: 5px 11px; border-radius: 8px;
+            background: transparent; transition: background 0.2s ease, color 0.2s ease;
+        }
+        [data-theme="dark"] .rg-lang .lang-btn { background: #1e293b; color: #cbd5e1; }
+        [data-theme="dark"] .rg-lang .lang-btn:hover { background: #334155; color: #f1f5f9; }
+        [data-theme="light"] .rg-lang .lang-btn { background: #e2e8f0; color: #334155; }
+        [data-theme="light"] .rg-lang .lang-btn:hover { background: #cbd5e1; color: #0f172a; }
+        .rg-lang .lang-btn.active,
+        [data-theme="dark"] .rg-lang .lang-btn.active,
+        [data-theme="light"] .rg-lang .lang-btn.active {
+            background: #4f46e5 !important; color: #ffffff !important;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+        }
+
+        /* ===== Premium light mode =====
+           The page is authored dark-first. This block re-skins every
+           surface for light mode: slate-50 canvas, white elevated
+           cards, crisp slate-200 borders, slate typography, indigo
+           accents and soft premium shadows. */
+        html[data-theme="light"],
+        [data-theme="light"] body {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        [data-theme="light"] body {
+            background-image:
+                radial-gradient(1100px 480px at 20% -10%, rgba(99,102,241,0.10), transparent 60%),
+                radial-gradient(900px 420px at 90% 0%, rgba(168,85,247,0.08), transparent 55%);
+            background-repeat: no-repeat;
+        }
+
+        /* Header — the brand block is transparent on both themes, so there is
+           nothing to re-skin here. */
+
+        /* Cards & sections */
+        [data-theme="light"] .rg-card {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            box-shadow: 0 20px 25px -5px rgba(15,23,42,0.10), 0 8px 10px -6px rgba(15,23,42,0.05);
+        }
+        [data-theme="light"] .rg-section {
+            background: #ffffff;
+            border-color: #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(15,23,42,0.08), 0 4px 6px -4px rgba(15,23,42,0.04);
+        }
+        [data-theme="light"] .rg-section-icon {
+            color: #4f46e5;                                  /* indigo-600 */
+            background: #eef2ff;                             /* indigo-50 */
+            border-color: #e0e7ff;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        [data-theme="light"] .rg-section-title {
+            background: none;
+            -webkit-text-fill-color: #0f172a;
+            color: #0f172a;
+        }
+        [data-theme="light"] .rg-section-subtitle { color: #64748b; }
+
+        /* Labels */
+        [data-theme="light"] .rg-label { color: #334155; }   /* slate-700 */
+        [data-theme="light"] .rg-label .required { color: #e11d48; }
+
+        /* Inputs */
+        [data-theme="light"] .rg-body .form-control,
+        [data-theme="light"] .rg-body select.form-control {
+            background-color: #ffffff;
+            border-color: #cbd5e1;                            /* slate-300 */
+            color: #0f172a;
+        }
+        [data-theme="light"] .rg-body .form-control::placeholder { color: #94a3b8; }  /* slate-400 */
+        [data-theme="light"] .rg-body .form-control:hover { border-color: #94a3b8; }
+        [data-theme="light"] .rg-body .form-control:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.20);
+            background-color: #ffffff;
+            color: #0f172a;
+        }
+        [data-theme="light"] .rg-body select.form-control {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        }
+        [data-theme="light"] .rg-body select.form-control option { background-color: #ffffff; color: #0f172a; }
+        [data-theme="light"] .rg-body .form-control:-webkit-autofill,
+        [data-theme="light"] .rg-body .form-control:-webkit-autofill:hover,
+        [data-theme="light"] .rg-body .form-control:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px #ffffff inset; box-shadow: 0 0 0 1000px #ffffff inset;
+            -webkit-text-fill-color: #0f172a; caret-color: #0f172a;
+        }
+
+        /* Validation & hints */
+        [data-theme="light"] .rg-error { color: #dc2626; }
+        [data-theme="light"] .rg-hint { color: #64748b; }
+        [data-theme="light"] .rg-error-card {
+            color: #dc2626;
+            background: #fef2f2; border-color: #fecaca;
+        }
+        [data-theme="light"] .rg-error-card-icon { color: #dc2626; }
+        [data-theme="light"] .rg-body ul.errorlist li {
+            color: #dc2626;
+            background: #fef2f2; border-color: #fecaca;
+        }
+
+        /* Password helpers */
+        [data-theme="light"] .rg-pw-toggle { color: #64748b; }
+        [data-theme="light"] .rg-pw-toggle:hover { color: #0f172a; background: #f1f5f9; }
+        [data-theme="light"] .rg-pw-strength-bar { background: #e2e8f0; }
+        [data-theme="light"] .rg-pw-strength-text { color: #64748b; }
+        [data-theme="light"] .rg-pw-reqs {
+            background: #f8fafc; border-color: #e2e8f0;
+        }
+        [data-theme="light"] .rg-pw-reqs h4 { color: #475569; }
+        [data-theme="light"] .rg-pw-reqs h4 i { color: #4f46e5; }
+        [data-theme="light"] .rg-pw-reqs li { color: #64748b; }
+        [data-theme="light"] .rg-pw-reqs li i { color: #94a3b8; }
+        [data-theme="light"] .rg-pw-reqs li.met { color: #059669; }
+        [data-theme="light"] .rg-pw-reqs li.met i { color: #059669; }
+
+        /* Submit CTA */
+        [data-theme="light"] .rg-btn {
+            background: #4f46e5; border: none;
+            box-shadow: 0 10px 15px -3px rgba(79,70,229,0.35), 0 4px 6px -4px rgba(79,70,229,0.25);
+        }
+        [data-theme="light"] .rg-btn:hover { background: #6366f1; }
+        [data-theme="light"] .rg-btn:active { transform: scale(0.99); }
+
+        /* Footer — slate-600 on white keeps ≥7:1 for the base sentence and
+           indigo-600 for the action link. */
+        /* Light mode: slate-600 helper + indigo-600 link -> indigo-800
+           hover. Values come from the global tokens, so only the
+           `[data-theme="light"]` token override is needed. */
+        [data-theme="light"] .rg-footer-link { color: var(--text-link-helper); }
+        [data-theme="light"] .rg-footer-link a { color: var(--text-link); }
+        [data-theme="light"] .rg-footer-link a:hover { color: var(--text-link-hover); }
+
+        /* Stepper — mobile badges */
+        [data-theme="light"] .rg-step-badge {
+            background: #f1f5f9; border-color: #e2e8f0; color: #64748b;
+        }
+        [data-theme="light"] .rg-step.is-active .rg-step-badge {
+            background: #4f46e5; border-color: transparent; color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.20);
+        }
+        [data-theme="light"] .rg-step.is-complete .rg-step-badge {
+            background: #d1fae5; border-color: #a7f3d0; color: #047857;
+        }
+        [data-theme="light"] .rg-step-track { background: #e2e8f0; }
+        [data-theme="light"] .rg-step-caption { color: #475569; }
+
+        /* Stepper — desktop pills */
+        @media (min-width: 768px) {
+            [data-theme="light"] .rg-step {
+                background: #f8fafc; border-color: #e2e8f0; color: #64748b;
+            }
+            [data-theme="light"] .rg-step:not(.is-active):not(.is-complete):hover { background: #f1f5f9; }
+            [data-theme="light"] .rg-step.is-active {
+                background: #4f46e5; border-color: transparent; color: #ffffff;
+                box-shadow: 0 10px 15px -3px rgba(79,70,229,0.30), 0 4px 6px -4px rgba(79,70,229,0.30);
+            }
+            [data-theme="light"] .rg-step.is-complete {
+                background: #d1fae5; border-color: #a7f3d0; color: #047857;
+            }
+            [data-theme="light"] .rg-step-badge {
+                background: #ffffff; border-color: #e2e8f0; color: inherit;
+            }
+            [data-theme="light"] .rg-step.is-active .rg-step-badge {
+                background: rgba(255,255,255,0.20); border-color: transparent; color: #ffffff;
+            }
+            [data-theme="light"] .rg-step.is-complete .rg-step-badge {
+                background: #a7f3d0; border-color: transparent; color: #047857;
+            }
+            [data-theme="light"] .rg-step.is-active .rg-step-title { color: #ffffff; }
+            [data-theme="light"] .rg-step.is-complete .rg-step-title { color: #047857; }
+        }
+
+        /* ===== Stepper sections: hidden until their turn ===== */
+        #sectionAdmin, #sectionSecurity { display: none; }
+        #registerBtn { display: none; }
+        .rg-nav { display: flex; gap: 12px; margin-top: 4px; }
+        .rg-nav .rg-btn { flex: 1; }
+        .rg-btn--ghost { background: rgba(30,41,59,0.6); color: #e2e8f0; box-shadow: none; }
+        .rg-btn--ghost:hover { background: rgba(51,65,85,0.8); transform: none; }
+        input.is-invalid, select.is-invalid, textarea.is-invalid { border-color: #f43f5e !important; }
+        .rg-toast {
+            position: fixed; left: 50%; top: 20px; transform: translateX(-50%); z-index: 100;
+            background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); border-radius: 14px;
+            color: #fda4af; font-size: 13px; font-weight: 600; padding: 12px 18px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            animation: rg-fadein 0.2s ease; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <button class="auth-theme-toggle" type="button" onclick="toggleAuthTheme()" aria-label="{% t "toggle_theme" %}" title="{% t "toggle_theme" %}">
+        <i class="bi bi-sun" id="authThemeIcon"></i>
+    </button>
+
+    <div class="rg-shell">
+        <!-- ===== Header & Branding (outside the card: full-width band) ===== -->
+        <header class="rg-brand">
+            <div class="rg-logo"><i class="bi bi-box-seam"></i> SKLAT PRO</div>
+            <p class="rg-subtitle">{% t "register_subtitle" %}</p>
+        </header>
+
+        <!-- ===== Step Progress (full max-w-2xl band, titles never wrap) ===== -->
+        <div class="rg-stepper-wrap">
+            <div class="rg-steps" id="rgSteps">
+                <div class="rg-step is-active" data-step="company">
+                    <div class="rg-step-top">
+                        <span class="rg-step-icon"><i class="bi bi-building"></i></span>
+                        <span class="rg-step-badge">
+                            <span class="rg-step-num">1</span>
+                            <span class="rg-step-check"><i class="bi bi-check-lg"></i></span>
+                        </span>
+                        <span class="rg-step-title">{% t "step_company" %}</span>
+                    </div>
+                    <div class="rg-step-track"><div class="rg-step-fill"></div></div>
+                    <span class="rg-step-fulltitle" hidden>1-{% t "stage_word" %}: {% t "company_info" %}</span>
+                </div>
+                <div class="rg-step" data-step="admin">
+                    <div class="rg-step-top">
+                        <span class="rg-step-icon"><i class="bi bi-person-badge"></i></span>
+                        <span class="rg-step-badge">
+                            <span class="rg-step-num">2</span>
+                            <span class="rg-step-check"><i class="bi bi-check-lg"></i></span>
+                        </span>
+                        <span class="rg-step-title">{% t "step_admin" %}</span>
+                    </div>
+                    <div class="rg-step-track"><div class="rg-step-fill"></div></div>
+                    <span class="rg-step-fulltitle" hidden>2-{% t "stage_word" %}: {% t "admin_info" %}</span>
+                </div>
+                <div class="rg-step" data-step="security">
+                    <div class="rg-step-top">
+                        <span class="rg-step-icon"><i class="bi bi-shield-lock"></i></span>
+                        <span class="rg-step-badge">
+                            <span class="rg-step-num">3</span>
+                            <span class="rg-step-check"><i class="bi bi-check-lg"></i></span>
+                        </span>
+                        <span class="rg-step-title">{% t "step_security" %}</span>
+                    </div>
+                    <div class="rg-step-track"><div class="rg-step-fill"></div></div>
+                    <span class="rg-step-fulltitle" hidden>3-{% t "stage_word" %}: {% t "security" %}</span>
+                </div>
+            </div>
+            <div class="rg-step-caption" id="rgStepCaption">1-{% t "stage_word" %}: {% t "company_info" %}</div>
+        </div>
+
+        <div class="rg-card">
+            <!-- ===== Form Body ===== -->
+            <div class="rg-body">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert-pro alert-pro-{{ message.tags }} rg-alert" role="alert">
+                        <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" id="registerForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Section 1: Company Information -->
+                    <div class="rg-section" id="sectionCompany" data-step="company">
+                        <div class="rg-section-header">
+                            <div class="rg-section-icon"><i class="bi bi-building"></i></div>
+                            <div class="rg-section-head">
+                                <div class="rg-section-title">{% t "company_info" %}</div>
+                                <div class="rg-section-subtitle">{% t "company_info_desc" %}</div>
+                            </div>
+                        </div>
+                        <div class="rg-row">
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_company_name">{% t "company_name" %} <span class="required">*</span></label>
+                                {{ company_form.company_name }}
+                                {% if company_form.company_name.errors %}<div class="rg-error" role="alert">{{ company_form.company_name.errors }}</div>{% endif %}
+                            </div>
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_company_email">{% t "company_email" %} <span class="required">*</span></label>
+                                {{ company_form.email }}
+                                {% if company_form.email.errors %}<div class="rg-error" role="alert">{{ company_form.email.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="rg-row">
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_phone">{% t "phone" %}</label>
+                                {{ company_form.phone }}
+                                {% if company_form.phone.errors %}<div class="rg-error" role="alert">{{ company_form.phone.errors }}</div>{% endif %}
+                            </div>
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_tax_number">{% t "tax_number" %}</label>
+                                {{ company_form.tax_number }}
+                                {% if company_form.tax_number.errors %}<div class="rg-error" role="alert">{{ company_form.tax_number.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="rg-group">
+                            <label class="rg-label" for="id_address">{% t "address" %}</label>
+                            {{ company_form.address }}
+                            {% if company_form.address.errors %}<div class="rg-error" role="alert">{{ company_form.address.errors }}</div>{% endif %}
+                        </div>
+                        <div class="rg-row">
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_city">{% t "city" %}</label>
+                                {{ company_form.city }}
+                                {% if company_form.city.errors %}<div class="rg-error" role="alert">{{ company_form.city.errors }}</div>{% endif %}
+                            </div>
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_country">{% t "country" %}</label>
+                                {{ company_form.country }}
+                                {% if company_form.country.errors %}<div class="rg-error" role="alert">{{ company_form.country.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="rg-nav">
+                            <button type="button" class="rg-btn" data-nav="next" data-current="company">
+                                <i class="bi bi-arrow-right"></i> {% t "next_step" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Administrator Information -->
+                    <div class="rg-section" id="sectionAdmin" data-step="admin">
+                        <div class="rg-section-header">
+                            <div class="rg-section-icon"><i class="bi bi-person-badge"></i></div>
+                            <div class="rg-section-head">
+                                <div class="rg-section-title">{% t "admin_info" %}</div>
+                                <div class="rg-section-subtitle">{% t "admin_info_desc" %}</div>
+                            </div>
+                        </div>
+                        <div class="rg-row">
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_first_name">{% t "first_name" %} <span class="required">*</span></label>
+                                {{ user_form.first_name }}
+                                {% if user_form.first_name.errors %}<div class="rg-error" role="alert">{{ user_form.first_name.errors }}</div>{% endif %}
+                            </div>
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_last_name">{% t "last_name" %} <span class="required">*</span></label>
+                                {{ user_form.last_name }}
+                                {% if user_form.last_name.errors %}<div class="rg-error" role="alert">{{ user_form.last_name.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="rg-group">
+                            <label class="rg-label" for="id_email">Email <span class="required">*</span></label>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}<div class="rg-error" role="alert">{{ user_form.email.errors }}</div>{% endif %}
+                        </div>
+                        <div class="rg-group">
+                            <label class="rg-label" for="id_user_phone">{% t "phone" %}</label>
+                            {{ user_form.phone }}
+                            {% if user_form.phone.errors %}<div class="rg-error" role="alert">{{ user_form.phone.errors }}</div>{% endif %}
+                        </div>
+                        <div class="rg-nav">
+                            <button type="button" class="rg-btn rg-btn--ghost" data-nav="back" data-current="admin">
+                                <i class="bi bi-arrow-left"></i> {% t "back_step" %}
+                            </button>
+                            <button type="button" class="rg-btn" data-nav="next" data-current="admin">
+                                {% t "next_step" %} <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Security -->
+                    <div class="rg-section" id="sectionSecurity" data-step="security">
+                        <div class="rg-section-header">
+                            <div class="rg-section-icon"><i class="bi bi-shield-lock"></i></div>
+                            <div class="rg-section-head">
+                                <div class="rg-section-title">{% t "security" %}</div>
+                                <div class="rg-section-subtitle">{% t "security_desc" %}</div>
+                            </div>
+                        </div>
+                        <div class="rg-row">
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_password1">{% t "password" %} <span class="required">*</span></label>
+                                <div class="rg-input-wrap">
+                                    {{ user_form.password1 }}
+                                    <button type="button" class="rg-pw-toggle" onclick="toggleRegPassword('id_password1',this)" aria-label="{% t "toggle_password" %}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="rg-pw-strength" id="pwStrength" style="display:none">
+                                    <div class="rg-pw-strength-bar"><div class="rg-pw-strength-fill" id="pwStrengthFill"></div></div>
+                                    <div class="rg-pw-strength-text" id="pwStrengthText"></div>
+                                </div>
+                            </div>
+                            <div class="rg-group">
+                                <label class="rg-label" for="id_password2">{% t "confirm_password" %} <span class="required">*</span></label>
+                                <div class="rg-input-wrap">
+                                    {{ user_form.password2 }}
+                                    <button type="button" class="rg-pw-toggle" onclick="toggleRegPassword('id_password2',this)" aria-label="{% t "toggle_password" %}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% with pw_errs=user_form.password1.errors|add:user_form.password2.errors %}
+                        {% if pw_errs %}
+                        <div class="rg-error-card">
+                            <div class="rg-error-card-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                            <div class="rg-error-card-body">
+                                {% for e in pw_errs %}<span>{{ e }}</span>{% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        <div class="rg-pw-reqs">
+                            <h4><i class="bi bi-shield-check"></i> {% t "password_requirements" %}</h4>
+                            <ul>
+                                <li id="reg-req-length"><i class="bi bi-circle-fill"></i> {% t "password_min_8" %}</li>
+                                <li id="reg-req-mixed"><i class="bi bi-circle-fill"></i> {% t "password_mixed" %}</li>
+                                <li id="reg-req-special"><i class="bi bi-circle-fill"></i> {% t "special_character" %}</li>
+                            </ul>
+                        </div>
+                        <div class="rg-nav">
+                            <button type="button" class="rg-btn rg-btn--ghost" data-nav="back" data-current="security">
+                                <i class="bi bi-arrow-left"></i> {% t "back_step" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="rg-btn" id="registerBtn" style="margin-top:4px">
+                        <span class="btn-text"><i class="bi bi-person-plus"></i> {% t "register" %}</span>
+                        <span class="spinner"></span>
+                    </button>
+                </form>
+
+                <div class="rg-footer-link">
+                    {% t "has_account" %} <a href="{% url 'login' %}">{% t "login" %}</a>
+                </div>
+            </div>
+
+            <!-- Language Switcher — very bottom footer of the page -->
+            <div class="rg-lang">
+                <div class="lang-switcher" role="group" aria-label="{% t "language" %}" style="justify-content:center">
+                    <button class="lang-btn {% if current_language == 'uz' %}active{% endif %}"
+                            onclick="setLang('uz')" type="button">UZ</button>
+                    <button class="lang-btn {% if current_language == 'uz_cyr' %}active{% endif %}"
+                            onclick="setLang('uz_cyr')" type="button">ЎЗ</button>
+                    <button class="lang-btn {% if current_language == 'ru' %}active{% endif %}"
+                            onclick="setLang('ru')" type="button">RU</button>
+                    <button class="lang-btn {% if current_language == 'en' %}active{% endif %}"
+                            onclick="setLang('en')" type="button">EN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function toggleRegPassword(id, btn) {
+        var input = document.getElementById(id);
+        var icon = btn.querySelector('i');
+        if (input.type === 'password') { input.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+        else { input.type = 'password'; icon.className = 'bi bi-eye'; }
+    }
+var pwInput = document.getElementById('id_password1');
+    if (pwInput) {
+        pwInput.addEventListener('input', function() {
+            var v = this.value;
+            var strength = document.getElementById('pwStrength');
+            var fill = document.getElementById('pwStrengthFill');
+            var text = document.getElementById('pwStrengthText');
+            var lenEl = document.getElementById('reg-req-length');
+            var mixEl = document.getElementById('reg-req-mixed');
+            var speEl = document.getElementById('reg-req-special');
+            if (!v) { strength.style.display = 'none'; return; }
+            strength.style.display = 'block';
+            var score = 0;
+            var setReq = function(el, met) {
+                el.classList.toggle('met', met);
+                el.querySelector('i').className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle-fill';
+            };
+            setReq(lenEl, v.length >= 8);
+            setReq(mixEl, /[a-zA-Z]/.test(v) && /[0-9]/.test(v));
+            setReq(speEl, /[!@#$%^&*]/.test(v));
+            if (v.length >= 8) score++;
+            if (/[a-zA-Z]/.test(v) && /[0-9]/.test(v)) score++;
+            if (/[!@#$%^&*]/.test(v)) score++;
+            var pct = (score / 3) * 100;
+            fill.style.width = pct + '%';
+            if (score <= 1) { fill.style.background = '#f43f5e'; text.textContent = window.t('weak_password', 'Weak'); }
+            else if (score === 2) { fill.style.background = '#f59e0b'; text.textContent = window.t('medium_password', 'Medium'); }
+            else { fill.style.background = '#10b981'; text.textContent = window.t('strong_password', 'Strong'); }
+        });
+    }
+    /* Apply a theme everywhere: keeps data-theme (styling), toggles the
+       .dark class on <html>, and persists to both storage keys. */
+    function applyAuthTheme(mode) {
+        var h = document.documentElement;
+        h.setAttribute('data-theme', mode);
+        h.classList.toggle('dark', mode === 'dark');
+        h.classList.toggle('light', mode === 'light');
+        try {
+            localStorage.setItem('sklat-theme', mode);
+            localStorage.setItem('theme', mode);
+        } catch (e) {}
+        var icon = document.getElementById('authThemeIcon');
+        if (icon) icon.className = mode === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    }
+    function toggleAuthTheme() {
+        var h = document.documentElement;
+        var c = h.getAttribute('data-theme') || (h.classList.contains('dark') ? 'dark' : 'light');
+        applyAuthTheme(c === 'light' ? 'dark' : 'light');
+    }
+    (function() {
+        var saved;
+        try { saved = localStorage.getItem('theme') || localStorage.getItem('sklat-theme'); } catch (e) {}
+        if (saved !== 'light' && saved !== 'dark') {
+            saved = document.documentElement.getAttribute('data-theme') || 'dark';
+        }
+        applyAuthTheme(saved);
+    })();
+    function setLang(lang) {
+        fetch('/set-language/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: 'language=' + lang
+        }).then(function() { location.reload(); });
+    }
+    </script>
+    <script>
+    (function() {
+        var stepOrder = ['company', 'admin', 'security'];
+        var stepSections = { company: 'sectionCompany', admin: 'sectionAdmin', security: 'sectionSecurity' };
+        var stepInputs = {};
+        var lastFocusedStep = null;
+        var lastScrolledStep = null;
+        var currentStep = 0;                 // 0-indexed; 0 => Step 1 "Kompaniya"
+        var userScrolled = false;            // ignore the IntersectionObserver's
+                                             // initial layout burst (root cause of the
+                                             // Step 2 highlight on page load)
+        var engaged = false;                 // true once the user navigates via
+                                             // "Keyingisi" / "Ortga"; until then the
+                                             // wizard is locked on Step 1.
+
+        function requiredMsg() {
+            return (window.translations && window.translations.requiredField) || 'This field is required.';
+        }
+
+        function collectRequired() {
+            stepOrder.forEach(function(key) {
+                var sec = document.getElementById(stepSections[key]);
+                if (!sec) { stepInputs[key] = []; return; }
+                var nodes = sec.querySelectorAll('input[required], select[required], textarea[required]');
+                stepInputs[key] = Array.prototype.filter.call(nodes, function(el) {
+                    var t = (el.type || '').toLowerCase();
+                    return t !== 'hidden' && t !== 'submit' && t !== 'button';
+                });
+            });
+        }
+
+        function isFilled(el) {
+            if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+            var v = el.value;
+            return v != null && String(v).trim() !== '';
+        }
+
+        function pctOf(key) {
+            var els = stepInputs[key] || [];
+            if (!els.length) return 100;
+            var filled = 0;
+            for (var i = 0; i < els.length; i++) { if (isFilled(els[i])) filled++; }
+            return Math.round((filled / els.length) * 100);
+        }
+
+        function indexOfStep(key) { return stepOrder.indexOf(key); }
+
+        /* A step can only become ACTIVE once every previous step is fully
+           validated (all required inputs filled). Step 1 is the default until
+           "Kompaniya nomi" and "Kompaniya emaili" are provided. */
+        function allBeforeComplete(key) {
+            var idx = indexOfStep(key);
+            if (idx < 0) return false;
+            for (var i = 0; i < idx; i++) {
+                if (pctOf(stepOrder[i]) < 100) return false;
+            }
+            return true;
+        }
+
+        function activeStepKey() {
+            /* Once the user navigates, the wizard preview follows the nav
+               position. Before any interaction it ALWAYS starts at Step 1,
+               even if fields were auto-filled or the page was scrolled. */
+            if (engaged) return stepOrder[currentStep];
+            if (lastFocusedStep && allBeforeComplete(lastFocusedStep)) {
+                if (lastFocusedStep === stepOrder[0]) return lastFocusedStep;
+                return lastFocusedStep;
+            }
+            if (lastScrolledStep && allBeforeComplete(lastScrolledStep)) return lastScrolledStep;
+            return stepOrder[0];
+        }
+
+        function updateStepper() {
+            var pcts = { company: pctOf('company'), admin: pctOf('admin'), security: pctOf('security') };
+            var activeKey = activeStepKey();
+            currentStep = indexOfStep(activeKey);
+
+            stepOrder.forEach(function(key) {
+                var step = document.querySelector('.rg-step[data-step="' + key + '"]');
+                if (!step) return;
+                var fill = step.querySelector('.rg-step-fill');
+                var done = pcts[key] >= 100;
+                step.classList.toggle('is-complete', done);
+                /* Steps 2/3 stay visually inactive until the user navigates */
+                step.classList.toggle('is-active', !done && key === activeKey);
+                if (done) { fill.style.width = '100%'; }
+                else { fill.style.width = pcts[key] + '%'; }
+            });
+
+            var btn = document.getElementById('registerBtn');
+            if (btn) {
+                btn.style.display = stepOrder[currentStep] === 'security' ? 'flex' : 'none';
+            }
+
+            /* Mobile: show the active step's full title below the badges */
+            var caption = document.getElementById('rgStepCaption');
+            if (caption) {
+                var activeStep = document.querySelector('.rg-step[data-step="' + activeKey + '"] .rg-step-fulltitle');
+                if (activeStep) caption.textContent = activeStep.textContent.trim();
+            }
+        }
+
+        function showSection(key) {
+            stepOrder.forEach(function(k) {
+                var sec = document.getElementById(stepSections[k]);
+                if (sec) sec.style.display = (k === key) ? 'block' : 'none';
+            });
+        }
+
+        function clearStepErrors(key) {
+            var sec = document.getElementById(stepSections[key]);
+            if (!sec) return;
+            var dyn = sec.querySelectorAll('.rg-error-dyn');
+            for (var i = 0; i < dyn.length; i++) { if (dyn[i].parentNode) dyn[i].parentNode.removeChild(dyn[i]); }
+            var inv = sec.querySelectorAll('.is-invalid');
+            for (var j = 0; j < inv.length; j++) { inv[j].classList.remove('is-invalid'); }
+        }
+
+        function markError(el) {
+            el.classList.add('is-invalid');
+            var group = el.closest ? el.closest('.rg-group') : null;
+            if (!group || group.querySelector('.rg-error-dyn')) return;
+            var div = document.createElement('div');
+            div.className = 'rg-error rg-error-dyn';
+            div.setAttribute('role', 'alert');
+            div.appendChild(document.createTextNode(requiredMsg()));
+            group.appendChild(div);
+        }
+
+        function validateStep(key) {
+            var els = stepInputs[key] || [];
+            clearStepErrors(key);
+            var ok = true;
+            for (var i = 0; i < els.length; i++) {
+                if (!isFilled(els[i])) { ok = false; markError(els[i]); }
+            }
+            if (!ok) showToast(requiredMsg());
+            return ok;
+        }
+
+        function showToast(message) {
+            var existing = document.querySelector('.rg-toast');
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+            var toast = document.createElement('div');
+            toast.className = 'rg-toast';
+            toast.appendChild(document.createTextNode(message));
+            document.body.appendChild(toast);
+            window.setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 3200);
+        }
+
+        function goNext(key) {
+            if (!validateStep(key)) return;
+            var idx = indexOfStep(key);
+            engaged = true;
+            lastFocusedStep = null;
+            lastScrolledStep = null;
+            if (idx < stepOrder.length - 1) {
+                currentStep = idx + 1;
+                showSection(stepOrder[currentStep]);
+                updateStepper();
+            }
+        }
+
+        function goBack(key) {
+            var idx = indexOfStep(key);
+            if (idx <= 0) return;
+            engaged = true;
+            lastFocusedStep = null;
+            lastScrolledStep = null;
+            currentStep = idx - 1;
+            showSection(stepOrder[currentStep]);
+            updateStepper();
+        }
+
+        function stepOf(el) {
+            var sec = el && el.closest ? el.closest('[data-step]') : null;
+            return sec && sec.dataset ? sec.dataset.step : null;
+        }
+
+        function bind() {
+            collectRequired();
+            var form = document.getElementById('registerForm');
+            if (form) {
+                ['input', 'change', 'keyup'].forEach(function(ev) {
+                    form.addEventListener(ev, updateStepper);
+                });
+                form.addEventListener('focusin', function(e) {
+                    var s = stepOf(e.target);
+                    if (s) { lastFocusedStep = s; updateStepper(); }
+                });
+                form.addEventListener('focusout', function() {
+                    lastFocusedStep = null;
+                    updateStepper();
+                });
+                /* Never POST from a step whose required inputs are not filled */
+                form.addEventListener('submit', function(ev) {
+                    var cur = stepOrder[currentStep];
+                    if (cur !== 'security') {
+                        ev.preventDefault();
+                        goNext(cur);
+                        return;
+                    }
+                    if (!validateStep(cur)) {
+                        ev.preventDefault();
+                        showSection(cur);
+                        return;
+                    }
+                    var btn = document.getElementById('registerBtn');
+                    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+                });
+            }
+
+            document.querySelectorAll('[data-nav="next"]').forEach(function(b) {
+                b.addEventListener('click', function() { goNext(b.getAttribute('data-current')); });
+            });
+            document.querySelectorAll('[data-nav="back"]').forEach(function(b) {
+                b.addEventListener('click', function() { goBack(b.getAttribute('data-current')); });
+            });
+
+            window.addEventListener('scroll', function() { userScrolled = true; }, { once: true, passive: true });
+
+            var sections = stepOrder.map(function(k) { return document.getElementById(stepSections[k]); });
+            if ('IntersectionObserver' in window) {
+                var io = new IntersectionObserver(function(entries) {
+                    if (!userScrolled) return;
+                    entries.forEach(function(en) {
+                        if (en.isIntersecting && en.intersectionRatio > 0) {
+                            lastScrolledStep = en.target.getAttribute('data-step');
+                        }
+                    });
+                }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+                sections.forEach(function(s) { if (s) io.observe(s); });
+            }
+
+            /* ALWAYS start the wizard on Step 1 (Company) with Steps 2/3
+               hidden and inactive; navigation happens only on "Keyingisi". */
+            engaged = false;
+            currentStep = 0;
+            showSection('company');
+            updateStepper();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bind);
+        } else {
+            bind();
+        }
+    })();
+    </script>
+    <script>
+    window.SKLAT_LANG='{{ current_language|default:"uz" }}';
+    window.SKLAT_T={{ translations_json|safe }};
+    window.t=function(key,fallback){return(window.SKLAT_T&&window.SKLAT_T[key])||fallback||key};
+    window.translations={
+        requiredField: window.t('required_field_msg', 'This field is required.')
+    };
+    </script>
+</body>
+</html>

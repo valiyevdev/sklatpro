@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ return_order.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'sales:sale_detail' pk=return_order.sale.pk %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ return_order.reference }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{% t "return_order" %}
+            {% if return_order.status == 'draft' %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pending" %}</span>
+            {% elif return_order.status == 'approved' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "approved" %}</span>
+            {% elif return_order.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif return_order.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ return_order.get_status_display }}</span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="font-size:1rem">{{ return_order.sale.reference }}</div><div class="stat-card-label">{% t "sale_reference" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-cart-check"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="font-size:1rem">{{ return_order.sale.customer.name }}</div><div class="stat-card-label">{% t "customer" %}</div></div>
+        <div class="stat-card-icon info"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value" style="font-size:1rem">{{ return_order.warehouse.name|default:"-" }}</div><div class="stat-card-label">{% t "warehouse" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-building"></i></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "return_info" %}</span></div>
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "reason" %}</div>
+                    <div class="fw-500">{{ return_order.get_reason_display|default:return_order.reason }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "condition" %}</div>
+                    <div class="fw-500">{{ return_order.get_condition_display|default:return_order.condition }}</div>
+                </div>
+                {% if return_order.reason_notes %}
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "reason_notes" %}</div>
+                    <div>{{ return_order.reason_notes }}</div>
+                </div>
+                {% endif %}
+                {% if return_order.notes %}
+                <div>
+                    <div class="text-pro-sm text-pro-muted mb-1">{% t "notes" %}</div>
+                    <div>{{ return_order.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if return_order.status != 'completed' and return_order.status != 'cancelled' %}
+    <div class="card-pro">
+        <div class="card-pro-header"><span class="card-pro-title">{% t "actions" %}</span></div>
+        <div class="card-pro-body">
+            <div class="d-flex gap-2 flex-col">
+                {% if return_order.status == 'draft' %}
+                <form method="post" action="{% url 'sales:sale_return_update_status' pk=return_order.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="approved">
+                    <button type="submit" class="btn-pro btn-pro-success" style="width:100%"><i class="bi bi-check-circle"></i> {% t "approve_return" %}</button>
+                </form>
+                {% endif %}
+                {% if return_order.status == 'approved' %}
+                <form method="post" action="{% url 'sales:sale_return_update_status' pk=return_order.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-check2-all"></i> {% t "complete_return" %}</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "returned_items" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "quantity_short" %}</th>
+                    <th>{% t "unit_price" %}</th>
+                    <th>{% t "total_amount" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="fw-500">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.unit_price }}</td>
+                    <td class="fw-600">${{ item.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-pro-muted" style="text-align:center;padding:2rem">{% t "no_items" %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

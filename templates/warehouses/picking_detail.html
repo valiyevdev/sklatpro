@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ picking_list.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:picking_list' %}">{% t "picking_lists" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ picking_list.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ picking_list.reference }}</h1>
+            {% if picking_list.status == 'completed' %}
+                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+            {% elif picking_list.status == 'in_progress' %}
+                <span class="badge-pro badge-pro-info">{% t "in_progress" %}</span>
+            {% elif picking_list.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning">{{ picking_list.get_status_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="page-actions">
+        {% if picking_list.status == 'pending' %}
+        <form method="post" action="{% url 'warehouses:picking_start' pk=picking_list.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="in_progress">
+            <button type="submit" class="btn-pro btn-pro-primary">
+                <i class="bi bi-play-circle"></i> {% t "start" %}
+            </button>
+        </form>
+        {% endif %}
+        {% if picking_list.status == 'in_progress' %}
+        <form method="post" action="{% url 'warehouses:picking_start' pk=picking_list.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="btn-pro btn-pro-success">
+                <i class="bi bi-check-circle"></i> {% t "complete" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ picking_list.warehouse.name }}</div>
+            <div class="stat-card-label">{% t "warehouse" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-building"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if picking_list.sale %}{{ picking_list.sale.reference }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "sale" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-cart"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if picking_list.picker %}{{ picking_list.picker.get_full_name|default:picking_list.picker.email }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "picker" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-person"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">
+                {% if picking_list.priority == 'high' %}<span style="color:var(--danger-600)">{% t "high" %}</span>
+                {% elif picking_list.priority == 'medium' %}<span style="color:var(--warning-600)">{% t "medium" %}</span>
+                {% else %}<span>{% t "low" %}</span>{% endif %}
+            </div>
+            <div class="stat-card-label">{% t "priority" %}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-flag"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{{ picking_list.get_strategy_display|default:"—" }}</div>
+            <div class="stat-card-label">{% t "strategy" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-diagram-3"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if picking_list.started_at %}{{ picking_list.started_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "started_at" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-clock"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value" style="font-size:var(--text-lg)">{% if picking_list.completed_at %}{{ picking_list.completed_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            <div class="stat-card-label">{% t "completed_at" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-clock-history"></i></div>
+    </div>
+</div>
+
+<div class="card-pro mb-4">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-graph-up" style="color:var(--primary-600)"></i> {% t "progress" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex align-center justify-between mb-2">
+            <span class="text-pro-sm fw-500">{% t "picked" %}: {{ picking_list.picked_items }} / {{ picking_list.total_items }}</span>
+            <span class="text-pro-sm fw-600">{{ picking_list.progress_percent }}%</span>
+        </div>
+        <div style="height:10px;background:var(--gray-100);border-radius:var(--radius-full);overflow:hidden">
+            <div style="height:100%;width:{{ picking_list.progress_percent }}%;background:{% if picking_list.progress_percent == 100 %}var(--success-500){% elif picking_list.progress_percent >= 50 %}var(--primary-500){% else %}var(--warning-500){% endif %};border-radius:var(--radius-full);transition:width 0.3s ease"></div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-box-seam" style="color:var(--primary-600)"></i> {% t "items" %}</span>
+        <span class="badge-pro badge-pro-neutral">{{ items.count }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "sku" %}</th>
+                    <th>{% t "quantity" %}</th>
+                    <th>{% t "picked_quantity" %}</th>
+                    <th>{% t "location" %}</th>
+                    <th>{% t "batch" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                    <td><code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.product.sku }}</code></td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.picked_quantity }}</td>
+                    <td>{% if item.location %}{{ item.location.code }}{% else %}—{% endif %}</td>
+                    <td>{% if item.batch %}<code style="font-size:var(--text-xs);background:var(--bg-page);padding:2px 6px;border-radius:var(--radius-sm)">{{ item.batch }}</code>{% else %}—{% endif %}</td>
+                    <td>
+                        {% if item.is_picked %}
+                            <span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "picked" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-warning">{% t "pending" %}</span>
+                        {% endif %}
+                        {% if item.is_short_pick %}
+                            <span class="badge-pro badge-pro-danger" style="margin-left:4px"><i class="bi bi-exclamation-triangle"></i> {% t "short_pick" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not item.is_picked and picking_list.status != 'completed' and picking_list.status != 'cancelled' %}
+                        <form method="post" action="{% url 'warehouses:picking_confirm_item' pk=picking_list.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item.pk }}">
+                            <button type="submit" class="btn-pro btn-pro-success btn-pro-sm">
+                                <i class="bi bi-check-lg"></i> {% t "confirm" %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding:var(--sp-8)">
+                            <div class="empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+    div[style*="grid-template-columns:repeat(auto-fit"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

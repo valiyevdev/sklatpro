@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{{ account.name }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'finance:account_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{{ account.name }}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ account.get_account_type_display }} &middot; {{ account.code|default:"" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'finance:account_edit' pk=account.pk %}" class="btn-pro btn-pro-secondary"><i class="bi bi-pencil"></i> {% t "fin_edit_account" %}</a>
+        <a href="{% url 'finance:account_statement' pk=account.pk %}" class="btn-pro btn-pro-ghost"><i class="bi bi-journal-text"></i> {% t "fin_account_statement" %}</a>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_opening_balance" %}</div>
+            <div class="stat-card-value">${{ account.opening_balance|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-door-open"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_current_balance" %}</div>
+            <div class="stat-card-value" style="color:{% if account.current_balance >= 0 %}var(--success-600){% else %}var(--danger-500){% endif %}">${{ account.current_balance|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_income" %}</div>
+            <div class="stat-card-value" style="color:var(--success-600)">${{ total_income|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-arrow-down-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_expense" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-500)">${{ total_expense|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-circle"></i></div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <div class="card-pro-title">{% t "fin_recent_transactions" %}</div>
+    </div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "fin_type" %}</th>
+                    <th>{% t "fin_direction" %}</th>
+                    <th>{% t "amount" %}</th>
+                    <th>{% t "fin_category" %}</th>
+                    <th>{% t "description" %}</th>
+                    <th>{% t "fin_method" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_transactions %}
+                <tr>
+                    <td>{{ txn.date|date:"d.m.Y" }}</td>
+                    <td>{{ txn.get_txn_type_display }}</td>
+                    <td>
+                        {% if txn.direction == 'income' %}
+                            <span class="badge-pro badge-pro-success">{% t "fin_direction_income" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-danger">{% t "fin_direction_expense" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">{{ txn.currency }} {{ txn.amount|floatformat:2 }}</td>
+                    <td>{{ txn.category|default:"-" }}</td>
+                    <td class="text-pro-sm">{{ txn.description|truncatechars:40|default:"-" }}</td>
+                    <td>{{ txn.get_payment_method_display|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_transactions" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

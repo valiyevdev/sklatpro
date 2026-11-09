@@ -1,0 +1,37 @@
+﻿{% extends "base.html" %}
+{% load i18n_tags %}
+{% block title %}{% t "routes" %} — SKLAT PRO{% endblock %}
+{% block content %}
+<div class="breadcrumb-pro"><a href="{% url 'logistics:logistics_dashboard' %}">{% t "logistics_dashboard" %}</a><span class="separator">/</span><span class="current">{% t "routes" %}</span></div>
+<div class="page-header"><div class="page-header-content"><h1 class="page-title">{% t "routes" %}</h1><p class="page-subtitle">{{ total }} {% t "total" %}</p></div><div class="page-actions"><a href="{% url 'logistics:route_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_route" %}</a></div></div>
+<div class="card-pro mb-6"><div class="card-pro-body"><form method="get"><div class="d-flex gap-3 flex-wrap align-center">
+    <div style="flex:2;min-width:200px"><input class="input-pro" type="text" name="q" placeholder="{% t "search" %}" value="{{ search }}"></div>
+    <div style="flex:1;min-width:150px"><select class="input-pro" name="status"><option value="">{% t "all_statuses" %}</option>{% for val, label in status_choices %}<option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i></button>
+    <a href="{% url 'logistics:route_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-circle"></i></a>
+</div></form></div></div>
+<div class="card-pro"><div class="table-responsive"><table class="table-pro">
+    <thead><tr><th>{% t "reference" %}</th><th>{% t "date" %}</th><th>{% t "driver" %}</th><th>{% t "vehicle" %}</th><th>{% t "stops" %}</th><th>{% t "progress" %}</th><th>{% t "status" %}</th><th style="text-align:right">{% t "actions" %}</th></tr></thead>
+    <tbody>
+        {% for r in routes %}
+        <tr>
+            <td class="cell-primary"><a href="{% url 'logistics:route_detail' pk=r.pk %}" style="color:var(--text-primary);text-decoration:none">{{ r.reference }}</a></td>
+            <td>{{ r.route_date|date:"d.m.Y" }}</td>
+            <td>{{ r.driver|default:"-" }}</td>
+            <td>{{ r.vehicle|default:"-" }}</td>
+            <td>{{ r.completed_stops }}/{{ r.total_stops }}</td>
+            <td>
+                <div style="width:100px;height:6px;background:var(--border-color);border-radius:3px"><div style="width:{{ r.progress_percent }}%;height:100%;background:var(--color-primary);border-radius:3px"></div></div>
+            </td>
+            <td>{% if r.status == 'completed' %}<span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>{% elif r.status == 'in_progress' or r.status == 'started' %}<span class="badge-pro badge-pro-info badge-pro-dot">{% t "in_progress" %}</span>{% else %}<span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>{% endif %}</td>
+            <td><div class="actions"><a href="{% url 'logistics:route_detail' pk=r.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a><a href="{% url 'logistics:route_update' pk=r.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-pencil"></i></a></div></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-signpost-split"></i></div><h5 class="empty-state-title">{% t "no_routes" %}</h5><a href="{% url 'logistics:route_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "new_route" %}</a></div></td></tr>
+        {% endfor %}
+    </tbody>
+</table></div></div>
+{% if total_pages > 1 %}
+<div class="d-flex justify-between align-center mt-4"><span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page }} / {{ total_pages }}</span><div class="d-flex gap-1">{% if page > 1 %}<a href="?page={{ page|add:'-1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}{% if page < total_pages %}<a href="?page={{ page|add:'1' }}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}</div></div>
+{% endif %}
+{% endblock %}

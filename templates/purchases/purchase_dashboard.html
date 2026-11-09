@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "purchases" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'purchases:purchase_list' %}">{% t "purchases" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "dashboard" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "purchases" %} {% t "dashboard" %}</h1>
+        <p class="page-subtitle">{% t "purchase_overview_subtitle" %}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'purchases:purchase_create' %}" class="btn-pro btn-pro-primary">
+            <i class="bi bi-plus-lg"></i> {% t "new_purchase" %}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "purchases_today" %}</div>
+            <div class="stat-card-value">{{ purchases_today }}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cart-plus"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "pending_purchases" %}</div>
+            <div class="stat-card-value">{{ pending_purchases }}</div>
+        </div>
+        <div class="stat-card-icon warning"><i class="bi bi-clock-history"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "awaiting_delivery" %}</div>
+            <div class="stat-card-value">{{ awaiting_delivery }}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-truck"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "overdue" %}</div>
+            <div class="stat-card-value">{{ overdue_count }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "total_value" %}</div>
+            <div class="stat-card-value">${{ total_value|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "unpaid_value" %}</div>
+            <div class="stat-card-value">${{ unpaid_value|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-wallet2"></i></div>
+    </div>
+</div>
+
+<div class="grid grid-2 gap-6 mb-6">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-people" style="color:var(--primary-600)"></i> {% t "top_suppliers" %}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "supplier" %}</th>
+                        <th>{% t "purchases_count" %}</th>
+                        <th>{% t "total_value" %}</th>
+                        <th>{% t "overdue" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in top_suppliers %}
+                    <tr>
+                        <td class="cell-primary">
+                            <a href="{% url 'purchases:supplier_detail' pk=s.pk %}" style="color:var(--text-primary);text-decoration:none">{{ s.name }}</a>
+                        </td>
+                        <td>{{ s.purchase_count }}</td>
+                        <td class="fw-600">${{ s.total_value|floatformat:0 }}</td>
+                        <td>
+                            {% if s.overdue_count > 0 %}
+                                <span class="badge-pro badge-pro-danger">{{ s.overdue_count }}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-success">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_suppliers" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "recent_purchases" %}</span>
+            <a href="{% url 'purchases:purchase_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "supplier" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in recent_purchases %}
+                    <tr>
+                        <td class="cell-primary">
+                            <a href="{% url 'purchases:purchase_detail' pk=p.pk %}" style="color:var(--text-primary);text-decoration:none">{{ p.reference }}</a>
+                        </td>
+                        <td>{{ p.supplier.name }}</td>
+                        <td>
+                            {% if p.status == 'received' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "received" %}</span>
+                            {% elif p.status == 'partially_received' %}
+                                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "partially_received" %}</span>
+                            {% elif p.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+                            {% elif p.status == 'ordered' %}
+                                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "ordered" %}</span>
+                            {% elif p.status == 'approved' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ p.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-600">${{ p.total|floatformat:0 }}</td>
+                        <td class="cell-muted">{{ p.created_at|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_purchases" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if overdue_purchases %}
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-exclamation-triangle" style="color:var(--danger-600)"></i> {% t "overdue_purchases" %}</span>
+        <span class="badge-pro badge-pro-danger">{{ overdue_purchases|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "reference" %}</th>
+                    <th>{% t "supplier" %}</th>
+                    <th>{% t "expected_delivery_date" %}</th>
+                    <th>{% t "days_overdue" %}</th>
+                    <th>{% t "total" %}</th>
+                    <th style="text-align:right">{% t "actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in overdue_purchases %}
+                <tr>
+                    <td class="cell-primary">
+                        <a href="{% url 'purchases:purchase_detail' pk=p.pk %}" style="color:var(--text-primary);text-decoration:none">{{ p.reference }}</a>
+                    </td>
+                    <td>{{ p.supplier.name }}</td>
+                    <td class="cell-muted">{{ p.expected_delivery_date|date:"d.m.Y" }}</td>
+                    <td><span class="badge-pro badge-pro-danger">{{ p.days_overdue }} {% t "days" %}</span></td>
+                    <td class="fw-600">${{ p.total|floatformat:0 }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'purchases:purchase_detail' pk=p.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

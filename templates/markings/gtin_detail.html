@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ gtin.gtin }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:gtin_list' %}">{% t "gtin_list" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ gtin.gtin }}</span>
+</div>
+
+<div class="page-head">
+    <a href="{% url 'markings:gtin_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title" style="margin:0"><code style="font-size:var(--text-lg)">{{ gtin.gtin }}</code></h1>
+            <span class="badge-pro badge-pro-info">{{ gtin.format_type }}</span>
+            {% if gtin.is_active %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "active" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "inactive" %}</span>
+            {% endif %}
+            {% if gtin.is_primary %}
+                <span class="badge-pro badge-pro-primary">{% t "primary" %}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);margin-bottom:var(--sp-6)">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "gtin_detail" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "gtin" %}</div>
+                    <div class="fw-600"><code>{{ gtin.gtin }}</code></div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "format" %}</div>
+                    <div><span class="badge-pro badge-pro-info">{{ gtin.format_type }}</span></div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "product" %}</div>
+                    <div class="fw-500">{{ gtin.product.name }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "checksum" %}</div>
+                    {% if gtin.validate_checksum %}
+                        <div><span class="badge-pro badge-pro-success"><i class="bi bi-check-circle"></i> {% t "checksum_valid" %}</span></div>
+                    {% else %}
+                        <div><span class="badge-pro badge-pro-danger"><i class="bi bi-x-circle"></i> {% t "checksum_invalid" %}</span></div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "created" %}</div>
+                    <div class="text-pro-sm">{{ gtin.created_at|date:"d M Y H:i" }}</div>
+                </div>
+                <div>
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "active" %}</div>
+                    {% if gtin.is_active %}
+                        <div><span class="badge-pro badge-pro-success">{% t "yes" %}</span></div>
+                    {% else %}
+                        <div><span class="badge-pro badge-pro-danger">{% t "no" %}</span></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-upc-scan" style="color:var(--primary-600)"></i> {% t "linked_marking_codes" %} ({{ marking_codes.count }})</span>
+    </div>
+    <div style="overflow-x:auto">
+        {% if marking_codes %}
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "marking_code" %}</th>
+                    <th>{% t "product" %}</th>
+                    <th>{% t "status" %}</th>
+                    <th>{% t "serial_number" %}</th>
+                    <th>{% t "warehouse" %}</th>
+                    <th>{% t "created" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in marking_codes %}
+                <tr>
+                    <td><a href="{% url 'markings:marking_detail' pk=code.pk %}" class="fw-500" style="color:var(--primary-600);text-decoration:none">{{ code.code|truncatechars:30 }}</a></td>
+                    <td class="fw-500">{{ code.product.name|truncatechars:30 }}</td>
+                    <td><span class="badge-pro badge-pro-{{ code.status|yesno:'success,secondary' }}">{{ code.get_status_display }}</span></td>
+                    <td class="text-pro-sm">{{ code.serial_number|default:"—" }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ code.warehouse|default:"—" }}</td>
+                    <td class="text-pro-sm text-pro-muted">{{ code.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-upc-scan"></i></div>
+            <h5 class="empty-state-title">{% t "no_marking_codes" %}</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

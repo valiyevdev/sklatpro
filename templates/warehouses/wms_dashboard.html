@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "wms_dashboard" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="wms-dashboard" style="max-width: 1200px; margin: 0 auto; padding: var(--sp-6) var(--sp-4);">
+  <div class="page-header" style="margin-bottom: var(--sp-8);">
+    <h1 style="font-size: var(--text-3xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{% t "wms_dashboard" %}</h1>
+  </div>
+
+  <div class="stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-8);">
+    <div class="stat-card stat-card--primary" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--primary" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-primary-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-truck" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "receiving_today" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ receiving_today }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--warning" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--warning" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-warning-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-arrow-down-circle" style="font-size: 1.5rem; color: var(--color-warning);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "pending_putaway" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ pending_putaway }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--info" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--info" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-info-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-list-task" style="font-size: 1.5rem; color: var(--color-info);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "pending_picking" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ pending_picking }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--success" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--success" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-success-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-box" style="font-size: 1.5rem; color: var(--color-success);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "pending_packing" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ pending_packing }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--primary" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--primary" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-primary-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-send" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "ready_to_ship" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ ready_to_ship_count }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--warning" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--warning" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-warning-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-arrow-left-right" style="font-size: 1.5rem; color: var(--color-warning);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "pending_transfers" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ pending_transfers_count }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--info" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--info" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-info-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-clipboard-check" style="font-size: 1.5rem; color: var(--color-info);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "pending_tasks" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ pending_tasks }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--danger" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--danger" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-danger-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-exclamation-triangle" style="font-size: 1.5rem; color: var(--color-danger);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "low_stock" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ low_stock_count }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--warning" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--warning" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-warning-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-clock-history" style="font-size: 1.5rem; color: var(--color-warning);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "near_expiry" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ near_expiry_count }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--danger" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--danger" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-danger-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-x-octagon" style="font-size: 1.5rem; color: var(--color-danger);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "damaged" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ damaged_count }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--warning" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-5); display: flex; align-items: flex-start; gap: var(--sp-4);">
+      <div class="stat-icon stat-icon--warning" style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-warning-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="bi bi-shield-exclamation" style="font-size: 1.5rem; color: var(--color-warning);"></i>
+      </div>
+      <div class="stat-content">
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 var(--sp-1) 0;">{% t "quarantine" %}</p>
+        <p style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0;">{{ quarantine_count }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-actions" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--sp-6);">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; color: var(--color-text-primary); margin: 0 0 var(--sp-5) 0;">{% t "quick_actions" %}</h2>
+    <div class="quick-actions-grid" style="display: flex; flex-wrap: wrap; gap: var(--sp-3);">
+      <a href="{% url 'warehouses:receiving_list' %}" class="btn btn--primary" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-primary); color: var(--color-btn-primary-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-truck"></i> {% t "receiving" %}
+      </a>
+      <a href="{% url 'warehouses:picking_list' %}" class="btn btn--info" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-info); color: var(--color-btn-info-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-list-task"></i> {% t "picking" %}
+      </a>
+      <a href="{% url 'warehouses:packing_list' %}" class="btn btn--success" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-success); color: var(--color-btn-success-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-box"></i> {% t "packing" %}
+      </a>
+      <a href="{% url 'warehouses:shipment_list' %}" class="btn btn--primary" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-primary); color: var(--color-btn-primary-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-send"></i> {% t "shipping" %}
+      </a>
+      <a href="{% url 'warehouses:transfer_list' %}" class="btn btn--warning" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-warning); color: var(--color-btn-warning-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-arrow-left-right"></i> {% t "transfers" %}
+      </a>
+      <a href="{% url 'warehouses:task_list' %}" class="btn btn--info" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-md); background: var(--color-info); color: var(--color-btn-info-text); text-decoration: none; font-weight: 500; font-size: var(--text-sm); transition: background 0.2s;">
+        <i class="bi bi-clipboard-check"></i> {% t "tasks" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .quick-actions-grid {
+      flex-direction: column;
+    }
+    .quick-actions-grid .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+</style>
+{% endblock %}

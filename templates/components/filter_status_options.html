@@ -1,0 +1,5 @@
+{% load i18n_tags %}
+<option value="out_of_stock" {% if filter_status_value == "out_of_stock" %}selected{% endif %}>{% t "out_of_stock" %}</option>
+<option value="low_stock" {% if filter_status_value == "low_stock" %}selected{% endif %}>{% t "low_stock" %}</option>
+<option value="in_stock" {% if filter_status_value == "in_stock" %}selected{% endif %}>{% t "in_stock" %}</option>
+<option value="overstock" {% if filter_status_value == "overstock" %}selected{% endif %}>{% t "overstock" %}</option>

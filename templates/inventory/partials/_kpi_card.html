@@ -1,0 +1,41 @@
+{% load i18n_tags %}
+{% comment %}
+Reusable KPI tile for the SKLAT PRO dashboard.
+
+Params
+  kpi_key     translation key for the label. Used instead of a literal
+              because `t` is a context-taking tag and therefore cannot be
+              called from inside `{% with %}`.
+  kpi_label   fallback label for text that is deliberately not translated.
+  kpi_value   pre-formatted value: counts via `|num`, money via `|uzs`, so
+              number grouping lives in one place (core/templatetags/i18n_tags.py).
+  kpi_icon    Bootstrap Icons class, e.g. "bi-box-seam".
+  kpi_tone    primary | info | success | warning | danger (drives the icon chip).
+  kpi_url_name  view name to drill into. Resolved with `{% url %}` here
+              because `{% url %}` is a node and cannot be assigned inside
+              `{% with %}`. Namespaced names (e.g. "scanner:scanner_view")
+              work unchanged. Omit for a non-clickable tile.
+  kpi_href    pre-built URL, only when the href cannot be expressed as a
+              view name.
+
+Clickable tiles render as a real <a> so the tile is keyboard reachable and
+announces its destination; plain tiles render as a <div>.
+{% endcomment %}
+{% if kpi_url_name %}{% url kpi_url_name as kpi_href %}{% endif %}
+{% if kpi_href %}
+<a class="dbd-kpi dbd-kpi--{{ kpi_tone|default:'primary' }}" href="{{ kpi_href }}">
+{% else %}
+<div class="dbd-kpi dbd-kpi--{{ kpi_tone|default:'primary' }}">
+{% endif %}
+    <span class="dbd-kpi__icon" aria-hidden="true"><i class="bi {{ kpi_icon }}"></i></span>
+    <span class="dbd-kpi__body">
+        <span class="dbd-kpi__label">{% if kpi_key %}{% t kpi_key %}{% else %}{{ kpi_label }}{% endif %}</span>
+        <span class="dbd-kpi__value">{{ kpi_value }}</span>
+        {% if kpi_hint %}<span class="dbd-kpi__hint">{{ kpi_hint }}</span>{% endif %}
+    </span>
+    {% if kpi_href %}<i class="bi bi-chevron-right dbd-kpi__chevron" aria-hidden="true"></i>{% endif %}
+{% if kpi_href %}
+</a>
+{% else %}
+</div>
+{% endif %}

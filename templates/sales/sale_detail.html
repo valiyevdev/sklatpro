@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ sale.reference }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'sales:sale_list' %}">{% t "sales" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ sale.reference }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title">{{ sale.reference }}</h1>
+            {% if sale.status == 'completed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
+            {% elif sale.status == 'cancelled' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
+            {% elif sale.status == 'shipped' %}
+                <span class="badge-pro badge-pro-info badge-pro-dot">{% t "shipped" %}</span>
+            {% elif sale.status == 'reserved' %}
+                <span class="badge-pro badge-pro-primary badge-pro-dot">{% t "reserved" %}</span>
+            {% elif sale.status == 'confirmed' %}
+                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "confirmed" %}</span>
+            {% elif sale.status == 'returned' %}
+                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "returned" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-warning badge-pro-dot">{{ sale.get_status_display }}</span>
+            {% endif %}
+
+            {% if sale.payment_status == 'paid' %}
+                <span class="badge-pro badge-pro-success">{% t "paid" %}</span>
+            {% elif sale.payment_status == 'partial' %}
+                <span class="badge-pro badge-pro-warning">{% t "partially_paid" %}</span>
+            {% elif sale.payment_status == 'overdue' %}
+                <span class="badge-pro badge-pro-danger">{% t "overdue" %}</span>
+            {% else %}
+                <span class="badge-pro badge-pro-danger">{% t "unpaid" %}</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">
+            {{ sale.customer.name }} &middot; {{ sale.created_at|date:"d.m.Y" }}
+            {% if sale.expected_delivery_date %}
+                &middot; {% t "expected" %}: {{ sale.expected_delivery_date|date:"d.m.Y" }}
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if sale.status == 'draft' or sale.status == 'confirmed' %}
+            <a href="{% url 'sales:sale_update' pk=sale.pk %}" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-pencil"></i> {% t "edit" %}</a>
+        {% endif %}
+        <a href="{% url 'sales:sale_reserve' pk=sale.pk %}" class="btn-pro btn-pro-primary btn-pro-sm" onclick="event.preventDefault();document.getElementById('reserveForm').submit();"><i class="bi bi-stack"></i> {% t "reserve" %}</a>
+        <a href="{% url 'sales:sale_payment_create' pk=sale.pk %}" class="btn-pro btn-pro-success btn-pro-sm" onclick="event.preventDefault();document.getElementById('paymentModal').style.display='flex'"><i class="bi bi-wallet2"></i> {% t "record_payment" %}</a>
+        {% if sale.status != 'cancelled' and sale.status != 'draft' %}
+            <a href="{% url 'sales:sale_return_create' pk=sale.pk %}" class="btn-pro btn-pro-warning btn-pro-sm"><i class="bi bi-arrow-return-left"></i> {% t "return" %}</a>
+        {% endif %}
+        {% if sale.status == 'draft' or sale.status == 'cancelled' %}
+            <a href="{% url 'sales:sale_delete' pk=sale.pk %}" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-trash"></i></a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)">
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ sale.total|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "total_amount" %}</div>
+        </div>
+        <div class="stat-card-icon primary"><i class="bi bi-cash-stack"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ sale.total_paid_amount|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "paid_amount" %}</div>
+        </div>
+        <div class="stat-card-icon success"><i class="bi bi-wallet2"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">${{ outstanding|floatformat:0 }}</div>
+            <div class="stat-card-label">{% t "outstanding" %}</div>
+        </div>
+        <div class="stat-card-icon {% if outstanding > 0 %}danger{% else %}success{% endif %}"><i class="bi bi-exclamation-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div>
+            <div class="stat-card-value">{{ items.count }}</div>
+            <div class="stat-card-label">{% t "products" %}</div>
+        </div>
+        <div class="stat-card-icon info"><i class="bi bi-box-seam"></i></div>
+    </div>
+</div>
+
+{% with allowed=sale.VALID_TRANSITIONS %}
+{% if allowed %}
+<div class="card-pro mb-6">
+    <div class="card-pro-header">
+        <span class="card-pro-title"><i class="bi bi-arrow-repeat" style="color:var(--primary-600)"></i> {% t "status_workflow" %}</span>
+    </div>
+    <div class="card-pro-body">
+        <div class="d-flex gap-2 flex-wrap">
+            {% for status_key, allowed_list in sale.VALID_TRANSITIONS.items %}
+                {% if sale.status == status_key %}
+                    {% for next_status in allowed_list %}
+                        <form method="post" action="{% url 'sales:sale_update_status' pk=sale.pk %}" style="display:inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="{{ next_status }}">
+                            {% if next_status == 'confirmed' or next_status == 'reserved' or next_status == 'picking' or next_status == 'packed' or next_status == 'shipped' or next_status == 'completed' %}
+                                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t next_status %}</button>
+                            {% elif next_status == 'cancelled' or next_status == 'returned' %}
+                                <button type="submit" class="btn-pro btn-pro-danger btn-pro-sm"><i class="bi bi-x-circle"></i> {% t next_status %}</button>
+                            {% else %}
+                                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-arrow-repeat"></i> {% t next_status %}</button>
+                            {% endif %}
+                        </form>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="card-pro mb-6">
+    <div class="card-pro-header" style="border-bottom:1px solid var(--border-default)">
+        <div class="d-flex gap-1" style="overflow-x:auto">
+            <button class="tab-btn active" onclick="switchTab('overview')" id="tab-overview"><i class="bi bi-info-circle"></i> {% t "overview" %}</button>
+            <button class="tab-btn" onclick="switchTab('items')" id="tab-items"><i class="bi bi-box-seam"></i> {% t "items" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ items.count }}</span></button>
+            <button class="tab-btn" onclick="switchTab('payments')" id="tab-payments"><i class="bi bi-wallet2"></i> {% t "payments" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ payments|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('returns')" id="tab-returns"><i class="bi bi-arrow-return-left"></i> {% t "returns" %} <span class="badge-pro badge-pro-neutral" style="margin-left:4px">{{ returns|length }}</span></button>
+            <button class="tab-btn" onclick="switchTab('timeline')" id="tab-timeline"><i class="bi bi-clock-history"></i> {% t "timeline" %}</button>
+        </div>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="panel-overview">
+        <div class="card-pro-body">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-5)">
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "customer" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.customer.name }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-building"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "warehouse" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.warehouse.name }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "date" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon warning" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-calendar-event"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "expected_delivery_date" %}</div>
+                        <div class="text-pro-sm fw-500">{% if sale.expected_delivery_date %}{{ sale.expected_delivery_date|date:"d.m.Y" }}{% else %}—{% endif %}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon primary" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-wallet2"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "payment_terms" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.get_payment_terms_display }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon info" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-cash"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "currency" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.currency }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon success" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-person"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "created_by" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.created_by.get_full_name|default:sale.created_by.email }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-3">
+                    <div class="stat-card-icon {% if reservation_status == 'fully_reserved' %}success{% elif reservation_status == 'partially_reserved' %}warning{% else %}info{% endif %}" style="width:36px;height:36px;font-size:0.875rem"><i class="bi bi-stack"></i></div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted">{% t "reservation" %}</div>
+                        <div class="text-pro-sm fw-500">{{ sale.total_reserved }} / {{ sale.total_ordered }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Tab -->
+    <div class="tab-content" id="panel-items">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "product" %}</th>
+                        <th>{% t "quantity_short" %}</th>
+                        <th>{% t "reserved" %}</th>
+                        <th>{% t "picked" %}</th>
+                        <th>{% t "shipped" %}</th>
+                        <th>{% t "returned" %}</th>
+                        <th>{% t "unit_price" %}</th>
+                        <th>{% t "discount_short" %}</th>
+                        <th>{% t "tax_short" %}</th>
+                        <th>{% t "total" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="cell-primary fw-500">{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            {% if item.reserved_quantity > 0 %}
+                                <span class="text-pro-primary fw-600">{{ item.reserved_quantity }}</span>
+                            {% else %}0{% endif %}
+                        </td>
+                        <td>
+                            {% if item.picked_quantity > 0 %}
+                                <span class="text-pro-info fw-600">{{ item.picked_quantity }}</span>
+                            {% else %}0{% endif %}
+                        </td>
+                        <td>
+                            {% if item.shipped_quantity > 0 %}
+                                <span class="text-pro-success fw-600">{{ item.shipped_quantity }}</span>
+                            {% else %}0{% endif %}
+                        </td>
+                        <td>
+                            {% if item.returned_quantity > 0 %}
+                                <span class="text-pro-danger fw-600">{{ item.returned_quantity }}</span>
+                            {% else %}0{% endif %}
+                        </td>
+                        <td>${{ item.unit_price }}</td>
+                        <td>{% if item.discount > 0 %}${{ item.discount }}{% else %}—{% endif %}</td>
+                        <td>{% if item.tax > 0 %}${{ item.tax }}{% else %}—{% endif %}</td>
+                        <td class="fw-600">${{ item.total|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_products" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Payments Tab -->
+    <div class="tab-content" id="panel-payments">
+        <div class="card-pro-header" style="border-bottom:none">
+            <div></div>
+            <a href="{% url 'sales:sale_payment_create' pk=sale.pk %}" class="btn-pro btn-pro-primary btn-pro-sm" onclick="event.preventDefault();document.getElementById('paymentModal').style.display='flex'"><i class="bi bi-plus-lg"></i> {% t "add_payment" %}</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "amount" %}</th>
+                        <th>{% t "payment_method" %}</th>
+                        <th>{% t "date" %}</th>
+                        <th>{% t "notes" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                    <tr>
+                        <td class="cell-primary fw-600">${{ p.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if p.payment_method == 'cash' %}
+                                <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "cash" %}</span>
+                            {% elif p.payment_method == 'card' %}
+                                <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "card" %}</span>
+                            {% elif p.payment_method == 'transfer' %}
+                                <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "transfer" %}</span>
+                            {% elif p.payment_method == 'online' %}
+                                <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "online" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral"><i class="bi bi-three-dots"></i> {{ p.get_payment_method_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-muted">{{ p.payment_date|date:"d.m.Y" }}</td>
+                        <td class="text-pro-sm text-pro-muted">{{ p.notes|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-icon" style="width:48px;height:48px;font-size:1.25rem;margin-bottom:var(--sp-3)"><i class="bi bi-wallet2"></i></div>
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_payments" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Returns Tab -->
+    <div class="tab-content" id="panel-returns">
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "reference" %}</th>
+                        <th>{% t "reason" %}</th>
+                        <th>{% t "condition" %}</th>
+                        <th>{% t "total" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th style="text-align:right">{% t "actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in returns %}
+                    <tr>
+                        <td class="cell-primary">{{ r.reference }}</td>
+                        <td>{{ r.get_reason_display }}</td>
+                        <td>{{ r.get_condition_display }}</td>
+                        <td class="fw-600">${{ r.total|floatformat:0 }}</td>
+                        <td>
+                            {% if r.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success">{% t "completed" %}</span>
+                            {% elif r.status == 'approved' %}
+                                <span class="badge-pro badge-pro-info">{% t "approved" %}</span>
+                            {% elif r.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger">{% t "cancelled" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-warning">{{ r.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a href="{% url 'sales:sale_return_detail' pk=r.pk %}" class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm"><i class="bi bi-eye"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state" style="padding:var(--sp-6)">
+                                <div class="empty-state-icon" style="width:48px;height:48px;font-size:1.25rem;margin-bottom:var(--sp-3)"><i class="bi bi-arrow-return-left"></i></div>
+                                <div class="empty-state-desc" style="margin-bottom:0">{% t "no_returns" %}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Timeline Tab -->
+    <div class="tab-content" id="panel-timeline">
+        <div class="card-pro-body">
+            <div class="timeline-pro">
+                {% if sale.created_at %}
+                <div class="timeline-item">
+                    <div class="timeline-dot primary"><i class="bi bi-plus-circle"></i></div>
+                    <div class="timeline-content">
+                        <div class="text-pro-sm fw-500">{% t "sale_created" %}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ sale.created_at|date:"d.m.Y H:i" }} &middot; {{ sale.created_by.get_full_name|default:sale.created_by.email }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if sale.status != 'draft' %}
+                <div class="timeline-item">
+                    <div class="timeline-dot success"><i class="bi bi-check-circle"></i></div>
+                    <div class="timeline-content">
+                        <div class="text-pro-sm fw-500">{% t "confirmed" %}</div>
+                        <div class="text-pro-xs text-pro-muted">{% t "status_changed_to" %} {% t "confirmed" %}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% for p in payments %}
+                <div class="timeline-item">
+                    <div class="timeline-dot info"><i class="bi bi-wallet2"></i></div>
+                    <div class="timeline-content">
+                        <div class="text-pro-sm fw-500">{% t "payment_received" %}: ${{ p.amount|floatformat:2 }}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ p.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% for r in returns %}
+                <div class="timeline-item">
+                    <div class="timeline-dot warning"><i class="bi bi-arrow-return-left"></i></div>
+                    <div class="timeline-content">
+                        <div class="text-pro-sm fw-500">{% t "return" %}: {{ r.reference }}</div>
+                        <div class="text-pro-xs text-pro-muted">{{ r.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if sale.status == 'completed' %}
+                <div class="timeline-item">
+                    <div class="timeline-dot success"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="timeline-content">
+                        <div class="text-pro-sm fw-500">{% t "completed" %}</div>
+                        <div class="text-pro-xs text-pro-muted">{% t "sale_completed" %}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" action="{% url 'sales:sale_reserve' pk=sale.pk %}" id="reserveForm" style="display:none">{% csrf_token %}</form>
+
+<div id="paymentModal" style="display:none;position:fixed;inset:0;background:var(--bg-overlay);z-index:var(--z-dropdown);align-items:center;justify-content:center">
+    <div class="card-pro" style="width:420px;max-width:90vw">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-wallet2" style="color:var(--primary-600)"></i> {% t "record_payment" %}</span>
+            <button class="btn-pro btn-pro-ghost btn-pro-icon btn-pro-sm" onclick="document.getElementById('paymentModal').style.display='none'" type="button"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form method="post" action="{% url 'sales:sale_payment_create' pk=sale.pk %}">
+            {% csrf_token %}
+            <div class="card-pro-body">
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "amount" %} <span class="required">*</span></label>
+                    <input class="input-pro" type="number" name="amount" min="0.01" step="0.01" required placeholder="0.00" {% if outstanding > 0 %}value="{{ outstanding }}"{% endif %}>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "payment_method" %}</label>
+                    <select class="input-pro" name="payment_method">
+                        <option value="cash">{% t "cash" %}</option>
+                        <option value="card">{% t "card" %}</option>
+                        <option value="transfer">{% t "transfer" %}</option>
+                        <option value="online">{% t "online" %}</option>
+                        <option value="other">{% t "other" %}</option>
+                    </select>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    <textarea class="input-pro" name="notes" rows="2" placeholder="{% t "additional_notes" %}..."></textarea>
+                </div>
+            </div>
+            <div class="card-pro-header" style="border-top:1px solid var(--border-default);justify-content:flex-end;gap:var(--sp-2)">
+                <button type="button" class="btn-pro btn-pro-ghost btn-pro-sm" onclick="document.getElementById('paymentModal').style.display='none'">{% t "cancel" %}</button>
+                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "save_payment" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-btn{padding:var(--sp-3) var(--sp-4);border:none;background:none;color:var(--text-secondary);font-size:var(--text-sm);font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--transition-fast);white-space:nowrap;display:flex;align-items:center;gap:var(--sp-2);font-family:var(--font-sans)}
+    .tab-btn:hover{color:var(--text-primary);background:var(--bg-surface-hover)}
+    .tab-btn.active{color:var(--primary-600);border-bottom-color:var(--primary-600);font-weight:600}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .timeline-pro{position:relative;padding-left:var(--sp-8)}
+    .timeline-item{position:relative;padding-bottom:var(--sp-5)}
+    .timeline-item:last-child{padding-bottom:0}
+    .timeline-item::before{content:'';position:absolute;left:-17px;top:24px;bottom:0;width:2px;background:var(--border-default)}
+    .timeline-item:last-child::before{display:none}
+    .timeline-dot{position:absolute;left:-24px;top:2px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:#fff;flex-shrink:0}
+    .timeline-dot.primary{background:var(--primary-600)}
+    .timeline-dot.success{background:var(--success-600)}
+    .timeline-dot.warning{background:var(--warning-600)}
+    .timeline-dot.danger{background:var(--danger-600)}
+    .timeline-dot.info{background:var(--info-600)}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById('panel-' + tab).classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ doc.number }} — {% t "document_preview" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="breadcrumb-link">{{ doc.number }}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "document_preview" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "document_preview" %} — {{ doc.number }}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'documents:document_print' pk=doc.pk %}" class="btn-pro btn-pro-primary btn-pro-sm" target="_blank">
+            <i class="bi bi-printer"></i> {% t "print_document" %}
+        </a>
+    </div>
+</div>
+
+<div class="card-pro" style="max-width:900px;margin:0 auto">
+    <div class="card-pro-body" style="padding:var(--sp-8)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-8)">
+            <div>
+                <h2 style="margin:0;font-size:var(--text-2xl);font-weight:700">SKLAT PRO</h2>
+                <p class="cell-muted" style="margin:var(--sp-1) 0 0">{% t "company_address" %}</p>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:var(--text-2xl);font-weight:700">{{ doc.number }}</div>
+                <span class="badge-pro badge-pro-info" style="margin-top:var(--sp-1)">{{ doc.get_doc_type_display }}</span>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:var(--sp-8);margin-bottom:var(--sp-8)">
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm);margin-bottom:var(--sp-1)">{% t "date" %}</div>
+                <div>{{ doc.date|date:"d.m.Y" }}</div>
+            </div>
+            {% if doc.due_date %}
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm);margin-bottom:var(--sp-1)">{% t "due_date" %}</div>
+                <div>{{ doc.due_date|date:"d.m.Y" }}</div>
+            </div>
+            {% endif %}
+            {% if doc.customer %}
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm);margin-bottom:var(--sp-1)">{% t "customer" %}</div>
+                <div>{{ doc.customer.name }}</div>
+            </div>
+            {% endif %}
+            {% if doc.supplier %}
+            <div>
+                <div class="cell-muted" style="font-size:var(--text-sm);margin-bottom:var(--sp-1)">{% t "supplier" %}</div>
+                <div>{{ doc.supplier.name }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive" style="margin-bottom:var(--sp-6)">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{% t "description" %}</th>
+                        <th>{% t "quantity" %}</th>
+                        <th>{% t "unit_price" %}</th>
+                        <th>{% t "discount" %}</th>
+                        <th>{% t "tax" %}</th>
+                        <th>{% t "line_total" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="cell-muted">{{ forloop.counter }}</td>
+                        <td>{{ item.description|default:"—" }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|floatformat:2 }}</td>
+                        <td>{{ item.discount|floatformat:2 }}</td>
+                        <td>{{ item.tax|floatformat:2 }}</td>
+                        <td class="cell-primary fw-600">{{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state" style="padding:var(--sp-4)">
+                                <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                                <h5 class="empty-state-title">{% t "no_items" %}</h5>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="max-width:300px;margin-left:auto;margin-bottom:var(--sp-8)">
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                <span class="cell-muted">{% t "subtotal" %}</span>
+                <span>{{ doc.subtotal|floatformat:2 }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                <span class="cell-muted">{% t "tax" %}</span>
+                <span>{{ doc.tax|floatformat:2 }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)">
+                <span class="cell-muted">{% t "discount" %}</span>
+                <span>{{ doc.discount|floatformat:2 }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-3) 0">
+                <span class="fw-600">{% t "total_amount" %}</span>
+                <span class="fw-600 cell-primary" style="font-size:var(--text-lg)">{{ doc.total|floatformat:2 }} {{ doc.currency }}</span>
+            </div>
+        </div>
+
+        {% if doc.notes %}
+        <div style="margin-bottom:var(--sp-8)">
+            <div class="cell-muted" style="font-size:var(--text-sm);margin-bottom:var(--sp-1)">{% t "notes" %}</div>
+            <p>{{ doc.notes|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+
+        <div style="display:flex;justify-content:space-between;margin-top:var(--sp-12)">
+            <div style="text-align:center;width:200px">
+                <div style="border-top:1px solid var(--text-primary);padding-top:var(--sp-2)">{% t "created_by" %}</div>
+            </div>
+            <div style="text-align:center;width:200px">
+                <div style="border-top:1px solid var(--text-primary);padding-top:var(--sp-2)">{% t "authorized_signature" %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_budgets" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_budgets" %}</h1>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-6">
+    <a href="{% url 'finance:budget_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "fin_create_budget" %}</a>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "fin_name" %}</th>
+                    <th>{% t "fin_category" %}</th>
+                    <th>{% t "fin_period" %}</th>
+                    <th>{% t "fin_year" %}</th>
+                    <th>{% t "fin_month" %}</th>
+                    <th>{% t "fin_planned" %}</th>
+                    <th>{% t "fin_actual" %}</th>
+                    <th>{% t "fin_variance" %}</th>
+                    <th>{% t "fin_variance_pct" %}</th>
+                    <th>{% t "status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in page_obj %}
+                <tr>
+                    <td class="cell-primary fw-500">{{ b.name }}</td>
+                    <td>{{ b.category }}</td>
+                    <td>{{ b.get_period_type_display }}</td>
+                    <td>{{ b.year }}</td>
+                    <td>{{ b.month|default:"-" }}</td>
+                    <td>${{ b.planned_amount|floatformat:2 }}</td>
+                    <td>${{ b.actual_amount|floatformat:2 }}</td>
+                    <td class="fw-600" style="color:{% if b.variance > 0 %}var(--danger-500){% elif b.variance < 0 %}var(--success-600){% else %}var(--text-primary){% endif %}">${{ b.variance|floatformat:2 }}</td>
+                    <td style="color:{% if b.variance_pct > 0 %}var(--danger-500){% elif b.variance_pct < 0 %}var(--success-600){% else %}var(--text-primary){% endif %}">{{ b.variance_pct }}%</td>
+                    <td>
+                        {% if b.status == 'active' %}
+                            <span class="badge-pro badge-pro-success">{% t "active" %}</span>
+                        {% else %}
+                            <span class="badge-pro badge-pro-info">{% t "fin_closed" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_budgets" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

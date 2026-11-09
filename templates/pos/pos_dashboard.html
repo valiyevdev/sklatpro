@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "pos" %} {% t "dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+.pos-mobile-view { display: none; }
+
+@media (max-width: 767px) {
+  .pos-desktop-view { display: none !important; }
+  .pos-mobile-view { display: block !important; }
+
+  .pos-nav-desktop { display: none !important; }
+  .pos-nav-mobile { display: inline !important; }
+  .page-actions {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+  }
+  .page-actions .btn-pro {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  .page-actions .btn-pro i {
+    font-size: 14px !important;
+  }
+  .grid.grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .grid.grid-2.gap-6 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .pos-nav-mobile { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .grid.grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ===== PAYMENT BREAKDOWN CARDS ===== */
+.pos-pay-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.pos-pay-card:last-child { margin-bottom: 0; }
+.pos-pay-card-left { display: flex; align-items: center; gap: 8px; }
+.pos-pay-card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.pos-pay-total { font-size: 14px; color: var(--text-primary); }
+
+/* ===== RECEIPT CHECK CARDS ===== */
+.pos-check-card {
+  display: block;
+  padding: 12px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast);
+}
+.pos-check-card:last-child { margin-bottom: 0; }
+.pos-check-card:hover { border-color: var(--border-default); }
+.pos-check-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.pos-check-number {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.pos-check-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.pos-check-date { color: var(--text-muted); }
+.pos-check-bottom {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.pos-mobile-empty {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================
+   POS Boshqaruv paneli — modern FinTech / glassmorphism UI
+   ========================================================== */
+
+/* ---------- 1. Top action cards ---------- */
+.pos-top-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pos-top-action {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 92px;
+  padding: 18px 14px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 18px rgba(2, 6, 23, 0.35);
+  text-decoration: none;
+  color: var(--text-primary, #f1f5f9);
+  overflow: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+.pos-top-action__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  font-size: 20px;
+  color: var(--text-secondary, #cbd5e1);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  transition: color 0.22s ease, background 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+}
+.pos-top-action__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f1f5f9);
+  white-space: nowrap;
+}
+.pos-top-action:hover {
+  transform: translateY(-3px);
+  border-color: rgba(129, 140, 248, 0.5);
+  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.22);
+}
+.pos-top-action:hover .pos-top-action__icon {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(129, 140, 248, 0.4);
+  transform: scale(1.06);
+}
+.pos-top-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.55);
+}
+
+/* Active state — violet → blue gradient with neon glow */
+.pos-top-action--active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 45%, #2563eb 100%);
+  border-color: rgba(129, 140, 248, 0.65);
+  box-shadow: 0 8px 26px rgba(79, 70, 229, 0.45), 0 0 0 1px rgba(165, 180, 252, 0.2) inset;
+}
+.pos-top-action--active .pos-top-action__icon {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.pos-top-action--active .pos-top-action__label { color: #ffffff; }
+.pos-top-action--active:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(79, 70, 229, 0.55);
+}
+.pos-top-action--active:hover .pos-top-action__icon {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+.pos-top-action__glow {
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.pos-top-action > *:not(.pos-top-action__glow) { position: relative; z-index: 1; }
+
+/* ---------- 2. Metric cards ---------- */
+.pos-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 1024px) {
+  .pos-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .pos-metrics-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.pos-metric-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 22px 24px;
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 6px 22px rgba(2, 6, 23, 0.32);
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+.pos-metric-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.9), rgba(37, 99, 235, 0.4));
+  opacity: 0.75;
+}
+.pos-metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(129, 140, 248, 0.4);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+}
+.pos-metric-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.pos-metric-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted, #94a3b8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-metric-card__value {
+  font-size: clamp(1.375rem, 1.1rem + 0.7vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text-primary, #f8fafc);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.pos-metric-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 15px;
+  font-size: 21px;
+  border: 1px solid transparent;
+  transition: transform 0.22s ease;
+}
+.pos-metric-card:hover .pos-metric-card__icon { transform: scale(1.08) rotate(-4deg); }
+.pos-metric-card__icon--primary {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(129, 140, 248, 0.26);
+  color: #a5b4fc;
+}
+.pos-metric-card__icon--violet {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.26);
+  color: #c4b5fd;
+}
+.pos-metric-card__icon--success {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(52, 211, 153, 0.26);
+  color: #34d399;
+}
+.pos-metric-card__icon--info {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(96, 165, 250, 0.26);
+  color: #60a5fa;
+}
+.pos-metric-card__icon--warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+/* ---------- 3. Bottom widgets — glassmorphism shells ---------- */
+.pos-tables-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+@media (max-width: 1024px) {
+  .pos-tables-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+.pos-widget {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 6px 24px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+.pos-widget::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.4), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.pos-widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(51, 65, 85, 0.3) 0%, rgba(30, 41, 59, 0.08) 100%);
+}
+.pos-widget__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.pos-widget__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  font-size: 18px;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.14);
+  border: 1px solid rgba(129, 140, 248, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.pos-widget__icon--violet {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.28);
+}
+.pos-widget__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pos-widget__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #a5b4fc;
+  text-decoration: none;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.pos-widget__link i {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+.pos-widget__link:hover {
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(129, 140, 248, 0.45);
+}
+.pos-widget__link:hover i { transform: translateX(3px); }
+.pos-widget__body {
+  flex: 1;
+  min-width: 0;
+}
+.pos-widget .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- 4. Tables ---------- */
+.pos-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.pos-table__thead {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(30, 41, 59, 0.3) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.pos-table__th {
+  padding: 13px 20px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--text-muted, #94a3b8);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+.pos-table__th.pos-num { text-align: right; }
+.pos-table__row {
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.pos-table__row:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+.pos-table__row:hover .pos-table__td:first-child {
+  box-shadow: inset 3px 0 0 rgba(129, 140, 248, 0.85);
+}
+.pos-table__row:not(:last-child) .pos-table__td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.pos-table__td {
+  padding: 15px 20px;
+  vertical-align: middle;
+  font-size: 14px;
+  color: var(--text-secondary, #cbd5e1);
+  transition: color 0.2s ease;
+}
+.pos-table__td.pos-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pos-table__amount {
+  font-weight: 700;
+  color: var(--text-primary, #f1f5f9);
+}
+.pos-table__link {
+  color: var(--text-primary, #f1f5f9);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.pos-table__link:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
+}
+
+/* ---------- 5. Modern animated empty states ---------- */
+.pos-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 44px 24px;
+  text-align: center;
+}
+.pos-empty__icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+}
+.pos-empty__icon-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.24) 0%, rgba(99, 102, 241, 0) 70%);
+  filter: blur(4px);
+  animation: pos-empty-pulse 3s ease-in-out infinite;
+}
+.pos-empty__icon-circle {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.24) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  animation: float 3s ease-in-out infinite;
+}
+.pos-empty__icon-circle--violet {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.26) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+.pos-empty__icon {
+  font-size: 28px;
+  color: #a5b4fc;
+}
+.pos-empty__icon-circle--violet .pos-empty__icon { color: #c4b5fd; }
+.pos-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f1f5f9);
+}
+.pos-empty__desc {
+  margin: 0;
+  max-width: 260px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted, #94a3b8);
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pos-empty-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.12); opacity: 0.85; }
+}
+
+/* ---------- 6. Mobile cards inside widgets ---------- */
+.pos-widget .pos-pay-card,
+.pos-widget .pos-check-card {
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.pos-widget .pos-check-card:hover,
+.pos-widget .pos-pay-card:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(129, 140, 248, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ---------- 7. Overflow & motion ---------- */
+.pos-top-actions, .pos-metrics-grid { max-width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .pos-top-action, .pos-metric-card, .pos-metric-card__icon { transition: none; }
+  .pos-top-action:hover, .pos-metric-card:hover { transform: none; }
+  .pos-empty__icon-wrap::before,
+  .pos-empty__icon-circle { animation: none; }
+  .pos-widget .pos-check-card:hover,
+  .pos-widget .pos-pay-card:hover { transform: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- POS Header Card — section landing page, so no back arrow here. -->
+<div class="page-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 20px; padding: 12px 14px; border-radius: 16px; background-color: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(8px); box-shadow: var(--glass-shadow);">
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">POS Boshqaruv paneli</h1>
+    </div>
+</div>
+
+<!-- POS Navigation Tabs -->
+<div class="pos-top-actions">
+    <a href="{% url 'pos:terminal_list' %}" class="pos-top-action">
+        <div class="pos-top-action__icon">
+            <i class="bi bi-pc-display"></i>
+        </div>
+        <span class="pos-top-action__label">Terminal</span>
+    </a>
+    <a href="{% url 'pos:shift_list' %}" class="pos-top-action">
+        <div class="pos-top-action__icon">
+            <i class="bi bi-clock-history"></i>
+        </div>
+        <span class="pos-top-action__label">Smena</span>
+    </a>
+    <a href="{% url 'pos:receipt_list' %}" class="pos-top-action">
+        <div class="pos-top-action__icon">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <span class="pos-top-action__label">Chek</span>
+    </a>
+    <a href="{% url 'pos:workspace' %}" class="pos-top-action pos-top-action--active">
+        <div class="pos-top-action__icon">
+            <i class="bi bi-pc-display-horizontal"></i>
+        </div>
+        <span class="pos-top-action__label">Ish rejimi</span>
+        <div class="pos-top-action__glow"></div>
+    </a>
+</div>
+
+<div class="pos-metrics-grid">
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_receipts_today" %}</div>
+            <div class="pos-metric-card__value">{{ receipts_today }}</div>
+        </div>
+        <div class="pos-metric-card__icon pos-metric-card__icon--primary">
+            <i class="bi bi-receipt"></i>
+        </div>
+    </div>
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_sales_today" %}</div>
+            <div class="pos-metric-card__value">{{ sales_today|floatformat:0 }}</div>
+        </div>
+        <div class="pos-metric-card__icon pos-metric-card__icon--success">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+    </div>
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_receipts_month" %}</div>
+            <div class="pos-metric-card__value">{{ receipts_month }}</div>
+        </div>
+        <div class="pos-metric-card__icon pos-metric-card__icon--info">
+            <i class="bi bi-calendar-range"></i>
+        </div>
+    </div>
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_sales_month" %}</div>
+            <div class="pos-metric-card__value">{{ sales_month|floatformat:0 }}</div>
+        </div>
+        <div class="pos-metric-card__icon pos-metric-card__icon--violet">
+            <i class="bi bi-graph-up"></i>
+        </div>
+    </div>
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_open_shifts" %}</div>
+            <div class="pos-metric-card__value">{{ open_shifts }}</div>
+        </div>
+        <div class="pos-metric-card__icon {% if open_shifts > 0 %}pos-metric-card__icon--warning{% else %}pos-metric-card__icon--success{% endif %}">
+            <i class="bi bi-door-open"></i>
+        </div>
+    </div>
+    <div class="pos-metric-card">
+        <div class="pos-metric-card__content">
+            <div class="pos-metric-card__label">{% t "pos_active_terminals" %}</div>
+            <div class="pos-metric-card__value">{{ active_terminals }}</div>
+        </div>
+        <div class="pos-metric-card__icon pos-metric-card__icon--info">
+            <i class="bi bi-pc-display"></i>
+        </div>
+    </div>
+</div>
+
+<div class="pos-tables-grid">
+    {# ===== PAYMENT BREAKDOWN ===== #}
+    <div class="pos-widget">
+        <div class="pos-widget__header">
+            <div class="pos-widget__heading">
+                <span class="pos-widget__icon"><i class="bi bi-wallet2"></i></span>
+                <h2 class="pos-widget__title">{% t "pos_payment_breakdown" %}</h2>
+            </div>
+            <a href="{% url 'pos:receipt_list' %}" class="pos-widget__link">{% t "pos_all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="pos-widget__body">
+        {# Desktop table #}
+        <div class="table-responsive pos-desktop-view">
+            <table class="table-pro pos-table">
+                <thead class="pos-table__thead">
+                    <tr>
+                        <th class="pos-table__th">{% t "pos_payment_method" %}</th>
+                        <th class="pos-table__th pos-num">{% t "pos_count" %}</th>
+                        <th class="pos-table__th pos-num">{% t "pos_total" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="pos-table__tbody">
+                    {% for pb in payment_breakdown %}
+                    <tr class="pos-table__row">
+                        <td class="pos-table__td">
+                            {% if pb.payment_method == 'cash' %}
+                                <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "pos_cash" %}</span>
+                            {% elif pb.payment_method == 'card' %}
+                                <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "pos_card" %}</span>
+                            {% elif pb.payment_method == 'transfer' %}
+                                <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "pos_transfer" %}</span>
+                            {% elif pb.payment_method == 'online' %}
+                                <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "pos_online" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral">{{ pb.payment_method }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="pos-table__td pos-num">{{ pb.count }}</td>
+                        <td class="pos-table__td pos-num pos-table__amount">{{ pb.total|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="pos-empty">
+                                <div class="pos-empty__icon-wrap">
+                                    <span class="pos-empty__icon-circle">
+                                        <i class="bi bi-wallet2 pos-empty__icon" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                                <p class="pos-empty__title">{% t "pos_no_payments_today" %}</p>
+                                <p class="pos-empty__desc">Bugun to'lovlar qayd etilmagan</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Mobile cards #}
+        <div class="pos-mobile-view pos-payment-cards">
+            {% for pb in payment_breakdown %}
+            <div class="pos-pay-card">
+                <div class="pos-pay-card-left">
+                    {% if pb.payment_method == 'cash' %}
+                        <span class="badge-pro badge-pro-success"><i class="bi bi-cash"></i> {% t "pos_cash" %}</span>
+                    {% elif pb.payment_method == 'card' %}
+                        <span class="badge-pro badge-pro-info"><i class="bi bi-credit-card"></i> {% t "pos_card" %}</span>
+                    {% elif pb.payment_method == 'transfer' %}
+                        <span class="badge-pro badge-pro-primary"><i class="bi bi-bank"></i> {% t "pos_transfer" %}</span>
+                    {% elif pb.payment_method == 'online' %}
+                        <span class="badge-pro badge-pro-warning"><i class="bi bi-globe"></i> {% t "pos_online" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral">{{ pb.payment_method }}</span>
+                    {% endif %}
+                </div>
+                <div class="pos-pay-card-right">
+                    <span class="pos-pay-count">{{ pb.count }}</span>
+                    <span class="pos-pay-total fw-600">{{ pb.total|floatformat:0 }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="pos-empty">
+                <div class="pos-empty__icon-wrap">
+                    <span class="pos-empty__icon-circle">
+                        <i class="bi bi-wallet2 pos-empty__icon" aria-hidden="true"></i>
+                    </span>
+                </div>
+                <p class="pos-empty__title">{% t "pos_no_payments_today" %}</p>
+                <p class="pos-empty__desc">Bugun to'lovlar qayd etilmagan</p>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+
+    {# ===== RECENT RECEIPTS ===== #}
+    <div class="pos-widget">
+        <div class="pos-widget__header">
+            <div class="pos-widget__heading">
+                <span class="pos-widget__icon pos-widget__icon--violet"><i class="bi bi-receipt"></i></span>
+                <h2 class="pos-widget__title">{% t "pos_recent_receipts" %}</h2>
+            </div>
+            <a href="{% url 'pos:receipt_list' %}" class="pos-widget__link">{% t "pos_all" %} <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="pos-widget__body">
+        {# Desktop table #}
+        <div class="table-responsive pos-desktop-view">
+            <table class="table-pro pos-table">
+                <thead class="pos-table__thead">
+                    <tr>
+                        <th class="pos-table__th">{% t "pos_receipt_number" %}</th>
+                        <th class="pos-table__th">{% t "pos_customer" %}</th>
+                        <th class="pos-table__th pos-num">{% t "pos_total" %}</th>
+                        <th class="pos-table__th">{% t "pos_status" %}</th>
+                        <th class="pos-table__th">{% t "pos_date" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="pos-table__tbody">
+                    {% for r in recent_receipts %}
+                    <tr class="pos-table__row">
+                        <td class="pos-table__td cell-primary">
+                            <a href="{% url 'pos:receipt_detail' pk=r.pk %}" class="pos-table__link">{{ r.receipt_number }}</a>
+                        </td>
+                        <td class="pos-table__td">{{ r.customer.name|default:"—" }}</td>
+                        <td class="pos-table__td pos-num pos-table__amount">{{ r.total|floatformat:0 }}</td>
+                        <td class="pos-table__td">
+                            {% if r.status == 'completed' %}
+                                <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                            {% elif r.status == 'cancelled' %}
+                                <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                            {% elif r.status == 'refunded' %}
+                                <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_refunded" %}</span>
+                            {% else %}
+                                <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="pos-table__td cell-muted">{{ r.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="pos-empty">
+                                <div class="pos-empty__icon-wrap">
+                                    <span class="pos-empty__icon-circle pos-empty__icon-circle--violet">
+                                        <i class="bi bi-receipt-cutoff pos-empty__icon" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                                <p class="pos-empty__title">{% t "pos_no_receipts" %}</p>
+                                <p class="pos-empty__desc">Hozircha hech qanday chek qayd etilmagan</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Mobile cards #}
+        <div class="pos-mobile-view pos-check-cards">
+            {% for r in recent_receipts %}
+            <a href="{% url 'pos:receipt_detail' pk=r.pk %}" class="pos-check-card">
+                <div class="pos-check-top">
+                    <span class="pos-check-number">{{ r.receipt_number }}</span>
+                    {% if r.status == 'completed' %}
+                        <span class="badge-pro badge-pro-success badge-pro-dot">{% t "pos_completed" %}</span>
+                    {% elif r.status == 'cancelled' %}
+                        <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "pos_cancelled" %}</span>
+                    {% elif r.status == 'refunded' %}
+                        <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "pos_refunded" %}</span>
+                    {% else %}
+                        <span class="badge-pro badge-pro-neutral badge-pro-dot">{{ r.get_status_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="pos-check-mid">
+                    <span>{{ r.customer.name|default:"—" }}</span>
+                    <span class="pos-check-date">{{ r.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                <div class="pos-check-bottom fw-600">{{ r.total|floatformat:0 }}</div>
+            </a>
+            {% empty %}
+            <div class="pos-empty">
+                <div class="pos-empty__icon-wrap">
+                    <span class="pos-empty__icon-circle pos-empty__icon-circle--violet">
+                        <i class="bi bi-receipt-cutoff pos-empty__icon" aria-hidden="true"></i>
+                    </span>
+                </div>
+                <p class="pos-empty__title">{% t "pos_no_receipts" %}</p>
+                <p class="pos-empty__desc">Hozircha hech qanday chek qayd etilmagan</p>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

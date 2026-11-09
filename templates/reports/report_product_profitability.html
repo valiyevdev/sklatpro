@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="text-pro-2xl fw-bold">{% t "product_profitability" %}</h1>
+    </div>
+
+    <div class="card-pro">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div class="d-flex flex-column gap-1">
+                <label class="text-pro-sm fw-semibold">{% t "warehouse" %}</label>
+                <select name="warehouse" class="form-select">
+                    <option value="">{% t "all_warehouses" %}</option>
+                    {% for wh in warehouses %}
+                    <option value="{{ wh.id }}" {% if wh.id|stringformat:"s" == selected_warehouse %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 flex-wrap">
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total_revenue" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ total_revenue|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total_cost" %}</span>
+            <span class="text-pro-2xl fw-bold">{{ total_cost|floatformat:0 }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="text-pro-sm text-pro-muted">{% t "total_profit" %}</span>
+            <span class="text-pro-2xl fw-bold {% if total_profit >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{{ total_profit|floatformat:0 }}</span>
+        </div>
+    </div>
+
+    <div class="card-pro">
+        <div class="table-pro-wrapper">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>{% t "product" %}</th>
+                        <th>{% t "revenue" %}</th>
+                        <th>{% t "cost" %}</th>
+                        <th>{% t "profit" %}</th>
+                        <th>{% t "margin" %}</th>
+                        <th>{% t "units_sold" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in product_data %}
+                    <tr>
+                        <td class="fw-semibold">{{ row.product }}</td>
+                        <td>{{ row.revenue|floatformat:0 }}</td>
+                        <td>{{ row.cost|floatformat:0 }}</td>
+                        <td>
+                            <span class="{% if row.profit >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %} fw-semibold">
+                                {{ row.profit|floatformat:0 }}
+                            </span>
+                        </td>
+                        <td>{{ row.margin|floatformat:1 }}%</td>
+                        <td>{{ row.units_sold|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-pro-muted">{% t "no_data" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

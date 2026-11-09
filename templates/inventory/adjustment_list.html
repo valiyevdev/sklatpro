@@ -1,0 +1,538 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "stock_adjustments" %} | SKLAT PRO{% endblock %}
+
+{% block content %}
+<style>
+  .app-content {
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .app-content { padding: 1.5rem; }
+  }
+
+  @media (min-width: 1024px) {
+    .app-content { padding: 2rem; }
+  }
+
+  .adj-create {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background-color: #4f46e5;
+    background-image: linear-gradient(to right, #4f46e5, #7c3aed);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 10px 20px -8px rgba(49, 46, 129, 0.65);
+    transition: background-image 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  }
+
+  .adj-create:hover {
+    background-image: linear-gradient(to right, #6366f1, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 14px 26px -8px rgba(79, 70, 229, 0.7);
+    transform: translateY(-1px);
+  }
+
+  .adj-create:active {
+    transform: translateY(0);
+  }
+
+  .adj-create:focus-visible,
+  .adj-view:focus-visible,
+  .adj-mcard__action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.45);
+  }
+
+  .adj-create i {
+    font-size: 1rem;
+  }
+
+  .adj-card {
+    padding: 24px;
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35),
+                0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  }
+
+  .adj-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  .adj-table {
+    width: 100%;
+    min-width: 880px;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .adj-table thead th {
+    padding: 0 16px 12px;
+    border-bottom: 1px solid #1e293b;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .adj-table thead th:first-child {
+    padding-left: 8px;
+  }
+
+  .adj-table thead th:last-child {
+    padding-right: 8px;
+    text-align: right;
+  }
+
+  .adj-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.7);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    vertical-align: middle;
+  }
+
+  .adj-table tbody td:first-child {
+    padding-left: 8px;
+  }
+
+  .adj-table tbody td:last-child {
+    padding-right: 8px;
+    text-align: right;
+  }
+
+  .adj-table tbody tr {
+    transition: background 150ms ease;
+  }
+
+  .adj-table tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.45);
+  }
+
+  .adj-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .adj-ref {
+    color: var(--text-primary, #f1f5f9);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .adj-reason {
+    max-width: 260px;
+    color: var(--text-muted, #64748b);
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .adj-date {
+    color: var(--text-muted, #64748b);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .adj-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(51, 65, 85, 0.8);
+    border-radius: 10px;
+    background: rgba(30, 41, 59, 0.55);
+    color: #cbd5e1;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+
+  .adj-view:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.16);
+    color: #a5b4fc;
+  }
+
+  .adj-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .adj-mcard {
+    padding: 16px;
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.55);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.45);
+  }
+
+  .adj-mcard__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .adj-mcard__top .adj-ref {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .adj-mcard__top .badge-pro {
+    flex-shrink: 0;
+  }
+
+  .adj-mcard__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin: 14px 0 0;
+  }
+
+  .adj-mcard__meta div {
+    min-width: 0;
+  }
+
+  .adj-mcard__meta dt {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .adj-mcard__meta dd {
+    margin: 2px 0 0;
+    color: var(--text-primary, #f1f5f9);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .adj-mcard__reason {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(30, 41, 59, 0.7);
+  }
+
+  .adj-mcard__reason span {
+    color: #64748b;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .adj-mcard__reason p {
+    margin: 3px 0 0;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .adj-mcard__action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid rgba(51, 65, 85, 0.8);
+    border-radius: 10px;
+    background: rgba(30, 41, 59, 0.55);
+    color: #cbd5e1;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+
+  .adj-mcard__action:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.16);
+    color: #a5b4fc;
+  }
+
+  @media (max-width: 767px) {
+    .adj-desk { display: none; }
+    .adj-card { padding: 16px; }
+  }
+
+  @media (min-width: 768px) {
+    .adj-cards { display: none; }
+  }
+
+  .adj-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 340px;
+    padding: 32px 16px;
+    text-align: center;
+  }
+
+  .adj-empty__title {
+    margin: 0;
+    color: var(--text-primary, #f1f5f9);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .adj-empty__desc {
+    margin: 6px auto 22px;
+    max-width: 22rem;
+    color: var(--text-muted, #64748b);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .adj-empty .adj-create {
+    min-height: 44px;
+    padding: 0 20px;
+  }
+
+  .adj-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #1e293b;
+  }
+
+  .adj-footer__count {
+    color: var(--text-muted, #64748b);
+    font-size: 0.8125rem;
+  }
+
+  [data-theme="light"] .adj-card {
+    border-color: rgba(203, 213, 225, 0.9);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1),
+                0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  }
+
+  [data-theme="light"] .adj-table thead th {
+    border-bottom-color: #e2e8f0;
+    color: #64748b;
+  }
+
+  [data-theme="light"] .adj-table tbody td {
+    border-bottom-color: #e2e8f0;
+    color: #475569;
+  }
+
+  [data-theme="light"] .adj-table tbody tr:hover td {
+    background: #f8fafc;
+  }
+
+  [data-theme="light"] .adj-mcard {
+    border-color: #e2e8f0;
+    background: #ffffff;
+  }
+
+  [data-theme="light"] .adj-mcard__reason {
+    border-top-color: #e2e8f0;
+  }
+
+  [data-theme="light"] .adj-view,
+  [data-theme="light"] .adj-mcard__action {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  [data-theme="light"] .adj-footer {
+    border-top-color: #e2e8f0;
+  }
+
+  @media (max-width: 480px) {
+    .adj-create {
+      width: 100%;
+    }
+
+    .adj-empty {
+      min-height: 300px;
+      padding: 24px 8px;
+    }
+  }
+</style>
+
+<header class="page-header">
+  <div class="page-header-content">
+    <h1 class="page-title">{% t "stock_adjustments" %}</h1>
+    <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "adjustments_total" %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'adjustment_create' %}" class="adj-create">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      {% t "create_adjustment" %}
+    </a>
+  </div>
+</header>
+
+{% if page_obj.paginator.count %}
+<div class="adj-cards">
+  {% for adj in page_obj %}
+  <article class="adj-mcard">
+    <div class="adj-mcard__top">
+      <span class="adj-ref" data-allow-truncate>{{ adj.reference }}</span>
+      {% if adj.status == 'draft' %}
+        <span class="badge-pro badge-pro-neutral">{% t "adjustment_status_draft" %}</span>
+      {% elif adj.status == 'pending' %}
+        <span class="badge-pro badge-pro-warning">{% t "adjustment_status_pending" %}</span>
+      {% elif adj.status == 'approved' %}
+        <span class="badge-pro badge-pro-success">{% t "adjustment_status_approved" %}</span>
+      {% elif adj.status == 'completed' %}
+        <span class="badge-pro badge-pro-info">{% t "adjustment_status_completed" %}</span>
+      {% else %}
+        <span class="badge-pro badge-pro-danger">{{ adj.get_status_display }}</span>
+      {% endif %}
+    </div>
+
+    <dl class="adj-mcard__meta">
+      <div>
+        <dt>{% t "warehouse" %}</dt>
+        <dd>{{ adj.warehouse.name|default:"-" }}</dd>
+      </div>
+      <div>
+        <dt>{% t "date" %}</dt>
+        <dd>{{ adj.created_at|date:"d.m.Y" }}</dd>
+      </div>
+      <div>
+        <dt>{% t "created_by" %}</dt>
+        <dd>{{ adj.created_by.get_full_name|default:adj.created_by.email|default:"-" }}</dd>
+      </div>
+    </dl>
+
+    <div class="adj-mcard__reason">
+      <span>{% t "reason" %}</span>
+      <p>{{ adj.reason|default:"-" }}</p>
+    </div>
+
+    <a href="{% url 'adjustment_detail' pk=adj.pk %}" class="adj-mcard__action">
+      <i class="bi bi-eye" aria-hidden="true"></i>
+      {% t "view" %}
+    </a>
+  </article>
+  {% endfor %}
+</div>
+
+<div class="adj-card adj-desk">
+  <div class="adj-scroll">
+    <table class="adj-table">
+      <thead>
+        <tr>
+          <th>{% t "reference" %}</th>
+          <th>{% t "warehouse" %}</th>
+          <th>{% t "reason" %}</th>
+          <th>{% t "status" %}</th>
+          <th>{% t "created_by" %}</th>
+          <th>{% t "date" %}</th>
+          <th>{% t "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adj in page_obj %}
+        <tr>
+          <td><span class="adj-ref">{{ adj.reference }}</span></td>
+          <td>{{ adj.warehouse.name|default:"-" }}</td>
+          <td><div class="adj-reason" data-allow-truncate title="{{ adj.reason|default:'-' }}">{{ adj.reason|default:"-"|truncatechars:40 }}</div></td>
+          <td>
+            {% if adj.status == 'draft' %}
+              <span class="badge-pro badge-pro-neutral">{% t "adjustment_status_draft" %}</span>
+            {% elif adj.status == 'pending' %}
+              <span class="badge-pro badge-pro-warning">{% t "adjustment_status_pending" %}</span>
+            {% elif adj.status == 'approved' %}
+              <span class="badge-pro badge-pro-success">{% t "adjustment_status_approved" %}</span>
+            {% elif adj.status == 'completed' %}
+              <span class="badge-pro badge-pro-info">{% t "adjustment_status_completed" %}</span>
+            {% else %}
+              <span class="badge-pro badge-pro-danger">{{ adj.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td>{{ adj.created_by.get_full_name|default:adj.created_by.email|default:"-" }}</td>
+          <td><span class="adj-date">{{ adj.created_at|date:"d.m.Y" }}</span></td>
+          <td>
+            <a href="{% url 'adjustment_detail' pk=adj.pk %}" class="adj-view" title="{% t "view" %}" aria-label="{% t "view" %}">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="adj-footer">
+    <span class="adj-footer__count">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    <div class="pagination-pro">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" aria-label="{% t "previous" %}"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" aria-label="{% t "next" %}"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="adj-card">
+  <div class="adj-empty">
+    <div class="empty-state-icon adj-empty__icon">
+      <i class="bi bi-sliders" aria-hidden="true"></i>
+    </div>
+    <h2 class="adj-empty__title">{% t "no_adjustments" %}</h2>
+    <p class="adj-empty__desc">{% t "no_adjustments_created" %}</p>
+    <a href="{% url 'adjustment_create' %}" class="adj-create">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      {% t "create_adjustment" %}
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

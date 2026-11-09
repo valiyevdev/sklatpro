@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "rfm_report" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'reports:reports_index' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "rfm_report" %}</h1>
+        <p class="page-subtitle" style="margin-top:4px">{{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}</p>
+    </div>
+</div>
+
+{% include "reports/_filter_bar.html" %}
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ total_customers|floatformat:0 }}</div><div class="stat-card-label">{% t "total_customers" %}</div></div>
+        <div class="stat-card-icon primary"><i class="bi bi-people"></i></div>
+    </div>
+    <div class="stat-card">
+        <div><div class="stat-card-value">{{ total_revenue|floatformat:0 }}</div><div class="stat-card-label">{% t "total_revenue" %}</div></div>
+        <div class="stat-card-icon success"><i class="bi bi-currency-dollar"></i></div>
+    </div>
+</div>
+
+{% if segments %}
+<div class="card-pro">
+    <div class="card-pro-header"><span class="card-pro-title">{% t "rfm_segments" %}</span></div>
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead><tr><th>{% t "segment" %}</th><th>{% t "customers" %}</th><th>{% t "revenue" %}</th><th>{% t "pct_customers" %}</th><th>{% t "pct_revenue" %}</th></tr></thead>
+            <tbody>
+                {% for seg in segments %}
+                <tr>
+                    <td>
+                        {% if seg.name == 'Champions' %}
+                        <span class="badge-pro badge-pro-success">{{ seg.name }}</span>
+                        {% elif seg.name == 'Loyal' %}
+                        <span class="badge-pro badge-pro-primary">{{ seg.name }}</span>
+                        {% elif seg.name == 'Potential' %}
+                        <span class="badge-pro badge-pro-info">{{ seg.name }}</span>
+                        {% elif seg.name == 'At Risk' %}
+                        <span class="badge-pro badge-pro-warning">{{ seg.name }}</span>
+                        {% elif seg.name == 'Lost' %}
+                        <span class="badge-pro badge-pro-danger">{{ seg.name }}</span>
+                        {% else %}
+                        <span class="badge-pro badge-pro-secondary">{{ seg.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-500">{{ seg.count|floatformat:0 }}</td>
+                    <td class="fw-600">{{ seg.revenue|floatformat:0 }}</td>
+                    <td>{{ seg.pct_customers|floatformat:1 }}%</td>
+                    <td>{{ seg.pct_revenue|floatformat:1 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

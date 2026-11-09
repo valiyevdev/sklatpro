@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{% t "new_picking_list" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'warehouses:picking_list' %}">{% t "picking_lists" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{% t "new_picking_list" %}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "new_picking_list" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:720px">
+    <div class="card-pro">
+        <div class="card-pro-header">
+            <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "picking_info" %}</span>
+        </div>
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert-pro alert-pro-danger mb-4">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}{% for error in form.non_field_errors %}{{ error }} {% endfor %}</span>
+                </div>
+                {% endif %}
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "warehouse" %} <span style="color:var(--danger-500)">*</span></label>
+                        {{ form.warehouse }}
+                        {% if form.warehouse.errors %}<div class="input-pro-error">{{ form.warehouse.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "sale" %}</label>
+                        {{ form.sale }}
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "priority" %}</label>
+                        {{ form.priority }}
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "strategy" %}</label>
+                        {{ form.strategy }}
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "picker" %}</label>
+                    {{ form.picker }}
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "notes" %}</label>
+                    {{ form.notes }}
+                </div>
+
+                <div class="d-flex justify-between mt-6">
+                    <a href="{% url 'warehouses:picking_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "create" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@media(max-width:768px){
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+</style>
+{% endblock %}

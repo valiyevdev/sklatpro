@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "create_template" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <a href="{% url 'spiskalar:template_list' %}" class="back-btn" aria-label="Orqaga">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <div class="page-header-content">
+        <h1 class="page-title" style="margin:0">{% t "create_template" %}</h1>
+    </div>
+</div>
+
+<div style="max-width:600px">
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "template_name" %} *</label>
+                    <input class="input-pro" type="text" name="name" required placeholder="Kundalik ombor tekshiruvlari">
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "task_description" %}</label>
+                    <textarea class="input-pro" name="description" rows="3"></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "task_type" %}</label>
+                        <select class="input-pro" name="task_type">
+                            <option value="operational">{% t "task_operational" %}</option>
+                            <option value="warehouse">{% t "task_warehouse" %}</option>
+                            <option value="sales">{% t "task_sales" %}</option>
+                            <option value="customer">{% t "task_customer" %}</option>
+                            <option value="finance">{% t "task_finance" %}</option>
+                            <option value="administrative">{% t "task_administrative" %}</option>
+                            <option value="custom">{% t "task_custom" %}</option>
+                        </select>
+                    </div>
+                    <div class="input-pro-group">
+                        <label class="input-pro-label">{% t "task_priority" %}</label>
+                        <select class="input-pro" name="priority">
+                            <option value="low">{% t "priority_low" %}</option>
+                            <option value="normal" selected>{% t "priority_normal" %}</option>
+                            <option value="high">{% t "priority_high" %}</option>
+                            <option value="urgent">{% t "priority_urgent" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-pro-group">
+                    <label class="input-pro-label">{% t "checklist" %} ({% t "checklist_hint" %})</label>
+                    <textarea class="input-pro" name="checklist_items_text" rows="6" placeholder="Pol tozaligini tekshiring&#10;Yong'in o'chirgichlarni tekshiring&#10;Zaxira darajasini tekshiring&#10;Kutilayotgan buyurtmalarni ko'rib chiqing"></textarea>
+                </div>
+                <div class="d-flex justify-between">
+                    <a href="{% url 'spiskalar:template_list' %}" class="btn-pro btn-pro-secondary">{% t "cancel" %}</a>
+                    <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-check-circle"></i> {% t "create_template" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

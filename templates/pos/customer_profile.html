@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{ customer.name }} · Nasiya</title>
+    <style>
+        body{margin:0;padding:24px;background:#0f172a;color:#e2e8f0;font:15px Arial}.wrap{max-width:980px;margin:auto}
+        .card{background:#172033;border:1px solid #334155;border-radius:14px;padding:18px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        .stat b{display:block;font-size:22px;color:#a7f3d0;margin-top:6px}.muted{color:#94a3b8}.danger{color:#fca5a5}.orange{color:#fdba74}
+        table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #334155}a,button{color:#a7f3d0}
+        button{background:#0f766e;border:0;border-radius:8px;padding:9px 12px;color:#fff;cursor:pointer}.actions{display:flex;gap:8px;flex-wrap:wrap}
+        @media(max-width:650px){body{padding:12px}.grid{grid-template-columns:1fr}.card{overflow:auto}}
+    </style>
+</head>
+<body>
+<main class="wrap">
+    <p><a href="{% url 'pos:debt_ledger' %}">← Nasiya daftari</a></p>
+    <div class="card"><h1>{{ customer.name }}</h1><p class="muted">{{ customer.phone|default:"Telefon yo'q" }}</p><div class="actions"><a href="tel:{{ customer.phone }}"><button>Qo'ng'iroq qilish</button></a><button onclick="copyReminder()">Eslatmani nusxalash</button></div></div>
+    <section class="grid"><div class="card stat">Jami qarz<b>{{ balance|floatformat:0 }} so'm</b></div><div class="card stat">Kredit limiti<b>{% if customer.credit_limit %}{{ customer.credit_limit|floatformat:0 }} so'm{% else %}Cheklanmagan{% endif %}</b></div><div class="card stat">Qolgan limit<b>{% if customer.credit_limit %}{{ available_credit|floatformat:0 }} so'm{% else %}Cheklanmagan{% endif %}</b></div></section>
+    <div class="card"><h2>Qarzlar</h2><table><tr><th>Chek</th><th>Jami</th><th>To'langan</th><th>Qoldiq</th><th>Muddat</th><th>Holat</th></tr>{% for debt in debts %}<tr><td>{{ debt.sale.reference }}</td><td>{{ debt.total|floatformat:0 }}</td><td>{{ debt.paid|floatformat:0 }}</td><td>{{ debt.remaining|floatformat:0 }}</td><td>{{ debt.due_date|date:'d.m.Y' }}</td><td class="{% if debt.status == 'overdue' %}danger{% elif debt.status == 'partial' %}orange{% endif %}">{{ debt.get_status_display }}</td></tr>{% empty %}<tr><td colspan="6">Qarzlar yo'q</td></tr>{% endfor %}</table></div>
+    <div class="card"><h2>To'lovlar tarixi</h2><table><tr><th>Sana</th><th>Summa</th><th>Usul</th><th>Izoh</th></tr>{% for payment in payments %}<tr><td>{{ payment.date|date:'d.m.Y' }}</td><td>{{ payment.amount|floatformat:0 }}</td><td>{{ payment.method }}</td><td>{{ payment.note }}</td></tr>{% empty %}<tr><td colspan="4">To'lovlar yo'q</td></tr>{% endfor %}</table></div>
+    <script>function copyReminder(){const text=`Hurmatli {{ customer.name|escapejs }}, {{ balance|floatformat:0 }} so'm qarzingiz {% for debt in debts %}{% if forloop.first %}{{ debt.due_date|date:'d.m.Y' }}{% endif %}{% endfor %} gacha to'lanishi kerak.`;navigator.clipboard.writeText(text).then(()=>alert('Eslatma nusxalandi'));}</script>
+</main>
+</body>
+</html>

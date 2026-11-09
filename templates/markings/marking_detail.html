@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load i18n_tags %}
+
+{% block title %}{{ code.code }} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-pro">
+    <a href="{% url 'markings:marking_dashboard' %}">{% t "markings_dashboard" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'markings:marking_list' %}">{% t "marking_list" %}</a>
+    <span class="separator">/</span>
+    <span class="current">{{ code.code|truncatechars:30 }}</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div class="d-flex align-center gap-3" style="flex-wrap:wrap">
+            <h1 class="page-title" style="font-size:var(--text-xl)"><code>{{ code.code }}</code></h1>
+            <span class="badge-pro {% if code.status == 'sold' %}badge-pro-success{% elif code.status == 'in_stock' %}badge-pro-info{% elif code.status == 'quarantined' %}badge-pro-warning{% elif code.status == 'cancelled' %}badge-pro-danger{% else %}badge-pro-primary{% endif %}">{{ code.get_status_display }}</span>
+            <span class="badge-pro {% if code.verification_status == 'internal_verified' or code.verification_status == 'external_verified' %}badge-pro-success{% elif code.verification_status == 'rejected' %}badge-pro-danger{% else %}badge-pro-secondary{% endif %}">{{ code.get_verification_status_display }}</span>
+        </div>
+        <p class="page-subtitle">{{ code.product.name }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'markings:marking_history' pk=code.pk %}" class="btn-pro btn-pro-ghost"><i class="bi bi-clock-history"></i> {% t "marking_history" %}</a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--sp-6);align-items:start">
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-info-circle" style="color:var(--primary-600)"></i> {% t "code_info" %}</span>
+            </div>
+            <div class="card-pro-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4)">
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "marking_code" %}</div>
+                        <div class="fw-600"><code>{{ code.code }}</code></div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "product" %}</div>
+                        <div class="fw-500">{{ code.product.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "status" %}</div>
+                        <span class="badge-pro {% if code.status == 'sold' %}badge-pro-success{% elif code.status == 'in_stock' %}badge-pro-info{% elif code.status == 'quarantined' %}badge-pro-warning{% elif code.status == 'cancelled' %}badge-pro-danger{% else %}badge-pro-primary{% endif %}">{{ code.get_status_display }}</span>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "verification_status" %}</div>
+                        <span class="badge-pro {% if code.verification_status == 'internal_verified' or code.verification_status == 'external_verified' %}badge-pro-success{% elif code.verification_status == 'rejected' %}badge-pro-danger{% else %}badge-pro-secondary{% endif %}">{{ code.get_verification_status_display }}</span>
+                    </div>
+                    {% if code.serial_number %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "serial_number" %}</div>
+                        <div class="fw-500">{{ code.serial_number }}</div>
+                    </div>
+                    {% endif %}
+                    {% if code.batch %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "batch" %}</div>
+                        <div class="fw-500">{{ code.batch }}</div>
+                    </div>
+                    {% endif %}
+                    {% if code.warehouse %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "warehouse" %}</div>
+                        <div class="fw-500">{{ code.warehouse.name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if code.location %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "location" %}</div>
+                        <div class="fw-500">{{ code.location }}</div>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "created" %}</div>
+                        <div class="text-pro-sm">{{ code.created_at|date:"d M Y H:i" }}</div>
+                    </div>
+                    <div>
+                        <div class="text-pro-xs text-pro-muted mb-1">{% t "created_by" %}</div>
+                        <div class="text-pro-sm">{{ code.created_by.get_full_name|default:code.created_by.email|truncatechars:20 }}</div>
+                    </div>
+                </div>
+                {% if code.verification_notes %}
+                <div style="margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--border-subtle)">
+                    <div class="text-pro-xs text-pro-muted mb-1">{% t "verification_notes" %}</div>
+                    <div class="text-pro-sm">{{ code.verification_notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if history %}
+        <div class="card-pro">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-clock-history" style="color:var(--primary-600)"></i> {% t "recent_activity" %}</span>
+                <a href="{% url 'markings:marking_history' pk=code.pk %}" style="font-size:var(--text-sm);color:var(--primary-600);text-decoration:none;font-weight:500">{% t "view_all" %} <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="table-pro">
+                    <thead>
+                        <tr>
+                            <th>{% t "performed_at" %}</th>
+                            <th>{% t "event_type" %}</th>
+                            <th>{% t "from_status" %} → {% t "to_status" %}</th>
+                            <th>{% t "performed_by" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in history|slice:":10" %}
+                        <tr>
+                            <td class="text-pro-sm">{{ entry.performed_at|date:"d M H:i" }}</td>
+                            <td><span class="badge-pro badge-pro-info">{{ entry.event_type }}</span></td>
+                            <td>
+                                {% if entry.from_status %}<span class="badge-pro badge-pro-secondary">{{ entry.from_status }}</span> → {% endif %}
+                                <span class="badge-pro badge-pro-primary">{{ entry.to_status }}</span>
+                            </td>
+                            <td class="text-pro-sm text-pro-muted">{{ entry.performed_by.get_full_name|default:entry.performed_by.email|truncatechars:20 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card-pro mb-4">
+            <div class="card-pro-header">
+                <span class="card-pro-title"><i class="bi bi-lightning-charge" style="color:var(--primary-600)"></i> {% t "actions" %}</span>
+            </div>
+            <div class="card-pro-body d-flex flex-column gap-2">
+                <form method="post" action="{% url 'markings:marking_verify' pk=code.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="verification_status" value="internal_verified">
+                    <button type="submit" class="btn-pro btn-pro-primary" style="width:100%"><i class="bi bi-check-circle"></i> {% t "verify" %}</button>
+                </form>
+                <a href="{% url 'markings:marking_history' pk=code.pk %}" class="btn-pro btn-pro-secondary" style="width:100%"><i class="bi bi-clock-history"></i> {% t "marking_history" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

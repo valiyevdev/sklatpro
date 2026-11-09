@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load i18n_tags %}
+
+{% block title %}{% t "fin_expenses" %} — SKLAT PRO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">{% t "fin_expenses" %}</h1>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-6">
+    <div class="stat-card">
+        <div class="stat-card-content">
+            <div class="stat-card-label">{% t "fin_total_expenses" %}</div>
+            <div class="stat-card-value" style="color:var(--danger-500)">${{ total_expenses|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card-icon danger"><i class="bi bi-arrow-up-circle"></i></div>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-6">
+    <a href="{% url 'finance:expense_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "fin_create_expense" %}</a>
+    <a href="{% url 'finance:expense_category_list' %}" class="btn-pro btn-pro-ghost"><i class="bi bi-tags"></i> {% t "fin_expense_categories" %}</a>
+</div>
+
+<div class="card-pro">
+    <div style="overflow-x:auto">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>{% t "date" %}</th>
+                    <th>{% t "amount" %}</th>
+                    <th>{% t "fin_account" %}</th>
+                    <th>{% t "fin_category" %}</th>
+                    <th>{% t "description" %}</th>
+                    <th>{% t "fin_method" %}</th>
+                    <th>{% t "fin_reference" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in page_obj %}
+                <tr>
+                    <td>{{ txn.date|date:"d.m.Y" }}</td>
+                    <td class="fw-600" style="color:var(--danger-500)">${{ txn.amount|floatformat:2 }}</td>
+                    <td>{{ txn.account|default:"-" }}</td>
+                    <td>{{ txn.category|default:"-" }}</td>
+                    <td class="text-pro-sm">{{ txn.description|truncatechars:40|default:"-" }}</td>
+                    <td>{{ txn.get_payment_method_display|default:"-" }}</td>
+                    <td>{{ txn.reference_number|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding:var(--sp-6)">
+                            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                            <div class="empty-state-desc">{% t "fin_no_expenses" %}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-pro-body d-flex justify-between align-center" style="border-top:1px solid var(--gray-200)">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

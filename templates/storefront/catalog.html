@@ -1,0 +1,83 @@
+{% extends "storefront/storefront_base.html" %}
+{% block store_title %}Catalog - {{ store_company.company_name }}{% endblock %}
+{% block store_content %}
+<div class="store-section">
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-bottom:1.5rem">
+        <h1 class="store-section-title" style="margin:0;flex:1">Catalog {% if total_count %}({{ total_count }} products){% endif %}</h1>
+        <form method="get" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <select name="sort" class="form-select form-select-sm" style="width:auto;border-radius:var(--radius-sm)" onchange="this.form.submit()">
+                <option value="name" {% if sort == 'name' %}selected{% endif %}>Name</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+            </select>
+            <input type="hidden" name="q" value="{{ search }}">
+            <input type="hidden" name="category" value="{{ selected_category }}">
+            <input type="hidden" name="brand" value="{{ selected_brand }}">
+            <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.875rem">
+                <input type="checkbox" name="in_stock" value="1" {% if in_stock == '1' %}checked{% endif %} onchange="this.form.submit()"> In Stock
+            </label>
+        </form>
+    </div>
+
+    <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        {% if categories or brands %}
+        <aside style="min-width:200px;flex:0 0 200px">
+            <h3 style="font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem">Categories</h3>
+            <div style="display:flex;flex-direction:column;gap:0.25rem;margin-bottom:1.5rem">
+                <a href="{% url 'storefront:catalog' %}?q={{ search }}" style="padding:0.375rem 0.75rem;border-radius:var(--radius-sm);text-decoration:none;font-size:0.875rem;color:{% if not selected_category %}var(--primary);font-weight:600{% else %}var(--text-secondary){% endif %}">All Categories</a>
+                {% for cat in categories %}
+                <a href="{% url 'storefront:catalog' %}?category={{ cat.slug }}&q={{ search }}" style="padding:0.375rem 0.75rem;border-radius:var(--radius-sm);text-decoration:none;font-size:0.875rem;color:{% if selected_category == cat.slug %}var(--primary);font-weight:600{% else %}var(--text-secondary){% endif %}">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
+            {% if brands %}
+            <h3 style="font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem">Brands</h3>
+            <div style="display:flex;flex-direction:column;gap:0.25rem">
+                {% for brand in brands %}
+                <a href="{% url 'storefront:catalog' %}?brand={{ brand.slug }}&q={{ search }}" style="padding:0.375rem 0.75rem;border-radius:var(--radius-sm);text-decoration:none;font-size:0.875rem;color:{% if selected_brand == brand.slug %}var(--primary);font-weight:600{% else %}var(--text-secondary){% endif %}">{{ brand.name }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </aside>
+        {% endif %}
+
+        <div style="flex:1;min-width:0">
+            {% if products %}
+            <div class="products-grid">
+                {% for product in products %}
+                <a href="{% if product.slug %}{% url 'storefront:product_detail' slug=product.slug %}{% else %}{% url 'storefront:product_detail' slug=product.pk %}{% endif %}" class="product-card">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img" loading="lazy">
+                    {% else %}
+                    <div class="product-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem"><i class="bi bi-box"></i></div>
+                    {% endif %}
+                    <div class="product-card-body">
+                        <div class="product-card-name">{{ product.name }}</div>
+                        <div class="product-card-price">{{ product.price|floatformat:0 }} so'm</div>
+                        <span class="product-card-sku">{{ product.sku }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if total_pages > 1 %}
+            <nav style="display:flex;justify-content:center;gap:0.5rem;margin-top:2rem">
+                {% if page > 1 %}
+                <a href="?page={{ page|add:-1 }}&q={{ search }}&category={{ selected_category }}&brand={{ selected_brand }}&sort={{ sort }}&in_stock={{ in_stock }}" class="btn-store-outline" style="padding:0.5rem 1rem">Prev</a>
+                {% endif %}
+                <span style="display:flex;align-items:center;padding:0 1rem;font-size:0.875rem;color:var(--text-secondary)">Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                <a href="?page={{ page|add:1 }}&q={{ search }}&category={{ selected_category }}&brand={{ selected_brand }}&sort={{ sort }}&in_stock={{ in_stock }}" class="btn-store-outline" style="padding:0.5rem 1rem">Next</a>
+                {% endif %}
+            </nav>
+            {% endif %}
+            {% else %}
+            <div style="text-align:center;padding:4rem 1rem;color:var(--text-muted)">
+                <i class="bi bi-search" style="font-size:3rem;margin-bottom:1rem;display:block"></i>
+                <p style="font-size:1.125rem;margin-bottom:0.5rem">No products found</p>
+                <p>Try adjusting your search or filters</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
