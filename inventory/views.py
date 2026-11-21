@@ -109,8 +109,8 @@ def dashboard(request):
 
     category_label_map = {k: get_translation(k, lang) for k in ['electronics', 'clothing', 'food', 'furniture', 'tools', 'other']}
     category_counts_translated = {category_label_map.get(k, k): v for k, v in category_counts.items()}
-    # Largest slice first: the analytics chart and its legend read top-down,
-    # and an unordered dict would render slices in database grouping order.
+    # Keep category counts in descending order so the bar chart presents
+    # larger inventory groups before smaller ones.
     category_counts_translated = dict(sorted(category_counts_translated.items(), key=lambda kv: kv[1], reverse=True))
 
     context = {
@@ -220,8 +220,12 @@ def inventory_table(request):
     paginator = Paginator(products, 25)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    categories = Product.objects.filter(company=company).values_list('category_fk__id', 'category_fk__name').distinct() if company else Product.objects.values_list('category_fk__id', 'category_fk__name').distinct()
-    brands = Product.objects.filter(company=company).values_list('brand__id', 'brand__name').distinct() if company else Product.objects.values_list('brand__id', 'brand__name').distinct()
+    # Clear Product.Meta.ordering before DISTINCT: without it Django adds
+    # created_at to the SELECT and every product row becomes its own
+    # category/brand option. The filter dropdowns must list each choice once.
+    product_choices = Product.objects.filter(company=company) if company else Product.objects.all()
+    categories = product_choices.order_by().values_list('category_fk__id', 'category_fk__name').distinct()
+    brands = product_choices.order_by().values_list('brand__id', 'brand__name').distinct()
 
     context = {
         'page_obj': page_obj,

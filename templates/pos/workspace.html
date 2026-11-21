@@ -6,6 +6,21 @@
     <!-- BUILD-2026-10-26-A -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                var themeKey = 'sklat-pos-theme-{{ request.user.pk }}';
+                var saved = localStorage.getItem(themeKey) || localStorage.getItem('theme');
+                if (saved === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.classList.add('light');
+                } else if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.remove('light');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title>POS — Ish rejimi | SKLAT PRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -364,6 +379,53 @@
             border-color: rgba(96, 165, 250, 0.8);
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.18);
             background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+        }
+
+        /* Smart filters (Sevimlilar - och sariq / Ko'p sotilganlar - olov rang) */
+        .pos-category-pill.pos-smart-filter[data-filter="favorites"] {
+            background: rgba(234, 179, 8, 0.12);
+            border-color: rgba(234, 179, 8, 0.35);
+            color: #fef08a;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="favorites"] i {
+            color: #facc15;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="favorites"]:hover {
+            background: rgba(234, 179, 8, 0.22);
+            border-color: #facc15;
+            color: #fef9c3;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="favorites"].active {
+            background: #eab308;
+            border-color: #facc15;
+            color: #713f12;
+            box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="favorites"].active i {
+            color: #713f12;
+        }
+
+        .pos-category-pill.pos-smart-filter[data-filter="popular"] {
+            background: rgba(249, 115, 22, 0.12);
+            border-color: rgba(249, 115, 22, 0.35);
+            color: #fed7aa;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="popular"] i {
+            color: #fb923c;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="popular"]:hover {
+            background: rgba(249, 115, 22, 0.22);
+            border-color: #fb923c;
+            color: #ffedd5;
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="popular"].active {
+            background: #f97316;
+            border-color: #fb923c;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+        }
+        .pos-category-pill.pos-smart-filter[data-filter="popular"].active i {
+            color: #ffffff;
         }
 
         .pos-catalog-area {
@@ -1367,18 +1429,22 @@
           .pos-catalog-area:not(.is-list) .pos-product-name { -webkit-line-clamp:2; line-height:1.25; font-size:14px; }
           .pos-catalog-area:not(.is-list) .pos-product-price { font-size:16px; }
           .pos-catalog-area:not(.is-list) .pos-product-meta { gap:4px; font-size:11px; }
-        body.light { background:#eef4f8; color:#102033; --bg-primary:#eef4f8; --text-primary:#102033; --text-secondary:#334155; --text-muted:#64748b; --border-glass:rgba(15,23,42,.14); }
-        body.light .pos-topbar, body.light .pos-panel, body.light .pos-cart-panel, body.light .pos-pill, body.light .pos-back-btn, body.light .pos-product-card { background:rgba(255,255,255,.86); color:#102033; }
-        body.light .pos-catalog-area, body.light .pos-cart-items, body.light .pos-cart-summary { color:#102033; }
-        body.light .pos-search-input, body.light .pos-cart-item, body.light .pos-summary-discount input, body.light .pos-summary-discount select { background:#f8fafc; color:#102033; }
-        body.light .pos-product-name, body.light .pos-catalog-status strong, body.light .pos-summary-row.total { color:#102033; }
-         body.light .pos-day-strip, body.light .pos-cart-header, body.light .pos-cart-summary { background:rgba(255,255,255,.75); color:#334155; }
-         body.light .pos-metric-card { background:rgba(248,250,252,.86); border-color:rgba(100,116,139,.25); }
-         body.light .pos-metric-label { color:#64748b; }
-         body.light .pos-metric-value { color:#1e293b; }
-         body.light .pos-catalog-count { background:rgba(241,245,249,.9); border-color:rgba(100,116,139,.25); }
-         body.light .pos-catalog-count strong { color:#1e293b; }
-        body.light .pos-payment-method, body.light .pos-cash-keypad button, body.light .pos-cash-shortcut, body.light .pos-modal-body { color:#102033; background:#fff; }
+        /* Cart and component base styles */
+        .pos-cart-item-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(148, 163, 184, 0.16); }
+        .pos-cart-item-title { color: #f1f5f9; }
+        .pos-cart-item-sub { color: var(--text-muted); }
+        .pos-cart-item-sum { color: #f8fafc; }
+        .pos-cart-item-qty { border: 1px solid rgba(148, 163, 184, 0.25); background: transparent; }
+        .pos-cart-item-qty input { color: #f1f5f9; }
+        .pos-cart-item-qty button { color: var(--text-muted); }
+        .pos-cart-item-del { color: rgba(248, 113, 113, 0.9); }
+        .pos-custom-price-badge { color: #fbbf24; }
+        .pos-cart-customer-bar { border-bottom: 1px solid rgba(148, 163, 184, 0.12); }
+        .pos-cart-customer-avatar { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(59, 130, 246, 0.16); color: #93c5fd; }
+        .pos-cart-customer-name { color: #e2e8f0; font-size: 13px; }
+        .pos-cart-customer-edit { border: 1px solid rgba(148, 163, 184, 0.25); background: transparent; color: var(--text-muted); border-radius: 8px; cursor: pointer; }
+        .pos-quick-pay-btn { flex: 1; min-height: 38px; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.25); background: transparent; color: var(--text-muted); cursor: pointer; }
+        .pos-quick-pay-btn.active { background: rgba(15, 23, 42, 0.7); color: #e2e8f0; }
         .pos-view-toggle { width:40px; height:40px; border:1px solid var(--border-glass); border-radius:10px; background:rgba(30,41,59,.6); color:var(--text-muted); cursor:pointer; }
         .pos-view-toggle.active, .pos-view-toggle:hover { color:#a7f3d0; border-color:rgba(45,212,191,.65); background:rgba(20,184,166,.12); }
         .pos-skeleton-grid { display:none; grid-template-columns:repeat(auto-fill,minmax(208px,1fr)); gap:14px; }
@@ -1421,6 +1487,1065 @@
             .pos-topbar-right { flex: 0 0 auto; max-width:none; margin-left:auto; }
             .pos-topbar-right > .pos-pill:not(.pos-more-btn), .pos-topbar-right > .pos-back-btn { display:none; }
             .pos-more-btn { display:flex; width:44px; padding:0; justify-content:center; }
+        }
+
+        /* ========================================================
+           LIGHT THEME SUPPORT ([data-theme="light"] & body.light)
+           ======================================================== */
+        :root[data-theme="light"],
+        html[data-theme="light"],
+        body.light,
+        [data-theme="light"] {
+            --grid: 8px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
+            --bg-primary: #f1f5f9;
+            --bg-secondary: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.94);
+            --border-glass: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --success: #16a34a;
+            --success-glow: #15803d;
+            --emerald: #059669;
+            --emerald-glow: rgba(5, 150, 105, 0.3);
+        }
+
+        html[data-theme="light"] body,
+        body[data-theme="light"],
+        [data-theme="light"] body,
+        body.light {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        /* Topbar */
+        html[data-theme="light"] .pos-topbar,
+        [data-theme="light"] .pos-topbar,
+        body.light .pos-topbar {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05) !important;
+        }
+        [data-theme="light"] .pos-brand,
+        body.light .pos-brand {
+            border-right-color: #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-brand-mark,
+        body.light .pos-brand-mark {
+            background: #ecfdf5 !important;
+            border: 1px solid #a7f3d0 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+        [data-theme="light"] .pos-brand-mark i,
+        body.light .pos-brand-mark i {
+            color: #059669 !important;
+        }
+        [data-theme="light"] .pos-brand-title,
+        body.light .pos-brand-title {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-brand-subtitle,
+        body.light .pos-brand-subtitle {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-status-badge,
+        body.light .pos-status-badge {
+            background: #ecfdf5 !important;
+            border-color: #a7f3d0 !important;
+            color: #047857 !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08) !important;
+        }
+        [data-theme="light"] .pos-pill,
+        body.light .pos-pill {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #334155 !important;
+            box-shadow: none !important;
+        }
+        [data-theme="light"] .pos-pill:hover,
+        body.light .pos-pill:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+        }
+        [data-theme="light"] .pos-back-btn,
+        body.light .pos-back-btn {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-back-btn:hover,
+        body.light .pos-back-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-shift-open-btn,
+        body.light .pos-shift-open-btn {
+            color: #047857 !important;
+            border-color: #86efac !important;
+            background: #ecfdf5 !important;
+        }
+        [data-theme="light"] .pos-shift-open-btn:hover,
+        body.light .pos-shift-open-btn:hover {
+            color: #065f46 !important;
+            border-color: #4ade80 !important;
+            background: #d1fae5 !important;
+        }
+        [data-theme="light"] .pos-header-add,
+        body.light .pos-header-add {
+            color: #047857 !important;
+            border-color: #86efac !important;
+            background: #ecfdf5 !important;
+        }
+        [data-theme="light"] .pos-header-add:hover,
+        body.light .pos-header-add:hover {
+            color: #065f46 !important;
+            border-color: #4ade80 !important;
+            background: #d1fae5 !important;
+        }
+
+        /* Metrics day strip */
+        [data-theme="light"] .pos-day-strip,
+        body.light .pos-day-strip {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-metric-card,
+        body.light .pos-metric-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 135px;
+            padding: 8px 14px;
+            border-radius: 14px;
+            box-shadow: none !important;
+            transition: transform var(--ease), box-shadow var(--ease);
+        }
+        [data-theme="light"] .pos-metric-card:hover,
+        body.light .pos-metric-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+        }
+        [data-theme="light"] .pos-metric-card > i,
+        body.light .pos-metric-card > i {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            flex: 0 0 32px;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+        [data-theme="light"] .pos-metric-label,
+        body.light .pos-metric-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        [data-theme="light"] .pos-metric-value,
+        body.light .pos-metric-value {
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.25;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        /* 1. Bugungi savdo - Mint Green */
+        [data-theme="light"] .pos-metric-sales,
+        body.light .pos-metric-sales,
+        [data-theme="light"] .pos-metric-primary,
+        body.light .pos-metric-primary,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(1),
+        body.light .pos-day-strip .pos-metric-card:nth-child(1) {
+            background: #f0fdf4 !important;
+            border: 1px solid #bbf7d0 !important;
+        }
+        [data-theme="light"] .pos-metric-sales > i,
+        body.light .pos-metric-sales > i,
+        [data-theme="light"] .pos-metric-primary > i,
+        body.light .pos-metric-primary > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(1) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(1) > i {
+            background: #dcfce7 !important;
+            color: #059669 !important;
+        }
+        [data-theme="light"] .pos-metric-sales .pos-metric-label,
+        body.light .pos-metric-sales .pos-metric-label,
+        [data-theme="light"] .pos-metric-primary .pos-metric-label,
+        body.light .pos-metric-primary .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(1) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(1) .pos-metric-label {
+            color: #047857 !important;
+        }
+        [data-theme="light"] .pos-metric-sales .pos-metric-value,
+        body.light .pos-metric-sales .pos-metric-value,
+        [data-theme="light"] .pos-metric-primary .pos-metric-value,
+        body.light .pos-metric-primary .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(1) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(1) .pos-metric-value {
+            color: #047857 !important;
+        }
+
+        /* 2. Cheklar - Sky Blue */
+        [data-theme="light"] .pos-metric-receipts,
+        body.light .pos-metric-receipts,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(2),
+        body.light .pos-day-strip .pos-metric-card:nth-child(2) {
+            background: #f0f9ff !important;
+            border: 1px solid #bae6fd !important;
+        }
+        [data-theme="light"] .pos-metric-receipts > i,
+        body.light .pos-metric-receipts > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(2) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(2) > i {
+            background: #e0f2fe !important;
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .pos-metric-receipts .pos-metric-label,
+        body.light .pos-metric-receipts .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(2) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(2) .pos-metric-label {
+            color: #0369a1 !important;
+        }
+        [data-theme="light"] .pos-metric-receipts .pos-metric-value,
+        body.light .pos-metric-receipts .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(2) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(2) .pos-metric-value {
+            color: #0284c7 !important;
+        }
+
+        /* 3. Naqd - Blue */
+        [data-theme="light"] .pos-metric-cash,
+        body.light .pos-metric-cash,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(3),
+        body.light .pos-day-strip .pos-metric-card:nth-child(3) {
+            background: #eff6ff !important;
+            border: 1px solid #bfdbfe !important;
+        }
+        [data-theme="light"] .pos-metric-cash > i,
+        body.light .pos-metric-cash > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(3) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(3) > i {
+            background: #dbeafe !important;
+            color: #2563eb !important;
+        }
+        [data-theme="light"] .pos-metric-cash .pos-metric-label,
+        body.light .pos-metric-cash .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(3) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(3) .pos-metric-label {
+            color: #1d4ed8 !important;
+        }
+        [data-theme="light"] .pos-metric-cash .pos-metric-value,
+        body.light .pos-metric-cash .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(3) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(3) .pos-metric-value {
+            color: #1d4ed8 !important;
+        }
+
+        /* 4. Karta - Cyan / Teal */
+        [data-theme="light"] .pos-metric-card-pay,
+        body.light .pos-metric-card-pay,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(4),
+        body.light .pos-day-strip .pos-metric-card:nth-child(4) {
+            background: #ecfeff !important;
+            border: 1px solid #a5f3fc !important;
+        }
+        [data-theme="light"] .pos-metric-card-pay > i,
+        body.light .pos-metric-card-pay > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(4) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(4) > i {
+            background: #cffafe !important;
+            color: #0891b2 !important;
+        }
+        [data-theme="light"] .pos-metric-card-pay .pos-metric-label,
+        body.light .pos-metric-card-pay .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(4) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(4) .pos-metric-label {
+            color: #0e7490 !important;
+        }
+        [data-theme="light"] .pos-metric-card-pay .pos-metric-value,
+        body.light .pos-metric-card-pay .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(4) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(4) .pos-metric-value {
+            color: #0e7490 !important;
+        }
+
+        /* 5. O'tkazma - Indigo */
+        [data-theme="light"] .pos-metric-transfer,
+        body.light .pos-metric-transfer,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(5),
+        body.light .pos-day-strip .pos-metric-card:nth-child(5) {
+            background: #eef2ff !important;
+            border: 1px solid #c7d2fe !important;
+        }
+        [data-theme="light"] .pos-metric-transfer > i,
+        body.light .pos-metric-transfer > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(5) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(5) > i {
+            background: #e0e7ff !important;
+            color: #4f46e5 !important;
+        }
+        [data-theme="light"] .pos-metric-transfer .pos-metric-label,
+        body.light .pos-metric-transfer .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(5) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(5) .pos-metric-label {
+            color: #4338ca !important;
+        }
+        [data-theme="light"] .pos-metric-transfer .pos-metric-value,
+        body.light .pos-metric-transfer .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(5) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(5) .pos-metric-value {
+            color: #4338ca !important;
+        }
+
+        /* 6. Nasiya - Amber */
+        [data-theme="light"] .pos-metric-debt,
+        body.light .pos-metric-debt,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(6),
+        body.light .pos-day-strip .pos-metric-card:nth-child(6) {
+            background: #fffbeb !important;
+            border: 1px solid #fde68a !important;
+        }
+        [data-theme="light"] .pos-metric-debt > i,
+        body.light .pos-metric-debt > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(6) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(6) > i {
+            background: #fef3c7 !important;
+            color: #d97706 !important;
+        }
+        [data-theme="light"] .pos-metric-debt .pos-metric-label,
+        body.light .pos-metric-debt .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(6) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(6) .pos-metric-label {
+            color: #b45309 !important;
+        }
+        [data-theme="light"] .pos-metric-debt .pos-metric-value,
+        body.light .pos-metric-debt .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(6) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(6) .pos-metric-value {
+            color: #b45309 !important;
+        }
+
+        /* 7. Foyda - Violet */
+        [data-theme="light"] .pos-metric-profit,
+        body.light .pos-metric-profit,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(7),
+        body.light .pos-day-strip .pos-metric-card:nth-child(7) {
+            background: #faf5ff !important;
+            border: 1px solid #e9d5ff !important;
+        }
+        [data-theme="light"] .pos-metric-profit > i,
+        body.light .pos-metric-profit > i,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(7) > i,
+        body.light .pos-day-strip .pos-metric-card:nth-child(7) > i {
+            background: #f3e8ff !important;
+            color: #9333ea !important;
+        }
+        [data-theme="light"] .pos-metric-profit .pos-metric-label,
+        body.light .pos-metric-profit .pos-metric-label,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(7) .pos-metric-label,
+        body.light .pos-day-strip .pos-metric-card:nth-child(7) .pos-metric-label {
+            color: #7e22ce !important;
+        }
+        [data-theme="light"] .pos-metric-profit .pos-metric-value,
+        body.light .pos-metric-profit .pos-metric-value,
+        [data-theme="light"] .pos-day-strip .pos-metric-card:nth-child(7) .pos-metric-value,
+        body.light .pos-day-strip .pos-metric-card:nth-child(7) .pos-metric-value {
+            color: #7e22ce !important;
+        }
+
+        /* Nasiya daftari link */
+        [data-theme="light"] .pos-debt-link,
+        body.light .pos-debt-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            margin-left: auto;
+            padding: 8px 16px;
+            border: 1px solid #fde68a !important;
+            border-radius: 999px !important;
+            background: #fffbeb !important;
+            color: #b45309 !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            text-decoration: none;
+            white-space: nowrap;
+            box-shadow: none !important;
+            transition: all 0.2s ease;
+        }
+        [data-theme="light"] .pos-debt-link:hover,
+        body.light .pos-debt-link:hover {
+            background: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            color: #92400e !important;
+            transform: translateY(-1px);
+        }
+        [data-theme="light"] .pos-debt-link > i,
+        body.light .pos-debt-link > i {
+            color: #d97706 !important;
+            font-size: 15px;
+        }
+
+        /* Catalog Left Panel */
+        [data-theme="light"] .pos-panel,
+        body.light .pos-panel {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        }
+        [data-theme="light"] .pos-search-section,
+        body.light .pos-search-section {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-search-wrapper::after,
+        body.light .pos-search-wrapper::after {
+            background: none !important;
+        }
+        [data-theme="light"] .pos-search-input,
+        body.light .pos-search-input {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+        }
+        [data-theme="light"] .pos-search-input::placeholder,
+        body.light .pos-search-input::placeholder {
+            color: #94a3b8 !important;
+        }
+        [data-theme="light"] .pos-search-input:focus,
+        body.light .pos-search-input:focus {
+            background: #ffffff !important;
+            border-color: #0d9488 !important;
+            box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12) !important;
+        }
+        [data-theme="light"] .pos-search-icon,
+        body.light .pos-search-icon {
+            color: #94a3b8 !important;
+        }
+        [data-theme="light"] .pos-search-clear,
+        body.light .pos-search-clear {
+            background: #e2e8f0 !important;
+            color: #475569 !important;
+        }
+        [data-theme="light"] .pos-search-hint,
+        body.light .pos-search-hint {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-search-hint kbd,
+        body.light .pos-search-hint kbd {
+            background: #f1f5f9 !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-category-pill,
+        body.light .pos-category-pill {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #475569 !important;
+            box-shadow: none !important;
+        }
+        [data-theme="light"] .pos-category-pill:hover,
+        body.light .pos-category-pill:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-category-pill.active,
+        body.light .pos-category-pill.active {
+            background: #0f766e !important;
+            border-color: #0f766e !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(15, 118, 110, 0.25) !important;
+        }
+
+        /* 1. Sevimlilar: Och sariq background */
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="favorites"],
+        body.light .pos-category-pill.pos-smart-filter[data-filter="favorites"] {
+            background: #fef9c3 !important;
+            border: 1px solid #fde047 !important;
+            color: #854d0e !important;
+            box-shadow: none !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="favorites"] i,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="favorites"] i {
+            color: #ca8a04 !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="favorites"]:hover,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="favorites"]:hover {
+            background: #fef08a !important;
+            border-color: #eab308 !important;
+            color: #713f12 !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="favorites"].active,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="favorites"].active {
+            background: #facc15 !important;
+            border-color: #ca8a04 !important;
+            color: #713f12 !important;
+            box-shadow: 0 2px 8px rgba(202, 138, 4, 0.3) !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="favorites"].active i,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="favorites"].active i {
+            color: #713f12 !important;
+        }
+
+        /* 2. Ko'p sotilgan: Olov rang (flame orange) background */
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="popular"],
+        body.light .pos-category-pill.pos-smart-filter[data-filter="popular"] {
+            background: #ffedd5 !important;
+            border: 1px solid #fdba74 !important;
+            color: #9a3412 !important;
+            box-shadow: none !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="popular"] i,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="popular"] i {
+            color: #ea580c !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="popular"]:hover,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="popular"]:hover {
+            background: #fed7aa !important;
+            border-color: #fb923c !important;
+            color: #7c2d12 !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="popular"].active,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="popular"].active {
+            background: #f97316 !important;
+            border-color: #ea580c !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35) !important;
+        }
+        [data-theme="light"] .pos-category-pill.pos-smart-filter[data-filter="popular"].active i,
+        body.light .pos-category-pill.pos-smart-filter[data-filter="popular"].active i {
+            color: #ffffff !important;
+        }
+        [data-theme="light"] .pos-catalog-count,
+        body.light .pos-catalog-count {
+            background: #f1f5f9 !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-catalog-count strong,
+        body.light .pos-catalog-count strong {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-secondary-btn,
+        body.light .pos-secondary-btn {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-secondary-btn:hover,
+        body.light .pos-secondary-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-view-toggle,
+        body.light .pos-view-toggle {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-view-toggle:hover,
+        body.light .pos-view-toggle:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-view-toggle.active,
+        body.light .pos-view-toggle.active {
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            color: #047857 !important;
+        }
+
+        /* Products - Grid Cards */
+        [data-theme="light"] .pos-product-card,
+        body.light .pos-product-card {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+        }
+        [data-theme="light"] .pos-product-card:hover,
+        body.light .pos-product-card:hover {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 8px 24px -4px rgba(59, 130, 246, 0.15) !important;
+        }
+        [data-theme="light"] .pos-product-card.keyboard-highlight,
+        body.light .pos-product-card.keyboard-highlight {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+        }
+        [data-theme="light"] .pos-product-name,
+        body.light .pos-product-name {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-product-price,
+        body.light .pos-product-price {
+            color: #059669 !important;
+        }
+        [data-theme="light"] .pos-product-meta,
+        body.light .pos-product-meta {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-product-image,
+        body.light .pos-product-image {
+            background: #f8fafc !important;
+            border: 1px solid #f1f5f9 !important;
+        }
+        [data-theme="light"] .pos-product-image i,
+        body.light .pos-product-image i {
+            color: #0d9488 !important;
+        }
+        [data-theme="light"] .pos-product-initials,
+        body.light .pos-product-initials {
+            background: linear-gradient(135deg, #dbeafe, #e0e7ff) !important;
+            color: #1d4ed8 !important;
+        }
+        [data-theme="light"] .pos-product-favorite,
+        body.light .pos-product-favorite {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #94a3b8 !important;
+        }
+        [data-theme="light"] .pos-product-favorite:hover,
+        body.light .pos-product-favorite:hover,
+        [data-theme="light"] .pos-product-favorite.active,
+        body.light .pos-product-favorite.active {
+            color: #d97706 !important;
+            background: #fffbeb !important;
+            border-color: #fde68a !important;
+        }
+        [data-theme="light"] .pos-product-quantity,
+        body.light .pos-product-quantity {
+            background: #059669 !important;
+            color: #ffffff !important;
+        }
+
+        /* Products - List View Cards */
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-card,
+        body.light .pos-catalog-area.is-list .pos-product-card {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-card:hover,
+        body.light .pos-catalog-area.is-list .pos-product-card:hover {
+            background: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-name,
+        body.light .pos-catalog-area.is-list .pos-product-name {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-price,
+        body.light .pos-catalog-area.is-list .pos-product-price {
+            color: #059669 !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-meta,
+        body.light .pos-catalog-area.is-list .pos-product-meta {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-list-stock,
+        body.light .pos-catalog-area.is-list .pos-product-list-stock {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-catalog-area.is-list .pos-product-image,
+        body.light .pos-catalog-area.is-list .pos-product-image {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+
+        /* Stock Badges */
+        [data-theme="light"] .pos-stock-badge.in-stock,
+        body.light .pos-stock-badge.in-stock {
+            color: #15803d !important;
+            background: #dcfce7 !important;
+            border: 1px solid #86efac !important;
+        }
+        [data-theme="light"] .pos-stock-badge.low-stock,
+        body.light .pos-stock-badge.low-stock {
+            color: #b45309 !important;
+            background: #fef3c7 !important;
+            border: 1px solid #fde68a !important;
+        }
+        [data-theme="light"] .pos-stock-badge.out-of-stock,
+        body.light .pos-stock-badge.out-of-stock {
+            color: #dc2626 !important;
+            background: #fee2e2 !important;
+            border: 1px solid #fca5a5 !important;
+        }
+        [data-theme="light"] .pos-product-card.is-disabled,
+        body.light .pos-product-card.is-disabled {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+            opacity: 0.65 !important;
+        }
+
+        /* Cart Panel */
+        [data-theme="light"] .pos-cart-panel,
+        body.light .pos-cart-panel {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        }
+        [data-theme="light"] .pos-cart-header,
+        body.light .pos-cart-header {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-cart-title,
+        body.light .pos-cart-title {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-badge,
+        body.light .pos-cart-badge {
+            background: #dcfce7 !important;
+            color: #15803d !important;
+        }
+        [data-theme="light"] .pos-cart-clear,
+        body.light .pos-cart-clear {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-cart-clear:hover,
+        body.light .pos-cart-clear:hover {
+            background: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+            color: #dc2626 !important;
+        }
+        [data-theme="light"] .pos-cart-customer-bar,
+        body.light .pos-cart-customer-bar {
+            border-bottom: 1px solid #e2e8f0 !important;
+            background: #f8fafc !important;
+        }
+        [data-theme="light"] .pos-cart-customer-avatar,
+        body.light .pos-cart-customer-avatar {
+            background: #eff6ff !important;
+            color: #2563eb !important;
+        }
+        [data-theme="light"] .pos-cart-customer-name,
+        body.light .pos-cart-customer-name,
+        [data-theme="light"] #cart-customer,
+        body.light #cart-customer {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-customer-edit,
+        body.light .pos-cart-customer-edit {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-cart-customer-edit:hover,
+        body.light .pos-cart-customer-edit:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-empty,
+        body.light .pos-cart-empty {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-cart-empty-icon,
+        body.light .pos-cart-empty-icon {
+            color: #94a3b8 !important;
+        }
+        [data-theme="light"] .pos-cart-item-card,
+        body.light .pos-cart-item-card {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-cart-item-title,
+        body.light .pos-cart-item-title {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-item-sub,
+        body.light .pos-cart-item-sub {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-cart-item-sum,
+        body.light .pos-cart-item-sum {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-item-qty,
+        body.light .pos-cart-item-qty {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        [data-theme="light"] .pos-cart-item-qty input,
+        body.light .pos-cart-item-qty input {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-item-qty button,
+        body.light .pos-cart-item-qty button {
+            color: #475569 !important;
+        }
+        [data-theme="light"] .pos-cart-item-qty button:hover,
+        body.light .pos-cart-item-qty button:hover {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-item-del,
+        body.light .pos-cart-item-del {
+            color: #dc2626 !important;
+        }
+        [data-theme="light"] .pos-cart-summary,
+        body.light .pos-cart-summary {
+            background: #ffffff !important;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-summary-row,
+        body.light .pos-summary-row {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-summary-row span:last-child,
+        body.light .pos-summary-row span:last-child {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-summary-row.total,
+        body.light .pos-summary-row.total {
+            border-top: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-summary-row.total span:last-child,
+        body.light .pos-summary-row.total span:last-child {
+            color: #059669 !important;
+        }
+        [data-theme="light"] #cart-discount,
+        body.light #cart-discount {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-quick-pay-btn,
+        body.light .pos-quick-pay-btn {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #475569 !important;
+        }
+        [data-theme="light"] .pos-quick-pay-btn.active,
+        body.light .pos-quick-pay-btn.active {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cart-actions,
+        body.light .pos-cart-actions {
+            background: #ffffff !important;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-action-btn,
+        body.light .pos-action-btn {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-action-btn:hover,
+        body.light .pos-action-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+
+        /* Modals in light theme */
+        [data-theme="light"] .pos-modal-overlay,
+        body.light .pos-modal-overlay {
+            background: rgba(15, 23, 42, 0.45) !important;
+        }
+        [data-theme="light"] .pos-shift-modal,
+        body.light .pos-shift-modal {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.15) !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-modal-header,
+        body.light .pos-modal-header {
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-modal-title,
+        body.light .pos-modal-title {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-modal-close,
+        body.light .pos-modal-close {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-modal-close:hover,
+        body.light .pos-modal-close:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-field-label,
+        body.light .pos-field-label {
+            color: #475569 !important;
+        }
+        [data-theme="light"] .pos-input,
+        body.light .pos-input,
+        [data-theme="light"] .pos-select,
+        body.light .pos-select,
+        [data-theme="light"] .pos-form-field input,
+        body.light .pos-form-field input,
+        [data-theme="light"] .pos-form-field select,
+        body.light .pos-form-field select,
+        [data-theme="light"] .pos-form-field textarea,
+        body.light .pos-form-field textarea,
+        [data-theme="light"] #expense-note,
+        body.light #expense-note {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-input:focus,
+        body.light .pos-input:focus,
+        [data-theme="light"] .pos-select:focus,
+        body.light .pos-select:focus,
+        [data-theme="light"] .pos-form-field input:focus,
+        body.light .pos-form-field input:focus,
+        [data-theme="light"] .pos-form-field select:focus,
+        body.light .pos-form-field select:focus {
+            border-color: #0d9488 !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+            outline: none !important;
+        }
+        [data-theme="light"] .pos-result-row,
+        body.light .pos-result-row {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-result-row:hover,
+        body.light .pos-result-row:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+        [data-theme="light"] .pos-payment-method,
+        body.light .pos-payment-method {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-payment-method:hover,
+        body.light .pos-payment-method:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+        [data-theme="light"] .pos-payment-method.active,
+        body.light .pos-payment-method.active {
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            color: #047857 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+        }
+        [data-theme="light"] .pos-cash-keypad button,
+        body.light .pos-cash-keypad button {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-cash-keypad button:hover,
+        body.light .pos-cash-keypad button:hover {
+            background: #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-cash-shortcut,
+        body.light .pos-cash-shortcut {
+            background: #eff6ff !important;
+            border: 1px solid #bfdbfe !important;
+            color: #1d4ed8 !important;
+        }
+        [data-theme="light"] .pos-cash-shortcut:hover,
+        body.light .pos-cash-shortcut:hover {
+            background: #dbeafe !important;
+            border-color: #93c5fd !important;
+        }
+        [data-theme="light"] .pos-credit-summary,
+        body.light .pos-credit-summary {
+            background: #fffbeb !important;
+            border: 1px solid #fde68a !important;
+            color: #92400e !important;
+        }
+        [data-theme="light"] .pos-credit-summary strong,
+        body.light .pos-credit-summary strong {
+            color: #78350f !important;
+        }
+        [data-theme="light"] .pos-shift-dropdown-menu,
+        body.light .pos-shift-dropdown-menu {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1) !important;
+        }
+        [data-theme="light"] .pos-shift-dropdown-menu button,
+        body.light .pos-shift-dropdown-menu button {
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-shift-dropdown-menu button:hover,
+        body.light .pos-shift-dropdown-menu button:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-empty-title,
+        body.light .pos-empty-title {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .pos-empty-subtitle,
+        body.light .pos-empty-subtitle {
+            color: #64748b !important;
+        }
+        [data-theme="light"] .pos-empty-circle,
+        body.light .pos-empty-circle {
+            background: #eff6ff !important;
+            border-color: #bfdbfe !important;
+        }
+        [data-theme="light"] .pos-empty-icon,
+        body.light .pos-empty-icon {
+            color: #3b82f6 !important;
+        }
+        [data-theme="light"] .pos-empty-glow,
+        body.light .pos-empty-glow {
+            display: none !important;
+        }
+        [data-theme="light"] .pos-skeleton-card,
+        body.light .pos-skeleton-card {
+            background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%) !important;
+            background-size: 200% 100% !important;
+            border-color: #e2e8f0 !important;
+        }
+        [data-theme="light"] .pos-check-label,
+        body.light .pos-check-label {
+            color: #334155 !important;
+        }
+        [data-theme="light"] .pos-import-box,
+        body.light .pos-import-box {
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+            background: #f8fafc !important;
+        }
+        [data-theme="light"] .pos-receipt-preview,
+        body.light .pos-receipt-preview {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] ::-webkit-scrollbar-thumb,
+        body.light ::-webkit-scrollbar-thumb {
+            background: #cbd5e1 !important;
+        }
+        [data-theme="light"] ::-webkit-scrollbar-thumb:hover,
+        body.light ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8 !important;
         }
     </style>
 </head>
@@ -1487,14 +2612,14 @@
     </header>
 
     <div class="pos-day-strip" aria-label="Bugungi savdo ko'rsatkichlari">
-        <div class="pos-metric-card pos-metric-primary"><i class="bi bi-sunrise"></i><div><span class="pos-metric-label">Bugungi savdo</span><strong class="pos-metric-value">{{ today_summary.total|floatformat:0 }} so'm</strong></div></div>
-        <div class="pos-metric-card"><i class="bi bi-receipt"></i><div><span class="pos-metric-label">Cheklar</span><strong class="pos-metric-value">{{ today_summary.count }} ta</strong></div></div>
-        <div class="pos-metric-card"><i class="bi bi-wallet2"></i><div><span class="pos-metric-label">Naqd</span><strong class="pos-metric-value">{{ today_summary.cash|floatformat:0 }} so'm</strong></div></div>
-        <div class="pos-metric-card"><i class="bi bi-credit-card"></i><div><span class="pos-metric-label">Karta</span><strong class="pos-metric-value">{{ today_summary.card|floatformat:0 }} so'm</strong></div></div>
-        <div class="pos-metric-card"><i class="bi bi-arrow-left-right"></i><div><span class="pos-metric-label">O'tkazma</span><strong class="pos-metric-value">{{ today_summary.transfer|floatformat:0 }} so'm</strong></div></div>
-        <div class="pos-metric-card"><i class="bi bi-person-lines-fill"></i><div><span class="pos-metric-label">Nasiya</span><strong class="pos-metric-value">{{ today_summary.credit|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card pos-metric-sales"><i class="bi bi-bag"></i><div><span class="pos-metric-label">Bugungi savdo</span><strong class="pos-metric-value">{{ today_summary.total|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card pos-metric-receipts"><i class="bi bi-file-earmark-text"></i><div><span class="pos-metric-label">Cheklar</span><strong class="pos-metric-value">{{ today_summary.count }} ta</strong></div></div>
+        <div class="pos-metric-card pos-metric-cash"><i class="bi bi-cash-stack"></i><div><span class="pos-metric-label">Naqd</span><strong class="pos-metric-value">{{ today_summary.cash|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card pos-metric-card-pay"><i class="bi bi-credit-card"></i><div><span class="pos-metric-label">Karta</span><strong class="pos-metric-value">{{ today_summary.card|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card pos-metric-transfer"><i class="bi bi-arrow-left-right"></i><div><span class="pos-metric-label">O'tkazma</span><strong class="pos-metric-value">{{ today_summary.transfer|floatformat:0 }} so'm</strong></div></div>
+        <div class="pos-metric-card pos-metric-debt"><i class="bi bi-people"></i><div><span class="pos-metric-label">Nasiya</span><strong class="pos-metric-value">{{ today_summary.credit|floatformat:0 }} so'm</strong></div></div>
         {% if is_owner %}<div class="pos-metric-card pos-metric-profit" title="Taxminiy foyda"><i class="bi bi-graph-up-arrow"></i><div><span class="pos-metric-label">Foyda</span><strong class="pos-metric-value">{{ today_summary.profit|floatformat:0 }} so'm</strong></div></div>{% endif %}
-        <a class="pos-debt-link" href="{% url 'pos:debt_ledger' %}"><i class="bi bi-journal-text"></i><span>Nasiya daftari</span></a>
+        <a class="pos-debt-link" href="{% url 'pos:debt_ledger' %}"><i class="bi bi-book"></i><span>Nasiya daftari</span></a>
     </div>
 
     <!-- Workspace -->
@@ -1554,20 +2679,20 @@
                     <div class="pos-cart-title">
                         <i class="bi bi-cart3"></i>
                         <span>Savat</span>
-                        <span class="pos-cart-badge" style="background:rgba(16,185,129,0.18);color:#6ee7b7;">(<span id="cart-count">0</span>)</span>
+                        <span class="pos-cart-badge">(<span id="cart-count">0</span>)</span>
                     </div>
                 </div>
                 <button type="button" class="pos-cart-clear" onclick="clearCart()" title="Tozalash" aria-label="Tozalash"><span style="margin-right:6px;font-size:12px;">Tozalash</span><i class="bi bi-trash3"></i></button>
             </header>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(148,163,184,0.12);">
+            <div class="pos-cart-customer-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-                    <div style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(59,130,246,0.16);color:#93c5fd;"><i class="bi bi-person"></i></div>
+                    <div class="pos-cart-customer-avatar"><i class="bi bi-person"></i></div>
                     <div style="display:flex;flex-direction:column;min-width:0;">
-                        <div id="cart-customer" style="font-size:13px;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mijoz tanlanmagan</div>
+                        <div id="cart-customer" class="pos-cart-customer-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mijoz tanlanmagan</div>
                         <div style="font-size:11px;color:var(--text-muted);">Mijoz ma'lumotlari</div>
                     </div>
                 </div>
-                <button type="button" onclick="openCustomerModal()" style="border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);border-radius:8px;padding:4px 8px;font-size:11px;">O'zgartirish</button>
+                <button type="button" class="pos-cart-customer-edit" onclick="openCustomerModal()" style="padding:4px 8px;font-size:11px;">O'zgartirish</button>
             </div>
             <div class="pos-cart-items" id="cart-items" style="gap:8px;">
                 <div class="pos-cart-empty" id="cart-empty">
@@ -1585,16 +2710,16 @@
                 </div>
                 <div class="pos-summary-row">
                     <span>Chegirma</span>
-                    <span id="cart-discount" style="color:#f8fafc;">0</span>
+                    <span id="cart-discount">0</span>
                 </div>
                 <div class="pos-summary-row total">
                     <span>Jami</span>
                     <span id="cart-total">0</span>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:6px;">
-                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:rgba(15,23,42,0.7);color:#e2e8f0;">Naqd</button>
-                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);">Karta</button>
-                    <button type="button" style="flex:1;min-height:38px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);background:transparent;color:var(--text-muted);">O'tkazma</button>
+                    <button type="button" class="pos-quick-pay-btn active">Naqd</button>
+                    <button type="button" class="pos-quick-pay-btn">Karta</button>
+                    <button type="button" class="pos-quick-pay-btn">O'tkazma</button>
                 </div>
             </div>
             <div class="pos-cart-actions" style="grid-template-columns:1fr 1fr;">
@@ -1784,11 +2909,20 @@
         let catalogLoading = false;
          function applyTheme(light) {
              document.body.classList.toggle('light', light);
+             document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+             document.body.setAttribute('data-theme', light ? 'light' : 'dark');
              const button = document.getElementById('theme-toggle');
-             if (button) { button.setAttribute('aria-pressed', String(light)); button.querySelector('span').textContent = light ? 'Qorong\'i mavzu' : 'Yorug\' mavzu'; }
+             if (button) {
+                 button.setAttribute('aria-pressed', String(light));
+                 const label = button.querySelector('span');
+                 if (label) label.textContent = light ? 'Qorong\'i mavzu' : 'Yorug\' mavzu';
+                 const icon = button.querySelector('i');
+                 if (icon) icon.className = light ? 'bi bi-moon' : 'bi bi-sun';
+             }
          }
          const THEME_KEY = `sklat-pos-theme-{{ request.user.pk }}`;
-         applyTheme(localStorage.getItem(THEME_KEY) === 'light');
+         const initialIsLight = localStorage.getItem(THEME_KEY) === 'light' || localStorage.getItem('theme') === 'light' || document.documentElement.getAttribute('data-theme') === 'light';
+         applyTheme(initialIsLight);
          const soundEnabled = localStorage.getItem('sklat-pos-sound') === 'true';
          const vibrationEnabled = localStorage.getItem('sklat-pos-vibration') === 'true';
          function feedback() { if (soundEnabled) { try { const audio = new AudioContext(); const osc = audio.createOscillator(); osc.connect(audio.destination); osc.frequency.value = 720; osc.start(); osc.stop(audio.currentTime + .045); } catch (e) {} } if (vibrationEnabled && navigator.vibrate) navigator.vibrate(20); }
@@ -2172,21 +3306,21 @@
             }
 
             container.innerHTML = items.map(item => `
-                <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.16);">
+                <div class="pos-cart-item-card" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;">
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
                         <div style="min-width:0;display:flex;flex-direction:column;gap:2px;">
-                            <div style="font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.name)}</div>
-                            <div style="font-size:11px;color:var(--text-muted);">${money(item.unit_price)} / ${item.unit_symbol || 'dona'} ${item.custom_price ? '<span style="color:#fbbf24">• maxsus narx</span>' : ''}</div>
+                            <div class="pos-cart-item-title" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.name)}</div>
+                            <div class="pos-cart-item-sub" style="font-size:11px;">${money(item.unit_price)} / ${item.unit_symbol || 'dona'} ${item.custom_price ? '<span class="pos-custom-price-badge">• maxsus narx</span>' : ''}</div>
                         </div>
-                        <div style="font-weight:700;color:#f8fafc;font-variant-numeric:tabular-nums;">${money(Number(parseFloat(item.unit_price) * parseFloat(item.quantity)) - Number(item.discount || 0))}</div>
+                        <div class="pos-cart-item-sum" style="font-weight:700;font-variant-numeric:tabular-nums;">${money(Number(parseFloat(item.unit_price) * parseFloat(item.quantity)) - Number(item.discount || 0))}</div>
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                        <div style="display:flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(148,163,184,0.25);padding:2px 8px;">
-                            <button style="border:none;background:transparent;color:var(--text-muted);" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) - 1})"><i class="bi bi-dash"></i></button>
-                            <input type="number" min="0" step="0.001" value="${item.quantity}" onchange="updateQty('${item.key}', this.value)" style="width:42px;text-align:center;border:none;background:transparent;color:#f1f5f9;font-variant-numeric:tabular-nums;">
-                            <button style="border:none;background:transparent;color:var(--text-muted);" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) + 1})"><i class="bi bi-plus"></i></button>
+                        <div class="pos-cart-item-qty" style="display:flex;align-items:center;gap:6px;border-radius:999px;padding:2px 8px;">
+                            <button type="button" style="border:none;background:transparent;cursor:pointer;" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) - 1})"><i class="bi bi-dash"></i></button>
+                            <input type="number" min="0" step="0.001" value="${item.quantity}" onchange="updateQty('${item.key}', this.value)" style="width:42px;text-align:center;border:none;background:transparent;font-variant-numeric:tabular-nums;">
+                            <button type="button" style="border:none;background:transparent;cursor:pointer;" onclick="updateQty('${item.key}', ${parseFloat(item.quantity) + 1})"><i class="bi bi-plus"></i></button>
                         </div>
-                        <button style="border:none;background:transparent;color:rgba(248,113,113,0.9);" onclick="removeItem('${item.key}')" title="O'chirish"><i class="bi bi-trash3"></i></button>
+                        <button type="button" class="pos-cart-item-del" style="border:none;background:transparent;cursor:pointer;" onclick="removeItem('${item.key}')" title="O'chirish"><i class="bi bi-trash3"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -2570,10 +3704,15 @@
         }
 
         function toggleSmartFilter(element, filter) {
+            const wasActive = activeSmartFilter === filter;
             document.querySelectorAll('.pos-category-pill').forEach(button => button.classList.remove('active'));
-            element.classList.add('active');
-            activeSmartFilter = activeSmartFilter === filter ? '' : filter;
-            if (!activeSmartFilter) document.querySelector('.pos-category-pill:not(.pos-smart-filter)').classList.add('active');
+            if (wasActive) {
+                activeSmartFilter = '';
+                document.querySelector('.pos-category-pill:not(.pos-smart-filter)')?.classList.add('active');
+            } else {
+                activeSmartFilter = filter;
+                element.classList.add('active');
+            }
             if (activeSmartFilter === 'popular' || !activeSmartFilter) searchProducts(document.getElementById('barcode-input').value.trim(), window.activeCategory || '', 1);
             else renderProductGrid(catalogProducts, document.getElementById('barcode-input').value.trim());
         }
@@ -2588,9 +3727,11 @@
 
         function showOutOfStock(name) { alert(`${name} tugagan. Qoldiqni to'ldirgach qayta urinib ko'ring.`); }
         function toggleTheme() {
-            const light = document.body.classList.toggle('light');
-            localStorage.setItem(THEME_KEY, light ? 'light' : 'dark');
-            applyTheme(light);
+            const isLight = document.body.classList.contains('light') || document.documentElement.getAttribute('data-theme') === 'light';
+            const nextLight = !isLight;
+            localStorage.setItem(THEME_KEY, nextLight ? 'light' : 'dark');
+            localStorage.setItem('theme', nextLight ? 'light' : 'dark');
+            applyTheme(nextLight);
         }
         setCatalogView(catalogView);
 

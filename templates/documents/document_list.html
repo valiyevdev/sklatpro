@@ -3,122 +3,562 @@
 
 {% block title %}{% t "document_list" %} — SKLAT PRO{% endblock %}
 
+{% block extra_css %}
+<style>
+    .doc-page {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 8px 0 40px;
+    }
+
+    /* ============================================================
+       FILTER PANEL & FORM ELEMENTS
+       ============================================================ */
+    .doc-filter-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+        transition: border-color .15s ease;
+    }
+    .doc-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+        gap: 14px;
+        align-items: flex-end;
+    }
+    .doc-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .doc-label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0;
+        white-space: nowrap;
+    }
+    .doc-label i {
+        color: #818cf8;
+        font-size: 13px;
+    }
+
+    /* Unified Form Inputs Styling */
+    .doc-field input[type="text"],
+    .doc-field input[type="date"],
+    .doc-field select,
+    .doc-field .input-pro {
+        height: 42px !important;
+        width: 100% !important;
+        padding: 0 14px !important;
+        border-radius: 10px !important;
+        border: 1px solid #26334b !important;
+        background: #0d1424 !important;
+        color: #f8fafc !important;
+        font-family: inherit !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        outline: none !important;
+        transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease !important;
+        box-sizing: border-box !important;
+    }
+    .doc-field input:focus,
+    .doc-field select:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+        background: #090d16 !important;
+    }
+    .doc-field input::placeholder {
+        color: #64748b !important;
+        font-weight: 400 !important;
+    }
+
+    /* Action Buttons in Filter */
+    .doc-filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .doc-btn-submit {
+        height: 42px;
+        padding: 0 18px;
+        border-radius: 10px;
+        border: 1px solid #818cf8;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+        white-space: nowrap;
+    }
+    .doc-btn-submit:hover {
+        background: linear-gradient(135deg, #818cf8, #6366f1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .doc-btn-submit:active {
+        transform: translateY(0);
+    }
+    .doc-btn-reset {
+        height: 42px;
+        width: 42px;
+        border-radius: 10px;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all .15s ease;
+        flex-shrink: 0;
+    }
+    .doc-btn-reset:hover {
+        background: #334155;
+        color: #ffffff;
+        border-color: #475569;
+    }
+
+    /* ============================================================
+       DOCUMENTS TABLE CARD
+       ============================================================ */
+    .doc-table-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+    }
+    .doc-table-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .doc-table-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #f8fafc;
+        margin: 0;
+    }
+    .doc-table-title i {
+        color: #818cf8;
+        font-size: 18px;
+    }
+    .doc-count-tag {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+
+    /* Table styles */
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .doc-table th {
+        padding: 12px 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        background: #0d1424;
+        border-bottom: 1px solid #1e293b;
+        white-space: nowrap;
+    }
+    .doc-table td {
+        padding: 14px 20px;
+        font-size: 13.5px;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1e293b;
+        vertical-align: middle;
+    }
+    .doc-table tr:last-child td {
+        border-bottom: none;
+    }
+    .doc-table tbody tr {
+        transition: background-color .12s ease;
+    }
+    .doc-table tbody tr:hover {
+        background-color: rgba(99, 102, 241, 0.05);
+    }
+    .doc-num-link {
+        font-family: monospace;
+        font-weight: 700;
+        color: #818cf8 !important;
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .doc-num-link:hover {
+        text-decoration: underline;
+    }
+    .doc-amount {
+        font-weight: 700;
+        color: #f8fafc;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Status Badges */
+    .doc-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .doc-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+    .doc-status--draft { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .doc-status--draft .doc-status-dot { background: #fbbf24; }
+    .doc-status--pending { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .doc-status--pending .doc-status-dot { background: #60a5fa; }
+    .doc-status--approved { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .doc-status--approved .doc-status-dot { background: #34d399; }
+    .doc-status--sent { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .doc-status--sent .doc-status-dot { background: #a5b4fc; }
+    .doc-status--completed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .doc-status--completed .doc-status-dot { background: #34d399; }
+    .doc-status--cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .doc-status--cancelled .doc-status-dot { background: #f87171; }
+    .doc-status--archived { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+    .doc-status--archived .doc-status-dot { background: #94a3b8; }
+
+    /* ============================================================
+       PAGINATION BAR
+       ============================================================ */
+    .doc-pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 24px;
+        border-top: 1px solid #1e293b;
+        background: #0d1424;
+    }
+
+    /* ============================================================
+       LIGHT MODE ADAPTATION (Clean Borders, Soft High-End Tones)
+       ============================================================ */
+    [data-theme="light"] .doc-filter-card,
+    html:not([data-theme="dark"]) .doc-filter-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    [data-theme="light"] .doc-label,
+    html:not([data-theme="dark"]) .doc-label {
+        color: #475569;
+    }
+    [data-theme="light"] .doc-field input[type="text"],
+    [data-theme="light"] .doc-field input[type="date"],
+    [data-theme="light"] .doc-field select,
+    [data-theme="light"] .doc-field .input-pro,
+    html:not([data-theme="dark"]) .doc-field input[type="text"],
+    html:not([data-theme="dark"]) .doc-field input[type="date"],
+    html:not([data-theme="dark"]) .doc-field select,
+    html:not([data-theme="dark"]) .doc-field .input-pro {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+    }
+    [data-theme="light"] .doc-field input:focus,
+    [data-theme="light"] .doc-field select:focus,
+    html:not([data-theme="dark"]) .doc-field input:focus,
+    html:not([data-theme="dark"]) .doc-field select:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16) !important;
+        background: #ffffff !important;
+    }
+    [data-theme="light"] .doc-btn-reset,
+    html:not([data-theme="dark"]) .doc-btn-reset {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+        color: #475569;
+    }
+    [data-theme="light"] .doc-btn-reset:hover,
+    html:not([data-theme="dark"]) .doc-btn-reset:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    [data-theme="light"] .doc-table-card,
+    html:not([data-theme="dark"]) .doc-table-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    [data-theme="light"] .doc-table-header,
+    html:not([data-theme="dark"]) .doc-table-header {
+        border-color: #e2e8f0;
+    }
+    [data-theme="light"] .doc-table-title,
+    html:not([data-theme="dark"]) .doc-table-title {
+        color: #0f172a;
+    }
+    [data-theme="light"] .doc-count-tag,
+    html:not([data-theme="dark"]) .doc-count-tag {
+        color: #64748b;
+    }
+    [data-theme="light"] .doc-table th,
+    html:not([data-theme="dark"]) .doc-table th {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #64748b;
+    }
+    [data-theme="light"] .doc-table td,
+    html:not([data-theme="dark"]) .doc-table td {
+        border-color: #f1f5f9;
+        color: #334155;
+    }
+    [data-theme="light"] .doc-table tbody tr:hover,
+    html:not([data-theme="dark"]) .doc-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    [data-theme="light"] .doc-amount,
+    html:not([data-theme="dark"]) .doc-amount {
+        color: #0f172a;
+    }
+    [data-theme="light"] .doc-num-link,
+    html:not([data-theme="dark"]) .doc-num-link {
+        color: #4f46e5 !important;
+    }
+    [data-theme="light"] .doc-pagination-bar,
+    html:not([data-theme="dark"]) .doc-pagination-bar {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+    [data-theme="light"] .doc-status--draft,
+    html:not([data-theme="dark"]) .doc-status--draft { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    [data-theme="light"] .doc-status--pending,
+    html:not([data-theme="dark"]) .doc-status--pending { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    [data-theme="light"] .doc-status--approved,
+    html:not([data-theme="dark"]) .doc-status--approved { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    [data-theme="light"] .doc-status--sent,
+    html:not([data-theme="dark"]) .doc-status--sent { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+    [data-theme="light"] .doc-status--completed,
+    html:not([data-theme="dark"]) .doc-status--completed { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    [data-theme="light"] .doc-status--cancelled,
+    html:not([data-theme="dark"]) .doc-status--cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    [data-theme="light"] .doc-status--archived,
+    html:not([data-theme="dark"]) .doc-status--archived { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
+    /* ============================================================
+       RESPONSIVE BREAKPOINTS
+       ============================================================ */
+    @media (max-width: 1200px) {
+        .doc-filter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .doc-filter-actions {
+            grid-column: 1 / -1;
+            justify-content: flex-end;
+        }
+    }
+    @media (max-width: 640px) {
+        .doc-page {
+            padding-top: 0;
+        }
+        .doc-filter-card {
+            padding: 16px;
+        }
+        .doc-filter-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .doc-filter-actions {
+            width: 100%;
+        }
+        .doc-btn-submit {
+            flex: 1;
+            justify-content: center;
+        }
+        .doc-pagination-bar {
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="breadcrumb-pro">
-    <a href="{% url 'documents:documents_dashboard' %}" class="breadcrumb-link">{% t "documents" %}</a>
-    <span class="separator">/</span>
-    <span class="current">{% t "document_list" %}</span>
-</div>
+<main class="doc-page">
+    <!-- Reusable Hero Header Component -->
+    {% url 'documents:document_create' as create_doc_url %}
+    {% url 'documents:documents_dashboard' as doc_dash_url %}
+    {% t "document_list" as list_title %}
+    {% t "create_document" as create_doc_text %}
+    {% t "dashboard" as dash_btn_text %}
+    {% t "items_suffix" as items_suffix_txt %}
+    {% with total_str=total_count|default:"0"|stringformat:"s" %}
+    {% with stat_val=total_str|add:" "|add:items_suffix_txt %}
+    {% include 'components/hero_header.html' with title=list_title subtitle="Katalog, hisob-fakturalar, shartnomalar va aktlarni qidiring hamda boshqaring" stat_text=stat_val stat_icon="bi-file-earmark-text" action_url=create_doc_url action_text=create_doc_text action_icon="bi-plus-lg" secondary_url=doc_dash_url secondary_text=dash_btn_text secondary_icon="bi-grid" %}
+    {% endwith %}
+    {% endwith %}
 
-<div class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "document_list" %}</h1>
-        <p class="page-subtitle">{{ total_count }} {% t "documents" %}</p>
-    </div>
-    <div class="page-actions">
-        <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary">
-            <i class="bi bi-plus-lg"></i> {% t "create_document" %}
-        </a>
-    </div>
-</div>
-
-<div class="card-pro mb-6">
-    <div class="card-pro-header">
-        <span class="card-pro-title"><i class="bi bi-funnel" style="color:var(--primary-600)"></i> {% t "filter_by_type" %}</span>
-    </div>
-    <div class="card-pro-body">
-        <form method="get" class="grid grid-5" style="gap:var(--sp-3);align-items:end">
-            <div class="form-group">
-                <label class="form-label">{% t "filter_by_type" %}</label>
+    <!-- Filter Form Card -->
+    <div class="doc-filter-card">
+        <form method="get" class="doc-filter-grid">
+            <div class="doc-field">
+                <label class="doc-label"><i class="bi bi-tag"></i> {% t "filter_by_type" %}</label>
                 {{ filter_form.doc_type }}
             </div>
-            <div class="form-group">
-                <label class="form-label">{% t "filter_by_status" %}</label>
+            <div class="doc-field">
+                <label class="doc-label"><i class="bi bi-check2-circle"></i> {% t "filter_by_status" %}</label>
                 {{ filter_form.status }}
             </div>
-            <div class="form-group">
-                <label class="form-label">{% t "date_from" %}</label>
+            <div class="doc-field">
+                <label class="doc-label"><i class="bi bi-calendar-event"></i> {% t "date_from" %}</label>
                 {{ filter_form.date_from }}
             </div>
-            <div class="form-group">
-                <label class="form-label">{% t "date_to" %}</label>
+            <div class="doc-field">
+                <label class="doc-label"><i class="bi bi-calendar-check"></i> {% t "date_to" %}</label>
                 {{ filter_form.date_to }}
             </div>
-            <div class="form-group">
-                <label class="form-label">{% t "search_documents" %}</label>
+            <div class="doc-field">
+                <label class="doc-label"><i class="bi bi-search"></i> {% t "search_documents" %}</label>
                 {{ filter_form.search }}
             </div>
-            <div style="grid-column:1/-1;display:flex;gap:var(--sp-2)">
-                <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i> {% t "search_documents" %}</button>
-                <a href="{% url 'documents:document_list' %}" class="btn-pro btn-pro-ghost btn-pro-sm"><i class="bi bi-x-lg"></i></a>
+            <div class="doc-filter-actions">
+                <button type="submit" class="doc-btn-submit">
+                    <i class="bi bi-search"></i>
+                    <span>{% t "search_documents" %}</span>
+                </button>
+                {% if request.GET.urlencode %}
+                <a href="{% url 'documents:document_list' %}" class="doc-btn-reset" title="Filtrni tozalash">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                {% endif %}
             </div>
         </form>
     </div>
-</div>
 
-<div class="card-pro">
-    <div class="card-pro-header">
-        <span class="card-pro-title"><i class="bi bi-file-earmark-text" style="color:var(--primary-600)"></i> {% t "document_list" %}</span>
-    </div>
-    <div class="table-responsive">
-        <table class="table-pro">
-            <thead>
-                <tr>
-                    <th>{% t "document_number" %}</th>
-                    <th>{% t "document_type" %}</th>
-                    <th>{% t "title" %}</th>
-                    <th>{% t "customer" %}</th>
-                    <th>{% t "total_amount" %}</th>
-                    <th>{% t "status" %}</th>
-                    <th>{% t "date" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for doc in documents %}
-                <tr>
-                    <td class="cell-primary">
-                        <a href="{% url 'documents:document_detail' pk=doc.pk %}" style="color:var(--text-primary);text-decoration:none">{{ doc.number }}</a>
-                    </td>
-                    <td>
-                        <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
-                    </td>
-                    <td>{{ doc.title|default:"—" }}</td>
-                    <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
-                    <td class="cell-primary fw-600">{{ doc.total|floatformat:0 }} {{ doc.currency }}</td>
-                    <td>
-                        {% if doc.status == 'draft' %}
-                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "drafts" %}</span>
-                        {% elif doc.status == 'pending' %}
-                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "pending" %}</span>
-                        {% elif doc.status == 'approved' %}
-                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
-                        {% elif doc.status == 'sent' %}
-                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "sent" %}</span>
-                        {% elif doc.status == 'completed' %}
-                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
-                        {% elif doc.status == 'cancelled' %}
-                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
-                        {% elif doc.status == 'archived' %}
-                            <span class="badge-pro badge-pro-dot">{% t "archived" %}</span>
-                        {% else %}
-                            <span class="badge-pro badge-pro-warning badge-pro-dot">{{ doc.get_status_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="cell-muted">{{ doc.date|date:"d.m.Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state" style="padding:var(--sp-6)">
-                            <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
-                            <h5 class="empty-state-title">{% t "no_documents" %}</h5>
-                            <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
-                        </div>
-                    </td>
-                </tr>
+    <!-- Documents Table Card -->
+    <div class="doc-table-card">
+        <div class="doc-table-header">
+            <h2 class="doc-table-title">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>{% t "document_list" %}</span>
+            </h2>
+            <span class="doc-count-tag">
+                Jami: <strong>{{ total_count|default:"0" }}</strong> ta hujjat
+            </span>
+        </div>
+        <div class="table-responsive" style="overflow-x:auto">
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th>{% t "document_number" %}</th>
+                        <th>{% t "document_type" %}</th>
+                        <th>{% t "title" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "total_amount" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="doc-num-link">
+                                {{ doc.number }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
+                        </td>
+                        <td>{{ doc.title|default:"—" }}</td>
+                        <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
+                        <td class="doc-amount">{{ doc.total|floatformat:0 }} {{ doc.currency|default:"UZS" }}</td>
+                        <td>
+                            {% if doc.status == 'draft' %}
+                                <span class="doc-status-badge doc-status--draft"><span class="doc-status-dot"></span>{% t "drafts" %}</span>
+                            {% elif doc.status == 'pending' %}
+                                <span class="doc-status-badge doc-status--pending"><span class="doc-status-dot"></span>{% t "pending" %}</span>
+                            {% elif doc.status == 'approved' %}
+                                <span class="doc-status-badge doc-status--approved"><span class="doc-status-dot"></span>{% t "approved" %}</span>
+                            {% elif doc.status == 'sent' %}
+                                <span class="doc-status-badge doc-status--sent"><span class="doc-status-dot"></span>{% t "sent" %}</span>
+                            {% elif doc.status == 'completed' %}
+                                <span class="doc-status-badge doc-status--completed"><span class="doc-status-dot"></span>{% t "completed" %}</span>
+                            {% elif doc.status == 'cancelled' %}
+                                <span class="doc-status-badge doc-status--cancelled"><span class="doc-status-dot"></span>{% t "cancelled" %}</span>
+                            {% elif doc.status == 'archived' %}
+                                <span class="doc-status-badge doc-status--archived"><span class="doc-status-dot"></span>{% t "archived" %}</span>
+                            {% else %}
+                                <span class="doc-status-badge doc-status--pending"><span class="doc-status-dot"></span>{{ doc.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-muted" style="font-size:12.5px">{{ doc.date|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state" style="padding:48px 20px;text-align:center">
+                                <div class="empty-state-icon" style="margin:0 auto 12px auto"><i class="bi bi-file-earmark-text"></i></div>
+                                <h5 class="empty-state-title" style="margin-bottom:8px">{% t "no_documents" %}</h5>
+                                <p class="empty-state-desc" style="margin-bottom:16px">Filtr bo'yicha hech qanday hujjat topilmadi.</p>
+                                <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if page_obj and page_obj.has_other_pages %}
+        <div class="doc-pagination-bar">
+            <span class="text-pro-sm text-pro-muted">
+                {% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+            <div class="pagination-pro">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if filter_form.doc_type.value %}&doc_type={{ filter_form.doc_type.value }}{% endif %}{% if filter_form.status.value %}&status={{ filter_form.status.value }}{% endif %}{% if filter_form.date_from.value %}&date_from={{ filter_form.date_from.value }}{% endif %}{% if filter_form.date_to.value %}&date_to={{ filter_form.date_to.value }}{% endif %}{% if filter_form.search.value %}&search={{ filter_form.search.value }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% if filter_form.doc_type.value %}&doc_type={{ filter_form.doc_type.value }}{% endif %}{% if filter_form.status.value %}&status={{ filter_form.status.value }}{% endif %}{% if filter_form.date_from.value %}&date_from={{ filter_form.date_from.value }}{% endif %}{% if filter_form.date_to.value %}&date_to={{ filter_form.date_to.value }}{% endif %}{% if filter_form.search.value %}&search={{ filter_form.search.value }}{% endif %}">{{ num }}</a>
+                    {% endif %}
                 {% endfor %}
-            </tbody>
-        </table>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if filter_form.doc_type.value %}&doc_type={{ filter_form.doc_type.value }}{% endif %}{% if filter_form.status.value %}&status={{ filter_form.status.value }}{% endif %}{% if filter_form.date_from.value %}&date_from={{ filter_form.date_from.value }}{% endif %}{% if filter_form.date_to.value %}&date_to={{ filter_form.date_to.value }}{% endif %}{% if filter_form.search.value %}&search={{ filter_form.search.value }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
-</div>
+</main>
 {% endblock %}

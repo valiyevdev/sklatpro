@@ -4,13 +4,15 @@
 {% block title %}{% t "inventory_counts" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="d-flex align-center justify-between mb-4">
-    <div>
-        <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "inventory_counts" %}</h2>
-        <p class="text-pro-sm text-pro-muted mb-0">{{ page_obj.paginator.count }} {% t "counts_total" %}</p>
-    </div>
-    <a href="{% url 'count_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-circle"></i> {% t "new_count" %}</a>
-</div>
+{% url 'count_create' as count_create_url %}
+{% t "inventory_counts" as count_list_title %}
+{% t "new_count" as new_count_text %}
+{% t "counts_total" as counts_total_text %}
+{% with count_str=page_obj.paginator.count|default:"0"|stringformat:"s" %}
+{% with stat_val=count_str|add:" "|add:counts_total_text %}
+{% include 'components/hero_header.html' with title=count_list_title stat_text=stat_val stat_icon="bi-clipboard-check" action_url=count_create_url action_text=new_count_text action_icon="bi-plus-lg" %}
+{% endwith %}
+{% endwith %}
 
 <div class="card-pro">
     <div style="overflow-x:auto">

@@ -3,168 +3,504 @@
 
 {% block title %}{% t "documents" %} {% t "dashboard" %} — SKLAT PRO{% endblock %}
 
+{% block extra_css %}
+<style>
+    .doc-page {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 8px 0 40px;
+    }
+
+    /* ============================================================
+       STAT CARDS GRID (10 Status Metrics Responsive Grid)
+       ============================================================ */
+    .doc-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .doc-stat-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 14px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .doc-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: #334155;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+    }
+    .doc-stat-info {
+        min-width: 0;
+        flex: 1;
+    }
+    .doc-stat-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .doc-stat-value {
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #f8fafc;
+        font-variant-numeric: tabular-nums;
+    }
+    .doc-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    /* Stat Tones (Dark Defaults) */
+    .doc-stat-icon--primary { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .doc-stat-icon--warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .doc-stat-icon--info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .doc-stat-icon--success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .doc-stat-icon--danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .doc-stat-icon--neutral { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+
+    /* ============================================================
+       TABLE CARD
+       ============================================================ */
+    .doc-table-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+    }
+    .doc-table-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .doc-table-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #f8fafc;
+        margin: 0;
+    }
+    .doc-table-title i {
+        color: #818cf8;
+        font-size: 18px;
+    }
+    .doc-view-all-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #818cf8;
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: all .15s ease;
+    }
+    .doc-view-all-btn:hover {
+        background: rgba(99, 102, 241, 0.12);
+        color: #a5b4fc;
+    }
+
+    /* Table styles */
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .doc-table th {
+        padding: 12px 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        background: #0d1424;
+        border-bottom: 1px solid #1e293b;
+        white-space: nowrap;
+    }
+    .doc-table td {
+        padding: 14px 20px;
+        font-size: 13.5px;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1e293b;
+        vertical-align: middle;
+    }
+    .doc-table tr:last-child td {
+        border-bottom: none;
+    }
+    .doc-table tbody tr {
+        transition: background-color .12s ease;
+    }
+    .doc-table tbody tr:hover {
+        background-color: rgba(99, 102, 241, 0.05);
+    }
+    .doc-num-link {
+        font-family: monospace;
+        font-weight: 700;
+        color: #818cf8 !important;
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .doc-num-link:hover {
+        text-decoration: underline;
+    }
+    .doc-amount {
+        font-weight: 700;
+        color: #f8fafc;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Status Badges */
+    .doc-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .doc-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+    .doc-status--draft { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .doc-status--draft .doc-status-dot { background: #fbbf24; }
+    .doc-status--pending { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .doc-status--pending .doc-status-dot { background: #60a5fa; }
+    .doc-status--approved { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .doc-status--approved .doc-status-dot { background: #34d399; }
+    .doc-status--sent { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .doc-status--sent .doc-status-dot { background: #a5b4fc; }
+    .doc-status--completed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .doc-status--completed .doc-status-dot { background: #34d399; }
+    .doc-status--cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .doc-status--cancelled .doc-status-dot { background: #f87171; }
+    .doc-status--archived { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+    .doc-status--archived .doc-status-dot { background: #94a3b8; }
+
+    /* ============================================================
+       LIGHT MODE ADAPTATION (Fresh, High Contrast, Border-Free Hero)
+       ============================================================ */
+    [data-theme="light"] .doc-stat-card,
+    html:not([data-theme="dark"]) .doc-stat-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+    [data-theme="light"] .doc-stat-card:hover,
+    html:not([data-theme="dark"]) .doc-stat-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+    }
+    [data-theme="light"] .doc-stat-label,
+    html:not([data-theme="dark"]) .doc-stat-label {
+        color: #64748b;
+    }
+    [data-theme="light"] .doc-stat-value,
+    html:not([data-theme="dark"]) .doc-stat-value {
+        color: #0f172a;
+    }
+
+    [data-theme="light"] .doc-stat-icon--primary,
+    html:not([data-theme="dark"]) .doc-stat-icon--primary { background: #eef2ff; color: #4f46e5; }
+    [data-theme="light"] .doc-stat-icon--warning,
+    html:not([data-theme="dark"]) .doc-stat-icon--warning { background: #fffbeb; color: #d97706; }
+    [data-theme="light"] .doc-stat-icon--info,
+    html:not([data-theme="dark"]) .doc-stat-icon--info { background: #eff6ff; color: #2563eb; }
+    [data-theme="light"] .doc-stat-icon--success,
+    html:not([data-theme="dark"]) .doc-stat-icon--success { background: #ecfdf5; color: #059669; }
+    [data-theme="light"] .doc-stat-icon--danger,
+    html:not([data-theme="dark"]) .doc-stat-icon--danger { background: #fef2f2; color: #dc2626; }
+    [data-theme="light"] .doc-stat-icon--neutral,
+    html:not([data-theme="dark"]) .doc-stat-icon--neutral { background: #f1f5f9; color: #64748b; }
+
+    [data-theme="light"] .doc-table-card,
+    html:not([data-theme="dark"]) .doc-table-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    [data-theme="light"] .doc-table-header,
+    html:not([data-theme="dark"]) .doc-table-header {
+        border-color: #e2e8f0;
+    }
+    [data-theme="light"] .doc-table-title,
+    html:not([data-theme="dark"]) .doc-table-title {
+        color: #0f172a;
+    }
+    [data-theme="light"] .doc-table th,
+    html:not([data-theme="dark"]) .doc-table th {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #64748b;
+    }
+    [data-theme="light"] .doc-table td,
+    html:not([data-theme="dark"]) .doc-table td {
+        border-color: #f1f5f9;
+        color: #334155;
+    }
+    [data-theme="light"] .doc-table tbody tr:hover,
+    html:not([data-theme="dark"]) .doc-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    [data-theme="light"] .doc-amount,
+    html:not([data-theme="dark"]) .doc-amount {
+        color: #0f172a;
+    }
+    [data-theme="light"] .doc-num-link,
+    html:not([data-theme="dark"]) .doc-num-link {
+        color: #4f46e5 !important;
+    }
+
+    [data-theme="light"] .doc-status--draft,
+    html:not([data-theme="dark"]) .doc-status--draft { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    [data-theme="light"] .doc-status--pending,
+    html:not([data-theme="dark"]) .doc-status--pending { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    [data-theme="light"] .doc-status--approved,
+    html:not([data-theme="dark"]) .doc-status--approved { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    [data-theme="light"] .doc-status--sent,
+    html:not([data-theme="dark"]) .doc-status--sent { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+    [data-theme="light"] .doc-status--completed,
+    html:not([data-theme="dark"]) .doc-status--completed { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    [data-theme="light"] .doc-status--cancelled,
+    html:not([data-theme="dark"]) .doc-status--cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    [data-theme="light"] .doc-status--archived,
+    html:not([data-theme="dark"]) .doc-status--archived { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
+    /* ============================================================
+       RESPONSIVE BREAKPOINTS
+       ============================================================ */
+    @media (max-width: 1200px) {
+        .doc-stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 768px) {
+        .doc-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .doc-stat-card {
+            padding: 14px 16px;
+        }
+        .doc-stat-value {
+            font-size: 22px;
+        }
+        .doc-stat-icon {
+            width: 38px;
+            height: 38px;
+            font-size: 17px;
+        }
+    }
+    @media (max-width: 480px) {
+        .doc-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="breadcrumb-pro">
-    <span class="current">{% t "documents" %}</span>
-    <span class="separator">/</span>
-    <span class="current">{% t "dashboard" %}</span>
-</div>
+<main class="doc-page">
+    <!-- Hero Header Component -->
+    {% url 'documents:document_create' as create_doc_url %}
+    {% url 'documents:document_template_list' as template_list_url %}
+    {% t "documents_dashboard" as dash_title %}
+    {% t "create_document" as create_doc_text %}
+    {% t "view_templates" as view_temp_text %}
+    {% t "items_suffix" as items_suffix_txt %}
+    {% with total_str=total|default:"0"|stringformat:"s" %}
+    {% with stat_val=total_str|add:" "|add:items_suffix_txt %}
+    {% with total_val_num=total_value|floatformat:0 %}
+    {% with sub_text=total_str|add:" ta hujjat &middot; "|add:total_val_num|add:" UZS" %}
+    {% include 'components/hero_header.html' with title=dash_title subtitle=sub_text stat_text=stat_val stat_icon="bi-file-earmark-text" action_url=create_doc_url action_text=create_doc_text action_icon="bi-plus-lg" secondary_url=template_list_url secondary_text=view_temp_text secondary_icon="bi-file-earmark-code" %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
 
-<div class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "documents_dashboard" %}</h1>
-        <p class="page-subtitle">{{ total }} {% t "total_documents" %} &middot; {{ total_value|floatformat:0 }} {{ currency|default:"UZS" }}</p>
+    <!-- Status Cards Grid Row 1 (Core Statuses) -->
+    <div class="doc-stats-grid">
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "total_documents" %}</div>
+                <div class="doc-stat-value">{{ total|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--primary"><i class="bi bi-file-earmark-text"></i></div>
+        </div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "drafts" %}</div>
+                <div class="doc-stat-value">{{ status_counts.draft|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--warning"><i class="bi bi-pencil"></i></div>
+        </div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "pending" %}</div>
+                <div class="doc-stat-value">{{ status_counts.pending|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--info"><i class="bi bi-clock-history"></i></div>
+        </div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "approved" %}</div>
+                <div class="doc-stat-value">{{ status_counts.approved|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--success"><i class="bi bi-check-circle"></i></div>
+        </div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "sent" %}</div>
+                <div class="doc-stat-value">{{ status_counts.sent|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--primary"><i class="bi bi-send"></i></div>
+        </div>
     </div>
-    <div class="page-actions">
-        <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary">
-            <i class="bi bi-plus-lg"></i> {% t "create_document" %}
-        </a>
-        <a href="{% url 'documents:document_template_list' %}" class="btn-pro btn-pro-ghost">
-            <i class="bi bi-file-earmark-text"></i> {% t "view_templates" %}
-        </a>
-    </div>
-</div>
 
-<div class="grid grid-5 mb-6">
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "total_documents" %}</div>
-            <div class="stat-card-value">{{ total }}</div>
+    <!-- Status Cards Grid Row 2 (Lifecycle Statuses) -->
+    <div class="doc-stats-grid">
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "completed" %}</div>
+                <div class="doc-stat-value">{{ status_counts.completed|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--success"><i class="bi bi-check2-all"></i></div>
         </div>
-        <div class="stat-card-icon primary"><i class="bi bi-file-earmark-text"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "drafts" %}</div>
-            <div class="stat-card-value">{{ status_counts.draft|default:0 }}</div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "received" %}</div>
+                <div class="doc-stat-value">{{ status_counts.received|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--info"><i class="bi bi-inbox"></i></div>
         </div>
-        <div class="stat-card-icon warning"><i class="bi bi-pencil"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "pending" %}</div>
-            <div class="stat-card-value">{{ status_counts.pending|default:0 }}</div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "archived" %}</div>
+                <div class="doc-stat-value">{{ status_counts.archived|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--neutral"><i class="bi bi-archive"></i></div>
         </div>
-        <div class="stat-card-icon info"><i class="bi bi-clock-history"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "approved" %}</div>
-            <div class="stat-card-value">{{ status_counts.approved|default:0 }}</div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "cancelled" %}</div>
+                <div class="doc-stat-value">{{ status_counts.cancelled|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--danger"><i class="bi bi-x-circle"></i></div>
         </div>
-        <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "sent" %}</div>
-            <div class="stat-card-value">{{ status_counts.sent|default:0 }}</div>
+        <div class="doc-stat-card">
+            <div class="doc-stat-info">
+                <div class="doc-stat-label">{% t "rejected" %}</div>
+                <div class="doc-stat-value">{{ status_counts.rejected|default:0 }}</div>
+            </div>
+            <div class="doc-stat-icon doc-stat-icon--danger"><i class="bi bi-slash-circle"></i></div>
         </div>
-        <div class="stat-card-icon info"><i class="bi bi-send"></i></div>
     </div>
-</div>
 
-<div class="grid grid-5 mb-6">
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "completed" %}</div>
-            <div class="stat-card-value">{{ status_counts.completed|default:0 }}</div>
+    <!-- Recent Documents Table Card -->
+    <div class="doc-table-card">
+        <div class="doc-table-header">
+            <h2 class="doc-table-title">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>{% t "recent_documents" %}</span>
+            </h2>
+            <a href="{% url 'documents:document_list' %}" class="doc-view-all-btn">
+                <span>{% t "view_all" %}</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
-        <div class="stat-card-icon success"><i class="bi bi-check2-all"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "archived" %}</div>
-            <div class="stat-card-value">{{ status_counts.archived|default:0 }}</div>
+        <div class="table-responsive" style="overflow-x:auto">
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th>{% t "document_number" %}</th>
+                        <th>{% t "document_type" %}</th>
+                        <th>{% t "title" %}</th>
+                        <th>{% t "customer" %}</th>
+                        <th>{% t "total_amount" %}</th>
+                        <th>{% t "status" %}</th>
+                        <th>{% t "date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in recent_docs %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="doc-num-link">
+                                {{ doc.number }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
+                        </td>
+                        <td>{{ doc.title|default:"—" }}</td>
+                        <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
+                        <td class="doc-amount">{{ doc.total|floatformat:0 }} {{ doc.currency|default:"UZS" }}</td>
+                        <td>
+                            {% if doc.status == 'draft' %}
+                                <span class="doc-status-badge doc-status--draft"><span class="doc-status-dot"></span>{% t "drafts" %}</span>
+                            {% elif doc.status == 'pending' %}
+                                <span class="doc-status-badge doc-status--pending"><span class="doc-status-dot"></span>{% t "pending" %}</span>
+                            {% elif doc.status == 'approved' %}
+                                <span class="doc-status-badge doc-status--approved"><span class="doc-status-dot"></span>{% t "approved" %}</span>
+                            {% elif doc.status == 'sent' %}
+                                <span class="doc-status-badge doc-status--sent"><span class="doc-status-dot"></span>{% t "sent" %}</span>
+                            {% elif doc.status == 'completed' %}
+                                <span class="doc-status-badge doc-status--completed"><span class="doc-status-dot"></span>{% t "completed" %}</span>
+                            {% elif doc.status == 'cancelled' %}
+                                <span class="doc-status-badge doc-status--cancelled"><span class="doc-status-dot"></span>{% t "cancelled" %}</span>
+                            {% elif doc.status == 'archived' %}
+                                <span class="doc-status-badge doc-status--archived"><span class="doc-status-dot"></span>{% t "archived" %}</span>
+                            {% else %}
+                                <span class="doc-status-badge doc-status--pending"><span class="doc-status-dot"></span>{{ doc.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-muted" style="font-size:12.5px">{{ doc.date|date:"d.m.Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state" style="padding:48px 20px;text-align:center">
+                                <div class="empty-state-icon" style="margin:0 auto 12px auto"><i class="bi bi-file-earmark-text"></i></div>
+                                <h5 class="empty-state-title" style="margin-bottom:8px">{% t "no_documents" %}</h5>
+                                <p class="empty-state-desc" style="margin-bottom:16px">Tizimda hozircha hech qanday hujjat mavjud emas.</p>
+                                <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="stat-card-icon"><i class="bi bi-archive"></i></div>
     </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "cancelled" %}</div>
-            <div class="stat-card-value">{{ status_counts.cancelled|default:0 }}</div>
-        </div>
-        <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "rejected" %}</div>
-            <div class="stat-card-value">{{ status_counts.rejected|default:0 }}</div>
-        </div>
-        <div class="stat-card-icon danger"><i class="bi bi-slash-circle"></i></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-content">
-            <div class="stat-card-label">{% t "received" %}</div>
-            <div class="stat-card-value">{{ status_counts.received|default:0 }}</div>
-        </div>
-        <div class="stat-card-icon info"><i class="bi bi-inbox"></i></div>
-    </div>
-</div>
-
-<div class="card-pro mb-6">
-    <div class="card-pro-header">
-        <span class="card-pro-title"><i class="bi bi-file-earmark-text" style="color:var(--primary-600)"></i> {% t "recent_documents" %}</span>
-        <a href="{% url 'documents:document_list' %}" class="btn-pro btn-pro-sm btn-pro-ghost">{% t "view_all" %} <i class="bi bi-arrow-right"></i></a>
-    </div>
-    <div class="table-responsive">
-        <table class="table-pro">
-            <thead>
-                <tr>
-                    <th>{% t "document_number" %}</th>
-                    <th>{% t "document_type" %}</th>
-                    <th>{% t "title" %}</th>
-                    <th>{% t "customer" %}</th>
-                    <th>{% t "total_amount" %}</th>
-                    <th>{% t "status" %}</th>
-                    <th>{% t "date" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for doc in recent_docs %}
-                <tr>
-                    <td class="cell-primary">
-                        <a href="{% url 'documents:document_detail' pk=doc.pk %}" style="color:var(--text-primary);text-decoration:none">{{ doc.number }}</a>
-                    </td>
-                    <td>
-                        <span class="badge-pro badge-pro-info">{{ doc.get_doc_type_display }}</span>
-                    </td>
-                    <td>{{ doc.title|default:"—" }}</td>
-                    <td>{{ doc.customer.name|default:doc.supplier.name|default:"—" }}</td>
-                    <td class="cell-primary fw-600">{{ doc.total|floatformat:0 }} {{ doc.currency }}</td>
-                    <td>
-                        {% if doc.status == 'draft' %}
-                            <span class="badge-pro badge-pro-warning badge-pro-dot">{% t "drafts" %}</span>
-                        {% elif doc.status == 'pending' %}
-                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "pending" %}</span>
-                        {% elif doc.status == 'approved' %}
-                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "approved" %}</span>
-                        {% elif doc.status == 'sent' %}
-                            <span class="badge-pro badge-pro-info badge-pro-dot">{% t "sent" %}</span>
-                        {% elif doc.status == 'completed' %}
-                            <span class="badge-pro badge-pro-success badge-pro-dot">{% t "completed" %}</span>
-                        {% elif doc.status == 'cancelled' %}
-                            <span class="badge-pro badge-pro-danger badge-pro-dot">{% t "cancelled" %}</span>
-                        {% elif doc.status == 'archived' %}
-                            <span class="badge-pro badge-pro-dot">{% t "archived" %}</span>
-                        {% else %}
-                            <span class="badge-pro badge-pro-warning badge-pro-dot">{{ doc.get_status_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="cell-muted">{{ doc.date|date:"d.m.Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state" style="padding:var(--sp-6)">
-                            <div class="empty-state-icon"><i class="bi bi-file-earmark-text"></i></div>
-                            <h5 class="empty-state-title">{% t "no_documents" %}</h5>
-                            <a href="{% url 'documents:document_create' %}" class="btn-pro btn-pro-primary"><i class="bi bi-plus-lg"></i> {% t "create_document" %}</a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+</main>
 {% endblock %}

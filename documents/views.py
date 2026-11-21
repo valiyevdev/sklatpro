@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.db.models import Sum, Count, Q
 from django.db import transaction as db_transaction
+from django.core.paginator import Paginator
 from django.http import FileResponse, Http404
 from django.utils import timezone
 from django.utils.text import slugify
@@ -148,11 +149,14 @@ def document_list(request):
                 Q(supplier__name__icontains=q)
             )
 
-    page_obj = None
     total_count = qs.count()
+    paginator = Paginator(qs, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'documents/document_list.html', {
-        'documents': qs,
+        'documents': page_obj,
+        'page_obj': page_obj,
         'filter_form': form,
         'total_count': total_count,
         'type_choices': Document.TYPE_CHOICES,

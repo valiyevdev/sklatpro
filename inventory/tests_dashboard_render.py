@@ -3,6 +3,7 @@
 Runs against Django's isolated TEST database, so db.sqlite3 is untouched.
 """
 import json
+import re
 from decimal import Decimal
 
 from django.test import TestCase
@@ -76,6 +77,23 @@ class DashboardRenderTests(TestCase):
                 self.assertIn("dbdCategoryChart", body, lang)
                 self.assertIn('<script id="dbdCategoryData"', body, lang)
 
+    def test_dashboard_heading_and_stock_row_hover(self):
+        body = self._get().content.decode()
+        heading = re.search(r'<div class="dbd-heading">(.*?)</div>', body, re.S)
+        self.assertIsNotNone(heading)
+        self.assertRegex(
+            heading.group(1),
+            r'^\s*<h1 class="dbd-hero__title">.+</h1>\s*'
+            r'<p class="dbd-hero__subtitle">.+</p>\s*$',
+        )
+        self.assertNotIn('class="dbd-hero"', body)
+        self.assertRegex(
+            body,
+            r"\.dbd-row:hover\s*\{\s*background:\s*rgba\(99, 102, 241, 0\.08\);\s*"
+            r"border-left-color:\s*rgba\(99, 102, 241, 0\.6\);",
+        )
+        self.assertNotRegex(body, r"\.dbd-row:hover\s*\{[^}]*transform:")
+
     def test_real_counts_reach_the_template(self):
         resp = self._get()
         ctx = resp.context
@@ -98,6 +116,23 @@ class DashboardRenderTests(TestCase):
         data = json.loads(raw)
         self.assertEqual(sum(data.values()), 4)
         self.assertEqual(sorted(data.values()), [1, 1, 1, 1])
+
+    def test_category_chart_renders_category_bars_and_total(self):
+        body = self._get().content.decode()
+        self.assertIn("type: 'bar'", body)
+        self.assertIn("indexAxis: 'y'", body)
+        self.assertIn("totalProducts = values.reduce", body)
+        self.assertIn("values.push(totalProducts)", body)
+        self.assertIn("function barColors()", body)
+        self.assertIn("dbd-card dbd-card--fill", body)
+        self.assertIn("legend: { display: false }", body)
+        self.assertIn("beginAtZero: true", body)
+        self.assertNotIn("type: 'doughnut'", body)
+        self.assertNotIn("type: 'line'", body)
+        self.assertRegex(
+            body,
+            r"\.dbd-card__head\s*\{[^}]*border-bottom:\s*1px solid var\(--border-default\);",
+        )
 
     def test_numbers_are_grouped(self):
         body = self._get().content.decode()

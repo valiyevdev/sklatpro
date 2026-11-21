@@ -10,14 +10,13 @@
      truncation rules are scoped under `.mvh-` to avoid changing
      every other page.
      ============================================================ -->
-<header class="page-header">
-  <div class="page-header-content">
-    <h1 class="page-title">{% t "movement_history_title" %}</h1>
-  </div>
-  <div class="page-actions">
-    <span class="badge-pro mvh-count">{{ total_count }}</span>
-  </div>
-</header>
+{% t "movement_history_title" as mvh_title %}
+{% t "items_suffix" as items_suffix_text %}
+{% with count_str=total_count|default:"0"|stringformat:"s" %}
+{% with stat_val=count_str|add:" "|add:items_suffix_text %}
+{% include 'components/hero_header.html' with title=mvh_title stat_text=stat_val stat_icon="bi-clock-history" %}
+{% endwith %}
+{% endwith %}
 
 <!-- ============================================================
      Compact bar: search + "Filtrlar" toggle. The advanced filters
@@ -622,6 +621,79 @@
     padding: 0 4px;
     font-size: 0.875rem;
     color: var(--text-muted, #94a3b8);
+  }
+
+  /* ---------- Light theme overrides ---------- */
+  [data-theme="light"] .mvh-search__input {
+    color: #0f172a;
+    background: #ffffff;
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .mvh-search__input::placeholder {
+    color: #94a3b8;
+  }
+
+  [data-theme="light"] .mvh-filter-toggle {
+    color: #334155;
+    background: #ffffff;
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .mvh-filter-toggle:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  [data-theme="light"] .mvh-filter-toggle.is-active,
+  [data-theme="light"] .mvh-filter-toggle[aria-expanded="true"] {
+    color: #4f46e5;
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  [data-theme="light"] .mvh-empty {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(226, 232, 240, 0.95);
+    color: #64748b;
+  }
+
+  [data-theme="light"] .mvh-empty__title {
+    color: #0f172a;
+  }
+
+  [data-theme="light"] .mvh-sheet {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .mvh-select,
+  [data-theme="light"] .mvh-input {
+    color: #0f172a;
+    background-color: #ffffff;
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .mvh-select option {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  [data-theme="light"] .mvh-label {
+    color: #334155;
+  }
+
+  [data-theme="light"] .mvh-btn--ghost {
+    color: #334155;
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  [data-theme="light"] .mvh-btn--ghost:hover {
+    color: #0f172a;
+    background: #ffffff;
+    border-color: #cbd5e1;
   }
 </style>
 {% endblock %}

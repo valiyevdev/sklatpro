@@ -4,45 +4,32 @@
 {% block title %}{% t "count_detail" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <a href="{% url 'count_list' %}" class="back-btn" aria-label="Orqaga">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-    </a>
-    <div class="page-header-content">
-        <h1 class="page-title" style="margin:0">{{ count.reference }}</h1>
-        <p class="page-subtitle" style="margin-top:4px">{{ count.warehouse.name }} | {{ count.created_at|date:"d.m.Y" }}
-            {% if count.status == 'draft' %}
-                <span class="badge-pro badge-pro-neutral">{% t "count_status_draft" %}</span>
-            {% elif count.status == 'in_progress' %}
-                <span class="badge-pro badge-pro-warning">{% t "count_status_in_progress" %}</span>
-            {% elif count.status == 'submitted' %}
-                <span class="badge-pro badge-pro-info">{% t "count_status_submitted" %}</span>
-            {% elif count.status == 'completed' %}
-                <span class="badge-pro badge-pro-success">{% t "count_status_completed" %}</span>
-            {% endif %}
-        </p>
-    </div>
-    <div class="page-actions">
-        {% if count.status == 'draft' %}
-            <form method="post" action="{% url 'count_start' pk=count.pk %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-play-circle"></i> {% t "start_count" %}</button>
-            </form>
-        {% endif %}
-        {% if count.status == 'in_progress' %}
-            <form method="post" action="{% url 'count_submit' pk=count.pk %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-send"></i> {% t "submit" %}</button>
-            </form>
-        {% endif %}
-        {% if count.status == 'submitted' %}
-            <form method="post" action="{% url 'count_approve' pk=count.pk %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "approve" %}</button>
-            </form>
-        {% endif %}
-    </div>
+{% url 'count_list' as back_url %}
+{% t "back" as back_text %}
+{% include 'components/hero_header.html' with title=count.reference subtitle=count.warehouse.name secondary_url=back_url secondary_text=back_text secondary_icon="bi-arrow-left" %}
+
+{% if count.status == 'draft' %}
+<div class="mb-4">
+    <form method="post" action="{% url 'count_start' pk=count.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-play-circle"></i> {% t "start_count" %}</button>
+    </form>
 </div>
+{% elif count.status == 'in_progress' %}
+<div class="mb-4">
+    <form method="post" action="{% url 'count_submit' pk=count.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-send"></i> {% t "submit" %}</button>
+    </form>
+</div>
+{% elif count.status == 'submitted' %}
+<div class="mb-4">
+    <form method="post" action="{% url 'count_approve' pk=count.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "approve" %}</button>
+    </form>
+</div>
+{% endif %}
 
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
     <div class="stat-card">

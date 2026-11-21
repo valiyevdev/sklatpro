@@ -2,14 +2,10 @@
 {% load i18n_tags %}
 
 {% block content %}
+<div class="crm-dashboard">
 <div class="page-header">
   <div class="page-header-content">
     <div>
-      <nav class="breadcrumb-pro">
-        <a href="{% url 'dashboard' %}">{% t "Dashboard" %}</a>
-        <span class="breadcrumb-pro-separator">/</span>
-        <span>{% t "CRM Dashboard" %}</span>
-      </nav>
       <h1 class="page-title">{% t "CRM Dashboard" %}</h1>
       <p class="page-subtitle">{% t "Customer relationship overview and analytics" %}</p>
     </div>
@@ -21,14 +17,14 @@
   </div>
 </div>
 
-<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+<div class="grid grid-4 dashboard-section">
   <div class="stat-card">
     <div class="stat-card-content">
       <div class="stat-card-label">{% t "Total Customers" %}</div>
       <div class="stat-card-value">{{ total_customers }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-primary">
-      <i class="fas fa-users"></i>
+    <div class="stat-card-icon primary">
+      <i class="bi bi-people-fill" aria-hidden="true"></i>
     </div>
   </div>
   <div class="stat-card">
@@ -36,7 +32,7 @@
       <div class="stat-card-label">{% t "New This Month" %}</div>
       <div class="stat-card-value">{{ new_this_month }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-success">
+    <div class="stat-card-icon success">
       <i class="fas fa-user-plus"></i>
     </div>
   </div>
@@ -45,7 +41,7 @@
       <div class="stat-card-label">{% t "Active Customers" %}</div>
       <div class="stat-card-value">{{ active_customers }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-info">
+    <div class="stat-card-icon info">
       <i class="fas fa-user-check"></i>
     </div>
   </div>
@@ -54,20 +50,20 @@
       <div class="stat-card-label">{% t "Inactive Customers" %}</div>
       <div class="stat-card-value">{{ inactive_customers }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-warning">
+    <div class="stat-card-icon warning">
       <i class="fas fa-user-clock"></i>
     </div>
   </div>
 </div>
 
-<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+<div class="grid grid-4 dashboard-section">
   <div class="stat-card">
     <div class="stat-card-content">
       <div class="stat-card-label">{% t "Total Revenue" %}</div>
       <div class="stat-card-value">${{ total_revenue|floatformat:2 }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-primary">
-      <i class="fas fa-dollar-sign"></i>
+    <div class="stat-card-icon primary">
+      <i class="bi bi-currency-dollar" aria-hidden="true"></i>
     </div>
   </div>
   <div class="stat-card">
@@ -75,7 +71,7 @@
       <div class="stat-card-label">{% t "Monthly Revenue" %}</div>
       <div class="stat-card-value">${{ monthly_revenue|floatformat:2 }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-success">
+    <div class="stat-card-icon success">
       <i class="fas fa-chart-line"></i>
     </div>
   </div>
@@ -84,7 +80,7 @@
       <div class="stat-card-label">{% t "Outstanding Debt" %}</div>
       <div class="stat-card-value">${{ outstanding_debt|floatformat:2 }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-danger">
+    <div class="stat-card-icon danger">
       <i class="fas fa-exclamation-triangle"></i>
     </div>
   </div>
@@ -93,19 +89,19 @@
       <div class="stat-card-label">{% t "Avg Order Value" %}</div>
       <div class="stat-card-value">${{ avg_order_value|floatformat:2 }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-info">
+    <div class="stat-card-icon info">
       <i class="fas fa-receipt"></i>
     </div>
   </div>
 </div>
 
-<div class="grid grid-4" style="margin-bottom: var(--spacing-lg);">
+<div class="grid grid-4 dashboard-section">
   <div class="stat-card">
     <div class="stat-card-content">
       <div class="stat-card-label">{% t "Blocked" %}</div>
       <div class="stat-card-value">{{ blocked_count }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-danger">
+    <div class="stat-card-icon danger">
       <i class="fas fa-ban"></i>
     </div>
   </div>
@@ -114,7 +110,7 @@
       <div class="stat-card-label">{% t "Prospects" %}</div>
       <div class="stat-card-value">{{ prospects_count }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-info">
+    <div class="stat-card-icon info">
       <i class="fas fa-handshake"></i>
     </div>
   </div>
@@ -123,7 +119,7 @@
       <div class="stat-card-label">{% t "Overdue Tasks" %}</div>
       <div class="stat-card-value">{{ overdue_tasks|length }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-warning">
+    <div class="stat-card-icon warning">
       <i class="fas fa-tasks"></i>
     </div>
   </div>
@@ -132,14 +128,14 @@
       <div class="stat-card-label">{% t "At Risk" %}</div>
       <div class="stat-card-value">{{ at_risk_count }}</div>
     </div>
-    <div class="stat-card-icon stat-card-icon-danger">
+    <div class="stat-card-icon danger">
       <i class="fas fa-heartbeat"></i>
     </div>
   </div>
 </div>
 
-<div class="grid grid-2" style="margin-bottom: var(--spacing-lg);">
-  <div class="card-pro">
+<div class="grid grid-2 dashboard-section">
+  <div class="card-pro crm-dashboard-table-card">
     <div class="card-pro-header">
       <h3 class="card-pro-title">{% t "Top Customers" %}</h3>
     </div>
@@ -177,7 +173,7 @@
     </div>
   </div>
 
-  <div class="card-pro">
+  <div class="card-pro crm-dashboard-table-card">
     <div class="card-pro-header">
       <h3 class="card-pro-title">{% t "Recent Customers" %}</h3>
     </div>
@@ -218,29 +214,29 @@
   </div>
 </div>
 
-<div class="grid grid-2" style="margin-bottom: var(--spacing-lg);">
-  <div class="card-pro">
+<div class="grid grid-2 dashboard-section">
+  <div class="card-pro crm-dashboard-summary-card">
     <div class="card-pro-header">
       <h3 class="card-pro-title">{% t "New vs Returning" %}</h3>
     </div>
     <div class="card-pro-body">
-      <div class="grid grid-2">
-        <div class="stat-card">
+      <div class="grid grid-2 crm-dashboard-summary-grid">
+        <div class="stat-card crm-dashboard-summary-stat">
           <div class="stat-card-content">
             <div class="stat-card-label">{% t "New Customers" %}</div>
             <div class="stat-card-value">{{ new_customers_count }}</div>
           </div>
-          <div class="stat-card-icon stat-card-icon-success">
+          <div class="stat-card-icon success">
             <i class="fas fa-user-plus"></i>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card crm-dashboard-summary-stat">
           <div class="stat-card-content">
             <div class="stat-card-label">{% t "Returning Customers" %}</div>
             <div class="stat-card-value">{{ returning_customers_count }}</div>
           </div>
-          <div class="stat-card-icon stat-card-icon-primary">
-            <i class="fas fa-redo"></i>
+          <div class="stat-card-icon primary">
+            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
           </div>
         </div>
       </div>
@@ -277,7 +273,7 @@
   </div>
 </div>
 
-<div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+<div class="crm-dashboard-links">
   <a href="{% url 'crm:segment_list' %}" class="btn-pro btn-pro-outline">
     <i class="fas fa-layer-group"></i> {% t "Segments" %}
   </a>
@@ -287,5 +283,6 @@
   <a href="{% url 'crm:rfm_analyze' %}" class="btn-pro btn-pro-outline">
     <i class="fas fa-chart-pie"></i> {% t "RFM Analysis" %}
   </a>
+</div>
 </div>
 {% endblock %}

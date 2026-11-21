@@ -22,31 +22,31 @@
     </div>
 </div>
 
-<div class="card-pro mb-6">
+<div class="card-pro mb-6 orders-filter-card">
     <div class="card-pro-body">
-        <form method="get" action="{% url 'orders:order_list' %}">
-            <div class="d-flex gap-3 flex-wrap align-center">
-                <div style="flex:2;min-width:200px">
+        <form method="get" action="{% url 'orders:order_list' %}" class="orders-filter-form">
+            <div class="orders-filter-row d-flex gap-3 flex-wrap align-center">
+                <div class="orders-filter-field" style="flex:2;min-width:200px">
                     <input class="input-pro" type="text" name="q" placeholder="{% t "search_orders" %}" value="{{ q }}">
                 </div>
-                <div style="flex:1;min-width:150px">
-                    <select class="input-pro" name="status">
+                <div class="orders-filter-field" style="flex:1;min-width:150px">
+                    <select class="input-pro" name="status" aria-label="{% t "status" %}" data-orders-select>
                         <option value="">{% t "all_statuses" %}</option>
                         {% for val, label in status_choices %}
                             <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div style="flex:1;min-width:150px">
-                    <select class="input-pro" name="payment_status">
+                <div class="orders-filter-field" style="flex:1;min-width:150px">
+                    <select class="input-pro" name="payment_status" aria-label="{% t "payment" %}" data-orders-select>
                         <option value="">{% t "all_payment_statuses" %}</option>
                         {% for val, label in payment_choices %}
                             <option value="{{ val }}" {% if payment_filter == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div style="flex:1;min-width:150px">
-                    <select class="input-pro" name="priority">
+                <div class="orders-filter-field" style="flex:1;min-width:150px">
+                    <select class="input-pro" name="priority" aria-label="{% t "priority" %}" data-orders-select>
                         <option value="">{% t "all_priorities" %}</option>
                         {% for val, label in priority_choices %}
                             <option value="{{ val }}" {% if priority_filter == val %}selected{% endif %}>{{ label }}</option>
@@ -54,27 +54,27 @@
                     </select>
                 </div>
             </div>
-            <div class="d-flex gap-3 flex-wrap align-center mt-3">
-                <div style="flex:1;min-width:150px">
-                    <select class="input-pro" name="customer">
+            <div class="orders-filter-row d-flex gap-3 flex-wrap align-center">
+                <div class="orders-filter-field" style="flex:1;min-width:150px">
+                    <select class="input-pro" name="customer" aria-label="{% t "customer" %}" data-orders-select>
                         <option value="">{% t "all_customers" %}</option>
                         {% for c in customers %}
                             <option value="{{ c.pk }}" {% if customer_filter == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div style="flex:1;min-width:150px">
-                    <select class="input-pro" name="warehouse">
+                <div class="orders-filter-field" style="flex:1;min-width:150px">
+                    <select class="input-pro" name="warehouse" aria-label="{% t "warehouse" %}" data-orders-select>
                         <option value="">{% t "all_warehouses" %}</option>
                         {% for w in warehouses %}
                             <option value="{{ w.pk }}" {% if warehouse_filter == w.pk|stringformat:"d" %}selected{% endif %}>{{ w.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div style="flex:1;min-width:140px">
+                <div class="orders-filter-field" style="flex:1;min-width:140px">
                     <input class="input-pro" type="date" name="date_from" value="{{ date_from }}" placeholder="{% t "date_from" %}">
                 </div>
-                <div style="flex:1;min-width:140px">
+                <div class="orders-filter-field" style="flex:1;min-width:140px">
                     <input class="input-pro" type="date" name="date_to" value="{{ date_to }}" placeholder="{% t "date_to" %}">
                 </div>
                 <button type="submit" class="btn-pro btn-pro-primary btn-pro-sm"><i class="bi bi-search"></i> {% t "filter" %}</button>
@@ -83,6 +83,7 @@
         </form>
     </div>
 </div>
+
 
 <div class="card-pro">
     <div class="table-responsive">
@@ -193,4 +194,127 @@
     </div>
 </div>
 {% endif %}
+<script>
+    (() => {
+        const form = document.querySelector('.orders-filter-form');
+        if (!form || form.dataset.ordersSelectReady === '1') return;
+        form.dataset.ordersSelectReady = '1';
+
+        const wrappers = [];
+
+        const closeAll = (except) => {
+            wrappers.forEach((wrapper) => {
+                if (wrapper === except) return;
+                wrapper.classList.remove('is-open');
+                wrapper.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+            });
+        };
+
+        const sync = (select, wrapper) => {
+            const selected = select.options[select.selectedIndex];
+            wrapper.querySelector('.custom-select-label').textContent = selected ? selected.textContent.trim() : '';
+
+            wrapper.querySelectorAll('.custom-select-option').forEach((item) => {
+                const isSelected = item.dataset.value === select.value;
+                item.classList.toggle('is-selected', isSelected);
+                item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+                item.querySelector('.custom-select-option-check')?.remove();
+                if (isSelected) {
+                    const check = document.createElement('i');
+                    check.className = 'bi bi-check2 custom-select-option-check';
+                    check.setAttribute('aria-hidden', 'true');
+                    item.appendChild(check);
+                }
+            });
+        };
+
+        form.querySelectorAll('select[data-orders-select]').forEach((select) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-select-wrapper orders-filter-select';
+            select.classList.add('custom-select-native');
+            select.setAttribute('tabindex', '-1');
+            select.setAttribute('aria-hidden', 'true');
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+
+            const trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = 'custom-select-trigger';
+            trigger.setAttribute('aria-haspopup', 'listbox');
+            trigger.setAttribute('aria-expanded', 'false');
+            if (select.getAttribute('aria-label')) {
+                trigger.setAttribute('aria-label', select.getAttribute('aria-label'));
+            }
+
+            const label = document.createElement('span');
+            label.className = 'custom-select-label';
+            trigger.appendChild(label);
+
+            const arrow = document.createElement('i');
+            arrow.className = 'bi bi-chevron-down custom-select-arrow';
+            arrow.setAttribute('aria-hidden', 'true');
+            trigger.appendChild(arrow);
+            wrapper.appendChild(trigger);
+
+            const menu = document.createElement('div');
+            menu.className = 'custom-select-menu';
+            menu.setAttribute('role', 'listbox');
+            if (select.getAttribute('aria-label')) {
+                menu.setAttribute('aria-label', select.getAttribute('aria-label'));
+            }
+
+            Array.from(select.options).forEach((option) => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'custom-select-option';
+                item.setAttribute('role', 'option');
+                item.setAttribute('tabindex', '-1');
+                item.dataset.value = option.value;
+
+                const text = document.createElement('span');
+                text.className = 'custom-select-option-label';
+                text.textContent = option.textContent.trim();
+                item.appendChild(text);
+
+                item.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const changed = select.value !== option.value;
+                    select.value = option.value;
+                    sync(select, wrapper);
+                    wrapper.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    trigger.focus();
+                    if (changed) {
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+
+                menu.appendChild(item);
+            });
+
+            wrapper.appendChild(menu);
+
+            trigger.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const isOpen = wrapper.classList.contains('is-open');
+                closeAll(wrapper);
+                wrapper.classList.toggle('is-open', !isOpen);
+                trigger.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            });
+
+            select.addEventListener('change', () => sync(select, wrapper));
+            sync(select, wrapper);
+            wrappers.push(wrapper);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest || !event.target.closest('.orders-filter-select')) closeAll(null);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeAll(null);
+        });
+    })();
+</script>
 {% endblock %}

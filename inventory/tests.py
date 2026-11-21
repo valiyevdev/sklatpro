@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import StockAdjustment, StockMovement
-from products.models import Product
+from products.models import Brand, Category, Product
 from users.models import Company
 from warehouses.models import Warehouse
 
@@ -571,3 +571,81 @@ class InventoryTablePolishTests(TestCase):
         self.product.save(update_fields=['quantity'])
         resp = self.client.get(self.url())
         self.assertIn('invt-status--warning', resp.content.decode())
+
+
+class InventoryTableFilterCustomSelectTests(TestCase):
+    """The inventory filters render the custom-select-trigger dropdown.
+
+    The native selects stay inside the form as the no-JavaScript fallback,
+    while the trigger button carries the current value and the listbox hooks.
+    """
+
+    def setUp(self):
+        self.company = Company.objects.create(
+            company_name='Filter Co', slug='filter-co', email='filter@co.test',
+        )
+        self.user = User.objects.create_user(
+            'filter@co.test', password='x', company=self.company,
+        )
+        self.client.force_login(self.user)
+        self.category = Category.objects.create(company=self.company, name='Mebel')
+        self.brand = Brand.objects.create(company=self.company, name='IKEA')
+        self.product = Product.objects.create(
+            company=self.company, name='Stol', sku='TBL-10', price='1000',
+            quantity=10, category_fk=self.category, brand=self.brand,
+        )
+
+    def url(self):
+        return reverse('inventory_table')
+
+    def test_renders_custom_select_trigger_for_every_filter(self):
+        html = self.client.get(self.url()).content.decode()
+
+        for trigger in ('fp-status-trigger', 'fp-category-trigger', 'fp-brand-trigger'):
+            self.assertIn(f'id="{trigger}"', html)
+        for menu in ('fp-status-menu', 'fp-category-menu', 'fp-brand-menu'):
+            self.assertIn(f'id="{menu}"', html)
+        self.assertIn('class="custom-select-trigger"', html)
+        self.assertIn('data-fp-select', html)
+        self.assertIn('custom-select-menu', html)
+        self.assertIn('data-fp-native-select', html)
+
+        # The native controls stay in the form for the no-JS fallback.
+        self.assertIn('id="fp-category-filter" name="category"', html)
+        self.assertIn('id="fp-brand-filter" name="brand"', html)
+
+    def test_selected_values_are_reflected_in_trigger_labels(self):
+        html = self.client.get(self.url(), {
+            'status': 'low_stock',
+            'category': self.category.pk,
+            'brand': self.brand.pk,
+        }).content.decode()
+
+        self.assertIn(
+            'id="fp-status-value" data-fp-label data-allow-truncate>Kam qolgan</span>',
+            html,
+        )
+        self.assertIn(
+            'id="fp-category-value" data-fp-label data-allow-truncate>Mebel</span>',
+            html,
+        )
+        self.assertIn(
+            'id="fp-brand-value" data-fp-label data-allow-truncate>IKEA</span>',
+            html,
+        )
+        self.assertIn(f'<option value="{self.category.pk}" selected>Mebel</option>', html)
+        self.assertIn(f'<option value="{self.brand.pk}" selected>IKEA</option>', html)
+
+    def test_category_filter_still_applies(self):
+        resp = self.client.get(self.url(), {'category': self.category.pk})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(list(resp.context['page_obj'].object_list), [self.product])
+
+    def test_filter_choices_are_listed_once_per_category_and_brand(self):
+        Product.objects.create(
+            company=self.company, name='Stul', sku='STL-10', price='1000',
+            quantity=5, category_fk=self.category, brand=self.brand,
+        )
+        resp = self.client.get(self.url())
+        self.assertEqual(resp.context['categories'], [(self.category.pk, 'Mebel')])
+        self.assertEqual(resp.context['brands'], [(self.brand.pk, 'IKEA')])

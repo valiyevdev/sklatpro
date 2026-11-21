@@ -319,9 +319,30 @@ def report_kpi(request):
     company = get_company(request)
     sd, ed = get_date_range(request)
     kpis = services.kpi_summary(company, sd, ed)
-    return render(request, 'reports/report_kpi.html', {
-        'start_date': sd, 'end_date': ed, 'kpis': kpis,
-    })
+    context = {
+        'start_date': sd,
+        'end_date': ed,
+        'date_from': sd,
+        'date_to': ed,
+        'kpis': kpis,
+        'preset': request.GET.get('preset', ''),
+    }
+    if isinstance(kpis, dict):
+        if 'sales' in kpis and isinstance(kpis['sales'], dict):
+            context.update(kpis['sales'])
+        if 'purchases' in kpis and isinstance(kpis['purchases'], dict):
+            context.update(kpis['purchases'])
+            context['total_purchases'] = kpis['purchases'].get('gross_purchases', 0)
+            context['purchase_count'] = kpis['purchases'].get('total_count', 0)
+        if 'finance' in kpis and isinstance(kpis['finance'], dict):
+            context.update(kpis['finance'])
+        if 'inventory' in kpis and isinstance(kpis['inventory'], dict):
+            context.update(kpis['inventory'])
+            context['low_stock'] = kpis['inventory'].get('low_stock_count', 0)
+            context['out_of_stock'] = kpis['inventory'].get('out_of_stock_count', 0)
+        if 'new_customers' in kpis:
+            context['new_customers'] = kpis['new_customers']
+    return render(request, 'reports/report_kpi.html', context)
 
 
 # === SAVED REPORTS ===

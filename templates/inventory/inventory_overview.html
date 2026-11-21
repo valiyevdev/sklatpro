@@ -4,19 +4,12 @@
 {% block title %}{% t "inventory_overview" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<header class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "inventory_overview" %}</h1>
-    </div>
-    <div class="page-actions">
-        <a href="{% url 'inventory_table' %}" class="btn-pro btn-pro-outline-primary">
-            <i class="bi bi-table"></i> {% t "inventory_table_title" %}
-        </a>
-        <a href="{% url 'adjustment_create' %}" class="btn-pro btn-pro-primary">
-            <i class="bi bi-plus-lg"></i> {% t "create_adjustment" %}
-        </a>
-    </div>
-</header>
+{% url 'inventory_table' as inv_table_url %}
+{% url 'adjustment_create' as adj_create_url %}
+{% t "inventory_overview" as inv_overview_title %}
+{% t "inventory_table_title" as inv_table_text %}
+{% t "create_adjustment" as adj_create_text %}
+{% include 'components/hero_header.html' with title=inv_overview_title action_url=adj_create_url action_text=adj_create_text action_icon="bi-plus-lg" secondary_url=inv_table_url secondary_text=inv_table_text secondary_icon="bi-table" %}
 
 <style>
 .inv-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-5);margin-bottom:var(--sp-6)}
@@ -44,6 +37,7 @@
    GLOBAL .card-pro / .badge-pro / .btn-pro are never touched. */
 .daw{align-self:start;display:flex;flex-direction:column;gap:var(--sp-4);padding:var(--sp-5);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-xl);box-shadow:var(--shadow-xs);transition:transform 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
 .daw:hover{border-color:#334155;box-shadow:var(--shadow-md)}
+[data-theme="light"] .daw:hover {border-color: #ebeef3;}
 .daw-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);padding-bottom:var(--sp-3);border-bottom:1px solid var(--border-subtle)}
 .daw-tab{--daw-fg:#fbbf24;--daw-bg:rgba(245,158,11,.1);--daw-bd:rgba(245,158,11,.25);-webkit-appearance:none;appearance:none;margin:0;padding:var(--sp-3) var(--sp-2);border:1px solid var(--daw-bd);border-radius:var(--radius-lg);background:var(--daw-bg);color:var(--daw-fg);font:inherit;text-align:center;cursor:pointer;opacity:.55;transition:transform 200ms ease,opacity 200ms ease,border-color 200ms ease,box-shadow 200ms ease}
 .daw-tab:hover{opacity:.9;transform:translateY(-1px);border-color:var(--daw-fg)}
@@ -88,6 +82,7 @@
 [data-theme="light"] .daw-tab--over,
 [data-theme="light"] .daw-item--over{--daw-fg:#059669;--daw-bg:rgba(5,150,105,.08);--daw-bd:rgba(5,150,105,.28)}
 [data-theme="light"] .daw-empty i{color:#059669}
+[data-theme="light"] .inv-stat-card, .daw {border-color: rgba(226, 232, 240, 0.8);}
 
 @media(prefers-reduced-motion:reduce){
   .inv-stat-card,.daw,.daw-tab,.daw-item,.daw-item__action{transition:none}

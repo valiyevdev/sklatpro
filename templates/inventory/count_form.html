@@ -4,14 +4,10 @@
 {% block title %}{% t "create_count" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <a href="{% url 'count_list' %}" class="back-btn" aria-label="Orqaga">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-    </a>
-    <div class="page-header-content">
-        <h1 class="page-title" style="margin:0">{% t "create_count" %}</h1>
-    </div>
-</div>
+{% url 'count_list' as back_url %}
+{% t "create_count" as count_title %}
+{% t "back" as back_text %}
+{% include 'components/hero_header.html' with title=count_title secondary_url=back_url secondary_text=back_text secondary_icon="bi-arrow-left" %}
 
 <div style="max-width:720px">
     <div class="card-pro">

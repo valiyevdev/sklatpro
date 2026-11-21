@@ -3,65 +3,232 @@
 
 {% block title %}{% t "pricing" %} - {% t "overview" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .pricing-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+    gap: var(--sp-6);
+  }
+
+  .pricing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    flex-wrap: wrap;
+  }
+
+  .pricing-header h1 {
+    margin: 0;
+    font-size: var(--text-2xl);
+  }
+
+  .pricing-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  .pricing-stats {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+
+  .pricing-stat {
+    min-width: 0;
+    min-height: 96px;
+    padding: var(--sp-4);
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-2);
+  }
+
+  .pricing-stat .stat-card-value {
+    font-size: var(--text-2xl);
+  }
+
+  .pricing-content {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr);
+    gap: var(--sp-6);
+    align-items: start;
+  }
+
+  .pricing-content>*,
+  .pricing-side-panels>* {
+    min-width: 0;
+  }
+
+  .pricing-side-panels {
+    display: grid;
+    gap: var(--sp-4);
+  }
+
+  .pricing-table-wrap {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pricing-table {
+    min-width: 620px;
+  }
+
+  .pricing-quick-links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .pricing-quick-link {
+    display: block;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .pricing-quick-link:hover {
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+  }
+
+  .pricing-quick-link .card-pro-body {
+    text-align: center;
+    padding: var(--sp-5);
+  }
+
+  .pricing-quick-link h3 {
+    margin: var(--sp-2) 0;
+    font-size: var(--text-lg);
+  }
+
+  .pricing-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pricing-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .pricing-list-item:last-child {
+    border-bottom: 0;
+  }
+
+  @media (max-width: 1400px) {
+    .pricing-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pricing-content {
+      grid-template-columns: 1fr;
+    }
+
+    .pricing-side-panels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .pricing-side-panels {
+      grid-template-columns: 1fr;
+    }
+
+    .pricing-quick-links {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    .pricing-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-2);
+    }
+
+    .pricing-stat {
+      min-height: 80px;
+      padding: var(--sp-3);
+    }
+
+    .pricing-stat .stat-card-value {
+      font-size: var(--text-xl);
+    }
+
+    .pricing-quick-links {
+      grid-template-columns: 1fr;
+    }
+
+    .pricing-header,
+    .pricing-actions {
+      width: 100%;
+    }
+
+    .pricing-actions .btn-pro {
+      flex: 1 1 auto;
+      white-space: normal;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">{% t "pricing" %}</h1>
-    <div class="d-flex gap-2">
+<div class="pricing-dashboard">
+  <header class="pricing-header">
+    <h1>{% t "pricing" %}</h1>
+    <div class="pricing-actions">
       <a href="{% url 'pricing:price_list_create' %}" class="btn-pro btn-pro-primary">{% t "create_price_list" %}</a>
       <a href="{% url 'pricing:promotion_create' %}" class="btn-pro btn-pro-primary">{% t "create_promotion" %}</a>
       <a href="{% url 'pricing:coupon_create' %}" class="btn-pro btn-pro-primary">{% t "create_coupon" %}</a>
     </div>
-  </div>
+  </header>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "total_lists" %}</div>
-        <div class="h4 mb-0 mt-1">{{ total_plists }}</div>
-      </div>
+  <div class="pricing-stats">
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "total_lists" %}</div>
+      <div class="stat-card-value">{{ total_plists }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "active_lists" %}</div>
-        <div class="h4 mb-0 mt-1">{{ active_plists }}</div>
-      </div>
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "active_lists" %}</div>
+      <div class="stat-card-value">{{ active_plists }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "total_entries" %}</div>
-        <div class="h4 mb-0 mt-1">{{ total_entries }}</div>
-      </div>
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "total_entries" %}</div>
+      <div class="stat-card-value">{{ total_entries }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "active_promotions" %}</div>
-        <div class="h4 mb-0 mt-1">{{ active_promos }}</div>
-      </div>
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "active_promotions" %}</div>
+      <div class="stat-card-value">{{ active_promos }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "active_coupons" %}</div>
-        <div class="h4 mb-0 mt-1">{{ active_coupons }}</div>
-      </div>
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "active_coupons" %}</div>
+      <div class="stat-card-value">{{ active_coupons }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-      <div class="card-pro text-center p-3">
-        <div class="text-muted small">{% t "customer_prices" %}</div>
-        <div class="h4 mb-0 mt-1">{{ total_customer_prices }}</div>
-      </div>
+    <div class="stat-card pricing-stat">
+      <div class="stat-card-label">{% t "customer_prices" %}</div>
+      <div class="stat-card-value">{{ total_customer_prices }}</div>
     </div>
   </div>
 
-  <div class="row g-4">
-    <div class="col-lg-7">
+  <div class="pricing-content">
+    <section class="card-pro">
       <div class="card-pro">
-        <div class="card-pro-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{% t "recent_changes" %}</h5>
-          <a href="{% url 'pricing:price_history' %}" class="btn-pro btn-pro-sm">{% t "price_history" %}</a>
+        <div class="card-pro-header">
+          <h2 class="card-pro-title">{% t "recent_changes" %}</h2>
+          <a href="{% url 'pricing:price_history' %}" class="btn-pro btn-pro-secondary btn-pro-sm">{% t "price_history"
+            %}</a>
         </div>
-        <div class="table-pro" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-          <table class="table mb-0">
+        <div class="pricing-table-wrap">
+          <table class="table-pro pricing-table">
             <thead>
               <tr>
                 <th>{% t "products" %}</th>
@@ -74,7 +241,7 @@
             <tbody>
               {% for entry in recent_history %}
               <tr>
-                <td>{{ entry.product.name }}</td>
+                <td class="cell-primary">{{ entry.product.name }}</td>
                 <td>{{ entry.old_price }}</td>
                 <td>{{ entry.new_price }}</td>
                 <td><span class="badge-pro badge-pro-info">{{ entry.get_change_type_display }}</span></td>
@@ -82,84 +249,80 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center text-muted">{% t "no_history" %}</td>
+                <td colspan="5" class="text-center text-pro-muted">{% t "no_history" %}</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+    </section>
 
-    <div class="col-lg-5">
-      <div class="card-pro mb-4">
-        <div class="card-pro-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{% t "price_lists" %}</h5>
-          <a href="{% url 'pricing:price_list_list' %}" class="btn-pro btn-pro-sm">{% t "price_lists" %}</a>
+    <div class="pricing-side-panels">
+      <section class="card-pro">
+        <div class="card-pro-header">
+          <h2 class="card-pro-title">{% t "price_lists" %}</h2>
+          <a href="{% url 'pricing:price_list_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm">{% t "price_lists"
+            %}</a>
         </div>
         <div class="card-pro-body">
-          <ul class="list-unstyled mb-0">
+          <ul class="pricing-list">
             {% for plist in active_plists_list %}
-            <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
-              <a href="{% url 'pricing:price_list_detail' pk=plist.pk %}" style="color:var(--text-primary);text-decoration:none">{{ plist.name }}</a>
+            <li class="pricing-list-item">
+              <a href="{% url 'pricing:price_list_detail' pk=plist.pk %}">{{ plist.name }}</a>
               <span class="badge-pro badge-pro-success">{% t "active" %}</span>
             </li>
             {% empty %}
-            <li class="text-center text-muted py-2">{% t "no_price_lists" %}</li>
+            <li class="text-center text-pro-muted">{% t "no_price_lists" %}</li>
             {% endfor %}
           </ul>
         </div>
-      </div>
+      </section>
 
-      <div class="card-pro">
-        <div class="card-pro-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{% t "promotions" %}</h5>
-          <a href="{% url 'pricing:promotion_list' %}" class="btn-pro btn-pro-sm">{% t "promotions" %}</a>
+      <section class="card-pro">
+        <div class="card-pro-header">
+          <h2 class="card-pro-title">{% t "promotions" %}</h2>
+          <a href="{% url 'pricing:promotion_list' %}" class="btn-pro btn-pro-secondary btn-pro-sm">{% t "promotions"
+            %}</a>
         </div>
         <div class="card-pro-body">
-          <ul class="list-unstyled mb-0">
+          <ul class="pricing-list">
             {% for promo in active_promos_list %}
-            <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <li class="pricing-list-item">
               <span>{{ promo.name }}</span>
               <span class="badge-pro badge-pro-success">{% t "active" %}</span>
             </li>
             {% empty %}
-            <li class="text-center text-muted py-2">{% t "no_promotions" %}</li>
+            <li class="text-center text-pro-muted">{% t "no_promotions" %}</li>
             {% endfor %}
           </ul>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 
-  <div class="row g-3 mt-4">
-    <div class="col-md-4">
-      <a href="{% url 'pricing:coupon_list' %}" class="card-pro text-decoration-none">
-        <div class="card-pro-body text-center py-4">
-          <i class="bi bi-ticket-perforated" style="font-size:2rem;color:var(--primary-500)"></i>
-          <h5 class="mt-2">{% t "coupons" %}</h5>
-          <p class="text-muted small mb-0">{{ total_coupons }} {% t "active_coupons" %}</p>
-        </div>
-      </a>
-    </div>
-    <div class="col-md-4">
-      <a href="{% url 'pricing:customer_price_list' %}" class="card-pro text-decoration-none">
-        <div class="card-pro-body text-center py-4">
-          <i class="bi bi-person-check" style="font-size:2rem;color:var(--primary-500)"></i>
-          <h5 class="mt-2">{% t "customer_prices" %}</h5>
-          <p class="text-muted small mb-0">{{ total_customer_prices }} {% t "customer_specific_price" %}</p>
-        </div>
-      </a>
-    </div>
-    <div class="col-md-4">
-      <a href="{% url 'pricing:pricing_simulator' %}" class="card-pro text-decoration-none">
-        <div class="card-pro-body text-center py-4">
-          <i class="bi bi-calculator" style="font-size:2rem;color:var(--primary-500)"></i>
-          <h5 class="mt-2">{% t "pricing_simulator" %}</h5>
-          <p class="text-muted small mb-0">{% t "simulate_price" %}</p>
-        </div>
-      </a>
-    </div>
+  <div class="pricing-quick-links">
+    <a href="{% url 'pricing:coupon_list' %}" class="card-pro pricing-quick-link">
+      <div class="card-pro-body">
+        <i class="bi bi-ticket-perforated" aria-hidden="true"
+          style="font-size:var(--text-3xl);color:var(--primary-600)"></i>
+        <h3>{% t "coupons" %}</h3>
+        <p class="text-pro-muted">{{ total_coupons }} {% t "active_coupons" %}</p>
+      </div>
+    </a>
+    <a href="{% url 'pricing:customer_price_list' %}" class="card-pro pricing-quick-link">
+      <div class="card-pro-body">
+        <i class="bi bi-person-check" aria-hidden="true" style="font-size:var(--text-3xl);color:var(--primary-600)"></i>
+        <h3>{% t "customer_prices" %}</h3>
+        <p class="text-pro-muted">{{ total_customer_prices }} {% t "customer_specific_price" %}</p>
+      </div>
+    </a>
+    <a href="{% url 'pricing:pricing_simulator' %}" class="card-pro pricing-quick-link">
+      <div class="card-pro-body">
+        <i class="bi bi-calculator" aria-hidden="true" style="font-size:var(--text-3xl);color:var(--primary-600)"></i>
+        <h3>{% t "pricing_simulator" %}</h3>
+        <p class="text-pro-muted">{% t "simulate_price" %}</p>
+      </div>
+    </a>
   </div>
 </div>
 {% endblock %}

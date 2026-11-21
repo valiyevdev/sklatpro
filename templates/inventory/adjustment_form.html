@@ -5,18 +5,6 @@
 
 {% block content %}
 <style>
-  .app-content {
-    padding: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    .app-content { padding: 1.5rem; }
-  }
-
-  @media (min-width: 1024px) {
-    .app-content { padding: 2rem; }
-  }
-
   .adjf-shell {
     width: 100%;
     max-width: 768px;
@@ -291,16 +279,10 @@
 </style>
 
 <div class="adjf-shell">
-  <div class="page-head adjf-head">
-    <a href="{% url 'adjustment_list' %}" class="back-btn" aria-label="Orqaga">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-      </svg>
-    </a>
-    <div class="page-header-content">
-      <h1 class="page-title">{% t "create_adjustment" %}</h1>
-    </div>
-  </div>
+  {% url 'adjustment_list' as back_url %}
+  {% t "create_adjustment" as adjf_title %}
+  {% t "back" as back_text %}
+  {% include 'components/hero_header.html' with title=adjf_title secondary_url=back_url secondary_text=back_text secondary_icon="bi-arrow-left" %}
 
   <div class="adjf-card">
     <form method="post" class="adjf-form">

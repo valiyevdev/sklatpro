@@ -1,0 +1,37 @@
+{% load i18n_tags %}
+{# Reusable Hero Header Component — SKLAT PRO #}
+{# Usage: #}
+{# {% include 'components/hero_header.html' with title="Sarlavha" subtitle="Tavsif" stat_text="8 ta mahsulot" stat_icon="bi-check-circle-fill" action_url="/url/" action_text="Qo'shish" action_icon="bi-plus-lg" %} #}
+<header class="page-hero">
+    <div class="page-hero-main">
+        <h1 class="page-hero-title">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="page-hero-subtitle">{{ subtitle }}</p>
+        {% endif %}
+        {% if stat_text %}
+        <span class="page-hero-stat">
+            <i class="bi {{ stat_icon|default:'bi-check-circle-fill' }}"></i> {{ stat_text }}
+        </span>
+        {% elif total_count is not None and not hide_stat %}
+        <span class="page-hero-stat">
+            <i class="bi {{ stat_icon|default:'bi-check-circle-fill' }}"></i> {{ total_count }} {% t "items_suffix" %}
+        </span>
+        {% endif %}
+    </div>
+    {% if action_url or secondary_url %}
+    <div class="page-hero-actions">
+        {% if secondary_url and secondary_text %}
+        <a href="{{ secondary_url }}" class="page-hero-btn-secondary">
+            {% if secondary_icon %}<i class="bi {{ secondary_icon }}"></i>{% endif %}
+            <span>{{ secondary_text }}</span>
+        </a>
+        {% endif %}
+        {% if action_url and action_text %}
+        <a href="{{ action_url }}" class="page-hero-btn">
+            {% if action_icon %}<i class="bi {{ action_icon }}"></i>{% else %}<i class="bi bi-plus-lg"></i>{% endif %}
+            <span>{{ action_text }}</span>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</header>

@@ -32,15 +32,26 @@ class DocumentItemForm(forms.ModelForm):
 class DocumentFilterForm(forms.Form):
     doc_type = forms.ChoiceField(
         required=False,
-        choices=[('', 'All Types')] + Document.TYPE_CHOICES,
+        choices=[('', 'Barcha turlar')] + Document.TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'input-pro select-pro'}),
     )
     status = forms.ChoiceField(
         required=False,
-        choices=[('', 'All Statuses')] + Document.STATUS_CHOICES,
+        choices=[('', 'Barcha holatlar')] + Document.STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'input-pro select-pro'}),
     )
-    search = forms.CharField(required=False)
-    date_from = forms.DateField(required=False)
-    date_to = forms.DateField(required=False)
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'input-pro', 'placeholder': 'Hujjat raqami yoki nomi...'}),
+    )
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'input-pro', 'type': 'date'}),
+    )
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'input-pro', 'type': 'date'}),
+    )
 
 
 class DocumentTemplateForm(forms.ModelForm):

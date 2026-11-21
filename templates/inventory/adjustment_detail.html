@@ -4,41 +4,23 @@
 {% block title %}{% t "adjustment_detail" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <a href="{% url 'adjustment_list' %}" class="back-btn" aria-label="Orqaga">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-    </a>
-    <div class="page-header-content">
-        <h1 class="page-title" style="margin:0">{{ adjustment.reference }}</h1>
-        <p class="page-subtitle" style="margin-top:4px">{{ adjustment.warehouse.name }} | {{ adjustment.created_at|date:"d.m.Y" }}
-            {% if adjustment.status == 'draft' %}
-                <span class="badge-pro badge-pro-neutral">{% t "adjustment_status_draft" %}</span>
-            {% elif adjustment.status == 'pending' %}
-                <span class="badge-pro badge-pro-warning">{% t "adjustment_status_pending" %}</span>
-            {% elif adjustment.status == 'approved' %}
-                <span class="badge-pro badge-pro-success">{% t "adjustment_status_approved" %}</span>
-            {% elif adjustment.status == 'completed' %}
-                <span class="badge-pro badge-pro-info">{% t "adjustment_status_completed" %}</span>
-            {% else %}
-                <span class="badge-pro badge-pro-danger">{{ adjustment.get_status_display }}</span>
-            {% endif %}
-        </p>
-    </div>
-    <div class="page-actions">
-        {% if adjustment.status == 'draft' %}
-            <form method="post" action="{% url 'adjustment_submit' pk=adjustment.pk %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-pro btn-pro-secondary btn-pro-sm"><i class="bi bi-send"></i> {% t "submit" %}</button>
-            </form>
-        {% endif %}
-        {% if adjustment.status == 'pending' %}
-            <form method="post" action="{% url 'adjustment_approve' pk=adjustment.pk %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-pro btn-pro-success btn-pro-sm"><i class="bi bi-check-circle"></i> {% t "approve_adjustment" %}</button>
-            </form>
-        {% endif %}
-    </div>
+{% include 'components/hero_header.html' with title=adjustment.reference subtitle=adjustment.warehouse.name %}
+
+{% if adjustment.status == 'draft' %}
+<div class="mb-4">
+    <form method="post" action="{% url 'adjustment_submit' pk=adjustment.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-pro btn-pro-primary"><i class="bi bi-send"></i> {% t "submit" %}</button>
+    </form>
 </div>
+{% elif adjustment.status == 'pending' %}
+<div class="mb-4">
+    <form method="post" action="{% url 'adjustment_approve' pk=adjustment.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-pro btn-pro-success"><i class="bi bi-check-circle"></i> {% t "approve_adjustment" %}</button>
+    </form>
+</div>
+{% endif %}
 
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
     <div class="stat-card">

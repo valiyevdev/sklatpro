@@ -59,7 +59,9 @@
         font-weight: 700;
     }
     .products-stat i { color: #818cf8; }
-    .products-primary {
+    .products-primary,
+    .products-hero a.products-primary,
+    .products-hero a {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -69,109 +71,519 @@
         border: 1px solid #818cf8;
         border-radius: 11px;
         background: linear-gradient(135deg, #6366f1, #4f46e5);
-        box-shadow: 0 10px 28px rgba(79, 70, 229, .28), 0 0 0 1px rgba(129, 140, 248, .15);
-        color: #fff;
+        /* box-shadow: 0 10px 28px rgba(79, 70, 229, .28), 0 0 0 1px rgba(129, 140, 248, .15); */
+        color: #ffffff !important;
         font-size: 13px;
         font-weight: 800;
         text-decoration: none;
         white-space: nowrap;
-        transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        transition: transform .18s ease, background .18s ease;
     }
-    .products-primary:hover { background: linear-gradient(135deg, #818cf8, #6366f1); color: #fff; transform: translateY(-2px); box-shadow: 0 16px 34px rgba(79, 70, 229, .38); }
+    .products-primary i,
+    .products-hero a.products-primary i {
+        color: #ffffff !important;
+    }
+    .products-primary:hover,
+    .products-hero a.products-primary:hover,
+    .products-hero a:hover {
+        background: linear-gradient(135deg, #818cf8, #6366f1);
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        /* box-shadow: 0 16px 34px rgba(79, 70, 229, .38); */
+    }
     .products-toolbar {
-        display: grid;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        grid-template-columns: minmax(220px, 1.45fr) minmax(175px, 1.15fr) minmax(150px, 1fr) minmax(140px, .95fr) minmax(145px, 1fr) minmax(110px, .85fr) 40px auto;
-        gap: 10px;
-        margin-bottom: 18px;
-        padding: 12px;
-        border: 1px solid var(--products-border);
-        border-radius: 14px;
-        background: rgba(19, 27, 46, .88);
-        box-shadow: 0 16px 40px rgba(2, 6, 23, .18);
+        gap: 8px;
+        margin: 20px 0 20px 0;
+        padding: 12px 0 12px 0;
+        position: relative;
+        z-index: 30;
     }
-    .products-search { position: relative; min-width: 0; }
-    .products-search i { position: absolute; top: 50%; left: 13px; color: #64748b; font-size: 15px; transform: translateY(-50%); pointer-events: none; }
-    .products-search input, .products-select {
+    .custom-select-wrapper.products-select {
+        flex: 1 1 112px;
+        min-width: 102px;
+        height: 38px;
+        position: relative;
+    }
+    .custom-select-wrapper.is-open {
+        z-index: 60;
+    }
+    .products-search { flex: 1.5 1 170px; min-width: 150px; position: relative; }
+    .products-search i { position: absolute; top: 50%; left: 11px; color: #64748b; font-size: 14px; transform: translateY(-50%); pointer-events: none; }
+    .products-search input {
         width: 100%;
-        height: 40px;
-        border: 1px solid #26334b;
+        height: 38px;
+        border: 1px solid var(--select-border, #26334b);
         border-radius: 9px;
         outline: 0;
-        background: #0d1424;
-        color: #e2e8f0;
+        background: var(--select-bg, #0d1424);
+        color: var(--select-color, #e2e8f0);
         font: inherit;
         font-size: 12px;
+        padding: 0 60px 0 32px;
+        transition: border-color .15s ease, background-color .15s ease, color .15s ease;
     }
-    .products-search input { padding: 0 74px 0 37px; }
-    .products-search input::placeholder { color: #64748b; }
-    .products-search input:focus, .products-select:focus { border-color: var(--products-indigo); box-shadow: 0 0 0 3px rgba(99, 102, 241, .16); }
-    .products-shortcut { position: absolute; top: 50%; right: 10px; padding: 3px 6px; border: 1px solid #334155; border-radius: 5px; color: #94a3b8; font-size: 10px; transform: translateY(-50%); }
-    .products-select { min-width: 0; padding: 0 10px; white-space: nowrap; }
-    .products-filter-submit { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(99, 102, 241, .55); border-radius: 9px; background: rgba(99, 102, 241, .16); color: #c7d2fe; cursor: pointer; }
+    .products-search input::placeholder { color: var(--text-muted, #64748b); }
+    .products-search input:focus { border-color: var(--select-border-focus, var(--products-indigo)); box-shadow: 0 0 0 3px var(--select-focus-ring, rgba(99, 102, 241, .16)); }
+    .products-shortcut { position: absolute; top: 50%; right: 8px; padding: 2px 5px; border: 1px solid var(--select-border, #334155); border-radius: 5px; color: var(--text-muted, #94a3b8); font-size: 9px; transform: translateY(-50%); }
+    .products-select { flex: 1 1 112px; min-width: 102px; height: 38px; white-space: nowrap; font-size: 11.5px; }
+    .custom-select-trigger {
+        height: 38px;
+        padding: 0 8px 0 10px;
+        font-size: 12px;
+    }
+    .custom-select-label {
+        font-size: 11.5px;
+        font-weight: 600;
+    }
+    .products-filter-submit { flex: 0 0 38px; display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(99, 102, 241, .55); border-radius: 9px; background: rgba(99, 102, 241, .16); color: #c7d2fe; cursor: pointer; }
     .products-filter-submit:hover { background: rgba(99, 102, 241, .28); }
-    .products-view-toggle { display: inline-flex; flex: 0 0 auto; overflow: hidden; border: 1px solid #26334b; border-radius: 9px; background: #0d1424; }
-    .products-view-toggle button { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: 0; background: transparent; color: #64748b; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .products-view-toggle { flex: 0 0 auto; margin-left: auto; display: inline-flex; overflow: hidden; border: 1px solid #26334b; border-radius: 9px; background: #0d1424; height: 38px; }
+    .products-view-toggle button { display: inline-flex; align-items: center; gap: 5px; height: 38px; padding: 0 9px; border: 0; background: transparent; color: #64748b; font-size: 11px; font-weight: 700; cursor: pointer; }
     .products-view-toggle button.active { background: rgba(99, 102, 241, .2); color: #c7d2fe; }
     .products-results { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 2px 12px; color: var(--products-muted); font-size: 12px; }
     .products-results strong { color: #e2e8f0; }
+
+    /* Light Theme Adaptive Styling */
+    [data-theme="light"] .products-page,
+    html:not([data-theme="dark"]) .products-page {
+        --products-bg: #f8fafc;
+        --products-card: #ffffff;
+        --products-border: #e2e8f0;
+        --products-muted: #64748b;
+        color: #0f172a;
+    }
+    [data-theme="light"] .products-title,
+    html:not([data-theme="dark"]) .products-title {
+        color: #0f172a;
+    }
+    [data-theme="light"] .product-card,
+    html:not([data-theme="dark"]) .product-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, .08);
+    }
+    [data-theme="light"] .product-name,
+    html:not([data-theme="dark"]) .product-name {
+        color: #0f172a;
+    }
+    [data-theme="light"] .product-price,
+    html:not([data-theme="dark"]) .product-price {
+        color: #0f172a;
+    }
+    [data-theme="light"] .product-placeholder,
+    html:not([data-theme="dark"]) .product-placeholder {
+        background: radial-gradient(circle at 35% 30%, rgba(99, 102, 241, .15), #e0e7ff);
+        color: #4f46e5;
+    }
+    [data-theme="light"] .product-menu-trigger,
+    html:not([data-theme="dark"]) .product-menu-trigger {
+        background: rgba(255, 255, 255, .9);
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    [data-theme="light"] .product-dropdown,
+    html:not([data-theme="dark"]) .product-dropdown {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, .14);
+    }
+    [data-theme="light"] .product-dropdown-item,
+    html:not([data-theme="dark"]) .product-dropdown-item {
+        color: #1e293b;
+    }
+    [data-theme="light"] .product-dropdown-item:hover,
+    html:not([data-theme="dark"]) .product-dropdown-item:hover {
+        background: #f1f5f9;
+        color: #4338ca;
+    }
+    [data-theme="light"] .products-view-toggle,
+    html:not([data-theme="dark"]) .products-view-toggle {
+        background: #ffffff;
+        border-color: #cbd5e1;
+    }
     .products-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; align-items: stretch; }
     .product-card {
         display: flex;
         min-width: 0;
         height: 100%;
-        min-height: 450px;
+        min-height: 380px;
         flex-direction: column;
-        overflow: hidden;
-        border: 1px solid var(--products-border);
+        position: relative;
+        border: 1px solid rgba(148, 163, 184, .14);
         border-radius: 16px;
         background: linear-gradient(145deg, rgba(19, 27, 46, .98), rgba(15, 23, 42, .96));
-        box-shadow: 0 18px 45px rgba(2, 6, 23, .18);
+        box-shadow: 0 10px 30px rgba(2, 6, 23, .22);
         transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
     }
-    .product-card:hover { border-color: rgba(99, 102, 241, .72); box-shadow: 0 22px 48px rgba(2, 6, 23, .34), 0 0 0 1px rgba(99, 102, 241, .08); transform: translateY(-3px); }
-    .product-card-media { position: relative; height: 176px; flex: 0 0 176px; overflow: hidden; background: rgba(30, 41, 59, .5); }
-    .product-card-media img { width: 100%; height: 100%; display: block; object-fit: cover; }
-    .product-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, .22), transparent 50%), #111a2d; color: #a5b4fc; font-size: 48px; font-weight: 800; letter-spacing: -.05em; }
-    .product-status { position: absolute; top: 12px; left: 12px; padding: 5px 9px; border: 1px solid rgba(52, 211, 153, .32); border-radius: 999px; background: rgba(6, 78, 59, .82); color: #a7f3d0; font-size: 10px; font-weight: 800; }
-    .product-status.inactive { border-color: rgba(251, 191, 36, .32); background: rgba(120, 53, 15, .82); color: #fde68a; }
-    .product-status.archived { border-color: rgba(148, 163, 184, .32); background: rgba(51, 65, 85, .82); color: #cbd5e1; }
-    .product-menu { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(148, 163, 184, .2); border-radius: 9px; background: rgba(9, 13, 22, .65); color: #cbd5e1; cursor: pointer; }
-    .product-menu:hover { border-color: #818cf8; color: #c7d2fe; }
-    .product-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 16px; }
-    .product-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-width: 0; }
-    .product-name { min-width: 0; overflow: hidden; color: #f8fafc; font-size: 15px; font-weight: 800; line-height: 1.3; text-decoration: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-    .product-name:hover { color: #a5b4fc; }
-    .product-category { flex: 0 0 auto; max-width: 42%; overflow: hidden; padding: 4px 8px; border: 1px solid rgba(99, 102, 241, .2); border-radius: 6px; background: rgba(99, 102, 241, .12); color: #a5b4fc; font-size: 10px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-    .product-identifiers { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 9px; color: #64748b; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; line-height: 1.4; }
-    .product-identifiers span { overflow-wrap: anywhere; }
-    .product-financials { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: auto; padding: 14px 0 0; border-top: 1px solid rgba(30, 41, 59, .9); }
-    .product-label { display: block; margin-bottom: 5px; color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-    .product-price { display: block; overflow-wrap: anywhere; color: #f8fafc; font-size: 16px; font-weight: 800; line-height: 1.2; }
-    .product-stock { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; padding: 5px 8px; border-radius: 7px; background: rgba(16, 185, 129, .13); color: #6ee7b7; font-size: 12px; font-weight: 800; white-space: nowrap; }
-    .product-stock.empty { background: rgba(244, 63, 94, .12); color: #fda4af; }
-    .product-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 16px; }
-    .product-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 36px; padding: 0 8px; border-radius: 8px; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; }
-    .product-action.edit { border: 1px solid #6366f1; background: #4f46e5; color: #fff; }
-    .product-action.edit:hover { background: #6366f1; color: #fff; }
-    .product-action.copy { border: 1px solid #26334b; background: #0d1424; color: #cbd5e1; cursor: pointer; }
-    .product-action.copy:hover { border-color: #64748b; color: #fff; }
-    .product-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 8px; }
-    .product-tool { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 7px; color: #64748b; text-decoration: none; }
-    .product-tool:hover { background: rgba(99, 102, 241, .12); color: #a5b4fc; }
-    .product-tool.delete:hover { background: rgba(244, 63, 94, .12); color: #fb7185; }
-    .products-grid.is-compact { grid-template-columns: 1fr; gap: 8px; }
-    .products-grid.is-compact .product-card { display: grid; grid-template-columns: 56px minmax(0, 1fr) 150px 150px 120px 190px; align-items: center; min-height: 76px; padding: 10px 14px; }
-    .products-grid.is-compact .product-card-media { grid-column: 1; grid-row: 1; width: 56px; height: 56px; }
-    .products-grid.is-compact .product-card-body { display: contents; }
-    .products-grid.is-compact .product-card-head { display: contents; }
-    .products-grid.is-compact .product-name { grid-column: 2; grid-row: 1; }
-    .products-grid.is-compact .product-category { grid-column: 3; grid-row: 1; justify-self: start; max-width: 100%; }
-    .products-grid.is-compact .product-identifiers { grid-column: 4; grid-row: 1; margin: 0; }
-    .products-grid.is-compact .product-financials { display: contents; }
-    .products-grid.is-compact .product-financials > div:first-child { grid-column: 5; grid-row: 1; padding: 0; border: 0; }
-    .products-grid.is-compact .product-financials > div:last-child { grid-column: 6; grid-row: 1; padding: 0; border: 0; }
-    .products-grid.is-compact .product-card-actions, .products-grid.is-compact .product-tools, .products-grid.is-compact .product-label { display: none; }
+    .product-card:hover {
+        border-color: rgba(99, 102, 241, .68);
+        box-shadow: 0 20px 42px rgba(2, 6, 23, .36), 0 0 0 1px rgba(99, 102, 241, .15);
+        transform: translateY(-3px);
+    }
+    .product-card.has-open-menu,
+    .product-card:has(.product-menu-wrap.is-open) {
+        z-index: 45;
+    }
+    .product-card-top {
+        position: relative;
+        width: 100%;
+        border-radius: 15px 15px 0 0;
+    }
+    .product-card-media {
+        display: block;
+        position: relative;
+        height: 180px;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 15px 15px 0 0;
+        background: rgba(30, 41, 59, .5);
+        text-decoration: none;
+    }
+    .product-card-media img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        transition: transform .25s ease;
+    }
+    .product-card:hover .product-card-media img {
+        transform: scale(1.03);
+    }
+    .product-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 35% 30%, rgba(99, 102, 241, .22), rgba(15, 23, 42, .95)), #111a2d;
+        color: #a5b4fc;
+        font-size: 52px;
+        font-weight: 800;
+        letter-spacing: -.05em;
+        transition: transform .25s ease;
+    }
+    .product-card:hover .product-placeholder {
+        transform: scale(1.03);
+    }
+    .product-status {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        padding: 5px 11px;
+        border: 1px solid rgba(52, 211, 153, .35);
+        border-radius: 999px;
+        background: rgba(6, 78, 59, .88);
+        backdrop-filter: blur(8px);
+        color: #a7f3d0;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: .02em;
+        pointer-events: none;
+    }
+    .product-status.inactive {
+        border-color: rgba(251, 191, 36, .35);
+        background: rgba(120, 53, 15, .88);
+        color: #fde68a;
+    }
+    .product-status.archived {
+        border-color: rgba(148, 163, 184, .35);
+        background: rgba(51, 65, 85, .88);
+        color: #cbd5e1;
+    }
+    .product-menu-wrap {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 25;
+    }
+    .product-menu-trigger {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid rgba(148, 163, 184, .25);
+        border-radius: 10px;
+        background: rgba(9, 13, 22, .75);
+        backdrop-filter: blur(8px);
+        color: #cbd5e1;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all .16s ease;
+    }
+    .product-menu-trigger:hover,
+    .product-menu-wrap.is-open .product-menu-trigger {
+        border-color: #818cf8;
+        background: rgba(30, 41, 59, .95);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    }
+    .product-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        min-width: 195px;
+        padding: 6px;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        background: #0d1424;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .05);
+        z-index: 60;
+        display: none;
+        flex-direction: column;
+        gap: 2px;
+        animation: productDropdownFade .14s ease-out;
+    }
+    .product-menu-wrap.is-open .product-dropdown {
+        display: flex;
+    }
+    @keyframes productDropdownFade {
+        from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .product-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #cbd5e1;
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .12s ease, color .12s ease;
+        box-sizing: border-box;
+    }
+    .product-dropdown-item i {
+        font-size: 14px;
+        color: #818cf8;
+        width: 18px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .product-dropdown-item:hover {
+        background: rgba(99, 102, 241, .16);
+        color: #ffffff;
+    }
+    .product-dropdown-item:hover i {
+        color: #a5b4fc;
+    }
+    .product-dropdown-item.danger {
+        color: #f87171;
+    }
+    .product-dropdown-item.danger i {
+        color: #f87171;
+    }
+    .product-dropdown-item.danger:hover {
+        background: rgba(239, 68, 68, .16);
+        color: #fca5a5;
+    }
+    .product-dropdown-item.danger:hover i {
+        color: #fca5a5;
+    }
+    .product-dropdown-form {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+    .product-dropdown-divider {
+        height: 1px;
+        margin: 4px 6px;
+        background: rgba(148, 163, 184, .12);
+    }
+    .product-card-body {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        padding: 22px 24px 24px;
+    }
+    .product-card-head {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+    }
+    .product-category {
+        display: inline-block;
+        align-self: flex-end;
+        max-width: 100%;
+        overflow: hidden;
+        padding: 4px 9px;
+        border: 1px solid rgba(99, 102, 241, .24);
+        border-radius: 6px;
+        background: rgba(99, 102, 241, .12);
+        color: #a5b4fc;
+        font-size: 11px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .product-name {
+        min-width: 0;
+        overflow: hidden;
+        color: #f8fafc;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-decoration: none;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        transition: color .15s ease;
+    }
+    .product-name:hover {
+        color: #818cf8;
+    }
+    .product-identifiers {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        margin-top: 10px;
+        color: #64748b;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    .product-identifiers span {
+        overflow-wrap: anywhere;
+    }
+    .product-financials {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin-top: auto;
+        padding: 18px 0 0;
+        border-top: 1px solid rgba(30, 41, 59, .8);
+    }
+    .product-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .product-price {
+        display: block;
+        overflow-wrap: anywhere;
+        color: #f8fafc;
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -.02em;
+    }
+    .product-stock-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+    }
+    .product-stock {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        max-width: 100%;
+        padding: 5px 10px;
+        border: 1px solid rgba(16, 185, 129, .25);
+        border-radius: 8px;
+        background: rgba(16, 185, 129, .13);
+        color: #6ee7b7;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .product-stock.empty {
+        border-color: rgba(244, 63, 94, .25);
+        background: rgba(244, 63, 94, .13);
+        color: #fda4af;
+    }
+    .products-grid.is-compact {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .products-grid.is-compact .product-card {
+        display: grid;
+        grid-template-columns: 56px minmax(180px, 1fr) 140px 160px 130px 110px 44px;
+        align-items: center;
+        min-height: 76px;
+        padding: 10px 16px;
+        gap: 16px;
+    }
+    .products-grid.is-compact .product-card:hover {
+        transform: none;
+    }
+    .products-grid.is-compact .product-card-top {
+        display: contents;
+    }
+    .products-grid.is-compact .product-card-media {
+        grid-column: 1;
+        width: 56px;
+        height: 56px;
+        border-radius: 8px;
+    }
+    .products-grid.is-compact .product-placeholder {
+        font-size: 24px;
+    }
+    .products-grid.is-compact .product-status {
+        display: none;
+    }
+    .products-grid.is-compact .product-card-body {
+        display: contents;
+    }
+    .products-grid.is-compact .product-card-head {
+        display: contents;
+    }
+    .products-grid.is-compact .product-name {
+        grid-column: 2;
+        font-size: 14px;
+    }
+    .products-grid.is-compact .product-category {
+        grid-column: 3;
+        justify-self: start;
+        max-width: 100%;
+        margin: 0;
+    }
+    .products-grid.is-compact .product-identifiers {
+        grid-column: 4;
+        margin: 0;
+    }
+    .products-grid.is-compact .product-financials {
+        display: contents;
+    }
+    .products-grid.is-compact .product-financials > div:first-child {
+        grid-column: 5;
+        padding: 0;
+        border: 0;
+    }
+    .products-grid.is-compact .product-stock-wrap {
+        grid-column: 6;
+        align-items: flex-start;
+        text-align: left;
+    }
+    .products-grid.is-compact .product-menu-wrap {
+        grid-column: 7;
+        position: relative;
+        top: auto;
+        right: auto;
+    }
+    .products-grid.is-compact .product-label {
+        display: none;
+    }
     .products-empty { padding: 70px 20px; border: 1px dashed #26334b; border-radius: 16px; background: rgba(19, 27, 46, .55); color: var(--products-muted); text-align: center; }
     .products-empty i { display: block; margin-bottom: 12px; color: #818cf8; font-size: 38px; }
     .products-pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
@@ -179,8 +591,26 @@
     .products-pagination .current { border-color: #6366f1; background: #4f46e5; color: #fff; }
     @media (min-width: 640px) { .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (min-width: 1024px) { .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    @media (max-width: 1180px) and (min-width: 621px) { .products-toolbar { grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(135px, 1fr)); } .products-search { grid-column: span 2; } .products-filter-submit { width: 100%; } .products-view-toggle { justify-self: stretch; } }
-    @media (max-width: 620px) { .products-page { padding-top: 0; } .products-hero { align-items: stretch; flex-direction: column; gap: 16px; } .products-primary { width: 100%; } .products-toolbar { align-items: stretch; grid-template-columns: 1fr; } .products-search, .products-select, .products-filter-submit, .products-view-toggle { width: 100%; } .products-view-toggle button { flex: 1; justify-content: center; } .products-results { align-items: flex-start; flex-direction: column; } .products-grid { grid-template-columns: 1fr; gap: 1.5rem; } .products-grid.is-compact .product-card { display: flex; min-height: 0; padding: 0; } .products-grid.is-compact .product-card-media { width: 100%; height: 120px; } .products-grid.is-compact .product-card-body { display: flex; } .products-grid.is-compact .product-card-head, .products-grid.is-compact .product-financials { display: flex; } .products-grid.is-compact .product-category, .products-grid.is-compact .product-identifiers, .products-grid.is-compact .product-card-actions, .products-grid.is-compact .product-tools { display: flex; } }
+    @media (max-width: 620px) {
+        .products-page { padding-top: 0; }
+        .products-hero { align-items: stretch; flex-direction: column; gap: 16px; }
+        .products-primary { width: 100%; }
+        .products-toolbar { align-items: stretch; grid-template-columns: 1fr; }
+        .products-search, .products-select, .products-filter-submit, .products-view-toggle { width: 100%; }
+        .products-view-toggle button { flex: 1; justify-content: center; }
+        .products-results { align-items: flex-start; flex-direction: column; }
+        .products-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+        .product-card-body { padding: 20px; }
+        .products-grid.is-compact .product-card { display: flex; min-height: 0; padding: 16px; gap: 12px; }
+        .products-grid.is-compact .product-card-top { display: block; }
+        .products-grid.is-compact .product-card-media { width: 100%; height: 140px; }
+        .products-grid.is-compact .product-status { display: block; }
+        .products-grid.is-compact .product-card-body { display: flex; padding: 0; }
+        .products-grid.is-compact .product-card-head, .products-grid.is-compact .product-financials { display: flex; }
+        .products-grid.is-compact .product-category, .products-grid.is-compact .product-identifiers { display: flex; }
+        .products-grid.is-compact .product-label { display: block; }
+        .products-grid.is-compact .product-menu-wrap { position: absolute; top: 12px; right: 12px; }
+    }
 </style>
 {% endblock %}
 
@@ -188,7 +618,7 @@
 <main class="products-page">
     <header class="products-hero">
         <div>
-            <p class="products-breadcrumb"><span>SKLAT PRO</span><i class="bi bi-chevron-right"></i> Mahsulotlar</p>
+            <!-- <p class="products-breadcrumb"><span>SKLAT PRO</span><i class="bi bi-chevron-right"></i> Mahsulotlar</p> -->
             <h1 class="products-title">Mahsulotlar ro'yxati</h1>
             <p class="products-subtitle">Katalog, narxlar va zaxiralarni bir joyda boshqaring.</p>
             <span class="products-stat"><i class="bi bi-check-circle-fill"></i> {{ active_products }} ta mahsulot faol</span>
@@ -211,18 +641,71 @@
     {% if page_obj %}
     <section class="products-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="products-grid">
         {% for product in page_obj %}
-        <article class="product-card h-full flex flex-col justify-between">
-            <div class="product-card-media">
-                {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<span class="product-placeholder">{{ product.name|slice:':1'|upper }}</span>{% endif %}
-                <span class="product-status {% if product.status != 'active' %}{{ product.status }}{% endif %}">{% if product.status == 'active' %}Faol{% elif product.status == 'inactive' %}Nofaol{% else %}Arxiv{% endif %}</span>
-                <button type="button" class="product-menu" aria-label="Mahsulot amallari" title="Amallar"><i class="bi bi-three-dots-vertical"></i></button>
+        <article class="product-card">
+            <div class="product-card-top">
+                <a href="{% url 'product_detail' pk=product.pk %}" class="product-card-media" tabindex="-1" aria-hidden="true">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                    {% else %}
+                    <span class="product-placeholder">{{ product.name|slice:':1'|upper }}</span>
+                    {% endif %}
+                </a>
+                <span class="product-status {% if product.status != 'active' %}{{ product.status }}{% endif %}">
+                    {% if product.status == 'active' %}Faol{% elif product.status == 'inactive' %}Nofaol{% else %}Arxiv{% endif %}
+                </span>
+                <div class="product-menu-wrap">
+                    <button type="button" class="product-menu-trigger" aria-label="Mahsulot amallari" title="Amallar" aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <div class="product-dropdown" role="menu">
+                        <a href="{% url 'product_update' pk=product.pk %}" class="product-dropdown-item" role="menuitem">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Tahrirlash</span>
+                        </a>
+                        <form method="post" action="{% url 'product_duplicate' pk=product.pk %}" class="product-dropdown-form">
+                            {% csrf_token %}
+                            <button type="submit" class="product-dropdown-item" role="menuitem">
+                                <i class="bi bi-files"></i>
+                                <span>Nusxa ko'chirish</span>
+                            </button>
+                        </form>
+                        <div class="product-dropdown-divider"></div>
+                        <a href="{% url 'product_barcode' pk=product.pk %}" target="_blank" class="product-dropdown-item" role="menuitem">
+                            <i class="bi bi-upc-scan"></i>
+                            <span>Barcode</span>
+                        </a>
+                        <a href="{% url 'product_qrcode' pk=product.pk %}" target="_blank" class="product-dropdown-item" role="menuitem">
+                            <i class="bi bi-qr-code"></i>
+                            <span>QR kod</span>
+                        </a>
+                        <div class="product-dropdown-divider"></div>
+                        <a href="{% url 'product_delete' pk=product.pk %}" class="product-dropdown-item danger" role="menuitem">
+                            <i class="bi bi-trash3"></i>
+                            <span>O'chirish</span>
+                        </a>
+                    </div>
+                </div>
             </div>
             <div class="product-card-body">
-                <div class="product-card-head"><a href="{% url 'product_detail' pk=product.pk %}" class="product-name" title="{{ product.name }}">{{ product.name }}</a><span class="product-category">{% if product.category_fk %}{{ product.category_fk.name }}{% else %}Kategoriyasiz{% endif %}</span></div>
-                <div class="product-identifiers"><span>SKU: {{ product.sku }}</span><span>Barcode: {{ product.barcode|default:'yo\'q' }}</span></div>
-                <div class="product-financials"><div><span class="product-label">Sotish narxi</span><span class="product-price">{{ product.price|uzs }}</span></div><div><span class="product-label">Zaxira</span><span class="product-stock {% if product.quantity <= 0 %}empty{% endif %}">{{ product.quantity }} {{ product.unit.symbol|default:'dona' }}</span></div></div>
-                <div class="product-card-actions"><a href="{% url 'product_update' pk=product.pk %}" class="product-action edit"><i class="bi bi-pencil"></i> Tahrirlash</a><form method="post" action="{% url 'product_duplicate' pk=product.pk %}">{% csrf_token %}<button class="product-action copy" type="submit"><i class="bi bi-copy"></i> Nusxa ko'chirish</button></form></div>
-                <div class="product-tools"><a class="product-tool" href="{% url 'product_barcode' pk=product.pk %}" target="_blank" aria-label="Barcode" title="Barcode"><i class="bi bi-upc-scan"></i></a><a class="product-tool" href="{% url 'product_qrcode' pk=product.pk %}" target="_blank" aria-label="QR kod" title="QR kod"><i class="bi bi-qr-code"></i></a><a class="product-tool delete" href="{% url 'product_delete' pk=product.pk %}" aria-label="O'chirish" title="O'chirish"><i class="bi bi-trash3"></i></a></div>
+                <div class="product-card-head">
+                    <span class="product-category">{% if product.category_fk %}{{ product.category_fk.name }}{% else %}Kategoriyasiz{% endif %}</span>
+                    <a href="{% url 'product_detail' pk=product.pk %}" class="product-name" title="{{ product.name }}">{{ product.name }}</a>
+                </div>
+                <div class="product-identifiers">
+                    <span>SKU: {{ product.sku }}</span>
+                    <span style="opacity:0.35">•</span>
+                    <span>Barcode: {{ product.barcode|default:'yo\'q' }}</span>
+                </div>
+                <div class="product-financials">
+                    <div>
+                        <span class="product-label">Sotish narxi</span>
+                        <span class="product-price">{{ product.price|uzs }}</span>
+                    </div>
+                    <div class="product-stock-wrap">
+                        <span class="product-label">Zaxira</span>
+                        <span class="product-stock {% if product.quantity <= 0 %}empty{% endif %}">{{ product.quantity }} {{ product.unit.symbol|default:'dona' }}</span>
+                    </div>
+                </div>
             </div>
         </article>
         {% endfor %}
@@ -239,12 +722,233 @@
             grid?.classList.toggle('is-compact', compact);
             buttons.forEach(item => item.classList.toggle('active', item === button));
         }));
+
+        /* ========== Custom Floating Select Dropdowns (Matches Image 2) ========== */
+        function initCustomSelects() {
+            const selects = document.querySelectorAll('select.products-select, select.custom-select');
+            selects.forEach(select => {
+                if (select.dataset.customSelectInitialized) return;
+                select.dataset.customSelectInitialized = 'true';
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-select-wrapper ' + select.className.replace('custom-select-native', '');
+                
+                select.classList.add('custom-select-native');
+                select.setAttribute('tabindex', '-1');
+                select.setAttribute('aria-hidden', 'true');
+
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(select);
+
+                const currentOpt = select.options[select.selectedIndex] || select.options[0];
+                const initialText = currentOpt ? currentOpt.textContent.trim() : '';
+
+                const trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.className = 'custom-select-trigger';
+                trigger.setAttribute('aria-haspopup', 'listbox');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.setAttribute('aria-label', select.getAttribute('aria-label') || initialText);
+
+                const label = document.createElement('span');
+                label.className = 'custom-select-label';
+                label.textContent = initialText;
+
+                const arrow = document.createElement('i');
+                arrow.className = 'bi bi-chevron-down custom-select-arrow';
+                arrow.setAttribute('aria-hidden', 'true');
+
+                trigger.appendChild(label);
+                trigger.appendChild(arrow);
+                wrapper.appendChild(trigger);
+
+                const menu = document.createElement('div');
+                menu.className = 'custom-select-menu';
+                menu.setAttribute('role', 'listbox');
+
+                function renderOptions() {
+                    menu.innerHTML = '';
+                    Array.from(select.options).forEach((opt, index) => {
+                        const optBtn = document.createElement('button');
+                        optBtn.type = 'button';
+                        optBtn.className = 'custom-select-option';
+                        optBtn.setAttribute('role', 'option');
+                        optBtn.dataset.value = opt.value;
+
+                        const isSelected = (opt.value === select.value) || (index === select.selectedIndex);
+                        if (isSelected) {
+                            optBtn.classList.add('is-selected');
+                            optBtn.setAttribute('aria-selected', 'true');
+                        } else {
+                            optBtn.setAttribute('aria-selected', 'false');
+                        }
+
+                        const text = document.createElement('span');
+                        text.textContent = opt.textContent.trim();
+                        optBtn.appendChild(text);
+
+                        if (isSelected) {
+                            const check = document.createElement('i');
+                            check.className = 'bi bi-check2 custom-select-option-check';
+                            check.setAttribute('aria-hidden', 'true');
+                            optBtn.appendChild(check);
+                        }
+
+                        optBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const val = opt.value;
+                            const hasChanged = select.value !== val;
+                            select.value = val;
+                            label.textContent = opt.textContent.trim();
+
+                            menu.querySelectorAll('.custom-select-option').forEach(item => {
+                                const sel = item === optBtn;
+                                item.classList.toggle('is-selected', sel);
+                                item.setAttribute('aria-selected', sel ? 'true' : 'false');
+                                let chk = item.querySelector('.custom-select-option-check');
+                                if (sel) {
+                                    if (!chk) {
+                                        chk = document.createElement('i');
+                                        chk.className = 'bi bi-check2 custom-select-option-check';
+                                        chk.setAttribute('aria-hidden', 'true');
+                                        item.appendChild(chk);
+                                    }
+                                } else if (chk) {
+                                    chk.remove();
+                                }
+                            });
+
+                            wrapper.classList.remove('is-open');
+                            trigger.setAttribute('aria-expanded', 'false');
+
+                            if (hasChanged) {
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                select.dispatchEvent(new Event('input', { bubbles: true }));
+                                if (select.form) {
+                                    select.form.submit();
+                                }
+                            }
+                        });
+
+                        menu.appendChild(optBtn);
+                    });
+                }
+
+                renderOptions();
+                wrapper.appendChild(menu);
+
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const wasOpen = wrapper.classList.contains('is-open');
+                    closeAllMenus();
+                    closeAllCustomSelects(wasOpen ? null : wrapper);
+
+                    if (!wasOpen) {
+                        wrapper.classList.add('is-open');
+                        trigger.setAttribute('aria-expanded', 'true');
+
+                        // Viewport bounds check
+                        const rect = menu.getBoundingClientRect();
+                        if (rect.right > window.innerWidth - 12) {
+                            menu.style.left = 'auto';
+                            menu.style.right = '0';
+                        } else {
+                            menu.style.left = '0';
+                            menu.style.right = 'auto';
+                        }
+                    }
+                });
+
+                select.addEventListener('change', () => {
+                    const opt = select.options[select.selectedIndex];
+                    if (opt) {
+                        label.textContent = opt.textContent.trim();
+                        menu.querySelectorAll('.custom-select-option').forEach(item => {
+                            const sel = item.dataset.value === select.value;
+                            item.classList.toggle('is-selected', sel);
+                            item.setAttribute('aria-selected', sel ? 'true' : 'false');
+                            let chk = item.querySelector('.custom-select-option-check');
+                            if (sel) {
+                                if (!chk) {
+                                    chk = document.createElement('i');
+                                    chk.className = 'bi bi-check2 custom-select-option-check';
+                                    chk.setAttribute('aria-hidden', 'true');
+                                    item.appendChild(chk);
+                                }
+                            } else if (chk) {
+                                chk.remove();
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function closeAllCustomSelects(exceptWrapper = null) {
+            document.querySelectorAll('.custom-select-wrapper.is-open').forEach(w => {
+                if (w !== exceptWrapper) {
+                    w.classList.remove('is-open');
+                    w.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        function closeAllMenus(exceptWrap = null) {
+            document.querySelectorAll('.product-menu-wrap.is-open').forEach(wrap => {
+                if (wrap !== exceptWrap) {
+                    wrap.classList.remove('is-open');
+                    const trigger = wrap.querySelector('.product-menu-trigger');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                    wrap.closest('.product-card')?.classList.remove('has-open-menu');
+                }
+            });
+        }
+
         document.addEventListener('keydown', event => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
                 event.preventDefault();
                 document.getElementById('product-search')?.focus();
             }
+            if (event.key === 'Escape') {
+                closeAllMenus();
+                closeAllCustomSelects();
+            }
         });
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.product-menu-trigger');
+            if (trigger) {
+                event.preventDefault();
+                event.stopPropagation();
+                const wrap = trigger.closest('.product-menu-wrap');
+                if (!wrap) return;
+                const wasOpen = wrap.classList.contains('is-open');
+                closeAllCustomSelects();
+                closeAllMenus(wasOpen ? null : wrap);
+                if (!wasOpen) {
+                    wrap.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                    wrap.closest('.product-card')?.classList.add('has-open-menu');
+                }
+                return;
+            }
+
+            if (!event.target.closest('.product-dropdown')) {
+                closeAllMenus();
+            }
+
+            if (!event.target.closest('.custom-select-wrapper')) {
+                closeAllCustomSelects();
+            }
+        });
+
+        // Initialize custom selects on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCustomSelects);
+        } else {
+            initCustomSelects();
+        }
     })();
 </script>
 {% endblock %}

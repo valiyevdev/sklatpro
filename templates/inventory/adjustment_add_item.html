@@ -4,15 +4,8 @@
 {% block title %}{% t "add_item" %} | SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <a href="{% url 'adjustment_detail' pk=adjustment.pk %}" class="back-btn" aria-label="Orqaga">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-    </a>
-    <div class="page-header-content">
-        <h1 class="page-title" style="margin:0">{% t "add_item" %}</h1>
-        <p class="page-subtitle" style="margin-top:4px">{{ adjustment.reference }}</p>
-    </div>
-</div>
+{% t "add_item" as add_item_title %}
+{% include 'components/hero_header.html' with title=add_item_title subtitle=adjustment.reference %}
 
 <div style="max-width:720px">
     <div class="card-pro">

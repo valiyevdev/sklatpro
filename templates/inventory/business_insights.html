@@ -4,10 +4,9 @@
 {% block title %}{% t "business_insights_title" %} - SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h2 class="fw-700" style="font-size:1.5rem;color:var(--gray-900)">{% t "business_insights_title" %}</h2>
-    <p class="text-pro-sm text-pro-muted mb-0">{% t "business_insights_desc" %}</p>
-</div>
+{% t "business_insights_title" as bi_title %}
+{% t "business_insights_desc" as bi_subtitle %}
+{% include 'components/hero_header.html' with title=bi_title subtitle=bi_subtitle stat_icon="bi-graph-up-arrow" %}
 
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
     <div class="stat-card">

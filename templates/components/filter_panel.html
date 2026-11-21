@@ -17,9 +17,11 @@ Context (all optional unless noted):
   filter_status_options_template  template with <option> tags (optional)
   filter_state_key          localStorage key for the open/closed state
 
-The panel is fully usable without JavaScript: the controls are visible by
-default and the whole thing is a normal GET form. JavaScript only adds the
-collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
+The panel is fully usable without JavaScript: the native selects stay visible
+and the whole thing is a normal GET form. With JavaScript, the selects are
+progressively upgraded to the shared `custom-select-trigger` dropdown; the
+native select remains the form field. JavaScript also adds the collapse state,
+Ctrl+K, search debounce and Enter-to-apply behaviour.
 {% endcomment %}
 <div
   class="fp-panel"
@@ -74,10 +76,18 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
 
     <div class="fp-controls" id="fp-filter-controls" data-fp-controls>
       <div class="fp-row fp-row--fields">
+        <!--
+          Each filter renders a native <select> plus the markup the
+          `custom-select-trigger` component needs. The native select is the
+          no-JavaScript fallback and stays form-authoritative; the small
+          script below hides it and turns the button + menu into the real
+          control. Menu options are generated from the native select so the
+          two can never drift apart.
+        -->
         <div class="fp-field">
-          <label class="fp-label" for="fp-status-filter">{% t "status" %}</label>
-          <div class="fp-select">
-            <select id="fp-status-filter" name="status" class="fp-select__control">
+          <label class="fp-label" id="fp-status-label" for="fp-status-filter">{% t "status" %}</label>
+          <div class="fp-select fp-select--custom custom-select-wrapper" data-fp-select>
+            <select id="fp-status-filter" name="status" class="fp-select__control fp-select__native" data-fp-native-select>
               <option value="">{% t "all_statuses" %}</option>
               {% if filter_status_options %}
                 {% for option in filter_status_options %}
@@ -90,13 +100,27 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
             <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
             </svg>
+            <button
+              type="button"
+              id="fp-status-trigger"
+              class="custom-select-trigger"
+              data-fp-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="fp-status-menu"
+              aria-labelledby="fp-status-label fp-status-value"
+            >
+              <span class="custom-select-label" id="fp-status-value" data-fp-label data-allow-truncate>{% if filter_status_value %}{% t filter_status_value %}{% else %}{% t "all_statuses" %}{% endif %}</span>
+              <i class="bi bi-chevron-down custom-select-arrow" aria-hidden="true"></i>
+            </button>
+            <div class="custom-select-menu" id="fp-status-menu" role="listbox" aria-labelledby="fp-status-label" data-fp-menu></div>
           </div>
         </div>
 
         <div class="fp-field">
-          <label class="fp-label" for="fp-category-filter">{% t "category" %}</label>
-          <div class="fp-select">
-            <select id="fp-category-filter" name="category" class="fp-select__control">
+          <label class="fp-label" id="fp-category-label" for="fp-category-filter">{% t "category" %}</label>
+          <div class="fp-select fp-select--custom custom-select-wrapper" data-fp-select>
+            <select id="fp-category-filter" name="category" class="fp-select__control fp-select__native" data-fp-native-select>
               <option value="">{% t "all" %}</option>
               {% for category_id, category_name in filter_categories %}
               <option value="{{ category_id }}" {% if filter_category_value == category_id|stringformat:"s" %}selected{% endif %}>{{ category_name }}</option>
@@ -105,13 +129,27 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
             <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
             </svg>
+            <button
+              type="button"
+              id="fp-category-trigger"
+              class="custom-select-trigger"
+              data-fp-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="fp-category-menu"
+              aria-labelledby="fp-category-label fp-category-value"
+            >
+              <span class="custom-select-label" id="fp-category-value" data-fp-label data-allow-truncate>{% if filter_category_value %}{% for category_id, category_name in filter_categories %}{% if filter_category_value == category_id|stringformat:"s" %}{{ category_name }}{% endif %}{% endfor %}{% else %}{% t "all" %}{% endif %}</span>
+              <i class="bi bi-chevron-down custom-select-arrow" aria-hidden="true"></i>
+            </button>
+            <div class="custom-select-menu" id="fp-category-menu" role="listbox" aria-labelledby="fp-category-label" data-fp-menu></div>
           </div>
         </div>
 
         <div class="fp-field">
-          <label class="fp-label" for="fp-brand-filter">{% t "brand" %}</label>
-          <div class="fp-select">
-            <select id="fp-brand-filter" name="brand" class="fp-select__control">
+          <label class="fp-label" id="fp-brand-label" for="fp-brand-filter">{% t "brand" %}</label>
+          <div class="fp-select fp-select--custom custom-select-wrapper" data-fp-select>
+            <select id="fp-brand-filter" name="brand" class="fp-select__control fp-select__native" data-fp-native-select>
               <option value="">{% t "all" %}</option>
               {% for brand_id, brand_name in filter_brands %}
               <option value="{{ brand_id }}" {% if filter_brand_value == brand_id|stringformat:"s" %}selected{% endif %}>{{ brand_name }}</option>
@@ -120,6 +158,20 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
             <svg class="fp-select__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
             </svg>
+            <button
+              type="button"
+              id="fp-brand-trigger"
+              class="custom-select-trigger"
+              data-fp-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="fp-brand-menu"
+              aria-labelledby="fp-brand-label fp-brand-value"
+            >
+              <span class="custom-select-label" id="fp-brand-value" data-fp-label data-allow-truncate>{% if filter_brand_value %}{% for brand_id, brand_name in filter_brands %}{% if filter_brand_value == brand_id|stringformat:"s" %}{{ brand_name }}{% endif %}{% endfor %}{% else %}{% t "all" %}{% endif %}</span>
+              <i class="bi bi-chevron-down custom-select-arrow" aria-hidden="true"></i>
+            </button>
+            <div class="custom-select-menu" id="fp-brand-menu" role="listbox" aria-labelledby="fp-brand-label" data-fp-menu></div>
           </div>
         </div>
 
@@ -130,7 +182,7 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
       </div>
     </div>
 
-    <div class="fp-row fp-row--active">
+    <!-- <div class="fp-row fp-row--active">
       <div class="fp-chips">
         {% if filter_status_value %}
         <span class="fp-chip">
@@ -172,7 +224,7 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
       <p class="fp-result">
         <b>{{ filter_total_count|default:"0" }}</b> {% t "products_found_suffix" %}
       </p>
-    </div>
+    </div> -->
   </form>
 </div>
 
@@ -252,6 +304,193 @@ collapse state, Ctrl+K, search debounce and Enter-to-apply behaviour.
         event.preventDefault();
         input.focus();
         input.select();
+      });
+    }
+
+    /* ---------- Custom dropdowns (custom-select-trigger) ----------
+       The native select stays authoritative so the filter keeps working
+       without JavaScript. Once the menu is wired the native control is
+       visually hidden and the trigger button becomes the visible control.
+    */
+    function fieldTrigger(field) {
+      return field.querySelector('[data-fp-trigger]');
+    }
+
+    function closeField(field, focusTrigger) {
+      if (!field) return;
+      field.classList.remove('is-open');
+      var trigger = fieldTrigger(field);
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+        if (focusTrigger) trigger.focus();
+      }
+    }
+
+    function closeAllFields(focusTrigger) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-fp-select].is-open'), function (field) {
+        closeField(field, focusTrigger && field.contains(document.activeElement));
+      });
+    }
+
+    function openField(field) {
+      closeAllFields(false);
+      field.classList.add('is-open');
+      var trigger = fieldTrigger(field);
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    function syncField(field) {
+      var select = field.querySelector('[data-fp-native-select]');
+      var label = field.querySelector('[data-fp-label]');
+      var menu = field.querySelector('[data-fp-menu]');
+      if (!select || !label || !menu) return;
+
+      var selected = select.options[select.selectedIndex];
+      label.textContent = selected ? selected.textContent.trim() : '';
+
+      Array.prototype.forEach.call(menu.querySelectorAll('.custom-select-option'), function (item) {
+        var isSelected = item.getAttribute('data-value') === select.value;
+        item.classList.toggle('is-selected', isSelected);
+        item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+
+        var check = item.querySelector('.custom-select-option-check');
+        if (isSelected && !check) {
+          check = document.createElement('i');
+          check.className = 'bi bi-check2 custom-select-option-check';
+          check.setAttribute('aria-hidden', 'true');
+          item.appendChild(check);
+        } else if (!isSelected && check) {
+          check.remove();
+        }
+      });
+    }
+
+    function chooseFieldOption(field, trigger, value) {
+      var select = field.querySelector('[data-fp-native-select]');
+      if (!select) return;
+
+      var changed = select.value !== value;
+      select.value = value;
+      syncField(field);
+      closeField(field, false);
+      trigger.focus();
+
+      if (changed) {
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+
+    function buildFieldMenu(field) {
+      var select = field.querySelector('[data-fp-native-select]');
+      var menu = field.querySelector('[data-fp-menu]');
+      var trigger = fieldTrigger(field);
+      if (!select || !menu || !trigger) return false;
+
+      menu.textContent = '';
+
+      Array.prototype.forEach.call(select.options, function (option) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'custom-select-option';
+        item.setAttribute('role', 'option');
+        item.setAttribute('tabindex', '-1');
+        item.setAttribute('data-value', option.value);
+        if (option.disabled) {
+          item.disabled = true;
+          item.setAttribute('aria-disabled', 'true');
+        }
+
+        var text = document.createElement('span');
+        text.className = 'custom-select-option-label';
+        text.textContent = option.textContent.trim();
+        item.appendChild(text);
+
+        item.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          chooseFieldOption(field, trigger, option.value);
+        });
+
+        menu.appendChild(item);
+      });
+
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (field.classList.contains('is-open')) {
+          closeField(field, false);
+        } else {
+          openField(field);
+        }
+      });
+
+      trigger.addEventListener('keydown', function (event) {
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        if (!field.classList.contains('is-open')) openField(field);
+        var items = menu.querySelectorAll('.custom-select-option');
+        if (!items.length) return;
+        items[event.key === 'ArrowDown' ? 0 : items.length - 1].focus();
+      });
+
+      menu.addEventListener('keydown', function (event) {
+        var items = menu.querySelectorAll('.custom-select-option');
+        if (!items.length) return;
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          var index = Array.prototype.indexOf.call(items, document.activeElement);
+          var next = event.key === 'ArrowDown' ? index + 1 : index - 1;
+          if (index === -1) next = 0;
+          next = Math.max(0, Math.min(next, items.length - 1));
+          items[next].focus();
+        } else if (event.key === 'Home' || event.key === 'End') {
+          event.preventDefault();
+          items[event.key === 'Home' ? 0 : items.length - 1].focus();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          closeField(field, true);
+        } else if (event.key === 'Tab') {
+          // Restore focus to the trigger before the browser moves on, so
+          // hiding the menu does not drop focus into the document body.
+          closeField(field, true);
+        }
+      });
+
+      select.addEventListener('change', function () {
+        syncField(field);
+      });
+
+      field.addEventListener('focusout', function (event) {
+        if (event.relatedTarget && field.contains(event.relatedTarget)) return;
+        closeField(field, false);
+      });
+
+      syncField(field);
+
+      var label = field.parentNode.querySelector('label[for="' + select.id + '"]');
+      if (label) label.setAttribute('for', trigger.id);
+
+      select.setAttribute('tabindex', '-1');
+      select.setAttribute('aria-hidden', 'true');
+      return true;
+    }
+
+    var customReady = false;
+    Array.prototype.forEach.call(panel.querySelectorAll('[data-fp-select]'), function (field) {
+      if (buildFieldMenu(field)) customReady = true;
+    });
+    if (customReady) panel.classList.add('fp-custom-ready');
+
+    if (!window.__sklatFilterSelectBound) {
+      window.__sklatFilterSelectBound = true;
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest || event.target.closest('[data-fp-select]')) return;
+        closeAllFields(false);
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeAllFields(true);
       });
     }
   })();

@@ -224,15 +224,14 @@
   }
 </style>
 
-<header class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "out_of_stock_title" %}</h1>
-        <p class="page-subtitle">{% t "out_of_stock_subtitle" %}</p>
-    </div>
-    <div class="page-actions">
-        <span class="oos-count">{{ total_count|default:"0" }}&nbsp;{% t "items_suffix" %}</span>
-    </div>
-</header>
+{% t "out_of_stock_title" as oos_title %}
+{% t "out_of_stock_subtitle" as oos_subtitle %}
+{% t "items_suffix" as items_suffix_text %}
+{% with count_str=total_count|default:"0"|stringformat:"s" %}
+{% with stat_val=count_str|add:" "|add:items_suffix_text %}
+{% include 'components/hero_header.html' with title=oos_title subtitle=oos_subtitle stat_text=stat_val stat_icon="bi-x-circle" %}
+{% endwith %}
+{% endwith %}
 
 {% if page_obj %}
 <!-- ---------- Mobile: one card per product (< md) ---------- -->

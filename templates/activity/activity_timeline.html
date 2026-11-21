@@ -4,142 +4,720 @@
 
 {% block title %}{% t "activity_log" %} — SKLAT PRO{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "activity_log" %}</h1>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+    .act-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 8px 0 40px;
+    }
 
-<!-- Filter -->
-<div class="card-pro mb-6">
-    <div class="card-pro-body">
-        <form method="get" class="d-flex gap-3 align-end flex-wrap">
-            <div class="input-pro-group" style="min-width:200px;margin-bottom:0">
-                <select class="input-pro" name="type">
-                    <option value="">{% t "all_activities" %}</option>
-                    <option value="product_added" {% if activity_type == 'product_added' %}selected{% endif %}>{% t "activity_product_added" %}</option>
-                    <option value="product_updated" {% if activity_type == 'product_updated' %}selected{% endif %}>{% t "activity_product_updated" %}</option>
-                    <option value="product_deleted" {% if activity_type == 'product_deleted' %}selected{% endif %}>{% t "activity_product_deleted" %}</option>
-                    <option value="stock_in" {% if activity_type == 'stock_in' %}selected{% endif %}>{% t "stock_in" %}</option>
-                    <option value="stock_out" {% if activity_type == 'stock_out' %}selected{% endif %}>{% t "stock_out" %}</option>
-                    <option value="customer_debt_created" {% if activity_type == 'customer_debt_created' %}selected{% endif %}>{% t "activity_debt_created" %}</option>
-                    <option value="customer_debt_paid" {% if activity_type == 'customer_debt_paid' %}selected{% endif %}>{% t "activity_debt_paid" %}</option>
-                    <option value="supplier_debt_created" {% if activity_type == 'supplier_debt_created' %}selected{% endif %}>{% t "activity_supplier_debt_created" %}</option>
-                    <option value="supplier_debt_paid" {% if activity_type == 'supplier_debt_paid' %}selected{% endif %}>{% t "activity_supplier_debt_paid" %}</option>
-                </select>
+    /* ============================================================
+       FILTER BAR
+       ============================================================ */
+    .act-filter-card {
+        background: var(--bg-surface, #131b2e);
+        border: 1px solid var(--border-default, #1e293b);
+        border-radius: 14px;
+        padding: 14px 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transition: border-color .15s ease;
+    }
+    .act-filter-form {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+    }
+    .act-filter-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 260px;
+    }
+    .act-select-wrap {
+        position: relative;
+        min-width: 250px;
+        flex: 1 1 250px;
+        max-width: 360px;
+    }
+    .act-select-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #818cf8;
+        font-size: 14px;
+        pointer-events: none;
+    }
+    .act-select {
+        height: 42px;
+        width: 100%;
+        padding: 0 34px 0 38px;
+        border-radius: 10px;
+        border: 1px solid #26334b;
+        background: #0d1424;
+        color: #f8fafc;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .act-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    .act-filter-btn {
+        height: 42px;
+        padding: 0 18px;
+        border-radius: 10px;
+        border: 1px solid #818cf8;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+        white-space: nowrap;
+    }
+    .act-filter-btn:hover {
+        background: linear-gradient(135deg, #818cf8, #6366f1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .act-filter-btn:active {
+        transform: translateY(0);
+    }
+    .act-clear-btn {
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #94a3b8;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all .15s ease;
+        white-space: nowrap;
+    }
+    .act-clear-btn:hover {
+        background: #334155;
+        color: #ffffff;
+        border-color: #475569;
+    }
+    .act-filter-count {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ============================================================
+       TIMELINE CONTAINER
+       ============================================================ */
+    .act-timeline-wrap {
+        position: relative;
+        padding: 4px 0 16px 0;
+    }
+    .act-timeline-line {
+        position: absolute;
+        left: 19px;
+        top: 20px;
+        bottom: 24px;
+        width: 2px;
+        background: #1e293b;
+        z-index: 1;
+    }
+    .act-timeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ============================================================
+       TIMELINE ITEM & MARKER
+       ============================================================ */
+    .act-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        position: relative;
+    }
+    .act-marker {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        position: relative;
+        z-index: 3;
+        margin-top: 4px;
+        box-shadow: 0 0 0 4px #0f172a;
+        transition: transform .15s ease;
+    }
+    .act-item:hover .act-marker {
+        transform: scale(1.08);
+    }
+
+    /* Marker Tone Variants (Dark Theme Defaults) */
+    .act-marker--success {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .act-marker--info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+    .act-marker--danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .act-marker--warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .act-marker--primary {
+        background: rgba(99, 102, 241, 0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+    .act-marker--neutral {
+        background: rgba(100, 116, 139, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(100, 116, 139, 0.35);
+    }
+
+    /* ============================================================
+       EVENT CARD
+       ============================================================ */
+    .act-card {
+        flex: 1;
+        min-width: 0;
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 14px;
+        padding: 16px 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .act-card:hover {
+        border-color: #334155;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .act-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+    .act-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: -0.01em;
+    }
+    .act-badge--success {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .act-badge--info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .act-badge--danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .act-badge--warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fde68a;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .act-badge--primary {
+        background: rgba(99, 102, 241, 0.15);
+        color: #c7d2fe;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .act-badge--neutral {
+        background: rgba(100, 116, 139, 0.15);
+        color: #cbd5e1;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .act-card-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .act-time {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .act-time i {
+        color: #818cf8;
+    }
+    .act-user-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #0d1424;
+        color: #cbd5e1;
+        border: 1px solid #26334b;
+    }
+    .act-user-tag i {
+        color: #818cf8;
+    }
+    .act-desc {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.5;
+        color: #f1f5f9;
+        word-break: break-word;
+    }
+
+    /* ============================================================
+       PAGINATION BAR
+       ============================================================ */
+    .act-pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 24px;
+        padding: 14px 20px;
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ============================================================
+       LIGHT MODE ADAPTATION (Seamless matching with design tokens)
+       ============================================================ */
+    [data-theme="light"] .act-filter-card,
+    html:not([data-theme="dark"]) .act-filter-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    [data-theme="light"] .act-select,
+    html:not([data-theme="dark"]) .act-select {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+    [data-theme="light"] .act-select:focus,
+    html:not([data-theme="dark"]) .act-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+    }
+    [data-theme="light"] .act-clear-btn,
+    html:not([data-theme="dark"]) .act-clear-btn {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+        color: #475569;
+    }
+    [data-theme="light"] .act-clear-btn:hover,
+    html:not([data-theme="dark"]) .act-clear-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    [data-theme="light"] .act-filter-count,
+    html:not([data-theme="dark"]) .act-filter-count {
+        color: #64748b;
+    }
+
+    /* Timeline Line in Light Mode */
+    [data-theme="light"] .act-timeline-line,
+    html:not([data-theme="dark"]) .act-timeline-line {
+        background: #e2e8f0;
+    }
+
+    /* Markers in Light Mode */
+    [data-theme="light"] .act-marker,
+    html:not([data-theme="dark"]) .act-marker {
+        box-shadow: 0 0 0 4px #f8fafc;
+    }
+    [data-theme="light"] .act-marker--success,
+    html:not([data-theme="dark"]) .act-marker--success {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1.5px solid #a7f3d0;
+    }
+    [data-theme="light"] .act-marker--info,
+    html:not([data-theme="dark"]) .act-marker--info {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1.5px solid #bfdbfe;
+    }
+    [data-theme="light"] .act-marker--danger,
+    html:not([data-theme="dark"]) .act-marker--danger {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1.5px solid #fecaca;
+    }
+    [data-theme="light"] .act-marker--warning,
+    html:not([data-theme="dark"]) .act-marker--warning {
+        background: #fffbeb;
+        color: #d97706;
+        border: 1.5px solid #fde68a;
+    }
+    [data-theme="light"] .act-marker--primary,
+    html:not([data-theme="dark"]) .act-marker--primary {
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1.5px solid #c7d2fe;
+    }
+    [data-theme="light"] .act-marker--neutral,
+    html:not([data-theme="dark"]) .act-marker--neutral {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1.5px solid #cbd5e1;
+    }
+
+    /* Event Card in Light Mode */
+    [data-theme="light"] .act-card,
+    html:not([data-theme="dark"]) .act-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+    [data-theme="light"] .act-card:hover,
+    html:not([data-theme="dark"]) .act-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+    }
+
+    /* Badges in Light Mode */
+    [data-theme="light"] .act-badge--success,
+    html:not([data-theme="dark"]) .act-badge--success {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #a7f3d0;
+    }
+    [data-theme="light"] .act-badge--info,
+    html:not([data-theme="dark"]) .act-badge--info {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+    }
+    [data-theme="light"] .act-badge--danger,
+    html:not([data-theme="dark"]) .act-badge--danger {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+    [data-theme="light"] .act-badge--warning,
+    html:not([data-theme="dark"]) .act-badge--warning {
+        background: #fffbeb;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+    [data-theme="light"] .act-badge--primary,
+    html:not([data-theme="dark"]) .act-badge--primary {
+        background: #eef2ff;
+        color: #4338ca;
+        border-color: #c7d2fe;
+    }
+    [data-theme="light"] .act-badge--neutral,
+    html:not([data-theme="dark"]) .act-badge--neutral {
+        background: #f1f5f9;
+        color: #475569;
+        border-color: #e2e8f0;
+    }
+
+    [data-theme="light"] .act-card-meta,
+    html:not([data-theme="dark"]) .act-card-meta {
+        color: #64748b;
+    }
+    [data-theme="light"] .act-user-tag,
+    html:not([data-theme="dark"]) .act-user-tag {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #334155;
+    }
+    [data-theme="light"] .act-desc,
+    html:not([data-theme="dark"]) .act-desc {
+        color: #1e293b;
+    }
+    [data-theme="light"] .act-pagination-bar,
+    html:not([data-theme="dark"]) .act-pagination-bar {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 640px) {
+        .act-page {
+            padding-top: 0;
+        }
+        .act-filter-card {
+            padding: 14px;
+        }
+        .act-filter-left {
+            width: 100%;
+        }
+        .act-select-wrap {
+            max-width: 100%;
+            min-width: 100%;
+        }
+        .act-filter-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .act-clear-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .act-timeline-line {
+            left: 17px;
+        }
+        .act-marker {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            font-size: 13px;
+        }
+        .act-card {
+            padding: 14px;
+        }
+        .act-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .act-card-meta {
+            width: 100%;
+            justify-content: space-between;
+        }
+        .act-pagination-bar {
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="act-page">
+    <!-- Reusable Hero Header -->
+    {% t "activity_log" as act_title %}
+    {% t "items_suffix" as items_suffix_txt %}
+    {% with total_str=page_obj.paginator.count|default:"0"|stringformat:"s" %}
+    {% with stat_val=total_str|add:" "|add:items_suffix_txt %}
+    {% include 'components/hero_header.html' with title=act_title subtitle="Tizimdagi barcha amallar, hodisalar va faoliyat tarixi" stat_text=stat_val stat_icon="bi-clock-history" %}
+    {% endwith %}
+    {% endwith %}
+
+    <!-- Filter Card -->
+    <div class="act-filter-card">
+        <form method="get" class="act-filter-form">
+            <div class="act-filter-left">
+                <div class="act-select-wrap">
+                    <i class="bi bi-funnel act-select-icon"></i>
+                    <select class="act-select" name="type" aria-label="{% t 'all_activities' %}">
+                        <option value="">{% t "all_activities" %}</option>
+                        <optgroup label="Mahsulotlar">
+                            <option value="product_added" {% if activity_type == 'product_added' %}selected{% endif %}>{% t "activity_product_added" %}</option>
+                            <option value="product_updated" {% if activity_type == 'product_updated' %}selected{% endif %}>{% t "activity_product_updated" %}</option>
+                            <option value="product_deleted" {% if activity_type == 'product_deleted' %}selected{% endif %}>{% t "activity_product_deleted" %}</option>
+                        </optgroup>
+                        <optgroup label="Zaxira (Ombor)">
+                            <option value="stock_in" {% if activity_type == 'stock_in' %}selected{% endif %}>{% t "stock_in" %}</option>
+                            <option value="stock_out" {% if activity_type == 'stock_out' %}selected{% endif %}>{% t "stock_out" %}</option>
+                        </optgroup>
+                        <optgroup label="Qarzlar">
+                            <option value="customer_debt_created" {% if activity_type == 'customer_debt_created' %}selected{% endif %}>{% t "activity_debt_created" %}</option>
+                            <option value="customer_debt_paid" {% if activity_type == 'customer_debt_paid' %}selected{% endif %}>{% t "activity_debt_paid" %}</option>
+                            <option value="supplier_debt_created" {% if activity_type == 'supplier_debt_created' %}selected{% endif %}>{% t "activity_supplier_debt_created" %}</option>
+                            <option value="supplier_debt_paid" {% if activity_type == 'supplier_debt_paid' %}selected{% endif %}>{% t "activity_supplier_debt_paid" %}</option>
+                        </optgroup>
+                        <optgroup label="Vazifalar">
+                            <option value="task_created" {% if activity_type == 'task_created' %}selected{% endif %}>Vazifa yaratildi</option>
+                            <option value="task_completed" {% if activity_type == 'task_completed' %}selected{% endif %}>Vazifa bajarildi</option>
+                            <option value="task_deleted" {% if activity_type == 'task_deleted' %}selected{% endif %}>Vazifa o'chirildi</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <button class="act-filter-btn" type="submit">
+                    <i class="bi bi-filter"></i> {% t "filter" %}
+                </button>
+                {% if activity_type %}
+                <a href="{% url 'activity_timeline' %}" class="act-clear-btn" title="Filtrni tozalash">
+                    <i class="bi bi-x-circle"></i> Tozalash
+                </a>
+                {% endif %}
             </div>
-            <button class="btn-pro btn-pro-primary" type="submit">
-                <i class="bi bi-funnel"></i> {% t "filter" %}
-            </button>
+            <div class="act-filter-count">
+                <i class="bi bi-layers text-primary-400"></i>
+                <span>Jami: <strong>{{ page_obj.paginator.count|default:"0" }}</strong> ta amal</span>
+            </div>
         </form>
     </div>
-</div>
 
-<!-- Activity Timeline -->
-<div class="card-pro">
-    <div class="card-pro-body">
-        {% if page_obj %}
-        <div class="timeline">
+    <!-- Timeline Area -->
+    {% if page_obj %}
+    <div class="act-timeline-wrap">
+        <div class="act-timeline-line"></div>
+        <div class="act-timeline-list">
             {% for activity in page_obj %}
-            <div class="timeline-item">
-                <div class="timeline-marker" style="background:{% if activity.activity_type == 'product_added' %}var(--success-500){% elif activity.activity_type == 'product_updated' %}var(--info-500){% elif activity.activity_type == 'product_deleted' %}var(--danger-500){% elif activity.activity_type == 'stock_in' %}var(--success-500){% elif activity.activity_type == 'stock_out' %}var(--warning-500){% elif 'debt_created' in activity.activity_type %}var(--primary-500){% elif 'debt_paid' in activity.activity_type %}var(--success-500){% else %}var(--gray-400){% endif %}">
-                    <i class="bi bi-{% if activity.activity_type == 'product_added' %}plus-circle{% elif activity.activity_type == 'product_updated' %}pencil{% elif activity.activity_type == 'product_deleted' %}trash{% elif activity.activity_type == 'stock_in' %}box-arrow-in-down{% elif activity.activity_type == 'stock_out' %}box-arrow-up{% elif 'debt_created' in activity.activity_type %}person-plus{% elif 'debt_paid' in activity.activity_type %}cash{% else %}activity{% endif %}"></i>
-                </div>
-                <div class="timeline-content">
-                    <div class="timeline-header">
-                        <span class="badge-pro badge-pro-{% if activity.activity_type == 'product_added' %}success{% elif activity.activity_type == 'product_updated' %}info{% elif activity.activity_type == 'product_deleted' %}danger{% elif activity.activity_type == 'stock_in' %}success{% elif activity.activity_type == 'stock_out' %}warning{% elif 'debt_created' in activity.activity_type %}primary{% elif 'debt_paid' in activity.activity_type %}success{% else %}neutral{% endif %}">
-                            {{ activity.get_activity_type_display }}
-                        </span>
-                        <span class="text-pro-xs text-pro-muted" style="margin-left:var(--sp-2)">
-                            <i class="bi bi-clock"></i> {{ activity.created_at|date:"Y-m-d H:i" }}
-                        </span>
-                        <span class="text-pro-xs text-pro-muted" style="margin-left:var(--sp-2)">
-                            <i class="bi bi-person"></i> {{ activity.user.username|default:"System" }}
-                        </span>
+            <article class="act-item">
+                <!-- Status Marker with Halo -->
+                {% if activity.activity_type == 'product_added' or activity.activity_type == 'stock_in' or activity.activity_type == 'customer_debt_paid' or activity.activity_type == 'supplier_debt_paid' or activity.activity_type == 'task_completed' %}
+                    <div class="act-marker act-marker--success" aria-hidden="true">
+                        <i class="bi bi-{% if activity.activity_type == 'stock_in' %}box-arrow-in-down{% elif activity.activity_type == 'task_completed' %}check-circle{% elif 'debt' in activity.activity_type %}cash{% else %}plus-circle{% endif %}"></i>
                     </div>
-                    <p class="timeline-description">{{ activity.description }}</p>
+                {% elif activity.activity_type == 'product_updated' or 'status_changed' in activity.activity_type or 'assigned' in activity.activity_type %}
+                    <div class="act-marker act-marker--info" aria-hidden="true">
+                        <i class="bi bi-pencil"></i>
+                    </div>
+                {% elif activity.activity_type == 'product_deleted' or activity.activity_type == 'task_deleted' or activity.activity_type == 'employee_deleted' %}
+                    <div class="act-marker act-marker--danger" aria-hidden="true">
+                        <i class="bi bi-trash3"></i>
+                    </div>
+                {% elif activity.activity_type == 'stock_out' %}
+                    <div class="act-marker act-marker--warning" aria-hidden="true">
+                        <i class="bi bi-box-arrow-up"></i>
+                    </div>
+                {% elif 'debt_created' in activity.activity_type or activity.activity_type == 'task_created' %}
+                    <div class="act-marker act-marker--primary" aria-hidden="true">
+                        <i class="bi bi-{% if 'debt' in activity.activity_type %}person-plus{% else %}list-task{% endif %}"></i>
+                    </div>
+                {% else %}
+                    <div class="act-marker act-marker--neutral" aria-hidden="true">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                {% endif %}
+
+                <!-- Content Card -->
+                <div class="act-card">
+                    <div class="act-card-header">
+                        {% if activity.activity_type == 'product_added' or activity.activity_type == 'stock_in' or activity.activity_type == 'customer_debt_paid' or activity.activity_type == 'supplier_debt_paid' or activity.activity_type == 'task_completed' %}
+                            <span class="act-type-badge act-badge--success">
+                                <i class="bi bi-check2"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% elif activity.activity_type == 'product_updated' or 'status_changed' in activity.activity_type or 'assigned' in activity.activity_type %}
+                            <span class="act-type-badge act-badge--info">
+                                <i class="bi bi-pencil-square"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% elif activity.activity_type == 'product_deleted' or activity.activity_type == 'task_deleted' or activity.activity_type == 'employee_deleted' %}
+                            <span class="act-type-badge act-badge--danger">
+                                <i class="bi bi-trash"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% elif activity.activity_type == 'stock_out' %}
+                            <span class="act-type-badge act-badge--warning">
+                                <i class="bi bi-arrow-up-right"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% elif 'debt_created' in activity.activity_type or activity.activity_type == 'task_created' %}
+                            <span class="act-type-badge act-badge--primary">
+                                <i class="bi bi-asterisk"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% else %}
+                            <span class="act-type-badge act-badge--neutral">
+                                <i class="bi bi-dot"></i> {{ activity.get_activity_type_display }}
+                            </span>
+                        {% endif %}
+
+                        <div class="act-card-meta">
+                            <span class="act-time" title="Sana va vaqt">
+                                <i class="bi bi-clock"></i> {{ activity.created_at|date:"Y-m-d H:i" }}
+                            </span>
+                            <span class="act-user-tag" title="Foydalanuvchi">
+                                <i class="bi bi-person-fill"></i> {{ activity.user.get_full_name|default:activity.user.username|default:"System" }}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="act-desc">{{ activity.description }}</p>
                 </div>
-            </div>
+            </article>
             {% endfor %}
         </div>
+    </div>
 
-        {% if page_obj.has_other_pages %}
-        <div class="d-flex justify-between align-center mt-6" style="border-top:1px solid var(--border-subtle);padding-top:var(--sp-4)">
-            <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-            <div class="pagination-pro">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-left"></i></a>
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="act-pagination-bar">
+        <span class="text-pro-sm text-pro-muted">{% t "page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-pro">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-left"></i></a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}&type={{ activity_type }}">{{ num }}</a>
                 {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <span class="active">{{ num }}</span>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <a href="?page={{ num }}&type={{ activity_type }}">{{ num }}</a>
-                    {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-right"></i></a>
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&type={{ activity_type }}"><i class="bi bi-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="card-pro">
+        <div class="card-pro-body">
+            <div class="empty-state" style="padding: 48px 20px;">
+                <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
+                <h5 class="empty-state-title">{% t "no_activity" %}</h5>
+                <p class="empty-state-desc">Ushbu parametr bo'yicha hech qanday faoliyat yozuvlari topilmadi.</p>
+                {% if activity_type %}
+                <a href="{% url 'activity_timeline' %}" class="btn-pro btn-pro-secondary mt-3">
+                    <i class="bi bi-arrow-repeat"></i> Barcha faoliyatni ko'rish
+                </a>
                 {% endif %}
             </div>
         </div>
-        {% endif %}
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon"><i class="bi bi-clock-history"></i></div>
-            <h5 class="empty-state-title">{% t "no_activity" %}</h5>
-        </div>
-        {% endif %}
     </div>
-</div>
-
-<style>
-.timeline {
-    position: relative;
-    padding: var(--sp-4) 0;
-}
-.timeline::before {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    left: 20px;
-    width: 2px;
-    background: var(--border-default);
-}
-.timeline-item {
-    position: relative;
-    padding-left: 52px;
-    margin-bottom: var(--sp-6);
-}
-.timeline-item:last-child { margin-bottom: 0; }
-.timeline-marker {
-    position: absolute;
-    left: 0; top: 4px;
-    width: 42px; height: 42px;
-    border-radius: var(--radius-full);
-    display: flex; align-items: center; justify-content: center;
-    color: white;
-    font-size: 1rem;
-    z-index: 1;
-    box-shadow: var(--shadow-sm);
-}
-.timeline-content {
-    background: var(--bg-surface);
-    padding: var(--sp-4) var(--sp-5);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-subtle);
-}
-.timeline-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: var(--sp-2);
-    flex-wrap: wrap;
-    gap: var(--sp-1);
-}
-.timeline-description {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: var(--text-base);
-}
-</style>
+    {% endif %}
+</main>
 {% endblock %}

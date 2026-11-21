@@ -1,0 +1,29 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Maxfiy sozlamalar va baza
+.env
+*.sqlite3
+db.sqlite3
+
+# Avtomatik yaratiladigan fayllar
+media/
+staticfiles/
+tools/screens/
+
+# OpenCode sozlamalari
+opencode.json
+skills-lock.json
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

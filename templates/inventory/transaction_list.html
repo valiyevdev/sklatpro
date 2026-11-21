@@ -4,20 +4,17 @@
 {% block title %}{% t "inventory" %} — SKLAT PRO{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="page-header-content">
-        <h1 class="page-title">{% t "inventory" %}</h1>
-        <p class="page-subtitle">{{ page_obj.paginator.count }} {% t "transactions_total" %}</p>
-    </div>
-    <div class="page-actions">
-        <a href="{% url 'stock_in' %}" class="btn-pro btn-pro-success">
-            <i class="bi bi-arrow-down-circle"></i> {% t "stock_in" %}
-        </a>
-        <a href="{% url 'stock_out' %}" class="btn-pro btn-pro-danger">
-            <i class="bi bi-arrow-up-circle"></i> {% t "stock_out" %}
-        </a>
-    </div>
-</div>
+{% url 'stock_in' as stock_in_url %}
+{% url 'stock_out' as stock_out_url %}
+{% t "inventory" as txn_list_title %}
+{% t "stock_in" as stock_in_text %}
+{% t "stock_out" as stock_out_text %}
+{% t "transactions_total" as txn_total_text %}
+{% with count_str=page_obj.paginator.count|default:"0"|stringformat:"s" %}
+{% with stat_val=count_str|add:" "|add:txn_total_text %}
+{% include 'components/hero_header.html' with title=txn_list_title stat_text=stat_val stat_icon="bi-arrow-left-right" action_url=stock_in_url action_text=stock_in_text action_icon="bi-arrow-down-circle" secondary_url=stock_out_url secondary_text=stock_out_text secondary_icon="bi-arrow-up-circle" %}
+{% endwith %}
+{% endwith %}
 
 <div class="card-pro">
     <div class="table-responsive">

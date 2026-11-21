@@ -7,6 +7,37 @@
 <style>
 .pos-mobile-view { display: none; }
 
+.pos-header {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.pos-header__title {
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.625rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.pos-header__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
 @media (max-width: 767px) {
   .pos-desktop-view { display: none !important; }
   .pos-mobile-view { display: block !important; }
@@ -478,13 +509,10 @@
 }
 .pos-table__th.pos-num { text-align: right; }
 .pos-table__row {
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: none;
 }
-.pos-table__row:hover {
-  background: rgba(99, 102, 241, 0.1);
-}
-.pos-table__row:hover .pos-table__td:first-child {
-  box-shadow: inset 3px 0 0 rgba(129, 140, 248, 0.85);
+.pos-table__row--empty:hover .pos-table__td {
+  background: transparent;
 }
 .pos-table__row:not(:last-child) .pos-table__td {
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
@@ -605,7 +633,136 @@
   transform: translateY(-1px);
 }
 
-/* ---------- 7. Overflow & motion ---------- */
+/* ---------- 7. Light theme ---------- */
+html:not([data-theme="dark"]) .pos-top-action {
+  background: #ffffff;
+  border-color: rgba(226, 232, 240, 0.8);
+  box-shadow: var(--shadow-sm);
+  color: #334155;
+}
+html:not([data-theme="dark"]) .pos-top-action__icon {
+  color: #475569;
+  background: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.9);
+}
+html:not([data-theme="dark"]) .pos-top-action__label { color: #334155; }
+html:not([data-theme="dark"]) .pos-top-action:hover {
+  background: #f8fafc;
+  border-color: #a5b4fc;
+  box-shadow: var(--shadow-md);
+}
+html:not([data-theme="dark"]) .pos-top-action:hover .pos-top-action__icon {
+  color: #4f46e5;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+html:not([data-theme="dark"]) .pos-top-action--active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 45%, #2563eb 100%);
+  border-color: #6366f1;
+  box-shadow: 0 8px 22px rgba(79, 70, 229, 0.3);
+}
+html:not([data-theme="dark"]) .pos-top-action--active .pos-top-action__label,
+html:not([data-theme="dark"]) .pos-top-action--active:hover .pos-top-action__label { color: #ffffff; }
+
+html:not([data-theme="dark"]) .pos-metric-card,
+html:not([data-theme="dark"]) .pos-widget {
+  background: #ffffff;
+  border-color: rgba(226, 232, 240, 0.8);
+  box-shadow: var(--shadow-sm);
+}
+html:not([data-theme="dark"]) .pos-metric-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: var(--shadow-md);
+}
+html:not([data-theme="dark"]) .pos-metric-card__label,
+html:not([data-theme="dark"]) .pos-empty__desc { color: #64748b; }
+html:not([data-theme="dark"]) .pos-metric-card__value,
+html:not([data-theme="dark"]) .pos-widget__title,
+html:not([data-theme="dark"]) .pos-empty__title { color: #0f172a; }
+
+html:not([data-theme="dark"]) .pos-widget::before {
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.28), transparent);
+}
+html:not([data-theme="dark"]) .pos-widget__header {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom-color: rgba(226, 232, 240, 0.8);
+}
+html:not([data-theme="dark"]) .pos-widget__icon {
+  color: #4f46e5;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  box-shadow: none;
+}
+html:not([data-theme="dark"]) .pos-widget__icon--violet {
+  color: #7c3aed;
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+html:not([data-theme="dark"]) .pos-widget__link {
+  color: #4f46e5;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+html:not([data-theme="dark"]) .pos-widget__link:hover {
+  color: #3730a3;
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+html:not([data-theme="dark"]) .pos-table__thead {
+  background: #f8fafc;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html:not([data-theme="dark"]) .pos-table__th {
+  color: #475569;
+  border-bottom-color: rgba(226, 232, 240, 0.8);
+}
+html:not([data-theme="dark"]) .pos-table__td { color: #475569; }
+html:not([data-theme="dark"]) .pos-table__amount,
+html:not([data-theme="dark"]) .pos-table__link { color: #0f172a; }
+html:not([data-theme="dark"]) .pos-table__row:not(:last-child) .pos-table__td {
+  border-bottom-color: rgba(226, 232, 240, 0.8);
+}
+html:not([data-theme="dark"]) .pos-empty__icon-wrap::before {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 70%);
+}
+html:not([data-theme="dark"]) .pos-empty__icon-circle {
+  background: linear-gradient(135deg, #eef2ff 0%, #eff6ff 100%);
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.14);
+}
+html:not([data-theme="dark"]) .pos-empty__icon-circle--violet {
+  background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%);
+  border-color: #ddd6fe;
+}
+html:not([data-theme="dark"]) .pos-empty__icon { color: #4f46e5; }
+html:not([data-theme="dark"]) .pos-empty__icon-circle--violet .pos-empty__icon { color: #7c3aed; }
+html:not([data-theme="dark"]) .pos-widget .pos-pay-card,
+html:not([data-theme="dark"]) .pos-widget .pos-check-card {
+  background: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.8);
+}
+html:not([data-theme="dark"]) .pos-widget .pos-check-card:hover,
+html:not([data-theme="dark"]) .pos-widget .pos-pay-card:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+/* Table rows must stay visually stable; links retain keyboard focus styles. */
+.pos-table__tbody .pos-table__row:hover,
+.pos-table__tbody .pos-table__row:hover .pos-table__td,
+.pos-table__tbody .pos-table__row:hover .pos-table__td:first-child {
+  background: transparent;
+  box-shadow: none;
+}
+.pos-table__tbody .pos-table__link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- 8. Overflow & motion ---------- */
 .pos-top-actions, .pos-metrics-grid { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .pos-top-action, .pos-metric-card, .pos-metric-card__icon { transition: none; }
@@ -619,11 +776,10 @@
 {% endblock %}
 
 {% block content %}
-<!-- POS Header Card — section landing page, so no back arrow here. -->
-<div class="page-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 20px; padding: 12px 14px; border-radius: 16px; background-color: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(8px); box-shadow: var(--glass-shadow);">
-    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-        <h1 style="font-size: 19px; font-weight: 700; color: var(--glass-title); margin: 0; padding: 0; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">POS Boshqaruv paneli</h1>
-    </div>
+<!-- POS section heading — no back arrow on this landing page. -->
+<div class="page-header pos-header">
+    <h1 class="pos-header__title">POS boshqaruv paneli</h1>
+    <p class="pos-header__subtitle">Savdo, terminallar va smenalarni boshqaring.</p>
 </div>
 
 <!-- POS Navigation Tabs -->
@@ -854,7 +1010,7 @@
                         <td class="pos-table__td cell-muted">{{ r.created_at|date:"d.m.Y H:i" }}</td>
                     </tr>
                     {% empty %}
-                    <tr>
+                    <tr class="pos-table__row pos-table__row--empty">
                         <td colspan="5">
                             <div class="pos-empty">
                                 <div class="pos-empty__icon-wrap">

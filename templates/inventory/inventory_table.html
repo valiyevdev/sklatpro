@@ -14,22 +14,9 @@
      slate surface and the truncation rules are scoped under `.invt-`
      to avoid changing every other page.
      ============================================================ -->
-<header class="page-header invt-header">
-  <div class="page-header-content invt-header__content">
-    <span class="invt-header__eyebrow">
-      <i class="bi bi-box-seam" aria-hidden="true"></i>
-      {% t "inventory" %}
-    </span>
-    <h1 class="page-title">{% t "inventory_table_title" %}</h1>
-  </div>
-  <div class="page-actions">
-    <span class="invt-count">
-      <span class="invt-count__dot" aria-hidden="true"></span>
-      <strong>{{ total_count|default:"0" }}</strong>
-      <span class="invt-count__label">{% t "items_suffix" %}</span>
-    </span>
-  </div>
-</header>
+{% t "inventory_table_title" as inv_title %}
+{% t "inventory" as inv_subtitle %}
+{% include 'components/hero_header.html' with title=inv_title subtitle=inv_subtitle stat_icon="bi-box-seam" %}
 
 {% url 'inventory_table' as inventory_table_url %}
 {% include "components/filter_panel.html" with filter_action=inventory_table_url filter_search_value=q filter_status_value=status_filter filter_category_value=category_filter filter_brand_value=brand_filter filter_categories=categories filter_brands=brands filter_total_count=total_count filter_status_options_template="components/filter_status_options.html" %}
@@ -186,130 +173,6 @@
      `.table-pro` and `.empty-state` (177 templates) are never modified.
      ========================================================== */
 
-  /* ---------- 1. Header + item counter ---------- */
-  .invt-header {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding: 20px;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(30, 41, 59, 0.8);
-    border-radius: 16px;
-    box-shadow:
-      0 20px 25px -5px rgba(0, 0, 0, 0.4),
-      0 8px 10px -6px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    backdrop-filter: blur(24px) saturate(140%);
-  }
-
-  @media (max-width: 639px) {
-    .invt-header {
-      flex-direction: row;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-  }
-
-  /* Soft indigo bloom keeps the glass card from reading as a flat panel. */
-  .invt-header::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background:
-      radial-gradient(520px 150px at 8% -20%, rgba(99, 102, 241, 0.16), transparent 70%),
-      radial-gradient(360px 120px at 100% 120%, rgba(56, 189, 248, 0.08), transparent 70%);
-    pointer-events: none;
-  }
-
-  .invt-header__content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .invt-header__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #818cf8;
-  }
-
-  .invt-header__eyebrow i {
-    font-size: 0.75rem;
-    line-height: 1;
-  }
-
-  .invt-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    flex: 0 0 auto;
-    padding: 7px 13px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
-    color: #c7d2fe;
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.28);
-    border-radius: 9999px;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 0 18px -6px rgba(99, 102, 241, 0.55);
-  }
-
-  .invt-count strong {
-    font-size: 0.875rem;
-    font-weight: 800;
-    color: #e0e7ff;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .invt-count__label {
-    color: #a5b4fc;
-    font-weight: 500;
-  }
-
-  .invt-count__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #818cf8;
-    box-shadow: 0 0 8px rgba(129, 140, 248, 0.9);
-    flex: 0 0 auto;
-  }
-
-  [data-theme="light"] .invt-header {
-    background: rgba(255, 255, 255, 0.78);
-    border-color: rgba(226, 232, 240, 0.9);
-    box-shadow:
-      0 20px 25px -5px rgba(15, 23, 42, 0.08),
-      0 8px 10px -6px rgba(15, 23, 42, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  }
-  [data-theme="light"] .invt-header__eyebrow { color: #4f46e5; }
-  [data-theme="light"] .invt-count {
-    color: #4338ca;
-    background: rgba(99, 102, 241, 0.08);
-    border-color: rgba(99, 102, 241, 0.22);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  }
-  [data-theme="light"] .invt-count strong { color: #3730a3; }
-  [data-theme="light"] .invt-count__label { color: #4f46e5; }
-  [data-theme="light"] .invt-count__dot { background: #4f46e5; }
-
   /* ---------- 5. Buttons ---------- */
   .invt-btn {
     display: inline-flex;
@@ -390,6 +253,8 @@
     background: rgba(248, 250, 252, 0.9);
     border-color: rgba(226, 232, 240, 0.9);
   }
+
+  [data-theme="ligth"] .inv-stat-card { border-color: rgba(226, 232, 240, 0.8);}
   [data-theme="light"] .invt-stat__value { color: #334155; }
   [data-theme="light"] .invt-stat__value--strong { color: #0f172a; }
 

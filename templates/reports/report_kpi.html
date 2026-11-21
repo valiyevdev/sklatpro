@@ -1,124 +1,953 @@
 {% extends 'base.html' %}
 {% load i18n_tags %}
 
+{% block title %}{% t "kpi_dashboard" %} — SKLAT PRO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-page {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 8px 0 40px;
+    }
+
+    /* ============================================================
+       FILTER CARD & PRESETS TOOLBAR
+       ============================================================ */
+    .kpi-filter-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .kpi-presets-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #1e293b;
+    }
+    .kpi-presets-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-right: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .kpi-preset-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #94a3b8;
+        background: #0d1424;
+        border: 1px solid #1e293b;
+        border-radius: 9999px;
+        text-decoration: none;
+        transition: all .16s ease;
+        line-height: 1.2;
+    }
+    .kpi-preset-chip:hover {
+        background: #1e293b;
+        color: #f1f5f9;
+        border-color: #334155;
+    }
+    .kpi-preset-chip.active {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+
+    .kpi-filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 16px;
+    }
+    .kpi-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+        min-width: 170px;
+    }
+    .kpi-field label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #94a3b8;
+    }
+    .kpi-input {
+        height: 42px;
+        background: #0d1424;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 13.5px;
+        color: #f1f5f9;
+        font-family: inherit;
+        transition: all .16s ease;
+        outline: none;
+    }
+    .kpi-input:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+    .kpi-form-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .kpi-btn {
+        height: 42px;
+        padding: 0 18px;
+        border-radius: 10px;
+        font-size: 13.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all .16s ease;
+        border: none;
+        white-space: nowrap;
+    }
+    .kpi-btn--primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    }
+    .kpi-btn--primary:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.45);
+        color: #ffffff;
+    }
+    .kpi-btn--ghost {
+        background: transparent;
+        border: 1px solid #1e293b;
+        color: #94a3b8;
+    }
+    .kpi-btn--ghost:hover {
+        background: #1e293b;
+        color: #f1f5f9;
+        border-color: #334155;
+    }
+
+    /* ============================================================
+       METRIC SECTIONS & RESPONSIVE GRID
+       ============================================================ */
+    .kpi-section {
+        margin-bottom: 30px;
+    }
+    .kpi-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+    .kpi-section-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .kpi-section-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+    .kpi-section-title {
+        font-size: 16.5px;
+        font-weight: 700;
+        margin: 0;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .kpi-section-subtitle {
+        font-size: 12.5px;
+        color: #94a3b8;
+        margin: 2px 0 0 0;
+    }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+    }
+
+    /* ============================================================
+       KPI CARD COMPONENT
+       ============================================================ */
+    .kpi-card {
+        background: #131b2e;
+        border: 1px solid #1e293b;
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: #334155;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+    .kpi-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .kpi-card-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        line-height: 1.3;
+    }
+    .kpi-card-icon-pill {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .kpi-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .kpi-card-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: #f8fafc;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+    .kpi-card-foot {
+        font-size: 12px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 10px;
+        border-top: 1px dashed #1e293b;
+    }
+    .kpi-card-foot-text {
+        color: #94a3b8;
+        font-size: 11.5px;
+    }
+
+    /* Trend badges */
+    .kpi-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .kpi-trend--up {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+    }
+    .kpi-trend--down {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+    .kpi-trend--neutral {
+        background: rgba(100, 116, 139, 0.15);
+        color: #cbd5e1;
+    }
+    .kpi-trend--warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+    .kpi-trend--info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+    }
+
+    /* Color variations for icon pills */
+    .icon-emerald { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .icon-indigo  { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+    .icon-amber   { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+    .icon-rose    { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+    .icon-blue    { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+    .icon-violet  { background: rgba(139, 92, 246, 0.12); color: #c4b5fd; }
+    .icon-teal    { background: rgba(20, 184, 166, 0.12); color: #5eead4; }
+    .icon-cyan    { background: rgba(6, 182, 212, 0.12); color: #67e8f9; }
+
+    /* ============================================================
+       LIGHT MODE ADAPTATION (Clean White Cards, Soft #e2e8f0 Borders)
+       ============================================================ */
+    [data-theme="light"] .kpi-filter-card,
+    html:not([data-theme="dark"]) .kpi-filter-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+    [data-theme="light"] .kpi-presets-bar,
+    html:not([data-theme="dark"]) .kpi-presets-bar {
+        border-bottom-color: #f1f5f9;
+    }
+    [data-theme="light"] .kpi-presets-label,
+    html:not([data-theme="dark"]) .kpi-presets-label {
+        color: #64748b;
+    }
+    [data-theme="light"] .kpi-preset-chip,
+    html:not([data-theme="dark"]) .kpi-preset-chip {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #475569;
+    }
+    [data-theme="light"] .kpi-preset-chip:hover,
+    html:not([data-theme="dark"]) .kpi-preset-chip:hover {
+        background: #eef2ff;
+        color: #4338ca;
+        border-color: #c7d2fe;
+    }
+    [data-theme="light"] .kpi-preset-chip.active,
+    html:not([data-theme="dark"]) .kpi-preset-chip.active {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    }
+
+    [data-theme="light"] .kpi-field label,
+    html:not([data-theme="dark"]) .kpi-field label {
+        color: #64748b;
+    }
+    [data-theme="light"] .kpi-input,
+    html:not([data-theme="dark"]) .kpi-input {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+    [data-theme="light"] .kpi-input:focus,
+    html:not([data-theme="dark"]) .kpi-input:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+    [data-theme="light"] .kpi-btn--ghost,
+    html:not([data-theme="dark"]) .kpi-btn--ghost {
+        border-color: #e2e8f0;
+        color: #64748b;
+        background: #ffffff;
+    }
+    [data-theme="light"] .kpi-btn--ghost:hover,
+    html:not([data-theme="dark"]) .kpi-btn--ghost:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    [data-theme="light"] .kpi-section-title,
+    html:not([data-theme="dark"]) .kpi-section-title {
+        color: #0f172a;
+    }
+    [data-theme="light"] .kpi-section-subtitle,
+    html:not([data-theme="dark"]) .kpi-section-subtitle {
+        color: #64748b;
+    }
+
+    [data-theme="light"] .kpi-card,
+    html:not([data-theme="dark"]) .kpi-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+    [data-theme="light"] .kpi-card:hover,
+    html:not([data-theme="dark"]) .kpi-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+    }
+    [data-theme="light"] .kpi-card-label,
+    html:not([data-theme="dark"]) .kpi-card-label {
+        color: #64748b;
+    }
+    [data-theme="light"] .kpi-card-value,
+    html:not([data-theme="dark"]) .kpi-card-value {
+        color: #0f172a;
+    }
+    [data-theme="light"] .kpi-card-foot,
+    html:not([data-theme="dark"]) .kpi-card-foot {
+        border-top-color: #f1f5f9;
+        color: #64748b;
+    }
+    [data-theme="light"] .kpi-card-foot-text,
+    html:not([data-theme="dark"]) .kpi-card-foot-text {
+        color: #64748b;
+    }
+
+    /* Light mode icon containers - pastel tints */
+    [data-theme="light"] .icon-emerald,
+    html:not([data-theme="dark"]) .icon-emerald { background: #ecfdf5; color: #059669; }
+    [data-theme="light"] .icon-indigo,
+    html:not([data-theme="dark"]) .icon-indigo  { background: #eef2ff; color: #4f46e5; }
+    [data-theme="light"] .icon-amber,
+    html:not([data-theme="dark"]) .icon-amber   { background: #fffbeb; color: #d97706; }
+    [data-theme="light"] .icon-rose,
+    html:not([data-theme="dark"]) .icon-rose    { background: #fef2f2; color: #dc2626; }
+    [data-theme="light"] .icon-blue,
+    html:not([data-theme="dark"]) .icon-blue    { background: #eff6ff; color: #2563eb; }
+    [data-theme="light"] .icon-violet,
+    html:not([data-theme="dark"]) .icon-violet  { background: #f5f3ff; color: #7c3aed; }
+    [data-theme="light"] .icon-teal,
+    html:not([data-theme="dark"]) .icon-teal    { background: #f0fdfa; color: #0d9488; }
+    [data-theme="light"] .icon-cyan,
+    html:not([data-theme="dark"]) .icon-cyan    { background: #ecfeff; color: #0891b2; }
+
+    [data-theme="light"] .kpi-trend--up,
+    html:not([data-theme="dark"]) .kpi-trend--up { background: #ecfdf5; color: #047857; }
+    [data-theme="light"] .kpi-trend--down,
+    html:not([data-theme="dark"]) .kpi-trend--down { background: #fef2f2; color: #b91c1c; }
+    [data-theme="light"] .kpi-trend--neutral,
+    html:not([data-theme="dark"]) .kpi-trend--neutral { background: #f1f5f9; color: #475569; }
+    [data-theme="light"] .kpi-trend--warning,
+    html:not([data-theme="dark"]) .kpi-trend--warning { background: #fffbeb; color: #b45309; }
+    [data-theme="light"] .kpi-trend--info,
+    html:not([data-theme="dark"]) .kpi-trend--info { background: #eff6ff; color: #1d4ed8; }
+
+    /* ============================================================
+       RESPONSIVE BREAKPOINTS
+       ============================================================ */
+    @media (max-width: 1100px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 680px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .kpi-filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .kpi-field {
+            min-width: 100%;
+        }
+        .kpi-form-actions {
+            justify-content: stretch;
+        }
+        .kpi-form-actions .kpi-btn {
+            flex: 1;
+        }
+        .kpi-card {
+            padding: 16px;
+        }
+        .kpi-card-value {
+            font-size: 22px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex flex-column gap-4">
-    <div class="d-flex align-items-center justify-content-between">
-        <h1 class="text-pro-2xl fw-bold">{% t "kpi_dashboard" %}</h1>
+<main class="kpi-page">
+    <!-- Hero Header Component -->
+    {% url 'reports:reports_index' as reports_overview_url %}
+    {% t "kpi_dashboard" as kpi_title %}
+    {% t "reports" as reports_txt %}
+    {% with start_fmt=start_date|date:"d.m.Y" end_fmt=end_date|date:"d.m.Y" %}
+    {% with sub_txt=start_fmt|add:" — "|add:end_fmt|add:" oralig'idagi asosiy biznes ko'rsatkichlari tahlili" %}
+    {% with range_pill=start_fmt|add:" - "|add:end_fmt %}
+    {% include 'components/hero_header.html' with title=kpi_title subtitle=sub_txt stat_text=range_pill stat_icon="bi-speedometer2" action_url=reports_overview_url action_text="Barcha hisobotlar" action_icon="bi-grid-fill" secondary_url="javascript:window.print()" secondary_text="Chop etish" secondary_icon="bi-printer" %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+
+    <!-- Filter Card: Quick Presets + Custom Date Range -->
+    <div class="kpi-filter-card">
+        <div class="kpi-presets-bar">
+            <span class="kpi-presets-label"><i class="bi bi-clock-history"></i> Davr:</span>
+            <a href="{% url 'reports:report_kpi' %}" class="kpi-preset-chip {% if not preset and not request.GET.start_date %}active{% endif %}">
+                30 kun
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=today" class="kpi-preset-chip {% if preset == 'today' %}active{% endif %}">
+                Bugun
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=this_week" class="kpi-preset-chip {% if preset == 'this_week' %}active{% endif %}">
+                Bu hafta
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=this_month" class="kpi-preset-chip {% if preset == 'this_month' %}active{% endif %}">
+                Shu oy
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=last_month" class="kpi-preset-chip {% if preset == 'last_month' %}active{% endif %}">
+                O'tgan oy
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=this_quarter" class="kpi-preset-chip {% if preset == 'this_quarter' %}active{% endif %}">
+                Shu chorak
+            </a>
+            <a href="{% url 'reports:report_kpi' %}?preset=this_year" class="kpi-preset-chip {% if preset == 'this_year' %}active{% endif %}">
+                Shu yil
+            </a>
+        </div>
+
+        <form method="get" action="{% url 'reports:report_kpi' %}" class="kpi-filter-form">
+            <div class="kpi-field">
+                <label for="kpi-start-date">{% t "date_from" %}</label>
+                <input type="date" id="kpi-start-date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="kpi-input">
+            </div>
+            <div class="kpi-field">
+                <label for="kpi-end-date">{% t "date_to" %}</label>
+                <input type="date" id="kpi-end-date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="kpi-input">
+            </div>
+            <div class="kpi-form-actions">
+                <button type="submit" class="kpi-btn kpi-btn--primary">
+                    <i class="bi bi-funnel"></i> {% t "apply" %}
+                </button>
+                <a href="{% url 'reports:report_kpi' %}" class="kpi-btn kpi-btn--ghost">
+                    <i class="bi bi-arrow-counterclockwise"></i> {% t "reset" %}
+                </a>
+            </div>
+        </form>
     </div>
 
-    <div class="card-pro">
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="d-flex flex-column gap-1">
-                <label class="text-pro-sm fw-semibold">{% t "date_from" %}</label>
-                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
-            </div>
-            <div class="d-flex flex-column gap-1">
-                <label class="text-pro-sm fw-semibold">{% t "date_to" %}</label>
-                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
-            </div>
-            <div class="d-flex align-items-end">
-                <button type="submit" class="btn-pro btn-pro-primary">{% t "apply" %}</button>
+    <!-- 1. SALES METRICS -->
+    <section class="kpi-section">
+        <div class="kpi-section-header">
+            <div class="kpi-section-title-wrap">
+                <div class="kpi-section-icon icon-emerald"><i class="bi bi-cart-check"></i></div>
+                <div>
+                    <h2 class="kpi-section-title">{% t "sales_metrics" %}</h2>
+                    <p class="kpi-section-subtitle">Sotuv hajmi, tushum, chegirmalar va o'sish sur'ati</p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="card-pro">
-        <h2 class="text-pro-lg fw-bold mb-3">{% t "sales_metrics" %}</h2>
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "gross_sales" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ gross_sales|floatformat:0 }}</span>
+        <div class="kpi-grid">
+            <!-- Gross Sales -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "gross_sales" %}</span>
+                    <div class="kpi-card-icon-pill icon-emerald"><i class="bi bi-cash-stack"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ gross_sales|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Jami qayd etilgan savdo aylanmasi</span>
+                </div>
             </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "net_sales" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ net_sales|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "discounts" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-warning">{{ discounts|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "returns" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-danger">{{ returns|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "growth" %}</span>
-                <span class="text-pro-2xl fw-bold {% if growth >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{{ growth|floatformat:1 }}%</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="card-pro">
-        <h2 class="text-pro-lg fw-bold mb-3">{% t "purchase_metrics" %}</h2>
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "total_purchases" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ total_purchases|floatformat:0 }}</span>
+            <!-- Net Sales -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "net_sales" %}</span>
+                    <div class="kpi-card-icon-pill icon-indigo"><i class="bi bi-wallet2"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ net_sales|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Chegirma va qaytuvlar chegirilgach</span>
+                </div>
             </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "purchase_count" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ purchase_count|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "pending_orders" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-info">{{ pending_orders|floatformat:0 }}</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="card-pro">
-        <h2 class="text-pro-lg fw-bold mb-3">{% t "finance_metrics" %}</h2>
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "income" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-success">{{ income|floatformat:0 }}</span>
+            <!-- Discounts -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "discounts" %}</span>
+                    <div class="kpi-card-icon-pill icon-amber"><i class="bi bi-tag"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-amber" data-money>{{ discounts|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Mijozlarga taqdim etilgan chegirma</span>
+                </div>
             </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "expense" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-danger">{{ expense|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "profit" %}</span>
-                <span class="text-pro-2xl fw-bold {% if profit >= 0 %}text-pro-success{% else %}text-pro-danger{% endif %}">{{ profit|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "margin" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ margin|floatformat:1 }}%</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="card-pro">
-        <h2 class="text-pro-lg fw-bold mb-3">{% t "inventory_metrics" %}</h2>
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "total_stock_value" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ total_stock_value|floatformat:0 }}</span>
+            <!-- Returns -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "returns" %}</span>
+                    <div class="kpi-card-icon-pill icon-rose"><i class="bi bi-arrow-counterclockwise"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-rose" data-money>{{ returns|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Qaytarilgan mahsulotlar summasi</span>
+                </div>
             </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "total_products" %}</span>
-                <span class="text-pro-2xl fw-bold">{{ total_products|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "low_stock" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-warning">{{ low_stock|floatformat:0 }}</span>
-            </div>
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "out_of_stock" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-danger">{{ out_of_stock|floatformat:0 }}</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="card-pro">
-        <h2 class="text-pro-lg fw-bold mb-3">{% t "customers" %}</h2>
-        <div class="d-flex gap-3 flex-wrap">
-            <div class="stat-card">
-                <span class="text-pro-sm text-pro-muted">{% t "new_customers" %}</span>
-                <span class="text-pro-2xl fw-bold text-pro-info">{{ new_customers|floatformat:0 }}</span>
+            <!-- Growth -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "growth" %}</span>
+                    <div class="kpi-card-icon-pill {% if growth >= 0 %}icon-emerald{% else %}icon-rose{% endif %}">
+                        <i class="bi {% if growth >= 0 %}bi-graph-up-arrow{% else %}bi-graph-down-arrow{% endif %}"></i>
+                    </div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value">{{ growth|default:0|floatformat:1 }}%</div>
+                </div>
+                <div class="kpi-card-foot">
+                    {% if growth >= 0 %}
+                    <span class="kpi-trend kpi-trend--up"><i class="bi bi-arrow-up-right"></i> +{{ growth|floatformat:1 }}%</span>
+                    <span class="kpi-card-foot-text">o'tgan davrga nisbatan o'sish</span>
+                    {% else %}
+                    <span class="kpi-trend kpi-trend--down"><i class="bi bi-arrow-down-right"></i> {{ growth|floatformat:1 }}%</span>
+                    <span class="kpi-card-foot-text">o'tgan davrga nisbatan pasayish</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
+
+    <!-- 2. PURCHASE METRICS -->
+    <section class="kpi-section">
+        <div class="kpi-section-header">
+            <div class="kpi-section-title-wrap">
+                <div class="kpi-section-icon icon-blue"><i class="bi bi-bag-check"></i></div>
+                <div>
+                    <h2 class="kpi-section-title">{% t "purchase_metrics" %}</h2>
+                    <p class="kpi-section-subtitle">Ta'minotchilardan tovar qabullari va xarid partiyalari</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <!-- Total Purchases -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "total_purchases" %}</span>
+                    <div class="kpi-card-icon-pill icon-blue"><i class="bi bi-truck"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ total_purchases|default:gross_purchases|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Ta'minotchilardan olingan jami mahsulot</span>
+                </div>
+            </div>
+
+            <!-- Net Purchases -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">Sof xarid</span>
+                    <div class="kpi-card-icon-pill icon-teal"><i class="bi bi-receipt-cutoff"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ net_purchases|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Qaytuv va chegirmalar chiqarilgach</span>
+                </div>
+            </div>
+
+            <!-- Purchase Count -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "purchase_count" %}</span>
+                    <div class="kpi-card-icon-pill icon-indigo"><i class="bi bi-receipt"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value"><span data-num>{{ purchase_count|default:total_count|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Rasmilashtirilgan partiyalar soni</span>
+                </div>
+            </div>
+
+            <!-- Pending Orders / Avg Purchase -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">O'rtacha xarid cheki</span>
+                    <div class="kpi-card-icon-pill icon-violet"><i class="bi bi-calculator"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ avg_purchase|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Bir xarid partiyasi o'rtacha qiymati</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. FINANCE METRICS -->
+    <section class="kpi-section">
+        <div class="kpi-section-header">
+            <div class="kpi-section-title-wrap">
+                <div class="kpi-section-icon icon-emerald"><i class="bi bi-cash-coin"></i></div>
+                <div>
+                    <h2 class="kpi-section-title">{% t "finance_metrics" %}</h2>
+                    <p class="kpi-section-subtitle">Kassaga tushum, xarajatlar, sof foyda va rentabellik</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <!-- Income -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "income" %}</span>
+                    <div class="kpi-card-icon-pill icon-emerald"><i class="bi bi-arrow-down-left-circle"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-emerald" data-money>{{ income|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-trend kpi-trend--up"><i class="bi bi-check2"></i> Kirim</span>
+                    <span class="kpi-card-foot-text">Tasdiqlangan moliyaviy tushumlar</span>
+                </div>
+            </div>
+
+            <!-- Expense -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "expense" %}</span>
+                    <div class="kpi-card-icon-pill icon-rose"><i class="bi bi-arrow-up-right-circle"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-rose" data-money>{{ expense|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-trend kpi-trend--down"><i class="bi bi-dash"></i> Chiqim</span>
+                    <span class="kpi-card-foot-text">Tasdiqlangan xarajatlar summasi</span>
+                </div>
+            </div>
+
+            <!-- Profit -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "profit" %}</span>
+                    <div class="kpi-card-icon-pill {% if profit >= 0 %}icon-emerald{% else %}icon-rose{% endif %}">
+                        <i class="bi bi-piggy-bank"></i>
+                    </div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value {% if profit >= 0 %}text-emerald{% else %}text-rose{% endif %}" data-money>{{ profit|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    {% if profit >= 0 %}
+                    <span class="kpi-trend kpi-trend--up"><i class="bi bi-check-circle"></i> Foyda</span>
+                    <span class="kpi-card-foot-text">Ijobiy moliyaviy balans</span>
+                    {% else %}
+                    <span class="kpi-trend kpi-trend--down"><i class="bi bi-exclamation-triangle"></i> Zarar</span>
+                    <span class="kpi-card-foot-text">Xarajatlar tushumdan oshgan</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Margin -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "margin" %}</span>
+                    <div class="kpi-card-icon-pill icon-blue"><i class="bi bi-pie-chart"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value">{{ margin|default:0|floatformat:1 }}%</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Tushumga nisbatan sof rentabellik</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. INVENTORY METRICS -->
+    <section class="kpi-section">
+        <div class="kpi-section-header">
+            <div class="kpi-section-title-wrap">
+                <div class="kpi-section-icon icon-indigo"><i class="bi bi-boxes"></i></div>
+                <div>
+                    <h2 class="kpi-section-title">{% t "inventory_metrics" %}</h2>
+                    <p class="kpi-section-subtitle">Ombor zaxiralarining qiymati va kritik tovar holatlari</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <!-- Total Stock Value -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "total_stock_value" %}</span>
+                    <div class="kpi-card-icon-pill icon-indigo"><i class="bi bi-box-seam"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ total_stock_value|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Tannarx bo'yicha jami tovar qoldig'i</span>
+                </div>
+            </div>
+
+            <!-- Total Products -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "total_products" %}</span>
+                    <div class="kpi-card-icon-pill icon-blue"><i class="bi bi-grid-3x3-gap"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value"><span data-num>{{ total_products|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Katalogdagi barcha tovar nomlari</span>
+                </div>
+            </div>
+
+            <!-- Low Stock -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "low_stock" %}</span>
+                    <div class="kpi-card-icon-pill icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-amber"><span data-num>{{ low_stock|default:low_stock_count|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-trend kpi-trend--warning"><i class="bi bi-bell"></i> Diqqat</span>
+                    <span class="kpi-card-foot-text">Minimal zaxiradan kam qolgan</span>
+                </div>
+            </div>
+
+            <!-- Out of Stock -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "out_of_stock" %}</span>
+                    <div class="kpi-card-icon-pill icon-rose"><i class="bi bi-x-circle"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value text-rose"><span data-num>{{ out_of_stock|default:out_of_stock_count|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-trend kpi-trend--down"><i class="bi bi-slash-circle"></i> Tugagan</span>
+                    <span class="kpi-card-foot-text">Zaxirasi 0 ga teng tovarlar</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. CUSTOMERS & PERFORMANCE -->
+    <section class="kpi-section">
+        <div class="kpi-section-header">
+            <div class="kpi-section-title-wrap">
+                <div class="kpi-section-icon icon-violet"><i class="bi bi-people"></i></div>
+                <div>
+                    <h2 class="kpi-section-title">{% t "customers" %} va operatsiyalar</h2>
+                    <p class="kpi-section-subtitle">Yangi mijozlar, chek ko'rsatkichlari va realizatsiya hajmi</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <!-- New Customers -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">{% t "new_customers" %}</span>
+                    <div class="kpi-card-icon-pill icon-violet"><i class="bi bi-person-plus"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value"><span data-num>{{ new_customers|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-trend kpi-trend--info"><i class="bi bi-star"></i> Yangi</span>
+                    <span class="kpi-card-foot-text">Tanlangan davrda qo'shilgan mijozlar</span>
+                </div>
+            </div>
+
+            <!-- Average Sale -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">O'rtacha savdo cheki</span>
+                    <div class="kpi-card-icon-pill icon-cyan"><i class="bi bi-credit-card-2-front"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value" data-money>{{ avg_sale|default:0|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Bir savdo chekining o'rtacha summasi</span>
+                </div>
+            </div>
+
+            <!-- Items Sold -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">Sotilgan tovarlar soni</span>
+                    <div class="kpi-card-icon-pill icon-teal"><i class="bi bi-bag-check"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value"><span data-num>{{ items_sold|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Amalga oshirilgan tovar donasi</span>
+                </div>
+            </div>
+
+            <!-- Total Sales Orders -->
+            <div class="kpi-card">
+                <div class="kpi-card-head">
+                    <span class="kpi-card-label">Savdo cheklari soni</span>
+                    <div class="kpi-card-icon-pill icon-blue"><i class="bi bi-card-checklist"></i></div>
+                </div>
+                <div class="kpi-card-body">
+                    <div class="kpi-card-value"><span data-num>{{ total_count|default:0 }}</span> ta</div>
+                </div>
+                <div class="kpi-card-foot">
+                    <span class="kpi-card-foot-text">Muvaffaqiyatli yakunlangan savdolar</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Format money numbers into Uzbek format: 12 500 so'm
+    document.querySelectorAll('[data-money]').forEach(function(el) {
+        var raw = el.textContent.replace(/[^0-9.-]/g, '');
+        var num = parseFloat(raw);
+        if (!isNaN(num)) {
+            el.textContent = Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' ') + " so'm";
+        }
+    });
+
+    // Format plain counts with space separators: 1 250
+    document.querySelectorAll('[data-num]').forEach(function(el) {
+        var raw = el.textContent.replace(/[^0-9.-]/g, '');
+        var num = parseFloat(raw);
+        if (!isNaN(num)) {
+            el.textContent = Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' ');
+        }
+    });
+</script>
 {% endblock %}

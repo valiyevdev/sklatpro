@@ -105,7 +105,7 @@ INVENTORY_AUDIT = """() => {
         const h = Math.min(ar.bottom, br.bottom) - Math.max(ar.top, br.top);
         if (w > 2 && h > 2) add('interactive-intersection', `${label(a)} <> ${label(b)}`, `intersection=${w.toFixed(1)}x${h.toFixed(1)}`);
     }
-    const text = [...root.querySelectorAll('.page-title,.invt-count,.invt-count *,.invt-price,.invt-status,.invt-label,.invt-stat__value,.invt-btn,.fp-label,.fp-btn,.fp-toggle,.fp-result,.fp-chip')].filter(visible);
+    const text = [...root.querySelectorAll('.page-title,.invt-count,.invt-count *,.invt-price,.invt-status,.invt-label,.invt-stat__value,.invt-btn,.fp-label,.fp-btn,.fp-toggle,.fp-result,.fp-chip,.custom-select-label,.custom-select-option-label')].filter(visible);
     for (const node of text) {
         if (node.closest('[data-allow-truncate]')) continue;
         if (node.scrollWidth > node.clientWidth + 1) add('text-clipping', label(node), `scrollWidth=${node.scrollWidth}, clientWidth=${node.clientWidth}`);
@@ -164,50 +164,109 @@ def verify_inventory_viewport(page: Page, width: int, height: int) -> dict:
         if not page.evaluate("() => document.activeElement && document.activeElement.matches('[data-fp-search]')"):
             add_failure("shortcut-not-focusing", "Ctrl+K", "search input not focused")
 
-        page.select_option("#fp-status-filter", "low_stock")
+        # ---------- Custom dropdowns replace the native selects ----------
+        for field_id, trigger_id in (
+            ("fp-status-filter", "fp-status-trigger"),
+            ("fp-category-filter", "fp-category-trigger"),
+            ("fp-brand-filter", "fp-brand-trigger"),
+        ):
+            if not page.locator(f"#{trigger_id}").is_visible():
+                add_failure("custom-select-trigger", f"#{trigger_id}", "trigger not visible")
+            if page.locator(f"#{field_id}").get_attribute("aria-hidden") != "true":
+                add_failure("custom-select-native", f"#{field_id}", "native select still exposed")
+
+        page.locator("#fp-status-trigger").click()
+        status_menu = page.locator("#fp-status-menu")
+        if not status_menu.is_visible():
+            add_failure("custom-select-open", "#fp-status-trigger", "menu not visible")
+        if status_menu.locator(".custom-select-option").count() != page.locator("#fp-status-filter option").count():
+            add_failure("custom-select-options", "#fp-status-menu", "menu options differ from native select")
+        status_option = status_menu.locator('.custom-select-option[data-value="low_stock"]')
+        if not status_option.count():
+            add_failure("custom-select-option", "#fp-status-menu", "low_stock option missing")
+        else:
+            status_option.click()
+            page.wait_for_timeout(150)
+            native_status = page.locator("#fp-status-filter").input_value()
+            if native_status != "low_stock":
+                add_failure("custom-select-native-value", "#fp-status-filter", native_status)
+            status_label = page.locator("#fp-status-value").inner_text().strip()
+            if status_label != "Kam qolgan":
+                add_failure("custom-select-label", "#fp-status-value", status_label)
+        if status_menu.is_visible():
+            add_failure("custom-select-close", "#fp-status-menu", "menu stayed open after choosing an option")
+
         with page.expect_navigation(wait_until="domcontentloaded"):
             page.locator(".fp-btn--primary").click()
         page.wait_for_timeout(350)
         if "status=low_stock" not in page.url:
             add_failure("apply-status", "Qo'llash", page.url)
-        chips = page.locator(".fp-chip")
-        if chips.count() < 1:
-            add_failure("active-chip-missing", ".fp-chip", "0 chips")
-        elif "Kam qolgan" not in chips.first.inner_text():
-            add_failure("active-chip-label", ".fp-chip", chips.first.inner_text())
-        if not page.locator(".fp-result b").count():
-            add_failure("result-count-missing", ".fp-result", "no count")
+        page.locator(".fp-panel.fp-custom-ready").wait_for(state="visible", timeout=15000)
+        status_label = page.locator("#fp-status-value").inner_text().strip()
+        if status_label != "Kam qolgan":
+            add_failure("status-persist", "#fp-status-value", status_label)
 
-        with page.expect_navigation(wait_until="domcontentloaded"):
-            page.locator(".fp-chip__remove").first.click()
-        page.wait_for_timeout(350)
-        if "status=low_stock" in page.url:
-            add_failure("remove-chip", ".fp-chip__remove", page.url)
-
-        if page.locator("#fp-category-filter option").count() > 1:
-            category_value = page.locator("#fp-category-filter option").nth(1).get_attribute("value")
-            page.select_option("#fp-category-filter", category_value)
-            with page.expect_navigation(wait_until="domcontentloaded"):
-                page.locator(".fp-btn--primary").click()
-            page.wait_for_timeout(350)
-            if "category=" not in page.url:
-                add_failure("apply-category", "Kategoriya", page.url)
+        # Keyboard: ArrowDown opens the menu, Escape restores focus.
+        page.locator("#fp-status-trigger").focus()
+        page.keyboard.press("ArrowDown")
+        page.wait_for_timeout(150)
+        if not page.locator("#fp-status-menu").is_visible():
+            add_failure("keyboard-open", "#fp-status-trigger", "ArrowDown did not open the menu")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(100)
+        if page.locator("#fp-status-menu").is_visible():
+            add_failure("keyboard-close", "#fp-status-menu", "Escape did not close the menu")
+        if not page.evaluate("() => document.activeElement && document.activeElement.id === 'fp-status-trigger'"):
+            add_failure("keyboard-focus", "#fp-status-trigger", "focus not restored after Escape")
 
         with page.expect_navigation(wait_until="domcontentloaded"):
             page.locator(".fp-btn--outline").click()
         page.wait_for_timeout(350)
-        if any(part in page.url for part in ("q=", "status=", "category=")):
+        if any(part in page.url for part in ("q=", "status=", "category=", "brand=")):
             add_failure("clear-all", "Tozalash", page.url)
+
+        # ---------- Category dropdown applies and persists ----------
+        page.locator(".fp-panel.fp-custom-ready").wait_for(state="visible", timeout=15000)
+        page.locator("#fp-category-trigger").click()
+        category_options = page.locator("#fp-category-menu .custom-select-option")
+        if category_options.count() > 1:
+            category_option = category_options.nth(1)
+            category_value = category_option.get_attribute("data-value")
+            category_label = category_option.inner_text().strip()
+            category_option.click()
+            page.wait_for_timeout(150)
+            native_category = page.locator("#fp-category-filter").input_value()
+            if native_category != category_value:
+                add_failure("custom-select-native-value", "#fp-category-filter", native_category)
+            selected_label = page.locator("#fp-category-value").inner_text().strip()
+            if selected_label != category_label:
+                add_failure("custom-select-label", "#fp-category-value", selected_label)
+            with page.expect_navigation(wait_until="domcontentloaded"):
+                page.locator(".fp-btn--primary").click()
+            page.wait_for_timeout(350)
+            if f"category={category_value}" not in page.url:
+                add_failure("apply-category", "Kategoriya", page.url)
+            page.locator(".fp-panel.fp-custom-ready").wait_for(state="visible", timeout=15000)
+            selected_label = page.locator("#fp-category-value").inner_text().strip()
+            if selected_label != category_label:
+                add_failure("category-persist", "#fp-category-value", selected_label)
+            with page.expect_navigation(wait_until="domcontentloaded"):
+                page.locator(".fp-btn--outline").click()
+            page.wait_for_timeout(300)
 
         product_name = page.locator(".table-pro__cell-main, .invt-card__name").first.inner_text().strip()
         search_term = product_name.split()[0] if product_name else "a"
         page.fill("[data-fp-search]", search_term)
-        page.wait_for_timeout(650)
-        page.wait_for_load_state("domcontentloaded")
+        try:
+            page.wait_for_url(lambda current: "q=" in current, wait_until="domcontentloaded", timeout=5000)
+            page.wait_for_load_state("domcontentloaded")
+        except Exception:
+            pass
         if "q=" not in page.url:
             add_failure("search-debounce", "[data-fp-search]", page.url)
-        with page.expect_navigation(wait_until="domcontentloaded"):
-            page.locator(".fp-btn--outline").click()
+        # Clean up by URL: clicking the link while the debounced navigation is
+        # still settling can race on slow mobile viewports.
+        page.goto(url, wait_until="domcontentloaded")
         page.wait_for_timeout(300)
 
         page.locator("[data-fp-toggle]").click()
@@ -224,6 +283,32 @@ def verify_inventory_viewport(page: Page, width: int, height: int) -> dict:
         page.wait_for_timeout(200)
         if not page.locator("[data-fp-controls]").is_visible():
             add_failure("toggle-open", ".fp-toggle", "controls not visible")
+
+        # ---------- Progressive enhancement: the form works without JS ----------
+        if width == INVENTORY_VIEWPORTS[0][0]:
+            nojs_context = page.context.browser.new_context(
+                viewport={"width": width, "height": height},
+                java_script_enabled=False,
+                storage_state=page.context.storage_state(),
+            )
+            try:
+                nojs_page = nojs_context.new_page()
+                nojs_page.goto(url, wait_until="domcontentloaded")
+                nojs_page.locator(".fp-panel").wait_for(state="visible", timeout=15000)
+                if not nojs_page.locator("#fp-category-filter").is_visible():
+                    add_failure("nojs-native-select", "#fp-category-filter", "native select hidden without JS")
+                if nojs_page.locator("#fp-category-trigger").is_visible():
+                    add_failure("nojs-trigger", "#fp-category-trigger", "custom trigger visible without JS")
+                nojs_category_count = nojs_page.locator("#fp-category-filter option").count()
+                if nojs_category_count > 1:
+                    nojs_value = nojs_page.locator("#fp-category-filter option").nth(1).get_attribute("value")
+                    nojs_page.select_option("#fp-category-filter", nojs_value)
+                    with nojs_page.expect_navigation(wait_until="domcontentloaded"):
+                        nojs_page.locator(".fp-btn--primary").click()
+                    if f"category={nojs_value}" not in nojs_page.url:
+                        add_failure("nojs-apply-category", "no-JS", nojs_page.url)
+            finally:
+                nojs_context.close()
     except Exception as exc:
         add_failure("interaction-exception", "filter panel", str(exc))
 
@@ -231,6 +316,13 @@ def verify_inventory_viewport(page: Page, width: int, height: int) -> dict:
     failures["failures"].extend(interaction_failures)
     shot = SCREEN_DIR / f"inventory-{width}x{height}.png"
     page.screenshot(path=str(shot), full_page=True)
+    menu_shot = SCREEN_DIR / f"inventory-custom-select-{width}x{height}.png"
+    try:
+        page.locator("#fp-category-trigger").click()
+        page.wait_for_timeout(250)
+        page.screenshot(path=str(menu_shot), full_page=False)
+    except Exception as exc:
+        failures["failures"].append({"type": "menu-screenshot", "selector": "#fp-category-trigger", "numbers": str(exc)})
     return {
         "viewport": f"{width}x{height}",
         "table_visible": failures.get("tableVisible"),
@@ -240,6 +332,7 @@ def verify_inventory_viewport(page: Page, width: int, height: int) -> dict:
         "console_errors": console_errors,
         "failed_requests": failed_requests,
         "screenshot": str(shot),
+        "custom_select_screenshot": str(menu_shot),
     }
 
 
@@ -342,7 +435,7 @@ def main() -> int:
             print(f"FAIL | {result['viewport']} | exercise | page | {result['exercise_error']}")
         failed |= bool(result['failures'] or result['console_errors'] or result['failed_requests'] or result['exercise_error'])
     for result in inventory_results:
-        print(f"\n[inventory {result['viewport']}] table={result['table_visible']} rows={result['rows']} cards={result['cards']} screenshot={result['screenshot']}")
+        print(f"\n[inventory {result['viewport']}] table={result['table_visible']} rows={result['rows']} cards={result['cards']} screenshot={result['screenshot']} custom_select={result.get('custom_select_screenshot', '')}")
         for failure in result['failures']:
             print(f"FAIL | inventory {result['viewport']} | {failure['type']} | {failure['selector']} | {failure['numbers']}")
         for error in result['console_errors']:
