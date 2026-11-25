@@ -375,7 +375,11 @@ def api_product_search(request):
                 available = float(p.quantity)
         else:
             sls = StockLevel.objects.filter(product=p, company=company) if company else StockLevel.objects.filter(product=p)
-            available = sum(float(s.quantity - s.reserved) for s in sls)
+            stock_levels = list(sls.values_list('quantity', 'reserved'))
+            if stock_levels:
+                available = sum(float(quantity - reserved) for quantity, reserved in stock_levels)
+            else:
+                available = float(p.quantity)
 
         price_result = resolve_price(product=p, company=company)
 

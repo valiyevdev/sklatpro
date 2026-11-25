@@ -269,6 +269,28 @@ class POSWorkspaceFlowTest(TestCase):
         catalog = self.client.get('/pos/api/search/', {'q': product.sku}).json()
         self.assertEqual(catalog['products'][0]['available'], 6.0)
 
+    def test_search_without_terminal_uses_legacy_stock_when_no_stock_levels_exist(self):
+        legacy_product = Product.objects.create(
+            company=self.company, name='Legacy Without Terminal', sku='LEGACY-NO-TERMINAL',
+            price=Decimal('12000'), quantity=6,
+        )
+        tracked_product = Product.objects.create(
+            company=self.company, name='Tracked Without Terminal', sku='TRACKED-NO-TERMINAL',
+            price=Decimal('15000'), quantity=9,
+        )
+        StockLevel.objects.create(
+            company=self.company, product=tracked_product, warehouse=self.warehouse, quantity=0,
+        )
+        session = self.client.session
+        session.pop('pos_terminal_id', None)
+        session.save()
+
+        legacy_data = self.client.get('/pos/api/search/', {'q': legacy_product.sku}).json()
+        tracked_data = self.client.get('/pos/api/search/', {'q': tracked_product.sku}).json()
+
+        self.assertEqual(legacy_data['products'][0]['available'], 6.0)
+        self.assertEqual(tracked_data['products'][0]['available'], 0.0)
+
     def test_receipt_list_loads_for_cashier(self):
         response = self.client.get('/pos/receipts/')
         self.assertEqual(response.status_code, 200)
