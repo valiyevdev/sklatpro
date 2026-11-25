@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.template.loader import get_template
 from users.models import Company
 from products.models import Product, Category
 
@@ -74,3 +75,16 @@ class ProductCardRedesignTests(TestCase):
         copy_prod = copies.first()
         self.assertEqual(copy_prod.price, self.product.price)
         self.assertEqual(copy_prod.quantity, 0)
+
+    def test_product_detail_template_renders(self):
+        template = get_template('products/product_detail.html')
+        html = template.render({
+            'product': self.product,
+            'transactions': [],
+            'variants': [],
+        })
+
+        self.assertIn('Test Daftar', html)
+        self.assertIn('DAFTAR-001', html)
+        self.assertNotIn('{%', html)
+        self.assertNotIn('{{', html)
